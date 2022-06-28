@@ -12,7 +12,6 @@ import {
   Navigation,
   Footer,
   Home,
-  Blog,
   Posts,
   SolanaIntro
 } from "./components";
@@ -22,11 +21,9 @@ root.render(
   <Router>
     <Navigation />
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/blog" element={<Blog />}>
-        <Route path="" element={<Posts />} />
-        <Route path="solana_getting_started" element={<SolanaIntro />} />
-      </Route>
+        <Route path="/" element={<Home />} />
+        <Route path="/blog" element={<Posts />} />
+        <Route path="/blog/solana_getting_started" element={<SolanaIntro />} />
     </Routes>
     <Footer />
   </Router>
