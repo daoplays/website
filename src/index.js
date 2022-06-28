@@ -14,7 +14,8 @@ import {
   Home,
   Blog,
   Posts,
-  SolanaIntro
+  SolanaIntro,
+  RandomNumbers
 } from "./components";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -25,6 +26,7 @@ root.render(
       <Route path="/" element={<Home />} />
       <Route path="/blog" element={<Blog />}>
         <Route path="" element={<Posts />} />
+        <Route path="random_numbers" element={<RandomNumbers />} />
         <Route path="solana_getting_started" element={<SolanaIntro />} />
       </Route>
     </Routes>

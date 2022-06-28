@@ -12,11 +12,25 @@ function Posts() {
     
     };
 
+    const random_numbers = {
+        title:"Random Numbers With Solana",
+        sub_title:"June 25 2022",
+        post_text:"In this post we implement a simple on-chain program that has a couple of random number generators that takes a seed off-chain, and then generates uniform doubles on chain",
+        image:"matrix.jpg"
+    
+    };
+
     return (
         <div className="home">
             <div class="container">
 
                 <Box marginBottom={"20px"} />
+
+                <Link to="/blog/random_numbers">
+                    <RowCard {...random_numbers}/>
+                </Link>
+
+                <br />
                 
                 <Link to="/blog/solana_getting_started">
                     <RowCard {...getting_started}/>
