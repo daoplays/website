@@ -12,13 +12,6 @@ const higherOrderComponent = WrappedComponent => {
     return HOC
   }
 
-function NoDiv() 
-{
-    return (
-        <></>
-    );
-}
-
 function BlogButton()
 {
     return (
@@ -40,7 +33,7 @@ const blog_post = {
 
 function RowCard({title, sub_title, post_text, image, second_div, display_image}) 
 {
-    const Second_Div_Component = higherOrderComponent(second_div);
+    const SecondDivComponent = higherOrderComponent(second_div);
 
     return (
         <Card style={{flexDirection: "row"}}>
@@ -72,7 +65,7 @@ function RowCard({title, sub_title, post_text, image, second_div, display_image}
                     </Card.Text>
                 </div>
                 <div className="text-center">
-                    <Second_Div_Component/>
+                    <SecondDivComponent/>
                 </div>
             </Card.Body>
         </Card>
