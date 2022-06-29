@@ -1,16 +1,106 @@
 import React from "react";
-import { Text } from 'react-native';
 import { AirDrop } from '../../apps/AirDrop';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {Card, Image} from 'react-bootstrap';
 import { Box, HStack, VStack, Center } from '@chakra-ui/react';
+import { isMobile } from "react-device-detect";
 
 import phantom_1 from "./phantom_1.png"
 import phantom_2 from "./phantom_2.png"
 import phantom_3 from "./phantom_3.png"
 import sollet_img from "./sollet.png"
 
+
+function PhantomBlock() {
+
+    return  (
+        <>
+        <Box>
+            <Card style={{ width: '20rem' }} >
+                <Card.Img variant="top"  src={phantom_1} alt="banner" />
+                <Card.Body>
+                    <Card.Text
+                    className="text-body mb-4"
+                    style={{ fontSize: "1rem" }}
+                    >
+                    <br/>
+                    
+                    If you want to you can try and import the file system wallet you made previously to observe the futility of such action, as even if you didn't use the BIP39 passphrase this won't generate the right keys.  For now we would recommend creating a new wallet, it will be easy to import your file system wallet into Phantom later.
+                    </Card.Text>
+                </Card.Body>
+            </Card>
+        </Box>
+        <Box>
+            <Card  style={{ width: '20rem' }}>
+                <Card.Img variant="top" src={phantom_2} alt="banner" />
+                <Card.Body>
+                    <Card.Text
+                    className="text-body mb-4"
+                    style={{ fontSize: "1rem" }}
+                    >
+                        <br/>
+                        Note that this password is not the same thing as the BIP39 passphrase you used earlier for the file system wallet.  This password won't impact the key you get, but is  used to encrypt the key on your disk.  You will also need this to authorize any transactions.
+                    </Card.Text>
+                </Card.Body>
+            </Card>
+        </Box>
+        <Box>
+            <Card  style={{ width: '20rem' }}>
+                <Card.Img variant="top" src={phantom_3} alt="phantom_1" />
+                <Card.Body>
+                    <Card.Text
+                    className="text-body mb-4"
+                    style={{ fontSize: "1rem" }}
+                    >
+                        <br/>
+                        Normally you wouldn't show this to anyone, as this is your new seed phrase that will generate your private keys, but we will use this as an example sentence to try and dig into why the file system wallets and Phantom wallets give different public keys even if you don't use the BIP39 passphrase.
+                    </Card.Text>
+                </Card.Body>
+            </Card>
+        </Box>
+        </>     
+    );
+}
+
+function SolletBlock() {
+
+    return (
+        <>
+        <Box >
+            <Image src={sollet_img} />
+        </Box>
+        
+        <Box>
+            
+            To visualize this you can head over to <a style={{textDecoration: "underline"}} href="https://www.sollet.io/">sollet.io</a>.  At the bottom of the page you can click "Restore existing wallet", and copy your phantom seed phrase into box.  You don't need to enter a password (this isn't referring to a BIPM39 passphrase anyway), so just click next.
+
+            <br/><br/>
+
+            You will be presented with a list of derivable accounts, starting with 0  (this should match your phantom pubkey) and incrementing the account index in the path by one for each subsequent line.
+
+            <br/><br/>
+
+            You should now be armed with everything you need to know to finally import one of your phantom accounts into a file system wallet!  On the command line you can enter:
+            <br/><br/>
+
+            <SyntaxHighlighter 
+                lineProps={{style: {wordBreak: 'normal', whiteSpace: 'pre-wrap'}}}
+                wrapLines={true} 
+                language="bash" style={docco}
+            >
+            {"solana-keygen recover \"prompt://?full-path=m/44'/501'/0'/0'\" -o phantom_0.json"}
+            </SyntaxHighlighter>
+
+            <br/>
+            And at last the public keys will match.
+            
+        </Box>
+        
+        </>
+    );
+
+}
 
 function SolanaIntro() {
 
@@ -119,51 +209,16 @@ solana-keygen new`
 
                 <Box marginBottom  = "10px">
                     <Center>
-                    <HStack spacing='24px'  alignItems="start">
-                    <Box>
-                        <Card style={{ width: '20rem' }} >
-                            <Card.Img variant="top"  src={phantom_1} alt="banner" />
-                            <Card.Body>
-                                <Card.Text
-                                className="text-body mb-4"
-                                style={{ fontSize: "1rem" }}
-                                >
-                                <br/>
-                                
-                                If you want to you can try and import the file system wallet you made previously to observe the futility of such action, as even if you didn't use the BIP39 passphrase this won't generate the right keys.  For now we would recommend creating a new wallet, it will be easy to import your file system wallet into Phantom later.
-                                </Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Box>
-                    <Box>
-                        <Card  style={{ width: '20rem' }}>
-                            <Card.Img variant="top" src={phantom_2} alt="banner" />
-                            <Card.Body>
-                                <Card.Text
-                                className="text-body mb-4"
-                                style={{ fontSize: "1rem" }}
-                                >
-                                    <br/>
-                                    Note that this password is not the same thing as the BIP39 passphrase you used earlier for the file system wallet.  This password won't impact the key you get, but is  used to encrypt the key on your disk.  You will also need this to authorize any transactions.
-                                </Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Box>
-                    <Box>
-                        <Card  style={{ width: '20rem' }}>
-                            <Card.Img variant="top" src={phantom_3} alt="phantom_1" />
-                            <Card.Body>
-                                <Card.Text
-                                className="text-body mb-4"
-                                style={{ fontSize: "1rem" }}
-                                >
-                                    <br/>
-                                    Normally you wouldn't show this to anyone, as this is your new seed phrase that will generate your private keys, but we will use this as an example sentence to try and dig into why the file system wallets and Phantom wallets give different public keys even if you don't use the BIP39 passphrase.
-                                </Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Box>
-                    </HStack>
+                    {!isMobile &&
+                        <HStack spacing='24px'  alignItems="start">
+                            <PhantomBlock/>
+                        </HStack>
+                    }
+                    {isMobile &&
+                        <VStack spacing='24px'  alignItems="start">
+                            <PhantomBlock/>
+                        </VStack>
+                    }
                     </Center>
                 </Box>
 
@@ -211,16 +266,17 @@ solana-keygen new`
 
                </p>
 
-                <p style={{marginLeft:"40px"}}>
+                
                 <br/>
-
+                
+                <Box style={{paddingLeft:"5%", paddingRight:"10%"}}>
                 The solana-cli supports BIP32 and BIP44 hierarchical derivation of private keys from your seed phrase and passphrase by adding either the <span style={{backgroundColor:"lightgrey"}}>?key=</span> query string or the <span style={{backgroundColor:"lightgrey"}}>?full-path=</span> query string.  By default, <span style={{backgroundColor:"lightgrey"}}>prompt:</span> will derive solana's base derivation path <span style={{backgroundColor:"lightgrey"}}>m/44'/501'</span>. To derive a child key, supply the <span style={{backgroundColor:"lightgrey"}}>{`?key=<ACCOUNT>/<CHANGE>`}</span> query string.<br/>
                 To use a derivation path other than solana's standard BIP44, you can supply <span style={{backgroundColor:"lightgrey"}}>{`?full-path=m/<PURPOSE>/<COIN_TYPE>/<ACCOUNT>/<CHANGE>`}</span>.
                 Because Solana uses Ed25519 keypairs, as per SLIP-0010 all derivation-path indexes will be promoted to hardened indexes -- eg. <span style={{backgroundColor:"lightgrey"}}>?key=0'/0'</span>, <span style={{backgroundColor:"lightgrey"}}>?full-path=m/44'/2017'/0'/1'</span> -- regardless of whether ticks are included in the query-string input. 
+                </Box>        
 
-
-                <br/><br/>
-                </p>
+                <br/>
+                
 
                 <p>
 
@@ -256,34 +312,16 @@ solana-keygen new`
                 </p>
 
                 <Box marginBottom  = "10px">
-                    <HStack spacing='24px'  alignItems="start">
-                    <Box >
-                        <Image style={{ width: '100%' }} src={sollet_img} />
-                    </Box>
-                    <VStack>
-                    <Box>
-                   
-                To visualize this you can head over to <a style={{textDecoration: "underline"}} href="https://www.sollet.io/">sollet.io</a>.  At the bottom of the page you can click "Restore existing wallet", and copy your phantom seed phrase into box.  You don't need to enter a password (this isn't referring to a BIPM39 passphrase anyway), so just click next.
-
-                <br/><br/>
-
-                You will be presented with a list of derivable accounts, starting with 0  (this should match your phantom pubkey) and incrementing the account index in the path by one for each subsequent line.
-
-                <br/><br/>
-
-                You should now be armed with everything you need to know to finally import one of your phantom accounts into a file system wallet!  On the command line you can enter:
-                <br/><br/>
-                
-                <SyntaxHighlighter language="bash" style={docco}>
-                    {"solana-keygen recover \"prompt://?full-path=m/44'/501'/0'/0'\" -o phantom_0.json"}
-                </SyntaxHighlighter>
-
-                <br/>
-                And at last the public keys will match.
-                
-                </Box>
-                </VStack>
-                </HStack>
+                    {!isMobile && 
+                        <HStack spacing='24px'  alignItems="start">
+                            <SolletBlock/>
+                        </HStack>
+                    }
+                    {isMobile && 
+                        <VStack spacing='24px'  alignItems="start">
+                            <SolletBlock/>
+                        </VStack>
+                    }
                 </Box>
 
 
@@ -341,9 +379,6 @@ solana-keygen new`
                 On that note we will bring this post to a close.  Hopefully you have learnt something about the way your keypairs are generated, and if nothing else have paid yourself some fake SOL to spend on future projects.  If you did find this useful feel free to follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a> to keep up to date with future posts, and the release of our first proper Solana DApp!
                
                 </p>
-
-                <Text style={{ padding: 150 }}>
-                </Text>
             </div>
         </div>
     );
