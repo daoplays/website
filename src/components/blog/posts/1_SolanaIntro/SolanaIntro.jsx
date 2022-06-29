@@ -63,6 +63,41 @@ function PhantomBlock() {
     );
 }
 
+function SolletBlock() {
+
+    return (
+        <>
+        <Box >
+            <Image style={{ width: '100%' }} src={sollet_img} />
+        </Box>
+        <VStack>
+            <Box>
+
+            To visualize this you can head over to <a style={{textDecoration: "underline"}} href="https://www.sollet.io/">sollet.io</a>.  At the bottom of the page you can click "Restore existing wallet", and copy your phantom seed phrase into box.  You don't need to enter a password (this isn't referring to a BIPM39 passphrase anyway), so just click next.
+
+            <br/><br/>
+
+            You will be presented with a list of derivable accounts, starting with 0  (this should match your phantom pubkey) and incrementing the account index in the path by one for each subsequent line.
+
+            <br/><br/>
+
+            You should now be armed with everything you need to know to finally import one of your phantom accounts into a file system wallet!  On the command line you can enter:
+            <br/><br/>
+
+            <SyntaxHighlighter language="bash" style={docco}>
+            {"solana-keygen recover \"prompt://?full-path=m/44'/501'/0'/0'\" -o phantom_0.json"}
+            </SyntaxHighlighter>
+
+            <br/>
+            And at last the public keys will match.
+
+            </Box>
+        </VStack>
+        </>
+    );
+
+}
+
 function SolanaIntro() {
 
 const bip39 = 
@@ -171,14 +206,14 @@ solana-keygen new`
                 <Box marginBottom  = "10px">
                     <Center>
                     {!isMobile &&
-                    <HStack spacing='24px'  alignItems="start">
-                        <PhantomBlock/>
-                    </HStack>
+                        <HStack spacing='24px'  alignItems="start">
+                            <PhantomBlock/>
+                        </HStack>
                     }
                     {isMobile &&
-                    <VStack spacing='24px'  alignItems="start">
-                        <PhantomBlock/>
-                    </VStack>
+                        <VStack spacing='24px'  alignItems="start">
+                            <PhantomBlock/>
+                        </VStack>
                     }
                     </Center>
                 </Box>
@@ -227,16 +262,17 @@ solana-keygen new`
 
                </p>
 
-                <p style={{marginLeft:"40px"}}>
+                
                 <br/>
-
+                
+                <Box style={{paddingLeft:"5%", paddingRight:"10%"}}>
                 The solana-cli supports BIP32 and BIP44 hierarchical derivation of private keys from your seed phrase and passphrase by adding either the <span style={{backgroundColor:"lightgrey"}}>?key=</span> query string or the <span style={{backgroundColor:"lightgrey"}}>?full-path=</span> query string.  By default, <span style={{backgroundColor:"lightgrey"}}>prompt:</span> will derive solana's base derivation path <span style={{backgroundColor:"lightgrey"}}>m/44'/501'</span>. To derive a child key, supply the <span style={{backgroundColor:"lightgrey"}}>{`?key=<ACCOUNT>/<CHANGE>`}</span> query string.<br/>
                 To use a derivation path other than solana's standard BIP44, you can supply <span style={{backgroundColor:"lightgrey"}}>{`?full-path=m/<PURPOSE>/<COIN_TYPE>/<ACCOUNT>/<CHANGE>`}</span>.
                 Because Solana uses Ed25519 keypairs, as per SLIP-0010 all derivation-path indexes will be promoted to hardened indexes -- eg. <span style={{backgroundColor:"lightgrey"}}>?key=0'/0'</span>, <span style={{backgroundColor:"lightgrey"}}>?full-path=m/44'/2017'/0'/1'</span> -- regardless of whether ticks are included in the query-string input. 
+                </Box>        
 
-
-                <br/><br/>
-                </p>
+                <br/>
+                
 
                 <p>
 
@@ -272,34 +308,16 @@ solana-keygen new`
                 </p>
 
                 <Box marginBottom  = "10px">
-                    <HStack spacing='24px'  alignItems="start">
-                    <Box >
-                        <Image style={{ width: '100%' }} src={sollet_img} />
-                    </Box>
-                    <VStack>
-                    <Box>
-                   
-                To visualize this you can head over to <a style={{textDecoration: "underline"}} href="https://www.sollet.io/">sollet.io</a>.  At the bottom of the page you can click "Restore existing wallet", and copy your phantom seed phrase into box.  You don't need to enter a password (this isn't referring to a BIPM39 passphrase anyway), so just click next.
-
-                <br/><br/>
-
-                You will be presented with a list of derivable accounts, starting with 0  (this should match your phantom pubkey) and incrementing the account index in the path by one for each subsequent line.
-
-                <br/><br/>
-
-                You should now be armed with everything you need to know to finally import one of your phantom accounts into a file system wallet!  On the command line you can enter:
-                <br/><br/>
-                
-                <SyntaxHighlighter language="bash" style={docco}>
-                    {"solana-keygen recover \"prompt://?full-path=m/44'/501'/0'/0'\" -o phantom_0.json"}
-                </SyntaxHighlighter>
-
-                <br/>
-                And at last the public keys will match.
-                
-                </Box>
-                </VStack>
-                </HStack>
+                    {!isMobile && 
+                        <HStack spacing='24px'  alignItems="start">
+                            <SolletBlock/>
+                        </HStack>
+                    }
+                    {isMobile && 
+                        <VStack spacing='24px'  alignItems="start">
+                            <SolletBlock/>
+                        </VStack>
+                    }
                 </Box>
 
 
