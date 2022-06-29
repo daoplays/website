@@ -68,10 +68,10 @@ function SolletBlock() {
     return (
         <>
         <Box >
-            <Image style={{ width: '100%' }} src={sollet_img} />
+            <Image src={sollet_img} />
         </Box>
-        <VStack>
-            <Box>
+        
+        <Box>
 
             To visualize this you can head over to <a style={{textDecoration: "underline"}} href="https://www.sollet.io/">sollet.io</a>.  At the bottom of the page you can click "Restore existing wallet", and copy your phantom seed phrase into box.  You don't need to enter a password (this isn't referring to a BIPM39 passphrase anyway), so just click next.
 
@@ -91,8 +91,8 @@ function SolletBlock() {
             <br/>
             And at last the public keys will match.
 
-            </Box>
-        </VStack>
+        </Box>
+        
         </>
     );
 
