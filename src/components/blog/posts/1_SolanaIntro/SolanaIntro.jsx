@@ -4,12 +4,64 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {Card, Image} from 'react-bootstrap';
 import { Box, HStack, VStack, Center } from '@chakra-ui/react';
+import { isMobile } from "react-device-detect";
 
 import phantom_1 from "./phantom_1.png"
 import phantom_2 from "./phantom_2.png"
 import phantom_3 from "./phantom_3.png"
 import sollet_img from "./sollet.png"
 
+
+function Phantom_Block() {
+
+    return  (
+        <>
+        <Box>
+            <Card style={{ width: '20rem' }} >
+                <Card.Img variant="top"  src={phantom_1} alt="banner" />
+                <Card.Body>
+                    <Card.Text
+                    className="text-body mb-4"
+                    style={{ fontSize: "1rem" }}
+                    >
+                    <br/>
+                    
+                    If you want to you can try and import the file system wallet you made previously to observe the futility of such action, as even if you didn't use the BIP39 passphrase this won't generate the right keys.  For now we would recommend creating a new wallet, it will be easy to import your file system wallet into Phantom later.
+                    </Card.Text>
+                </Card.Body>
+            </Card>
+        </Box>
+        <Box>
+            <Card  style={{ width: '20rem' }}>
+                <Card.Img variant="top" src={phantom_2} alt="banner" />
+                <Card.Body>
+                    <Card.Text
+                    className="text-body mb-4"
+                    style={{ fontSize: "1rem" }}
+                    >
+                        <br/>
+                        Note that this password is not the same thing as the BIP39 passphrase you used earlier for the file system wallet.  This password won't impact the key you get, but is  used to encrypt the key on your disk.  You will also need this to authorize any transactions.
+                    </Card.Text>
+                </Card.Body>
+            </Card>
+        </Box>
+        <Box>
+            <Card  style={{ width: '20rem' }}>
+                <Card.Img variant="top" src={phantom_3} alt="phantom_1" />
+                <Card.Body>
+                    <Card.Text
+                    className="text-body mb-4"
+                    style={{ fontSize: "1rem" }}
+                    >
+                        <br/>
+                        Normally you wouldn't show this to anyone, as this is your new seed phrase that will generate your private keys, but we will use this as an example sentence to try and dig into why the file system wallets and Phantom wallets give different public keys even if you don't use the BIP39 passphrase.
+                    </Card.Text>
+                </Card.Body>
+            </Card>
+        </Box>
+        </>     
+    );
+}
 
 function SolanaIntro() {
 
@@ -118,51 +170,16 @@ solana-keygen new`
 
                 <Box marginBottom  = "10px">
                     <Center>
+                    {!isMobile &&
                     <HStack spacing='24px'  alignItems="start">
-                    <Box>
-                        <Card style={{ width: '20rem' }} >
-                            <Card.Img variant="top"  src={phantom_1} alt="banner" />
-                            <Card.Body>
-                                <Card.Text
-                                className="text-body mb-4"
-                                style={{ fontSize: "1rem" }}
-                                >
-                                <br/>
-                                
-                                If you want to you can try and import the file system wallet you made previously to observe the futility of such action, as even if you didn't use the BIP39 passphrase this won't generate the right keys.  For now we would recommend creating a new wallet, it will be easy to import your file system wallet into Phantom later.
-                                </Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Box>
-                    <Box>
-                        <Card  style={{ width: '20rem' }}>
-                            <Card.Img variant="top" src={phantom_2} alt="banner" />
-                            <Card.Body>
-                                <Card.Text
-                                className="text-body mb-4"
-                                style={{ fontSize: "1rem" }}
-                                >
-                                    <br/>
-                                    Note that this password is not the same thing as the BIP39 passphrase you used earlier for the file system wallet.  This password won't impact the key you get, but is  used to encrypt the key on your disk.  You will also need this to authorize any transactions.
-                                </Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Box>
-                    <Box>
-                        <Card  style={{ width: '20rem' }}>
-                            <Card.Img variant="top" src={phantom_3} alt="phantom_1" />
-                            <Card.Body>
-                                <Card.Text
-                                className="text-body mb-4"
-                                style={{ fontSize: "1rem" }}
-                                >
-                                    <br/>
-                                    Normally you wouldn't show this to anyone, as this is your new seed phrase that will generate your private keys, but we will use this as an example sentence to try and dig into why the file system wallets and Phantom wallets give different public keys even if you don't use the BIP39 passphrase.
-                                </Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Box>
+                        <Phantom_Block/>
                     </HStack>
+                    }
+                    {isMobile &&
+                    <VStack spacing='24px'  alignItems="start">
+                        <Phantom_Block/>
+                    </VStack>
+                    }
                     </Center>
                 </Box>
 
