@@ -72,7 +72,7 @@ function SolletBlock() {
         </Box>
         
         <Box>
-
+            
             To visualize this you can head over to <a style={{textDecoration: "underline"}} href="https://www.sollet.io/">sollet.io</a>.  At the bottom of the page you can click "Restore existing wallet", and copy your phantom seed phrase into box.  You don't need to enter a password (this isn't referring to a BIPM39 passphrase anyway), so just click next.
 
             <br/><br/>
@@ -84,13 +84,17 @@ function SolletBlock() {
             You should now be armed with everything you need to know to finally import one of your phantom accounts into a file system wallet!  On the command line you can enter:
             <br/><br/>
 
-            <SyntaxHighlighter language="bash" style={docco}>
+            <SyntaxHighlighter 
+                lineProps={{style: {wordBreak: 'normal', whiteSpace: 'pre-wrap'}}}
+                wrapLines={true} 
+                language="bash" style={docco}
+            >
             {"solana-keygen recover \"prompt://?full-path=m/44'/501'/0'/0'\" -o phantom_0.json"}
             </SyntaxHighlighter>
 
             <br/>
             And at last the public keys will match.
-
+            
         </Box>
         
         </>
