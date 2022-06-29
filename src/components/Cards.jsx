@@ -1,12 +1,10 @@
 import React from "react";
 import {Card} from 'react-bootstrap';
 
-
-
-export function RowCard({title, sub_title, post_text, image}) {
+export function RowCard({title, sub_title, post_text, image, display_image}) {
     return (
         <Card style={{flexDirection: "row"}}>
-            <Card.Img style={{width: "25%",objectFit: "cover"}} src={image} alt="banner" />
+            {display_image &&  <Card.Img style={{width: "25%",objectFit: "cover"}} src={image} alt="banner" />}
 
             <Card.Body>
                 <Card.Title className="h3 text-center mb-2 pt-2 font-weight-bold text-secondary"
