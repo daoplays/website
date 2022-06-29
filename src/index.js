@@ -12,7 +12,6 @@ import {
   Navigation,
   Footer,
   Home,
-  Blog,
   Posts,
   SolanaIntro,
   RandomNumbers
@@ -23,12 +22,10 @@ root.render(
   <Router>
     <Navigation />
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/blog" element={<Blog />}>
-        <Route path="" element={<Posts />} />
-        <Route path="random_numbers" element={<RandomNumbers />} />
-        <Route path="solana_getting_started" element={<SolanaIntro />} />
-      </Route>
+        <Route path="/" element={<Home />} />
+        <Route path="/blog" element={<Posts />} />
+        <Route path="/blog/solana_getting_started" element={<SolanaIntro />} />
+        <Route path="/blog/random_numbers" element={<RandomNumbers />} />
     </Routes>
     <Footer />
   </Router>
