@@ -12,7 +12,7 @@ import phantom_3 from "./phantom_3.png"
 import sollet_img from "./sollet.png"
 
 
-function Phantom_Block() {
+function PhantomBlock() {
 
     return  (
         <>
@@ -172,12 +172,12 @@ solana-keygen new`
                     <Center>
                     {!isMobile &&
                     <HStack spacing='24px'  alignItems="start">
-                        <Phantom_Block/>
+                        <PhantomBlock/>
                     </HStack>
                     }
                     {isMobile &&
                     <VStack spacing='24px'  alignItems="start">
-                        <Phantom_Block/>
+                        <PhantomBlock/>
                     </VStack>
                     }
                     </Center>
