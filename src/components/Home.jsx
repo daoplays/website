@@ -16,7 +16,7 @@ function BlogButton()
 {
     return (
         <Button variant="outline-dark" className="font-weight-bold">
-        "View Blog"
+        View Blog
         </Button>
     );
 }
