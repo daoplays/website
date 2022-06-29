@@ -20,10 +20,7 @@ function Posts() {
                 
                 <Link to="/blog/solana_getting_started">
                     <RowCard {...getting_started}/>
-                </Link>
-
-                <Box marginBottom={"20px"} />
-                
+                </Link>               
             </div>
         </div>
     );

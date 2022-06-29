@@ -1,5 +1,4 @@
 import React from "react";
-import { Text } from 'react-native';
 import { AirDrop } from '../../apps/AirDrop';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
@@ -341,9 +340,6 @@ solana-keygen new`
                 On that note we will bring this post to a close.  Hopefully you have learnt something about the way your keypairs are generated, and if nothing else have paid yourself some fake SOL to spend on future projects.  If you did find this useful feel free to follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a> to keep up to date with future posts, and the release of our first proper Solana DApp!
                
                 </p>
-
-                <Text style={{ padding: 150 }}>
-                </Text>
             </div>
         </div>
     );
