@@ -56,7 +56,7 @@ const RNGInstruction = {
     generate : 0
 }
 
-export function Gen_Randoms() 
+export function GenRandoms() 
 {
     const wallet = useWallet();
     const { connection } = useConnection();

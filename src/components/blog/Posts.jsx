@@ -18,7 +18,8 @@ function Posts() {
         title:"Random Numbers With Solana",
         sub_title:"June 25 2022",
         post_text:"In this post we implement a simple on-chain program that has a couple of random number generators that takes a seed off-chain, and then generates uniform doubles on chain",
-        image:"matrix.jpg"
+        image:"matrix.jpg",
+        display_image: !isMobile
     
     };
 

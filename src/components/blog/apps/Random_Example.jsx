@@ -25,11 +25,9 @@ import {
   getSolletExtensionWallet,
 } from '@solana/wallet-adapter-wallets';
 import {
-  WalletModalProvider,
-  WalletMultiButton,
-  WalletDisconnectButton,
+  WalletModalProvider
 } from '@solana/wallet-adapter-react-ui';
-import { Gen_Randoms } from './Gen_Randoms';
+import { GenRandoms } from './Gen_Randoms';
 import {WalletConnected, WalletNotConnected} from './AirDrop';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -71,7 +69,7 @@ function useSolanaAccount() {
 function RandomApp() {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
-  const { account, transactions } = useSolanaAccount();
+  const { account } = useSolanaAccount();
   const toast = useToast();
   const [airdropProcessing, setAirdropProcessing] = useState(false);
 
@@ -116,7 +114,7 @@ function RandomApp() {
                     </Button>
                     </HStack>
                   <VStack>
-                    <Gen_Randoms />
+                    <GenRandoms />
                   </VStack>
                   </Box>
               )}
@@ -126,7 +124,7 @@ function RandomApp() {
   );
 }
 
-export function Random_Example() {
+export function RandomExample() {
   const network = 'devnet';
   const endpoint = web3.clusterApiUrl(network);
   const wallets = useMemo(() => 

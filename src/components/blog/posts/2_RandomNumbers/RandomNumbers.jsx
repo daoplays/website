@@ -1,10 +1,7 @@
-import React, { useEffect } from "react";
-import { useParams } from "react-router";
+import React from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { Random_Example } from '../../apps/Random_Example';
-
-import { Text } from 'react-native';
+import { RandomExample } from '../../apps/Random_Example';
 
 
 function RandomNumbers() {
@@ -205,7 +202,7 @@ pub struct HashStruct {
             This means that the Xorshift* method is around a factor of fifteen less costly than the Hashing method per random number generated.  The hashing method will, however, produce higher quality random numbers, though it should be stressed that the Xorshift* method is likely suitable for any application where deriving random values on chain in this way is viable to begin with.
             <br/><br/></p>
 
-            <Random_Example />
+            <RandomExample />
 
             <p>
             We hope you have found something of use from this post
@@ -216,10 +213,6 @@ pub struct HashStruct {
 This means that the Xorshift* method is around a factor of fifteen less costly than the Hashing method per random number generated.  The hashing method will, however, produce higher quality random numbers, though it should be stressed that the Xorshift* method is likely suitable for any application where deriving random values on chain in this way is viable to begin with.
             </p>
 
-  
-            <Text style={{ padding: 150 }}>
-            <p></p>
-            </Text>
         </div>
     </div>
 
