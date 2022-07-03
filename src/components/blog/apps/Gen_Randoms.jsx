@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { Box, HStack, Button, Stack, Radio, RadioGroup } from '@chakra-ui/react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { deserialize, serialize } from "borsh";
 import Plot from 'react-plotly.js';
 import BN from "bn.js";
 import { struct, u64, u8 } from "@project-serum/borsh";
@@ -14,24 +13,6 @@ const creator = new PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
 
 const data_seed = 'rng_v1.0';
 
-class Assignable {
-  constructor(properties) {
-    Object.keys(properties).forEach(key => {
-      this[key] = properties[key];
-    });
-  }
-
-  encode() {
-    return serialize(SCHEMA, this);
-  }
-}
-
-export class RNGState extends Assignable {
-
-  static decode(bytes) {
-    return deserialize(SCHEMA, RNGState, bytes);
-  }
-}
 
 const RNGArgs = struct([
     u8("instruction"),
@@ -39,17 +20,11 @@ const RNGArgs = struct([
     u8("method"),
 ]);
 
-
-const SCHEMA = new Map([
-  [RNGState, {kind: 'struct', fields: [
-    ['random_numbers', ['f64', 512]]
-  ]}]
-]);
-
 const RNGMethod = {
     xorshift : 0,
     hash : 1,
-    none : 2
+    fasthash : 2,
+    none : 3
 }
 
 const RNGInstruction = {
@@ -85,8 +60,11 @@ export function GenRandoms()
         const bn = new BN(value2.toString('hex'), 16);
         const data = Buffer.alloc(RNGArgs.span);
         let method = RNGMethod.xorshift;
-        if (radio === "Hash") {
+        if (radio === "Sha2Hash") {
             method = RNGMethod.hash;
+        }
+        if (radio === "MurmurHash") {
+            method = RNGMethod.fasthash;
         }
         if (radio === "None") {
             method = RNGMethod.none;
@@ -151,7 +129,7 @@ export function GenRandoms()
         rng_account = await connection.getAccountInfo(rng_pubkey);
         let num2 = new Float64Array(rng_account.data.buffer);
         let n_generated = 256;
-        if(radio === "Hash"){
+        if(radio === "Sha2Hash"){
             n_generated = 60;
         }
         if(radio === "None"){
@@ -176,7 +154,8 @@ export function GenRandoms()
                 <RadioGroup onChange={setRadio} value={radio}>
                     <Stack direction='row'>
                         <Box><Radio value='Xorshift'>Xorshift</Radio></Box>
-                        <Box><Radio value='Hash'>Hash</Radio></Box>
+                        <Box><Radio value='MurmurHash'>Murmur Hash</Radio></Box>
+                        <Box><Radio value='Sha2Hash'>SHA2 Hash</Radio></Box>
                         <Box><Radio value='None'>None</Radio></Box>
                     </Stack>
                 </RadioGroup>
