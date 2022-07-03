@@ -13,6 +13,7 @@ import R_matrix_img from "./R_matrix.png"
 import XR_matrix_img from "./XR_matrix.png"
 
 function TableBlock() {
+    return (
     <>
         <Table striped bordered hover>
             <thead>
@@ -41,6 +42,7 @@ function TableBlock() {
         <br/><br/>
         </Box>
     </>
+    );
 }
 
 
@@ -415,8 +417,8 @@ pub struct HashStruct {
                         </HStack>
                     }
                     {isMobile &&
-                        <VStack spacing='24px'  alignItems="start">
-                            <TableBlock/>
+                        <VStack spacing='24px'  alignItems="start">                    
+                             <TableBlock/>
                         </VStack>
                     }
                 </Center>
