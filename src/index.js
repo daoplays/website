@@ -13,7 +13,8 @@ import {
   Footer,
   Home,
   Posts,
-  SolanaIntro
+  SolanaIntro,
+  RandomNumbers
 } from "./components";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -24,6 +25,7 @@ root.render(
         <Route path="/" element={<Home />} />
         <Route path="/blog" element={<Posts />} />
         <Route path="/blog/solana_getting_started" element={<SolanaIntro />} />
+        <Route path="/blog/random_numbers" element={<RandomNumbers />} />
     </Routes>
     <Footer />
   </Router>

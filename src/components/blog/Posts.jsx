@@ -14,11 +14,26 @@ function Posts() {
     
     };
 
+    const random_numbers = {
+        title:"Random Numbers With Solana",
+        sub_title:"July 03 2022",
+        post_text:"In this post we implement a simple on-chain program in order to compare a few different random number generators. Their state can be easily maintained on-chain, and used in programs where an oracle is just overkill.",
+        image:"matrix.jpg",
+        display_image: !isMobile
+    
+    };
+
     return (
         <div className="home">
             <div class="container">
 
                 <Box marginBottom={"20px"} />
+
+                <Link to="/blog/random_numbers">
+                    <RowCard {...random_numbers}/>
+                </Link>
+
+                <br />
                 
                 <Link to="/blog/solana_getting_started">
                     <RowCard {...getting_started}/>

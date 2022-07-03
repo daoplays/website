@@ -10,7 +10,14 @@ const higherOrderComponent = WrappedComponent => {
       }
     }
     return HOC
-  }
+}
+
+function NoDiv()
+{
+    return (
+       <></>
+    );
+}
 
 function BlogButton()
 {
@@ -31,6 +38,17 @@ const blog_post = {
 
 };
 
+const blog_post_two = {
+    title:"Generating Random Numbers On The Solana Blockchain",
+    sub_title:"July 03 2022",
+    post_text:"For our next blog post we are discussing on-chain random number generation with Solana.  In particular we'll be benchmarking a few different methods for performing RNG for those times when you just need a bit of random sauce in your DApp.  Depending on how you do it you could save yourself an order of magnitude in compute time!",
+    image:"matrix.jpg",
+    second_div: NoDiv,
+    display_image: !isMobile
+
+};
+
+
 function RowCard({title, sub_title, post_text, image, second_div, display_image}) 
 {
     const SecondDivComponent = higherOrderComponent(second_div);
@@ -39,7 +57,7 @@ function RowCard({title, sub_title, post_text, image, second_div, display_image}
         <Card style={{flexDirection: "row"}}>
 
             
-            {display_image &&  <Card.Img className=".d-none" style={{width: "25%",objectFit: "cover"}} src={image} alt="banner" />}
+            {display_image &&  <Card.Img style={{width: "25%",objectFit: "cover"}} src={image} alt="banner" />}
             <Card.Body>
                 <div>
                     <Card.Title 
@@ -77,16 +95,22 @@ function Home() {
     return (
         <>
         <br/><br/><br/>
-          <Container  >
+        <Container  >
 
-              <Col>
-              <Link to="/blog">
+            <Col>
+                <Link to="/blog/random_numbers">
+                    <RowCard {...blog_post_two}/>
+                </Link>
+
+                <br />
+
+                <Link to="/blog">
                     <RowCard {...blog_post}/>
                 </Link>
-              </Col>
-    
-          </Container>
-          </>
+            </Col>
+
+        </Container>
+        </>
     );
 }
 

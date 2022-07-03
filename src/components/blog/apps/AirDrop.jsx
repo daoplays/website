@@ -32,7 +32,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 // derived from https://learn.figment.io/tutorials/chakra-ui-with-solana-dapps
 
-function WalletNotConnected() 
+export function WalletNotConnected() 
 {
     return (
         <Box marginBottom  = "10px">
@@ -48,7 +48,7 @@ function WalletNotConnected()
     );
 }
 
-function WalletConnected(publicKey) 
+export function WalletConnected(publicKey) 
 {
 
     var pub_string = String(publicKey["publicKey"]);
