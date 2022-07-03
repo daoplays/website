@@ -40,8 +40,8 @@ const blog_post = {
 
 const blog_post_two = {
     title:"Generating Random Numbers On The Solana Blockchain",
-    sub_title:"June 28 2022",
-    post_text:"For our next blog post we are discussing on-chain random number generation with Solana.  We won't be using oracles, but comparing a couple of different methods for performing RNG for those times when you just need a bit of random sauce in your DApp.  Depending on how you do it you could save yourself an order of magnitude in compute units!",
+    sub_title:"July 03 2022",
+    post_text:"For our next blog post we are discussing on-chain random number generation with Solana.  In particular we'll be benchmarking a few different methods for performing RNG for those times when you just need a bit of random sauce in your DApp.  Depending on how you do it you could save yourself an order of magnitude in compute time!",
     image:"matrix.jpg",
     second_div: NoDiv,
     display_image: !isMobile
