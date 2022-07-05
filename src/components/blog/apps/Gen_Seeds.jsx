@@ -1,11 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { Box, HStack, VStack, Button, Stack, Radio, RadioGroup } from '@chakra-ui/react';
+import { Box,  Button, Radio, RadioGroup, Stack, HStack } from '@chakra-ui/react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import Plot from 'react-plotly.js';
-import BN from "bn.js";
-import { struct, u64, u8 } from "@project-serum/borsh";
-import { randomBytes } from 'crypto';
+
+import { struct, u8 } from "@project-serum/borsh";
 
 const genprogramId = new PublicKey('Hqw9GzaxEg1efH8BciNN5D32A5fMAfBdDM3qudRdb9o5');
 const btc_pyth = new PublicKey('HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J');
@@ -13,8 +11,15 @@ const eth_pyth = new PublicKey('EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw');
 const sol_pyth = new PublicKey('J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix');
 
 const RNGArgs = struct([
-    u8("instruction")
+    u8("instruction"),
+    u8("method")
 ]);
+
+const SeedMethod = {
+    shiftmurmur : 0,
+    sha256hash : 1,
+    none : 2
+}
 
 
 const RNGInstruction = {
@@ -25,14 +30,25 @@ export function GenSeed()
 {
     const wallet = useWallet();
     const { connection } = useConnection();
+    const [radio, setRadio] = useState('ShiftMurmur')
 
     const gen_seed = useCallback( async () => 
     {
-
+        let method = SeedMethod.shiftmurmur;
+        if (radio === "ShiftMurmur") {
+            method = SeedMethod.shiftmurmur;
+        }
+        if (radio === "Sha256") {
+            method = SeedMethod.sha256hash;
+        }
+        if (radio === "None") {
+            method = SeedMethod.none;
+        }
         const data = Buffer.alloc(RNGArgs.span);
         RNGArgs.encode(
             {
-                instruction: RNGInstruction.make_seed
+                instruction: RNGInstruction.make_seed,
+                method: method
             },
             data
         );
@@ -85,26 +101,38 @@ export function GenSeed()
         text += logs[3] + "<br>";   
         text += logs[4] + "<br>";   
         text += logs[5] + "<br>";   
+        text += logs[6] + "<br>";
 
         
         document.getElementById("myspan").innerHTML=text+"</p>";
 
     },
-    [connection, wallet]
+    [radio, connection, wallet]
     );
 
     return (
 
-    <Box textAlign="left" fontSize="l" width="full" spacing={8} borderRadius={10} borderWidth={2} p={10}>
+        <Box textAlign="center" fontSize="l" width="full" spacing={8} borderRadius={10} borderWidth={2} p={10}>
 
-            
-            <Box marginBottom={10}>
-                <Button onClick={gen_seed}>Generate Seed</Button>
-            </Box>
-           
+        <HStack marginBottom  = "10px">
             <Box>
-                <span id="myspan" > Waiting To Generate Seed <br /><br /><br /><br /><br /></span>
+                <Button onClick={gen_seed}>Generate Randoms</Button>
             </Box>
+            <Box>
+                <RadioGroup onChange={setRadio} value={radio}>
+                    <Stack direction='row'>
+                        <Box><Radio value='ShiftMurmur'>ShiftMurmur</Radio></Box>
+                        <Box><Radio value='Sha256'>Sha256 Hash</Radio></Box>
+                        <Box><Radio value='None'>None</Radio></Box>
+                    </Stack>
+                </RadioGroup>
+            </Box>
+        </HStack>
+        <HStack>
+            <Box>
+                <span id="myspan" > Waiting To Generate Random Numbers with {radio} <br /><br /><br /><br /><br /></span>
+            </Box>
+        </HStack>  
     </Box>
   );
 }
