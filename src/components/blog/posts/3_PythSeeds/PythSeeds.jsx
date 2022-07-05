@@ -89,17 +89,17 @@ pub struct SeedStruct {
             <br />
             <p>
 
-                In our <a style={{textDecoration: "underline"}} href="/blog/random_numbers">previous</a> post we compared a few different methods of generating random numbers on the Solana blockchain. The use case in that instance was strictly for programs that weren't relying on those random values to hand out anything of real world value. As everything about the RNG sequence was transparent, it meant that it was easy for anyone to predict the next values, and therefore manipulate the system that used them if there value to be gained from doing so.
+                In our <a style={{textDecoration: "underline"}} href="/blog/random_numbers">previous</a> post we compared a few different methods of generating random numbers on the Solana blockchain. The use case in that instance was strictly for programs that weren't using those random values for anything where real world value was at stake (i.e. not in a gambling app). As everything about the RNG sequence was transparent, it meant that it was easy for anyone to predict the next values, and therefore manipulate the system that used them.
                 <br/><br/>
 
                 In this post we are going to extend the previous functionality by generating the  seed for out random number generator (RNG) using information from off-chain via the oracle <a style={{textDecoration: "underline"}} href="https://pyth.network/">Pyth</a>.  At time of writing Pyth provides free access to  price data for around 80 different crypto and non-crypto assets, and adds very little computational cost to use within a program on-chain.
 
                 <br/><br/>
 
-                The advantage of doing this is that the entire process remains largely trustless (a user only needs to trust that Pyth isn't somehow manipulating the data being sent to your program to their advantage) and means that we can use our RNGs in a much wider range of applications.
+                The advantage of doing this is that the entire process remains largely trustless (a user only needs to trust that Pyth isn't somehow manipulating the data being sent to the program to their advantage) and means that we can use our RNGs in a much wider range of applications.
                 
                 
-                Although we wouldn't recommend using this for gambling apps where the outcome of a bet is generated within the same block as the bet is made, for applications where winners are selected some time after entries have closed this can provide extremely good random values to seed our RNG.  Although the security of the seed will increase as the time interval before selecting any winners increases, we will demonstrate that any change to any digit of any of the price streams that we include in our seed generator will yield entirely independent values for the seed. As it is adds very little computational cost to include more streams in the creation of the stream, you could include dozens, though in this post we will build our seed using only three.
+                Although we wouldn't recommend using this for gambling apps where the outcome of a bet is generated within the same block as the bet is made, for applications where winners are selected some time after entries have closed this process can provide extremely good random values to seed our RNG.  In general the security of the seed will increase as the time interval before selecting any winners increases, however any change to any of the price streams (including their provided confidence intervals) that we include in our seed generator will yield entirely independent values for the seed. As it is adds very little computational cost to include more streams in the creation of the stream, you could easily include dozens to increase security, though in this post we will build our seed using only three.
 
                 <br/><br/>
 
@@ -149,7 +149,7 @@ pub struct SeedStruct {
                 <p><br />
 
                 <MathJax.Provider>
-                If you are actually interested in the price then it is just given by <MathJax.Node inline formula={'P = (\\mathrm{price} \\pm \\mathrm{conf}) \\times 10^{\\mathrm{expo}}'} />, but in our case we just take the price and conf fields, and convert the price to a u64.  This is safe for cryptocurrency prices, but be aware that for derivatives you may need to be more careful as  prices can go <a  style={{textDecoration: "underline"}} href="https://www.bbc.co.uk/news/business-52350082">negative</a>.
+                and if you are actually interested in the price then it is just given by <MathJax.Node inline formula={'P = (\\mathrm{price} \\pm \\mathrm{conf}) \\times 10^{\\mathrm{expo}}'} />, but in our case we just take the price and conf fields, and convert the price to a u64.  This is safe for cryptocurrency prices, but be aware that for derivatives you may need to be more careful as  prices can go <a  style={{textDecoration: "underline"}} href="https://www.bbc.co.uk/news/business-52350082">negative</a>.
                 </MathJax.Provider>
 
 
@@ -182,7 +182,7 @@ pub struct SeedStruct {
 
 
                 
-               The final hashing step is shown below, where we make use of the murmur3 method described in the previous post to hash out struct into a single unsigned 128bit integer (u128).
+               The final hashing step is shown below, where we make use of the fast murmur3 method described in the previous post to hash out struct into a single unsigned 128bit integer (u128).
 
                 <br /><br /></p>   
                 <SyntaxHighlighter language="rust" style={docco}>
@@ -207,7 +207,7 @@ pub struct SeedStruct {
             <br/><br/>
 
             <p>
-                The baseline cost of running the program is about 32000 units, of which only 5000 is actually getting the price data, the rest is spent comparing that the keys are the ones that we expect.  This means that the  ShiftMurmur approach costs only about 3000 compute units to generate the seed, compared to 18000 for the SHA256 hash.  Although it seems like the process of using the Xorshift* and Murmur3 hash functions is a lot of trouble compared to a single call to SHA256, it is still the much cheaper option, at least for the number of streams we are dealing with in this example, and both will yield very different seed values for even a tiny change in the input.
+                The baseline cost of running the program is about 32000 units, of which only 5000 is actually getting the price data, the rest is spent checking that the keys are the ones that we expect.  This means that the  ShiftMurmur approach costs only 3000 compute units to generate the seed, compared to 18000 for the SHA256 hash.  Although it seems like the process of using the Xorshift* and Murmur3 hash functions is a lot of trouble compared to a single call to SHA256, it is still the much cheaper option, at least for the number of streams we are dealing with in this example, and both will yield very different seed values for even a tiny change in the input.
 
              </p>
 
@@ -227,7 +227,7 @@ pub struct SeedStruct {
             </Box>
             <p>   
 
-            In order to get some idea of how well distributed these seeds are we computed 5000 values in a row on and calculated the entropy of the histogram of those values.  We then did the same thing using the Numpy uniform random number generator for one thousand realizations, in order to build a distribution of the expected entropies for a dataset of this size.   We then repeated this process, but  taking the absolute values of the deltas between subsequent seed values, rather than the values themselves. The images below show the entropy distributions generated using Numpy, with the vertical lines the entropy of our random seeds.  Both are consistent with the Numpy RNG,  and if you want to try other statistical tests you can find the python script, and the seed values that were used here in the git repository for this example.
+            In order to get some idea of how well distributed these seeds are we computed 5000 values in a row and calculated the entropy of the histogram of those values.  We then did the same thing using the Numpy uniform random number generator for one thousand realizations, in order to build a distribution of the expected entropies for a dataset of this size.   We then repeated this process, but  taking the absolute values of the deltas between subsequent seed values, rather than the values themselves. The images above show the entropy distributions generated using Numpy, with the vertical lines the entropy of our random seeds.  Both are consistent with the Numpy RNG,  and if you want to try other statistical tests you can find both the python script and the seed values that were used here in the git repository for this example.
 
             <br/><br/>        
             On that note we will bring this post to a close, many thanks to Zantetsu | Shinobi Systems on the Solana Tech discord for helpful discussions on this topic.  Hopefully you've learnt something about how to use Pyth to create seeds for your random number generators, and if you did find this useful or informative feel free to follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a> to keep up to date with future posts, and the release of our first proper Solana DApp!
