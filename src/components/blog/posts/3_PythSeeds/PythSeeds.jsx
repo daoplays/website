@@ -85,7 +85,7 @@ pub struct SeedStruct {
         <div class="container">
 
             <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">Using Pyth To Seed A Random Number Generator</h1>
-            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">July 03 2022</h1>
+            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">July 05 2022</h1>
             <br />
             <p>
 
