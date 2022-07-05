@@ -4,3 +4,5 @@ export { default as Home } from "./Home";
 export { default as Posts } from "./blog/Posts";
 export { default as SolanaIntro } from "./blog/posts/1_SolanaIntro/SolanaIntro";
 export { default as RandomNumbers } from "./blog/posts/2_RandomNumbers/RandomNumbers";
+export { default as PythSeeds } from "./blog/posts/3_PythSeeds/PythSeeds";
+
