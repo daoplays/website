@@ -182,7 +182,7 @@ pub struct SeedStruct {
 
 
                 
-               The final hashing step is shown below, where we make use of the fast murmur3 method described in the previous post to hash out struct into a single unsigned 128bit integer (u128).
+               The final hashing step is shown below, where we make use of the fast murmur3 method described in the previous post to hash our struct into a single unsigned 128bit integer (u128).
 
                 <br /><br /></p>   
                 <SyntaxHighlighter language="rust" style={docco}>
