@@ -23,12 +23,27 @@ function Posts() {
     
     };
 
+
+    const pyth_seeds = {
+        title:"Using Pyth To Seed A Random Number Generator",
+        sub_title:"July 03 2022",
+        post_text:"Continuing our random numbers theme,  we extend the previous post by looking at seeding your on-chain random number generator using a combination of Pyth (a price oracle) with the Xorshift and Murmur based methods from the previous post.",
+        image:"pyth.jpg",
+        display_image: !isMobile
+    
+    };
+
     return (
         <div className="home">
             <div class="container">
 
                 <Box marginBottom={"20px"} />
 
+                <Link to="/blog/pyth_seeds">
+                    <RowCard {...pyth_seeds}/>
+                </Link>
+
+                <br />
                 <Link to="/blog/random_numbers">
                     <RowCard {...random_numbers}/>
                 </Link>

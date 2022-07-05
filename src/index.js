@@ -9,12 +9,13 @@ import "./index.css";
 import * as serviceWorker from "./serviceWorker";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import {
-  Navigation,
-  Footer,
-  Home,
-  Posts,
-  SolanaIntro,
-  RandomNumbers
+    Navigation,
+    Footer,
+    Home,
+    Posts,
+    SolanaIntro,
+    RandomNumbers,
+    PythSeeds
 } from "./components";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -26,6 +27,8 @@ root.render(
         <Route path="/blog" element={<Posts />} />
         <Route path="/blog/solana_getting_started" element={<SolanaIntro />} />
         <Route path="/blog/random_numbers" element={<RandomNumbers />} />
+        <Route path="/blog/pyth_seeds" element={<PythSeeds />} />
+
     </Routes>
     <Footer />
   </Router>
