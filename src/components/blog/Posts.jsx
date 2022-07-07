@@ -33,12 +33,25 @@ function Posts() {
     
     };
 
+    const charity_ico = {
+        title:"Launching an ICO for a Solana Token While Charity Fundraising with The Giving Block",
+        sub_title:"July 05 2022",
+        post_text:"Continuing our random numbers theme,  we extend the previous post by looking at seeding your on-chain random number generator using a combination of Pyth (a price oracle) with the Xorshift and Murmur based methods from the previous post.",
+        image:"givingblock.jpeg",
+        display_image: !isMobile
+    
+    };
+
     return (
         <div className="home">
             <div class="container">
 
                 <Box marginBottom={"20px"} />
 
+                <Link to="/blog/charity_ico">
+                    <RowCard {...charity_ico}/>
+                </Link>
+                <br />
                 <Link to="/blog/pyth_seeds">
                     <RowCard {...pyth_seeds}/>
                 </Link>

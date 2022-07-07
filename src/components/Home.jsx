@@ -58,6 +58,16 @@ const blog_post_three = {
 
 };
 
+const blog_post_four = {
+    title:"Using Pyth To Seed A Random Number Generator",
+    sub_title:"July 05 2022",
+    post_text:"Continuing our random numbers theme,  we extend the previous post by looking at seeding your on-chain random number generator using a combination of Pyth (a price oracle) with the Xorshift and Murmur based methods from the previous post",
+    image:"givingblock.jpeg",
+    second_div: NoDiv,
+    display_image: !isMobile
+
+};
+
 
 
 function RowCard({title, sub_title, post_text, image, second_div, display_image}) 
@@ -109,6 +119,11 @@ function Home() {
         <Container  >
 
             <Col>
+                <Link to="/blog/charity_ico">
+                    <RowCard {...blog_post_four}/>
+                </Link>
+
+                <br />
                 <Link to="/blog/pyth_seeds">
                     <RowCard {...blog_post_three}/>
                 </Link>
