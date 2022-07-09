@@ -4,7 +4,7 @@ import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { ChakraProvider, theme, Box, HStack, VStack, Center, Image } from '@chakra-ui/react';
 import { isMobile } from "react-device-detect";
 import MathJax from 'react-mathjax';
-import { SeedExample } from '../../apps/Seed_Example';
+import { CharityDapp } from '../../apps/charity';
 
 
 function PostContent() {
@@ -45,6 +45,10 @@ https://app.strataprotocol.com/launchpad/manual/new
             https://thegivingblock.com/donate/girls-who-code/
             https://thegivingblock.com/donate/outright-action-international/
             https://thegivingblock.com/donate/the-life-you-can-save/
+
+            <br/><br/>
+
+            <CharityDapp/>
         </div>
     </div>
 
