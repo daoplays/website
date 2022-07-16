@@ -124,7 +124,7 @@ solana-keygen new`
 
     return (
         <div className="home">
-            <div class="container">
+            <div className="container">
 
                 <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">Getting Started With Solana</h1>
                 <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">June 28 2022</h1>

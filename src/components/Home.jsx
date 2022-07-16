@@ -58,6 +58,16 @@ const blog_post_three = {
 
 };
 
+const blog_post_four = {
+    title:"A Charitable Solana Token Launch with The Giving Block",
+    sub_title:"July 16 2022",
+    post_text:"We go through the process of setting up a 'pay what you want' token launch where participants get to choose how much of the payment goes to charity, and get a bonus if they pay more than the current average",
+    image:"givingblock.jpg",
+    second_div: NoDiv,
+    display_image: !isMobile
+
+};
+
 
 
 function RowCard({title, sub_title, post_text, image, second_div, display_image}) 
@@ -109,6 +119,11 @@ function Home() {
         <Container  >
 
             <Col>
+                <Link to="/blog/charity_token_launch">
+                    <RowCard {...blog_post_four}/>
+                </Link>
+
+                <br />
                 <Link to="/blog/pyth_seeds">
                     <RowCard {...blog_post_three}/>
                 </Link>

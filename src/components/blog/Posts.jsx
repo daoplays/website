@@ -33,12 +33,25 @@ function Posts() {
     
     };
 
+    const charity_ico = {
+        title:"A Charitable Solana Token Launch with The Giving Block",
+        sub_title:"July 16 2022",
+        post_text:"We go through the process of setting up a 'pay what you want' token launch where participants get to choose how much of the payment goes to charity, and get a bonus if they pay more than the current average",
+        image:"givingblock.jpg",
+        display_image: !isMobile
+    
+    };
+
     return (
         <div className="home">
-            <div class="container">
+            <div className="container">
 
                 <Box marginBottom={"20px"} />
 
+                <Link to="/blog/charity_token_launch">
+                    <RowCard {...charity_ico}/>
+                </Link>
+                <br />
                 <Link to="/blog/pyth_seeds">
                     <RowCard {...pyth_seeds}/>
                 </Link>
