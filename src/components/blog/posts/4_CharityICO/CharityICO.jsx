@@ -1,11 +1,12 @@
 import React from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { ChakraProvider, Link, theme, Box, HStack, Code, Tooltip } from '@chakra-ui/react';
+import { ChakraProvider, Link, theme, Box, HStack, Code, Tooltip, Center, VStack } from '@chakra-ui/react';
 import { CharityDapp } from '../../apps/charity';
 import {Image} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
+import { isMobile } from "react-device-detect";
 
 
 import token_img from "./test_token.png"
@@ -484,7 +485,7 @@ function PostContent() {
             <main>
 
             <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">A Charitable Solana Token Launch with The Giving Block</h1>
-            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">July 05 2022</h1>
+            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">July 16 2022</h1>
             <br />
 
             <h2 id="intro-header" className="mt-5" style={{fontSize: "22px"}}>Introduction</h2><br />
@@ -550,19 +551,33 @@ function PostContent() {
             You can view your newly created tokens on <a style={{textDecoration: "underline"}}  href="https://explorer.solana.com/">explorer.solana</a> by entering the mint address that was reported at the end of the creation process.  For example, our two tokens can be seen <a style={{textDecoration: "underline"}}  href="https://explorer.solana.com/address/CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h?cluster=devnet">here</a> and <a style={{textDecoration: "underline"}}  href="https://explorer.solana.com/address/6tnMgdJsWobrWYfPTa1j8pniYL9YR5M6UVbWrxGcvhkK?cluster=devnet">here</a> (also pictured below).
             </p>
             <br/><br/>
+
             <Box maxWidth="100%">
-                <HStack>
-                    <Box>
-                        <Image  fluid="true" src={token_img}/>
-                    </Box>
-                    <Box>
-                        <Image fluid="true" src={supporter_token_img}/>
-                    </Box>      
-                </HStack>
+                <Center>
+                    {!isMobile &&
+                        <HStack>
+                            <Box>
+                                <Image  fluid="true" src={token_img}/>
+                            </Box>
+                            <Box>
+                                <Image fluid="true" src={supporter_token_img}/>
+                            </Box>      
+                        </HStack>
+                    }
+                    {isMobile &&
+                         <VStack>
+                            <Box>
+                                <Image  fluid="true" src={token_img}/>
+                            </Box>
+                            <Box>
+                                <Image fluid="true" src={supporter_token_img}/>
+                            </Box>      
+                        </VStack>
+                    }
+                </Center>
             </Box>
 
  
-
             <h2 id="charity-header"  className="mt-5" style={{fontSize: "22px"}}>Creating Donation Wallets With The Giving Block</h2><br />
 
             <p>     
