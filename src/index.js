@@ -29,7 +29,7 @@ root.render(
         <Route path="/blog/solana_getting_started" element={<SolanaIntro />} />
         <Route path="/blog/random_numbers" element={<RandomNumbers />} />
         <Route path="/blog/pyth_seeds" element={<PythSeeds />} />
-        <Route path="/blog/charity_ico" element={<CharityICO />} />
+        <Route path="/blog/charity_token_launch" element={<CharityICO />} />
 
 
     </Routes>
