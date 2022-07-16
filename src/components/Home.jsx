@@ -59,7 +59,7 @@ const blog_post_three = {
 };
 
 const blog_post_four = {
-    title:"Using Pyth To Seed A Random Number Generator",
+    title:"A Charitable Solana Token Launch with The Giving Block",
     sub_title:"July 05 2022",
     post_text:"Continuing our random numbers theme,  we extend the previous post by looking at seeding your on-chain random number generator using a combination of Pyth (a price oracle) with the Xorshift and Murmur based methods from the previous post",
     image:"givingblock.jpeg",

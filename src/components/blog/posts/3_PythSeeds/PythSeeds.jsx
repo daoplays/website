@@ -15,10 +15,10 @@ function ImageBlock() {
 
         <>
             <Box>
-                <Image  fluid={true} src={entropy}/>
+                <Image  fluid="true" src={entropy}/>
             </Box>
             <Box>
-                <Image  fluid={true} src={entropy_diffs}/>
+                <Image  fluid="true" src={entropy_diffs}/>
             </Box>
         </>
 
@@ -82,7 +82,7 @@ pub struct SeedStruct {
     return (
 
     <div className="home">
-        <div class="container">
+        <div className="container">
 
             <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">Using Pyth To Seed A Random Number Generator</h1>
             <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">July 05 2022</h1>
@@ -193,14 +193,15 @@ pub struct SeedStruct {
                 Whereas previously we split this u128 into two halves in order to have two independent u64 random values to use in our generator, in this case we combine them using the bitwise XOR function to produce a single u64 value as our final seed.
 
                 For the purposes of this post we then also convert that to a floating point value in the range[0..1) so that we can more easily compute some statistics on it to compare to the expected uniform distribution.
-
+                </p>
                 <h2 className="mt-5" style={{fontSize: "20px"}}>Checking The Statistical Properties Of The Seed Values</h2><br />
 
+                <p>
                 Now that we have our program we  can take a look at the statistical properties of the seeds we generate.  
                 Below is a  javascript API that can access our on-chain program.  When you click Generate Seed it will go and get the current prices for BTC, ETH and SOL and produce the seed either in the way we have described above (the 'ShiftMurmur' option) or simply by hashing the nine price values directly using a SHA256 hash function, and taking the lower 64bits as our seed.  The None  option simply allows you to check the baseline computation cost for everything except the process of generating the seed once the price data has been obtained.
-                          
+                </p>       
 
-            </p>
+            
             <br/><br/>
             <SeedExample/>
 
