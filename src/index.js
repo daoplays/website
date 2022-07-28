@@ -16,7 +16,8 @@ import {
     SolanaIntro,
     RandomNumbers,
     PythSeeds,
-    CharityICO
+    CharityICO,
+    SolanaStreamer
 } from "./components";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -30,6 +31,7 @@ root.render(
         <Route path="/blog/random_numbers" element={<RandomNumbers />} />
         <Route path="/blog/pyth_seeds" element={<PythSeeds />} />
         <Route path="/blog/charity_token_launch" element={<CharityICO />} />
+        <Route path="/blog/solana_streamer" element={<SolanaStreamer />} />
 
 
     </Routes>
