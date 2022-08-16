@@ -7,5 +7,6 @@ export { default as RandomNumbers } from "./blog/posts/2_RandomNumbers/RandomNum
 export { default as PythSeeds } from "./blog/posts/3_PythSeeds/PythSeeds";
 export { default as CharityICO } from "./blog/posts/4_CharityICO/CharityICO";
 export { default as SolanaStreamer } from "./blog/posts/5_Streamer/Streamer";
+export { default as CharityAuction } from "./blog/posts/6_CharityAuction/CharityAuction";
 
 
