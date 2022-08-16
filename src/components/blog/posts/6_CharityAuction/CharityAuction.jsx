@@ -665,7 +665,7 @@ function PostContent() {
 
             <br/>
 
-            At the end of the post you will also find a simple front end application that interacts with the token auction program currently running on the Solana devnet. You can skip to it <a href="#token-header" style={{textDecoration: "underline"}} >here</a> if you are interested in trying the final product before working through the code.
+            At the end of the post you will also find a simple front end application that interacts with the token auction program currently running on the Solana devnet. You can skip to it <a href="#token-header" style={{textDecoration: "underline"}} >here</a> if you are interested in trying the final product before working through the code.  You can find the source code both for the on-chain program, and a rust client that interacts with it <a  style={{textDecoration: "underline"}} href="https://github.com/daoplays/solana_examples/tree/master/charity_auction">here</a>
 
             <br/><br/>
 
@@ -1062,7 +1062,7 @@ pub struct BidderData {
 
             <h3 id="token-header" className="mt-5" style={{fontSize: "20px"}}>Live Example</h3><br />
 
-            Below we have a simple front end to the token auction program running on the Solana devnet blockchain.  At the top we show a summary of the donations that have been made, both as a total value and as a breakdown per charity.  Below that you can see the current state of the auction, with the number of active bids, and the average bid price.  
+            Below we have a simple front end to the token auction program running on the Solana devnet blockchain, you can find the source code for it at our website's git repo <a  style={{textDecoration: "underline"}} href="https://github.com/daoplays/website">here</a>.  At the top we show a summary of the donations that have been made, both as a total value and as a breakdown per charity.  Below that you can see the current state of the auction, with the number of active bids, and the average bid price.  
 
             <br/><br/>
 
