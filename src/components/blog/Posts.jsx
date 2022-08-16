@@ -51,11 +51,26 @@ function Posts() {
     
     };
 
+
+    const charity_auction = {
+        title:"Running A Charitable Token Auction",
+        sub_title:"August 16 2022",
+        post_text:"In this post we are going to build on our previous posts to build a charitable token auction program, where a users chance of winning is proportional to the size of their bid. They will also be able to decide how much of their bid we keep, and how much we donate to charity, as well as selecting which charity we donate to from a set of provided options.",
+        image:"givingblock.jpg",
+        display_image: !isMobile
+    
+    };
+
     return (
         <div className="home">
             <div className="container">
 
                 <Box marginBottom={"20px"} />
+
+                <Link to="/blog/charity_auction">
+                    <RowCard {...charity_auction}/>
+                </Link>
+                <br />
 
                 <Link to="/blog/solana_streamer">
                     <RowCard {...streamer}/>

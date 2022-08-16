@@ -79,6 +79,15 @@ const blog_post_five = {
 
 };
 
+const blog_post_six = {
+    title:"Running A Charitable Token Auction",
+    sub_title:"August 16 2022",
+    post_text:"In this post we are going to build on our previous posts to build a charitable token auction program, where a users chance of winning is proportional to the size of their bid. They will also be able to decide how much of their bid we keep, and how much we donate to charity, as well as selecting which charity we donate to from a set of provided options.",
+    image:"givingblock.jpg",
+    second_div: NoDiv,
+    display_image: !isMobile
+
+};
 
 
 function RowCard({title, sub_title, post_text, image, second_div, display_image}) 
@@ -130,6 +139,11 @@ function Home() {
         <Container  >
 
             <Col>
+                <Link to="/blog/charity_auction">
+                    <RowCard {...blog_post_six}/>
+                </Link>
+
+                <br />
                 <Link to="/blog/solana_streamer">
                     <RowCard {...blog_post_five}/>
                 </Link>
