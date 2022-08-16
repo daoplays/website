@@ -4,7 +4,7 @@ import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { ChakraProvider, theme, Code } from '@chakra-ui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
-import { CharityAuctionDapp } from '../../apps/charity_lottery';
+import { CharityAuctionDapp } from '../../apps/charity_auction';
 
 const state_1 =
 `// in state.rs

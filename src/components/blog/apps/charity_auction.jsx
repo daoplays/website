@@ -154,7 +154,7 @@ function WalletConnected({publicKey, tokenKey, account, token_amount, supporter_
 }
 
 
-const LotteryInstruction = {
+const AuctionInstruction = {
     create_data_account : 0,
     place_bid : 1,
     select_winners : 2,
@@ -380,38 +380,38 @@ function GetCharityStats()
     const init = useCallback(async () => 
     {       
         const launch_program_key = new PublicKey('BHJ8pK9WFHad1dEds631tFE6qWQgX48VbwWTSqiwR54Y');
-        const lottery_program_key = new PublicKey('EzigyiBDJy7Srq8xn6SK6Nx7BpenbSE3YbBSaBpPSN1q');
+        const auction_program_key = new PublicKey('EzigyiBDJy7Srq8xn6SK6Nx7BpenbSE3YbBSaBpPSN1q');
         const daoplays_key = new web3.PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 
         try {
 
-            let lottery_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", lottery_program_key));
-            let lottery_data_account = await connection.getAccountInfo(lottery_data_key);
+            let auction_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", auction_program_key));
+            let auction_data_account = await connection.getAccountInfo(auction_data_key);
 
             let launch_program_data_key = await PublicKey.findProgramAddress([Buffer.from("token_account")], launch_program_key);
             let launch_program_data_account = await connection.getAccountInfo(launch_program_data_key[0]);
 
             const launch_data = deserialize(schema, Test, launch_program_data_account.data);
-            const lottery_data = deserialize(schema, Test, lottery_data_account.data.slice(49299, 49379));
+            const auction_data = deserialize(schema, Test, auction_data_account.data.slice(49299, 49379));
 
-            let total_donated = (launch_data["donated_total"].toNumber() + lottery_data["donated_total"].toNumber()) / web3.LAMPORTS_PER_SOL;
+            let total_donated = (launch_data["donated_total"].toNumber() + auction_data["donated_total"].toNumber()) / web3.LAMPORTS_PER_SOL;
 
             setTotalDonated(total_donated);
 
-            let n_donations = launch_data["n_donations"].toNumber() + lottery_data["n_donations"].toNumber();
+            let n_donations = launch_data["n_donations"].toNumber() + auction_data["n_donations"].toNumber();
 
             setNDonations(n_donations);
 
             setAveragePrice(total_donated / n_donations);
 
           let donation_array = [
-            (launch_data["charity_0_total"].toNumber() + lottery_data["charity_0_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_1_total"].toNumber() + lottery_data["charity_1_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_2_total"].toNumber() + lottery_data["charity_2_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_3_total"].toNumber() + lottery_data["charity_3_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_4_total"].toNumber() + lottery_data["charity_4_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_5_total"].toNumber() + lottery_data["charity_5_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_6_total"].toNumber() + lottery_data["charity_6_total"].toNumber()) / web3.LAMPORTS_PER_SOL]
+            (launch_data["charity_0_total"].toNumber() + auction_data["charity_0_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
+            (launch_data["charity_1_total"].toNumber() + auction_data["charity_1_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
+            (launch_data["charity_2_total"].toNumber() + auction_data["charity_2_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
+            (launch_data["charity_3_total"].toNumber() + auction_data["charity_3_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
+            (launch_data["charity_4_total"].toNumber() + auction_data["charity_4_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
+            (launch_data["charity_5_total"].toNumber() + auction_data["charity_5_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
+            (launch_data["charity_6_total"].toNumber() + auction_data["charity_6_total"].toNumber()) / web3.LAMPORTS_PER_SOL]
 
           setDonationArray(donation_array);
         }
@@ -777,7 +777,7 @@ function CharityInfoBlock({which_charity})
 
             BidData.encode(
                 {
-                    instruction: LotteryInstruction.place_bid,
+                    instruction: AuctionInstruction.place_bid,
                     amount_charity: ch_bn,
                     amount_daoplays: dao_bn,
                     charity: chosen_charity
@@ -825,7 +825,7 @@ function CharityInfoBlock({which_charity})
             const select_data = Buffer.alloc(SelectData.span);
             SelectData.encode(
                 {
-                    instruction: LotteryInstruction.select_winners
+                    instruction: AuctionInstruction.select_winners
                 },
                 select_data
             );
@@ -860,7 +860,7 @@ function CharityInfoBlock({which_charity})
                 const send_data = Buffer.alloc(SelectData.span);
                 SelectData.encode(
                     {
-                        instruction: LotteryInstruction.send_tokens
+                        instruction: AuctionInstruction.send_tokens
                     },
                     send_data
                 );
@@ -959,7 +959,7 @@ function CharityInfoBlock({which_charity})
                 const send_data = Buffer.alloc(SelectData.span);
                 SelectData.encode(
                     {
-                        instruction: LotteryInstruction.send_tokens
+                        instruction: AuctionInstruction.send_tokens
                     },
                     send_data
                 );
@@ -1005,7 +1005,7 @@ function CharityInfoBlock({which_charity})
             const select_data = Buffer.alloc(SelectData.span);
             SelectData.encode(
                 {
-                    instruction: LotteryInstruction.select_winners
+                    instruction: AuctionInstruction.select_winners
                 },
                 select_data
             );
