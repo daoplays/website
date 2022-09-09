@@ -56,6 +56,10 @@ function PostContent() {
             <br/><br/>
             
             The token launch allows you to pay whatever you want for a block of 1000 Play Tokens, above a small minimum of 0.0001 SOL (about 0.3 US cents at time of writing).  If you pay above the current average though, you will not only get double the number of Play Tokens, but also a DaoPlays Supporter Token.  Right now the token launch is the only way to receive Supporter Tokens, which will be used in the future to allow owners to take part in governance votes, and potentially to unlock cosmetic features or other benefits in future apps. 
+            
+            <br/><br/>
+            
+            The first time you pay for tokens (either from the token launch, or the auction described in the next section) the program will create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts (referred to as <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">rent</a>) in order to ensure they aren't purged by the system.  This is roughly 0.002 SOL per token account created, and you will see this added onto your first payment.
 
             <br/><br/>
 
@@ -68,7 +72,7 @@ function PostContent() {
 
             <br/><br/>
 
-            You can find a detailed break down of the token auction code <Link style={{textDecoration: "underline"}} to="/blog/charity_auction">here</Link>.  Each auction is for a block of 100 Play Tokens, with new auctions taking place on timescales of seconds to minutes, and occurring more frequently as more players take part in the game.  The winner of a particular auction is not simply the person who bids the most, but instead is randomly chosen with everyone's chance of winning proportional to the size of their bid (i.e. if you bid 0.1 SOL and someone else bids 0.2 SOL you still have a 33% chance of winning the auction). If you don't win right away your bid will remain in the system, and will simply carry over into the next auction provided there are enough unused slots (we will explain this below). As with the token launch you can decide how much of your bid goes to charity, and the SOL will be transferred at the point the bid is made.  When you make your first bid the program will create a data account for you to track your position in the auction which will add a small additional cost of around 0.001 SOL to that first bid.
+            You can find a detailed break down of the token auction code <Link style={{textDecoration: "underline"}} to="/blog/charity_auction">here</Link>.  Each auction is for a block of 100 Play Tokens, with new auctions taking place on timescales of seconds to minutes, and occurring more frequently as more players take part in the game.  The winner of a particular auction is not simply the person who bids the most, but instead is randomly chosen with everyone's chance of winning proportional to the size of their bid (i.e. if you bid 0.1 SOL and someone else bids 0.2 SOL you still have a 33% chance of winning the auction). If you don't win right away your bid will remain in the system, and will simply carry over into the next auction provided there are enough unused slots (we will explain this below). As with the token launch you can decide how much of your bid goes to charity, and the SOL will be transferred at the point the bid is made.  When you make your first bid the program will create a data account for you to track your position in the auction.  As with the token accounts this requires a rent deposit be paid into the data account which will add an additional cost of around 0.001 SOL to that first bid.  
 
             <br/><br/>
 

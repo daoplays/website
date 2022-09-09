@@ -23,6 +23,10 @@ function PostContent() {
 
             <br/><br/>
 
+            When taking part in the token launch the program will automatically create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts (referred to as <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">rent</a>) in order to ensure they aren't purged by the system.  This is roughly 0.002 SOL per token account created, and you will see this added onto your payment.
+
+            <br/><br/>
+
             While our main motivation was to learn, we also wanted to take the opportunity to raise money for charity, and as such users can decide how much of what they pay goes to charity via <a  style={{textDecoration: "underline"}}  href="https://thegivingblock.com/">The Giving Block</a>, and which charity it goes to from a curated list. At present the way The Giving Block verifies that donation accounts are genuine is to have the owner tweet the transactions associated with an initial donation to the accounts in question, which they then confirm manually.  You can find the tweets announcing our initial donations <a style={{textDecoration: "underline"}} href="https://twitter.com/dao_plays/status/1560632420960849921">here</a>, and The Giving Block's verification of those accounts <a style={{textDecoration: "underline"}} href="https://twitter.com/TheGivingBlock/status/1560643494556958720">here</a>.   
             
             <br/><br/>
