@@ -420,14 +420,14 @@ function GetBidderStats()
     }, [connection, wallet]);
 
     useEffect(() => {
-        if (wallet.publicKey && !bid_intervalId) {
+        if (wallet && connection && !bid_intervalId) {
             bid_intervalId = setInterval(init, 3000);
         }
         else{
             clearInterval(bid_intervalId);
             bid_intervalId = null;
         }        
-      }, [init, wallet]);
+      }, [init, connection, wallet]);
 
     return {current_bid, n_bidders, bid_index, total_bid, is_winner, tokens_remaining, time_selected};
 }
@@ -1004,7 +1004,7 @@ function GetTokens() {
         <Text fontSize="2rem"  textAlign="center" mb="2rem" >Get Play Tokens</Text>
         <Alert status='info'  mb="1rem">
                     <AlertIcon />
-                        <Text  textAlign="center">The greater your bid, the higher your chance of winning. New auctions take place every few seconds to minutes, and your bid can remain active for multiple auctions. For more information check out our blog post here. </Text>
+                        <Text  textAlign="center">The greater your bid, the higher your chance of winning. New auctions take place every few seconds to minutes, and your bid can remain active for multiple auctions. For more information check out our blog post <Link style={{textDecoration: "underline"}} to="/blog/pokemon_guide">here</Link>. </Text>
                     
                 </Alert>
         <HStack alignItems="top">
@@ -1117,27 +1117,39 @@ function GetTokens() {
 
                 <Center>
                     <Box mt="2rem">
-                        {which_charity==="" && <Tooltip hasArrow label='Choose a charity to bid' bg='red.600'>
+                        {!wallet.publicKey ?
+
+                            <Tooltip hasArrow label='Connect a wallet to bid' bg='red.600'>
+                            <Button width='100px' colorScheme='red' variant='solid'>
+                                Place Bid!
+                            </Button>
+                            </Tooltip>
+                        :                        
+                        which_charity==="" ?
+                        
+                            <Tooltip hasArrow label='Choose a charity to bid' bg='red.600'>
                                 <Button width='100px' colorScheme='red' variant='solid'>
                                     Place Bid!
                                 </Button>
                             </Tooltip>
-                        }
-                        {
-                            sol_value >= 0.0001 && which_charity !=="" && 
+                        :
+
+                        sol_value < 0.0001 ?
+
+                            <Tooltip hasArrow label='Minimum bid is 0.0001 SOL' bg='red.600'>
+                                <Button width='100px' colorScheme='red' variant='solid'>
+                                    Place Bid!
+                                </Button>
+                            </Tooltip>
+                        :
+                        
 
                             <Button onClick={join_ico}  width='100px' colorScheme='green' variant='solid'>
                                 Place Bid!
                             </Button>
-                        }
-                        {
-                            sol_value < 0.0001 && which_charity !=="" && 
-
-                            <Tooltip hasArrow label='Minimum is 0.0001 SOL' bg='red.600'>
-                                <Button width='100px' colorScheme='red' variant='solid'>
-                                    Place Bid!
-                                </Button>
-                            </Tooltip>
+                        
+                        
+                            
                         }
                     </Box>
                 </Center>
@@ -1228,7 +1240,7 @@ function GetTokens() {
                             </Tooltip>
                             <Box></Box>
                             <Box></Box>
-                            <Tooltip hasArrow label="When all 1024 bid slots are in use, new bids remove the oldest ones in the auction.  When this counter reaches zero, you will have the oldest bid in the auction, and will be in danger of losing your bid.  Bid again to refresh this value to the maximum, or select winners to free up slots.">
+                            <Tooltip hasArrow label="When all 1024 bid slots are in use, new bids remove the oldest ones in the auction.  When this counter reaches zero, you will have the oldest bid in the auction, and will be in danger of losing your bid.  Bid again to refresh this value to the maximum.">
                             <Box flex='1'><Text fontSize="17">Bids until removal</Text></Box>   
                             </Tooltip>                        
 
@@ -1274,7 +1286,19 @@ function GetTokens() {
                     }
                 </Alert>
 
-                {tokens_remaining != null && tokens_remaining < 100 ?
+                { !wallet.publicKey ?
+                
+                <>
+                    
+                    <Tooltip hasArrow label='Connect a wallet to be able to send tokens.' bg='red.600'>
+                    <Button width='150px' colorScheme='red' variant='solid'>
+                        Send Tokens!
+                    </Button>
+                    </Tooltip>
+                </>
+
+                :
+                tokens_remaining != null && tokens_remaining < 100 ?
                         
                 
                 <>
@@ -1849,7 +1873,7 @@ function MainFunction()
         <Alert status='info'  mb="1rem">
         <AlertIcon />
         {
-            <Text textAlign="center">DaoPlays Pokemon is currently in open beta, so these donation stats are only for the beta. <br/>   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You can see the live stats, and get real Play, and Supporter Tokens to be ready for launch <Link style={{textDecoration: "underline"}} to="/pokemon/token_launch"> here</Link>!</Text>
+            <Text textAlign="center">Take part in the DaoPlays Pokemon token launch to pay what you want for an initial block of Play Tokens <Link style={{textDecoration: "underline"}} to="/pokemon/token_launch"> here</Link>!</Text>
         }
         </Alert>
         <br/><br/>

@@ -15,11 +15,11 @@ function PostContent() {
             <main>
 
             <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">DaoPlays Pokemon!</h1>
-            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 4th 2022</h1>
+            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 10th 2022</h1>
 
             <h2 id="intro-header" className="mt-5" style={{fontSize: "22px"}}>Introduction</h2><br />
 
-            Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and so formed DaoPlays as the vehicle that would allow ourselves to do that.  Since then we have been writing blog posts that cover some of the things we have learnt in order to arrive at the release of our first app : DaoPlays Pokemon.
+            Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and so formed DaoPlays as the vehicle through which we would do that.  Since then we have been writing blog posts that cover some of the things we have learnt in order to arrive at the release of our first app : DaoPlays Pokemon.
             
             <br/><br/>
             
@@ -27,7 +27,7 @@ function PostContent() {
 
             <br/><br/>
 
-            One of our main goals in developing DaoPlays Pokemon was to make charitable giving a key component of all aspects of the app.  For example, in the token launch app, users pay what they want for a block of Play Tokens, and can decide how much stays with us at DaoPlays and how much we donate to charity, with all donations handled via <a  style={{textDecoration: "underline"}}  href="https://thegivingblock.com/">The Giving Block</a>. 
+            One of our main goals in developing DaoPlays Pokemon was to make charitable giving a key component of all aspects of the app.  For example, in the token launch, users can pay what they want for a block of Play Tokens, and can decide how much stays with us at DaoPlays and how much we donate to charity, with all donations handled via <a  style={{textDecoration: "underline"}}  href="https://thegivingblock.com/">The Giving Block</a>. 
 
             <br/><br/>
 
@@ -41,8 +41,12 @@ function PostContent() {
             </ul>
 
             <br/>
+            
+            If you are brand new to Solana we can recommend giving our 'Getting Started With Solana' blog post a read <Link style={{textDecoration: "underline"}} to="/blog/solana_getting_started">here</Link>, and once you are set up with a wallet such as <a  style={{textDecoration: "underline"}}  href="https://phantom.app/">Phantom</a>, you can go and get your SOL either from a centralized exchange like <a  style={{textDecoration: "underline"}}  href="https://www.coinbase.com/home">Coinbase</a>, or if you already own other crypto assets from one of the many different decentralized exchanges out there.
 
-            For those interested, the code for the on-chain programs can be found here, and the code for the front end on our website can be found here.
+            <br/><br/>
+
+            For those interested, the code for the on-chain programs can be found <a  style={{textDecoration: "underline"}}  href="https://github.com/daoplays/pokemon/tree/master">here</a>, and the code for the front end on our website can be found <a  style={{textDecoration: "underline"}}  href="https://github.com/daoplays/website">here</a>.
             <br/>
 
             <h3 id="token_launch-header" className="mt-5" style={{fontSize: "20px"}}>Getting Tokens From the Token Launch App</h3><br />
@@ -55,7 +59,7 @@ function PostContent() {
 
             <br/><br/>
 
-            As mentioned previously, after you have set the amount of SOL you would like to pay, you can then decide how much we keep, and how much we donate to charity, along with which charity we donate to from a curated list.  The stats at the top of the page will then update to include your donation, which shows both a summary of all the payments made thus far, and also a break down per charity.  Currently the way to verify that the charity accounts the program is using are genuine is to publicly announce the transactions that send some initial donations to those accounts, and The Giving Block will then publicly verify that those accounts are genuine, and that the donations were received by the correct charities.  You can find the tweets announcing our initial donations <a style={{textDecoration: "underline"}} href="https://twitter.com/dao_plays/status/1560632420960849921">here</a>, and The Giving Block's verification of those accounts <a style={{textDecoration: "underline"}} href="https://twitter.com/TheGivingBlock/status/1560643494556958720">here</a>.
+            As mentioned in the introduction, after you have set the amount of SOL you would like to pay, you can then decide how much we keep, and how much we donate to charity, along with which charity we donate to from a curated list.  The stats at the top of the page will then update to include your donation, which shows both a summary of all the payments made thus far, and also a break down per charity.  Currently the way to verify that the charity accounts the program is using are genuine is to publicly announce the transactions that send some initial donations to those accounts, and The Giving Block will then publicly verify both that those accounts are genuine, and that the donations were received by the correct charities.  You can find the tweets announcing our initial donations <a style={{textDecoration: "underline"}} href="https://twitter.com/dao_plays/status/1560632420960849921">here</a>, and The Giving Block's verification of those accounts <a style={{textDecoration: "underline"}} href="https://twitter.com/TheGivingBlock/status/1560643494556958720">here</a>.
 
 
             <h3 id="token_auction-header" className="mt-5" style={{fontSize: "20px"}}>Getting Tokens In The Auction</h3><br />
@@ -68,11 +72,11 @@ function PostContent() {
 
             <br/><br/>
 
-            As discussed in the main post on the token auction, there are a maximum of 1024 bids that can be tracked at any one time.  New bids will be added into empty slots if they are available, however if there are no empty slots then the oldest bid at that point will be replaced with the new bid, and the original bid is lost.  Whenever new winners are selected this frees up space for new bids, and winners are chosen more frequently the more bids are present in the auction, so hopefully this situation never happens in practice. The game app will however show you the number of bids that need to be made before your's becomes the oldest and is at risk of being lost. If it starts to get low you can completely refresh its lifetime by submitting another bid, which will add onto your existing bid, increasing your chance of winning in the process.
+            As discussed in the main post on the token auction, there are a maximum of 1024 bids that can be tracked at any one time.  New bids will be added into empty slots if they are available, however if there are no empty slots then the oldest bid at that point will be replaced with the new bid, and the original bid is lost.  Whenever new winners are selected this frees up space for new bids, and winners are chosen more frequently the more bids are present in the auction, so hopefully this situation never happens in practice. The game app will however show you the number of bids that need to be made before yours becomes the oldest and is at risk of being lost. If it starts to get low you can completely refresh its lifetime by submitting another bid, which will add onto your existing bid, increasing your chance of winning in the process.
 
             <br/><br/>
 
-            Although the app will attempt to select new winners automatically whenever anyone makes a bid, or spends Play Tokens to vote for a move, if there are only a few people playing this may not yield a very responsive auction system.  The `send tokens` button included in the auction section of the game app allows users to manually select winners and send out tokens if enough time has passed since the last winners were selected.  When this is pressed any winners that have been selected previously will have their tokens sent to them, and the program will check if new winners can be selected.  This is particularly helpful in the case that only a single person is playing who has no Play Tokens, as they will bid, and be guaranteed to win tokens when the next winners can be selected, but will need to use the button to actually trigger that action.  
+            Although the app will attempt to select new winners automatically whenever anyone makes a bid, or spends Play Tokens to vote for a move, if there are only a few people playing this may not yield a very responsive auction system.  The `send tokens` button included in the auction section of the game app allows users to manually select winners and send out tokens if enough time has passed since the last winners were selected.  When this is pressed any winners that have been selected previously will have their tokens sent to them, and the program will then check if new winners can already be selected again.  This is particularly helpful in the case that only a single person is playing who has no Play Tokens, as they will bid, and be guaranteed to win tokens when the next winners can be selected, but will need to use the button to actually trigger that action.  
 
             <br/><br/>
 
@@ -84,11 +88,11 @@ function PostContent() {
             
             <br/><br/>
             
-            In order for the app to actually take the move, we are monitoring the Solana blockchain using the approach we described in <Link style={{textDecoration: "underline"}} to="/blog/solana_streamer">this</Link> post. Every time a new block is confirmed a move is either taken based on the transactions included in that block, or no move is taken and time simply advances in the game.  Please note that although the Solana blockchain is very fast, and it takes very little time for your transaction to be confirmed, there is latency associated with Twitch, and so you can expect to wait about ten seconds for the move selected from a given block to be shown in the game stream.
+            In order for the app to actually take the move, we are monitoring the Solana blockchain using the approach similar to the one we described in <Link style={{textDecoration: "underline"}} to="/blog/solana_streamer">this</Link> post. Every time a new block is confirmed a move is either taken based on the transactions included in that block, or no move is taken and time simply advances in the game.  Please note that although the Solana blockchain is very fast, and it takes very little time for your transaction to be confirmed, there is latency associated with Twitch, and so you can expect to wait about ten seconds for the move selected from a given block to be shown in the game stream.
 
             <br/><br/>
 
-            Thank you in advance for taking part in DaoPlays Pokemon, and for raising money for these great causes.  If you'd like to stay up to date with our future apps then go ahead and follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a>.
+            Thank you in advance for taking part in DaoPlays Pokemon, and for raising money for these great causes.  If you'd like to stay up to date with our future apps then please go ahead and follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a>.
 
             </main>
         </div>
