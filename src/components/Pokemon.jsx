@@ -312,7 +312,7 @@ function GetBidderStats()
         const program_key = new PublicKey('GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me');
         const daoplays_key = new web3.PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
         const token_mint_key = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
-        console.log("in biddata");
+        //console.log("in biddata");
         try {
             if (connection) {
                 let program_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", program_key));
@@ -420,14 +420,14 @@ function GetBidderStats()
     }, [connection, wallet]);
 
     useEffect(() => {
-        if (wallet && connection && !bid_intervalId) {
+        if (wallet.publicKey && !bid_intervalId) {
             bid_intervalId = setInterval(init, 3000);
         }
         else{
             clearInterval(bid_intervalId);
             bid_intervalId = null;
         }        
-      }, [init, connection, wallet]);
+      }, [init, wallet]);
 
     return {current_bid, n_bidders, bid_index, total_bid, is_winner, tokens_remaining, time_selected};
 }
@@ -654,7 +654,7 @@ function GetTokens() {
     const {current_bid, n_bidders, bid_index, total_bid, is_winner, tokens_remaining, time_selected} = GetBidderStats();
 
     let time_string = JSON.stringify(time_selected);
-    console.log("time remaining", time_selected, time_string);
+    //console.log("time remaining", time_selected, time_string);
 
     const format = (sol_value) => sol_value+` SOL`
     const parse = (sol_value) => sol_value.replace(/^ SOL/, '')
