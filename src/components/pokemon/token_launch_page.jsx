@@ -12,7 +12,7 @@ function PostContent() {
             <main>
 
             <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">Take Part In The DaoPlays Pokemon Token Launch!</h1>
-            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 04 2022</h1>
+            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 10 2022</h1>
             <br />
 
             Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and the first result of that is DaoPlays Pokemon: inspired by the 2016 event 'Twitch Plays Pokemon', it allows users to play through the original Pokemon Red as a decentralized gaming community. Players vote for which move they want to take using 'Play Tokens', and the votes contained within every new block produced on the Solana blockchain will determine the next move taken, resulting in a new move roughly once per second.
@@ -23,7 +23,7 @@ function PostContent() {
 
             <br/><br/>
 
-            When taking part in the token launch the program will automatically create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts (referred to as <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">rent</a>) in order to ensure they aren't purged by the system.  This is roughly 0.002 SOL per token account created, and you will see this added onto your payment.
+            When taking part in the token launch the program will automatically create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts to make them "rent exempt", which means they won't be deleted by the system (see <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">here</a> for more details).  This deposit is roughly 0.002 SOL per token account created, and you will see this added onto your payment.  As you have control of these accounts you will however be able to claim back this deposit if you decide to close them in the future.
 
             <br/><br/>
 
