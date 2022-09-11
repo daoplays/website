@@ -18,6 +18,9 @@ import {
     PythSeeds,
     CharityICO,
     SolanaStreamer,
+    PokemonPost,
+    Pokemon,
+    PokeTokenLaunchPage,
     CharityAuction
 
 } from "./components";
@@ -28,14 +31,16 @@ root.render(
     <Navigation />
     <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/pokemon" element={<Pokemon />} />
         <Route path="/blog" element={<Posts />} />
         <Route path="/blog/solana_getting_started" element={<SolanaIntro />} />
         <Route path="/blog/random_numbers" element={<RandomNumbers />} />
         <Route path="/blog/pyth_seeds" element={<PythSeeds />} />
         <Route path="/blog/charity_token_launch" element={<CharityICO />} />
         <Route path="/blog/solana_streamer" element={<SolanaStreamer />} />
+        <Route path="/blog/pokemon_guide" element={<PokemonPost />} />
         <Route path="/blog/charity_auction" element={<CharityAuction />} />
-
+        <Route path="/pokemon/token_launch" element={<PokeTokenLaunchPage />} />
 
     </Routes>
     <Footer />

@@ -89,6 +89,15 @@ const blog_post_six = {
 
 };
 
+const daoplays_pokemon = {
+    title:"DaoPlays.. Pokemon!",
+    sub_title:"September 10 2022",
+    post_text:"We are excited to announce the launch of our first app, DaoPlays Pokemon!  Play through the original Pokemon Red as part of a DAO, with votes for the next move happening in real time on the Solana blockchain, and raise money for a range of great charities!",
+    image:"daoplays_pokemon.png",
+    second_div: NoDiv,
+    display_image: !isMobile
+
+};
 
 function RowCard({title, sub_title, post_text, image, second_div, display_image}) 
 {
@@ -139,6 +148,12 @@ function Home() {
         <Container  >
 
             <Col>
+                <Link to="/blog/pokemon_guide">
+                    <RowCard {...daoplays_pokemon}/>
+                </Link>
+
+                <br />
+
                 <Link to="/blog/charity_auction">
                     <RowCard {...blog_post_six}/>
                 </Link>
