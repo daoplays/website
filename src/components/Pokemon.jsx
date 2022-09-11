@@ -1188,21 +1188,21 @@ function GetTokens() {
                             
                         </VStack>
                         <VStack>
-                            <FormControl id="n_bidders" maxWidth={"100px"} >
+                            <FormControl id="n_bidders" maxWidth={"120px"} >
                                 <Input
                                     type="text"
                                     value = {n_bidders != null ? n_bidders : "Loading.."}
                                     readOnly
                                 />
                             </FormControl>
-                            <FormControl id="total_bid" maxWidth={"100px"} >
+                            <FormControl id="total_bid" maxWidth={"120px"} >
                                 <Input
                                     type="text"
                                     value = {total_bid != null ? total_bid  ===  0 ? 0 : (total_bid / n_bidders).toFixed(4) : "Loading.."}
                                     readOnly
                                 />
                             </FormControl>
-                            <FormControl id="tokens_available" maxWidth={"100px"} >
+                            <FormControl id="tokens_available" maxWidth={"120px"} >
                                 <Input
                                     type="text"
                                     value = {tokens_remaining ? tokens_remaining : "Loading.."}
@@ -1248,21 +1248,21 @@ function GetTokens() {
                         
 
                         <VStack> 
-                            <FormControl id="current_bid" maxWidth={"100px"} >
+                            <FormControl id="current_bid" maxWidth={"120px"} >
                                 <Input
                                     type="text"
                                     value = {current_bid != null ? (current_bid).toFixed(4) : "Loading.."}
                                     readOnly
                                 />
                             </FormControl>
-                            <FormControl id="win_chance" maxWidth={"100px"} >
+                            <FormControl id="win_chance" maxWidth={"120px"} >
                                 <Input
                                     type="text"
                                     value = {total_bid && current_bid ? (current_bid / total_bid).toFixed(4) : 0}
                                     readOnly
                                 />
                             </FormControl>
-                            <FormControl id="bid_time" maxWidth={"100px"} >
+                            <FormControl id="bid_time" maxWidth={"120px"} >
                                 <Input
                                     type="text"
                                     value = {current_bid && bid_index != null ? bid_index : 0}
