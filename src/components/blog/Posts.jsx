@@ -53,7 +53,7 @@ function Posts() {
 
     const pokemon_post = {
         title:"DaoPlays.. Pokemon!",
-        sub_title:"September 10 2022",
+        sub_title:"September 11 2022",
         post_text:"We are excited to announce the launch of our first app, DaoPlays Pokemon!  Play through the original Pokemon Red as part of a DAO, with votes for the next move happening in real time on the Solana blockchain, and raise money for a range of great charities!",
         image:"daoplays_pokemon.png",
         display_image: !isMobile

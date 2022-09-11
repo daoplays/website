@@ -12,7 +12,7 @@ function PostContent() {
             <main>
 
             <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">Take Part In The DaoPlays Pokemon Token Launch!</h1>
-            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 10 2022</h1>
+            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 11 2022</h1>
             <br />
 
             Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and the first result of that is DaoPlays Pokemon: inspired by the 2016 event 'Twitch Plays Pokemon', it allows users to play through the original Pokemon Red as a decentralized gaming community. Players vote for which move they want to take using 'Play Tokens', and the votes contained within every new block produced on the Solana blockchain will determine the next move taken, resulting in a new move roughly once per second.

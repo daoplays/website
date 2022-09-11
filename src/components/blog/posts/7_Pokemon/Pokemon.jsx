@@ -15,7 +15,7 @@ function PostContent() {
             <main>
 
             <h1 className="h1 text-center mb-0 pt-3 font-weight-bold text-body">DaoPlays Pokemon!</h1>
-            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 10th 2022</h1>
+            <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 11th 2022</h1>
 
             <h2 id="intro-header" className="mt-5" style={{fontSize: "22px"}}>Introduction</h2><br />
 
