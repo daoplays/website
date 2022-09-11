@@ -19,11 +19,11 @@ function PostContent() {
 
             <h2 id="intro-header" className="mt-5" style={{fontSize: "22px"}}>Introduction</h2><br />
 
-            Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and formed DaoPlays as a vehicle through which we could share what we learn with others along the way.  Since then we have been writing a series of blog posts that have been building towards the release of our first app : DaoPlays Pokemon.
+            Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and formed DaoPlays as a vehicle through which we could share what we learn with others along the way.  Since then we have been writing a series of blog posts, building towards the release of our first app : DaoPlays Pokemon.
             
             <br/><br/>
             
-            Inspired by the 2016 event 'Twitch Plays Pokemon', it allows users to play through the original Pokemon Red as a decentralized gaming community. Players vote in real time for which move they want to take using 'Play Tokens', and the votes contained within every new block produced on the Solana blockchain will determine the next move taken, resulting in a new move roughly once per second. The more Play Tokens a user spends on their vote, the more likely it is that their move is the one that takes place, however it is never guaranteed as the game uses a proportional voting system (i.e. if one person bids 5 tokens to move up, and another bids 10 tokens to move down, there is still a 33% chance that the up move will be chosen for that block).
+            Inspired by the 2016 event 'Twitch Plays Pokemon', it allows users to play through the original Pokemon Red as a decentralized gaming community. Players vote in real time for which move they want to take using 'Play Tokens', and the votes contained within every new block produced on the Solana blockchain will determine the next move taken, resulting in a new move roughly once per second. The more Play Tokens a user spends on their vote, the more likely it is that their move is the one that takes place, however it is never guaranteed as the game uses a proportional voting system (i.e. if one person bids 5 tokens to move up, and another bids 10 tokens to move down, the latter is twice as likely, but won't definitely be picked).
 
             <br/><br/>
 
@@ -42,14 +42,14 @@ function PostContent() {
 
             <br/>
             
-            If you are brand new to Solana we can recommend giving our 'Getting Started With Solana' blog post a read <Link style={{textDecoration: "underline"}} to="/blog/solana_getting_started">here</Link>, and once you are set up with a wallet such as <a  style={{textDecoration: "underline"}}  href="https://phantom.app/">Phantom</a>, you can go and get your SOL either from a centralized exchange like <a  style={{textDecoration: "underline"}}  href="https://www.coinbase.com/home">Coinbase</a>, or if you already own other crypto assets from one of the many different decentralized exchanges out there.
+            If you are brand new to Solana we can recommend giving our 'Getting Started With Solana' blog post a read <Link style={{textDecoration: "underline"}} to="/blog/solana_getting_started">here</Link>.  Once you are set up with a wallet such as <a  style={{textDecoration: "underline"}}  href="https://phantom.app/">Phantom</a>, you can go and get your SOL either from a centralized exchange like <a  style={{textDecoration: "underline"}}  href="https://www.coinbase.com/home">Coinbase</a>, or if you already own other crypto assets from one of the many different decentralized exchanges out there.
 
             <br/><br/>
 
             For those interested, the code for the on-chain programs can be found <a  style={{textDecoration: "underline"}}  href="https://github.com/daoplays/pokemon/tree/master">here</a>, and the code for the front end on our website can be found <a  style={{textDecoration: "underline"}}  href="https://github.com/daoplays/website">here</a>.
             <br/>
 
-            <h3 id="token_launch-header" className="mt-5" style={{fontSize: "20px"}}>Getting Tokens From the Token Launch App</h3><br />
+            <h3 id="token_launch-header" className="mt-5" style={{fontSize: "20px"}}>Getting Tokens From the Token Launch (Time Limited)</h3><br />
 
             You can read a detailed description of the token launch program <Link style={{textDecoration: "underline"}} to="/blog/charity_token_launch">here</Link>.  This program will only be running for a limited time, but until it closes it is the easiest way to get an initial block of 1000-2000 Play Tokens.  You can find the token launch page <Link style={{textDecoration: "underline"}} to="/pokemon/token_launch">here</Link>.
 
@@ -59,20 +59,20 @@ function PostContent() {
             
             <br/><br/>
             
-            The first time you pay for tokens (either from the token launch, or the auction described in the next section) the program will create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts to make them "rent exempt", which means they won't be deleted by the system (see <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">here</a> for more details).  This deposit is roughly 0.002 SOL per token account created, and you will see this added onto your payment.  As you have control of these accounts you will however be able to claim back this deposit if you decide to close them in the future.
+            The first time you pay for tokens (either from the token launch, or the auction described in the next section), the program will create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts to make them "rent exempt", which means they won't be deleted by the system (see <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">here</a> for more details).  This deposit is roughly 0.002 SOL per token account created, and you will see this added onto your payment.  As you have control of these accounts you will however be able to claim back this deposit if you decide to close them in the future.
 
             <br/><br/>
 
             As mentioned in the introduction, after you have set the amount of SOL you would like to pay, you can then decide how much we keep, and how much we donate to charity, along with which charity we donate to from a curated list.  The stats at the top of the page will then update to include your donation, which shows both a summary of all the payments made thus far, and also a break down per charity.  Currently the way to verify that the charity accounts the program is using are genuine is to publicly announce the transactions that send some initial donations to those accounts, and The Giving Block will then publicly verify both that those accounts are genuine, and that the donations were received by the correct charities.  You can find the tweets announcing our initial donations <a style={{textDecoration: "underline"}} href="https://twitter.com/dao_plays/status/1560632420960849921">here</a>, and The Giving Block's verification of those accounts <a style={{textDecoration: "underline"}} href="https://twitter.com/TheGivingBlock/status/1560643494556958720">here</a>.
 
 
-            <h3 id="token_auction-header" className="mt-5" style={{fontSize: "20px"}}>Getting Tokens In The Auction</h3><br />
+            <h3 id="token_auction-header" className="mt-5" style={{fontSize: "20px"}}>Getting Tokens From The Token Auction</h3><br />
 
             Once the token launch has ended, the only way to get Play Tokens directly from DaoPlays will be through the token auction, which you can find at the bottom of the main app page <Link style={{textDecoration: "underline"}} to="/pokemon">here</Link>.  It won't be possible to get Supporter Tokens at all from the auction though, so don't miss out and take part in the token launch!  
 
             <br/><br/>
 
-            You can find a detailed break down of the token auction code <Link style={{textDecoration: "underline"}} to="/blog/charity_auction">here</Link>.  Each auction is for a block of 100 Play Tokens, with new auctions taking place on timescales of seconds to minutes, and occurring more frequently as more players take part.  The winner of a particular auction is not simply the person who bids the most, but instead is randomly chosen with everyone's chance of winning proportional to the size of their bid (i.e. if you bid 0.1 SOL and someone else bids 0.2 SOL you still have a 33% chance of winning the auction). If you don't win right away your bid will remain in the system, and will simply carry over into the next auction provided there are enough unused slots (we will explain this below). As with the token launch you can decide how much of your bid goes to charity, and the SOL will be transferred at the point the bid is made.  When you make your first bid the program will create a data account that it will use to track your position in the auction.  As with the token accounts this requires that some SOL is paid into it in order to make it rent exempt, which will add an additional cost of around 0.001 SOL to your first bid.  
+            You can find a detailed break down of the token auction code <Link style={{textDecoration: "underline"}} to="/blog/charity_auction">here</Link>.  Each auction is for a block of 100 Play Tokens, with new auctions taking place on timescales of seconds to minutes, and occurring more frequently as more players take part.  The winner of a particular auction is not simply the person who bids the most, but instead is randomly chosen with everyone's chance of winning proportional to the size of their bid (i.e. if you bid 0.1 SOL and someone else bids 0.2 SOL you still have a 33% chance of winning the auction). If you don't win right away your bid will remain in the system, and will simply carry over into the next auction provided there are enough unused slots (we will explain this below). As with the token launch you can decide how much of your bid goes to charity, and the SOL will be transferred at the point the bid is made.  When you make your first bid, the program will create a data account that it will use to track your position in the auction.  As with the token accounts this requires that some SOL is paid into it in order to make it rent exempt, which will add an additional cost of around 0.001 SOL to your first bid.  
 
             <br/><br/>
 
@@ -96,7 +96,7 @@ function PostContent() {
 
             <br/><br/>
 
-            Thank you in advance for taking part in DaoPlays Pokemon, and for raising money for these great causes.  If you'd like to stay up to date with our future apps then please go ahead and follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a>.
+            Thank you in advance for taking part in DaoPlays Pokemon, and for raising money for these great causes.  If you'd like to stay up to date with our future apps then please follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a>.
 
             </main>
         </div>

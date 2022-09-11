@@ -23,7 +23,7 @@ function PostContent() {
 
             <br/><br/>
 
-            When taking part in the token launch the program will automatically create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts to make them "rent exempt", which means they won't be deleted by the system (see <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">here</a> for more details).  This deposit is roughly 0.002 SOL per token account created, and you will see this added onto your payment.  As you have control of these accounts you will however be able to claim back this deposit if you decide to close them in the future.
+            When taking part in the token launch, the program will automatically create your token accounts for you.  The Solana blockchain requires that a small amount of SOL is deposited in these accounts to make them "rent exempt", which means they won't be deleted by the system (see <a style={{textDecoration: "underline"}} href="https://docs.solana.com/implemented-proposals/rent">here</a> for more details).  This deposit is roughly 0.002 SOL per token account created, and you will see this added onto your payment.  As you have control of these accounts you will however be able to claim back this deposit if you decide to close them in the future.
 
             <br/><br/>
 
@@ -39,7 +39,7 @@ function PostContent() {
 
             <br/><br/>
 
-            Thank you in advance for taking part in DaoPlays Pokemon, and for raising money for these great causes.  If you'd like to stay up to date with our future apps then please go ahead and follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a>.
+            Thank you in advance for taking part in DaoPlays Pokemon, and for raising money for these great causes.  If you'd like to stay up to date with our future apps then please follow us on <a style={{textDecoration: "underline"}} href="http://www.twitter.com/dao_plays">Twitter</a>.
 
             <br/><br/>
 
