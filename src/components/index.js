@@ -11,3 +11,5 @@ export { default as SolanaStreamer } from "./blog/posts/5_Streamer/Streamer";
 export { default as CharityAuction } from "./blog/posts/6_CharityAuction/CharityAuction";
 export { default as PokemonPost } from "./blog/posts/7_Pokemon/Pokemon";
 export { default as PokeTokenLaunchPage} from "./pokemon/token_launch_page";
+export { default as Rewards} from "./apps/rewards";
+
