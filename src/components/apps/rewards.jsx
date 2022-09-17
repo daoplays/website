@@ -1027,10 +1027,10 @@ function Rewards()
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
 
-                    {isMobile &&
+                    {!isMobile &&
                     <MainFunction/>
                     }
-                    {!isMobile &&
+                    {isMobile &&
                     <Text  fontSize="1rem"  textAlign="left"><br/>Rewards Program currently doesn't support mobile use </Text>
                     }
        
