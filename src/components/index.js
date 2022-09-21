@@ -12,4 +12,5 @@ export { default as CharityAuction } from "./blog/posts/6_CharityAuction/Charity
 export { default as PokemonPost } from "./blog/posts/7_Pokemon/Pokemon";
 export { default as PokeTokenLaunchPage} from "./pokemon/token_launch_page";
 export { default as Rewards} from "./apps/rewards";
+export { default as Verified} from "./apps/verified";
 
