@@ -3,7 +3,7 @@ import {ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center,
     FormLabel,  FormControl, Input, Select
  } from '@chakra-ui/react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { deserialize, serialize } from 'borsh';
 import { isMobile } from "react-device-detect";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
@@ -30,7 +30,7 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-const PROGRAM_KEY = new PublicKey('2GYWCuoYhJnkk9vvmfXqaiHN6W9h6wVT2XkXRQU6N4yq');   
+const PROGRAM_KEY = new PublicKey('4xTTRRsDAjme4JoZxQ87czQvmstZ6onJJdNAQXpPw9PA');   
 const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111'); 
 
 
@@ -49,6 +49,9 @@ class Assignable {
   }
   
 class SubmitMeta extends Assignable { }
+class UserMeta extends Assignable { }
+class my_u8 extends Assignable { }
+class my_u8_array extends Assignable { }
 
 const submit_schema = new Map([
     [SubmitMeta, { kind: 'struct', 
@@ -61,6 +64,27 @@ const submit_schema = new Map([
         ['docker_version', 'string']
     ] 
     }]
+]);
+
+const user_meta_schema = new Map([
+    [UserMeta, { kind: 'struct', 
+    fields: [
+        ['status_code', 'u8'],
+        ['log_message', 'string']
+    ] 
+    }]
+]);
+
+const u8_scheme = new Map([
+    [my_u8, { kind: 'struct', 
+    fields: [
+    ['value', 'u8']] }]
+]);
+
+const u8_array_scheme = new Map([
+    [my_u8_array, { kind: 'struct', 
+    fields: [
+    ['value', [255]]] }]
 ]);
 
 
@@ -122,6 +146,60 @@ function useSolanaAccount()
     }, [init, wallet]);
 
     return { account };
+}
+
+let logintervalId;
+function useMetaData() 
+{
+    const [log_message, setLogMessage] = useState(null);
+    const [status_code, setStatusCode] = useState(null);
+
+
+    const { connection } = useConnection();
+    const wallet = useWallet();
+  
+
+
+    const init = useCallback(async () => 
+    {       
+
+        if (wallet.publicKey) {
+
+            let user_meta_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+
+            let user_data_account = await connection.getAccountInfo(user_meta_key);
+
+            if (user_data_account != null) {
+
+                const status_code_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(0,1));
+                const log_len_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(1,2));
+                const log_array_struct = deserialize(u8_array_scheme, my_u8_array, user_data_account.data.slice(2,257));
+                const uint8array = log_array_struct.value.slice(0,log_len_struct.value);
+
+                //console.log("status code ", status_code_struct.value);
+                //console.log("log len ", log_len_struct.value);
+
+                var string = new TextDecoder().decode(uint8array);
+                //console.log("string {}", string);
+
+                setStatusCode(status_code_struct.value);
+                setLogMessage(string);
+            }
+        }
+    }, [wallet, connection]);
+
+    useEffect(() => 
+    {
+        if (wallet.publicKey && !logintervalId) {
+            logintervalId = setInterval(init, 1000);
+        }
+        else{
+            clearInterval(logintervalId);
+            logintervalId = null;
+        }
+    }, [init, wallet]);
+
+    return { log_message, status_code };
 }
 
 
@@ -233,7 +311,6 @@ RUN solana config set --url https://api.devnet.solana.com`
     );
 }
   
-
 function MainFunction()
 {
    
@@ -254,6 +331,9 @@ function MainFunction()
     const handleDirectoryChange = (e) => setDirectory(e.target.value);     
     const handleWhichDocker = (e) => setWhichDocker(e.target.value);
       
+    const { status_code, log_message } = useMetaData();  
+
+
 
 
     const register_user = useCallback( async () => 
@@ -267,6 +347,7 @@ function MainFunction()
         
         let program_key = new web3.PublicKey(program_address);
         let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes()], PROGRAM_KEY))[0];
+        let user_meta_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
         
         const instruction_data = new SubmitMeta(
@@ -286,6 +367,8 @@ function MainFunction()
             keys: [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
                 {pubkey: program_meta_account, isSigner: false, isWritable: true},
+                {pubkey: user_meta_account, isSigner: false, isWritable: true},
+
                 
                 {pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false}
 
@@ -401,6 +484,26 @@ function MainFunction()
                     }
 
                     </VStack>
+
+                    <Box mt = "2rem">
+                        {log_message == null ?
+                            <span id="log_span"> Waiting to start verification.  Progress will be updated here. <br /><br /><br /><br /><br /></span>
+                        :
+
+                        status_code > 1 ? 
+                            <span id="log_span"> 
+                                    status code: {status_code} <br/><br/>
+                                    {log_message} <br /><br /><br /><br /><br />
+                            </span>
+                        :
+
+                        <span id="log_span"> 
+                            {log_message} <br /><br /><br /><br /><br />
+                        </span>
+
+                        }
+
+                    </Box>
                 
             </>
             
