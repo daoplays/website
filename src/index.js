@@ -22,7 +22,8 @@ import {
     Pokemon,
     PokeTokenLaunchPage,
     CharityAuction,
-    Rewards
+    Rewards,
+    Verified
 
 } from "./components";
 
@@ -43,6 +44,8 @@ root.render(
         <Route path="/blog/charity_auction" element={<CharityAuction />} />
         <Route path="/pokemon/token_launch" element={<PokeTokenLaunchPage />} />
         <Route path="/rewards" element={<Rewards />} />
+        <Route path="/verified" element={<Verified />} />
+
 
     </Routes>
     <Footer />
