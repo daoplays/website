@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center,
-    FormLabel,  FormControl, Input, Select
+    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription
  } from '@chakra-ui/react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { deserialize, serialize } from 'borsh';
@@ -49,9 +49,21 @@ class Assignable {
   }
   
 class SubmitMeta extends Assignable { }
-class UserMeta extends Assignable { }
+class ProgramMeta extends Assignable { }
+
 class my_u8 extends Assignable { }
 class my_u8_array extends Assignable { }
+
+const program_meta_schema = new Map([
+    [ProgramMeta, { kind: 'struct', 
+    fields: [
+        ['test_address', [32]],
+        ['last_verified_slot', 'u64'],
+        ['verified_code', 'u8'],
+        ['data_hash', [32]]
+    ] 
+    }]
+]);
 
 const submit_schema = new Map([
     [SubmitMeta, { kind: 'struct', 
@@ -62,15 +74,6 @@ const submit_schema = new Map([
         ['git_commit', 'string'],
         ['directory', 'string'],
         ['docker_version', 'string']
-    ] 
-    }]
-]);
-
-const user_meta_schema = new Map([
-    [UserMeta, { kind: 'struct', 
-    fields: [
-        ['status_code', 'u8'],
-        ['log_message', 'string']
     ] 
     }]
 ]);
@@ -153,6 +156,7 @@ function useMetaData()
 {
     const [log_message, setLogMessage] = useState(null);
     const [status_code, setStatusCode] = useState(null);
+    const [verified_code, setVerifiedCode] = useState(null);
 
 
     const { connection } = useConnection();
@@ -162,7 +166,6 @@ function useMetaData()
 
     const init = useCallback(async () => 
     {       
-
         if (wallet.publicKey) {
 
             let user_meta_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
@@ -180,10 +183,23 @@ function useMetaData()
                 //console.log("log len ", log_len_struct.value);
 
                 var string = new TextDecoder().decode(uint8array);
-                //console.log("string {}", string);
+                //console.log("string ", string.split(/\s+/)[1]);
 
                 setStatusCode(status_code_struct.value);
                 setLogMessage(string);
+
+                const programs_address = string.split(/\s+/)[1];
+
+                let test_program_key = new web3.PublicKey(programs_address)
+                let program_meta_key = (await PublicKey.findProgramAddress([test_program_key.toBytes()], PROGRAM_KEY))[0];
+
+
+                let program_data_account = await connection.getAccountInfo(program_meta_key);
+
+                const program_data = deserialize(program_meta_schema, ProgramMeta, program_data_account.data);
+
+                setVerifiedCode(program_data.verified_code);
+
             }
         }
     }, [wallet, connection]);
@@ -199,7 +215,7 @@ function useMetaData()
         }
     }, [init, wallet]);
 
-    return { log_message, status_code };
+    return { log_message, status_code, verified_code };
 }
 
 
@@ -291,11 +307,10 @@ function DockerInfoBlock({which_docker})
                         <br/>
                         <SyntaxHighlighter language="text" style={docco}>
             {
-`FROM solanalabs/solana:v1.14.2
+`FROM rust:1.63
 
-RUN apt-get update && apt-get install -y curl git build-essential
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="\${PATH}:/root/.cargo/bin"
+RUN sh -c "$(curl -sSfL https://release.solana.com/v1.14.2/install)"
+ENV PATH="\${PATH}:/root/.local/share/solana/install/active_release/bin"
 
 RUN solana config set --url https://api.devnet.solana.com`
 }
@@ -314,10 +329,10 @@ RUN solana config set --url https://api.devnet.solana.com`
 function MainFunction()
 {
    
-    const [program_address, setAddress] = React.useState(null)
-    const [git_repo, setGitRepo] = React.useState(null)
-    const [git_commit, setGitCommit] = React.useState(null)
-    const [directory, setDirectory] = React.useState(null)
+    const [program_address, setAddress] = React.useState("")
+    const [git_repo, setGitRepo] = React.useState("")
+    const [git_commit, setGitCommit] = React.useState("")
+    const [directory, setDirectory] = React.useState("")
     const [which_docker, setWhichDocker] = React.useState(null)
 
 
@@ -331,7 +346,7 @@ function MainFunction()
     const handleDirectoryChange = (e) => setDirectory(e.target.value);     
     const handleWhichDocker = (e) => setWhichDocker(e.target.value);
       
-    const { status_code, log_message } = useMetaData();  
+    const { status_code, log_message, verified_code } = useMetaData();  
 
 
 
@@ -471,8 +486,8 @@ function MainFunction()
                         </FormControl>
                         </HStack>
                     
-                    {(directory == null || git_commit == null || git_repo == null || which_docker == null || program_address == null) ?
-                    <Button  onClick={register_user} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
+                    {(directory === "" || git_commit === "" || git_repo === "" || which_docker === "" || program_address === "") ?
+                    <Button  disabled onClick={register_user} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
                         Verify
                     </Button>
 
@@ -484,6 +499,54 @@ function MainFunction()
                     }
 
                     </VStack>
+
+
+                    <Divider mb="1rem" mt = "1rem"/>
+
+
+
+
+                    {verified_code === 0 || verified_code == null?
+                    <></>
+
+                    :
+
+                    verified_code === 1 ?
+
+                    <>
+                        <Alert status='error'>
+                            <AlertDescription>Verification process has not produced a match</AlertDescription>
+                        </Alert>
+                        <Divider mb="1rem" mt = "1rem"/>
+
+                    </>
+
+                    :
+
+                    verified_code === 2 ?
+
+                    <>
+                        <Alert status='warning'>
+                            <AlertDescription>Verification was successful, however the program is updatable</AlertDescription>
+                        </Alert>
+                        <Divider mb="1rem" mt = "1rem"/>
+
+                    </>
+
+                    :
+
+                    <>
+                        <Alert status='success'>
+                            <AlertDescription>Program verified and immutable!</AlertDescription>
+                        </Alert>
+                        <Divider mb="1rem" mt = "1rem"/>
+
+                    </>
+
+                    }
+
+
+                    
 
                     <Box mt = "2rem">
                         {log_message == null ?
