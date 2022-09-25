@@ -297,7 +297,7 @@ function DockerInfoBlock({which_docker})
 {
     return(
         <Flex>
-            {which_docker === "solana_1.14.2" && 
+            {which_docker === "solana_1.10.39" && 
                 <Card className="text-left" style={{flexDirection: "row"}} >
                     <Card.Body>
                         <Card.Text
@@ -309,13 +309,13 @@ function DockerInfoBlock({which_docker})
             {
 `FROM rust:1.63
 
-RUN sh -c "$(curl -sSfL https://release.solana.com/v1.14.2/install)"
+RUN sh -c "$(curl -sSfL https://release.solana.com/v1.10.39/install)"
 ENV PATH="\${PATH}:/root/.local/share/solana/install/active_release/bin"
 
 RUN solana config set --url https://api.devnet.solana.com`
 }
                         </SyntaxHighlighter>
-                        Find out more <a href="https://hub.docker.com/repository/docker/daoplays/solana_v1.14.2">here</a>.
+                        Find out more <a href="https://hub.docker.com/repository/docker/daoplays/solana_v1.10.39">here</a>.
 
                         </Card.Text>
                     </Card.Body>
@@ -354,12 +354,7 @@ function MainFunction()
     const register_user = useCallback( async () => 
     {
         
-        //let program_address = "7EGMFCt38NyXZHsR7G3JeBgMkNPhGF3z8g1pVLEXPA8Y";
-        //let git_repo = "https://github.com/daoplays/solana_examples.git";
-        //let git_commit = "f3dd81928e49299f04070dfc58dd5cd3dd48a682";
-        //let directory = "charity_auction/program";
-        //let which_docker = "solana_v1.14.2";
-        
+
         let program_key = new web3.PublicKey(program_address);
         let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes()], PROGRAM_KEY))[0];
         let user_meta_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
@@ -448,7 +443,7 @@ function MainFunction()
 
                         <VStack>
                         <Select placeholder='Select Docker' onChange={handleWhichDocker}>
-                            <option value='solana_1.14.2'>solana v1.14.2</option>
+                            <option value='solana_1.10.39'>solana v1.10.39</option>
                         </Select>
                         <DockerInfoBlock which_docker = {which_docker}/>
                         </VStack>
