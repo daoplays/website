@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center,
-    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription
+    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription, AlertIcon
  } from '@chakra-ui/react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { deserialize, serialize } from 'borsh';
@@ -510,6 +510,7 @@ function MainFunction()
 
                     <>
                         <Alert status='error'>
+                            <AlertIcon />
                             <AlertDescription>Verification process has not produced a match</AlertDescription>
                         </Alert>
                         <Divider mb="1rem" mt = "1rem"/>
@@ -522,6 +523,7 @@ function MainFunction()
 
                     <>
                         <Alert status='warning'>
+                            <AlertIcon />
                             <AlertDescription>Verification was successful, however the program is updatable</AlertDescription>
                         </Alert>
                         <Divider mb="1rem" mt = "1rem"/>
@@ -532,6 +534,7 @@ function MainFunction()
 
                     <>
                         <Alert status='success'>
+                            <AlertIcon />
                             <AlertDescription>Program verified and immutable!</AlertDescription>
                         </Alert>
                         <Divider mb="1rem" mt = "1rem"/>
@@ -548,11 +551,13 @@ function MainFunction()
                             <span id="log_span"> Waiting to start verification.  Progress will be updated here. <br /><br /><br /><br /><br /></span>
                         :
 
-                        status_code > 1 ? 
-                            <span id="log_span"> 
-                                    status code: {status_code} <br/><br/>
-                                    {log_message} <br /><br /><br /><br /><br />
-                            </span>
+                        status_code >= 100 ?
+                            <Alert status='error'>
+                                <AlertIcon />
+                                <AlertDescription>{log_message}</AlertDescription> 
+                            </Alert>
+
+                          
                         :
 
                         <span id="log_span"> 
