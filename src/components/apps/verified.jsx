@@ -415,9 +415,9 @@ function MainFunction()
             {wallet.publicKey &&   
             <>
                 <>
-                <Text  fontSize="2rem"  textAlign="center">Register</Text>
+                <Text  fontSize="2rem"  textAlign="center">Verify Solana Program</Text>
 
-                <Text  fontSize="1rem"  textAlign="left"><br/>To verify, enter the required data below and click Verify.  It may take up to 5 minutes for verification to complete.  </Text>
+                <Text  fontSize="1rem"  textAlign="left"><br/>To verify, enter the required data below and click Verify.  It may take up to 15 minutes for verification to complete.  </Text>
                 </>
                 
 
@@ -427,7 +427,7 @@ function MainFunction()
                    
                     <VStack align="left" spacing="1rem">
                     <HStack>
-                        <FormControl  mb = "1rem" mt = "1rem" id="program_address" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="program_address" maxWidth={"450px"}>
                             <FormLabel>Program Address</FormLabel>
                             <Input
                                 type="text"
@@ -449,7 +449,7 @@ function MainFunction()
                         </VStack>
 
                         <HStack>
-                        <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"300px"}>
                             <FormLabel>Git Repo</FormLabel>
                             <Input
                                 type="text"
@@ -459,7 +459,7 @@ function MainFunction()
                             />
                     
                         </FormControl>
-                        <FormControl  mb = "1rem" mt = "1rem" id="git_commit" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="git_commit" maxWidth={"300px"}>
                             <FormLabel>Git Commit</FormLabel>
                             <Input
                                 type="text"
@@ -469,7 +469,7 @@ function MainFunction()
                             />
                     
                         </FormControl>
-                        <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
                             <FormLabel>Directory</FormLabel>
                             <Input
                                 type="text"
