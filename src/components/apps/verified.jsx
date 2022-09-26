@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center,
-    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription
+    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription, AlertIcon
  } from '@chakra-ui/react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { deserialize, serialize } from 'borsh';
@@ -415,9 +415,9 @@ function MainFunction()
             {wallet.publicKey &&   
             <>
                 <>
-                <Text  fontSize="2rem"  textAlign="center">Register</Text>
+                <Text  fontSize="2rem"  textAlign="center">Verify Solana Program</Text>
 
-                <Text  fontSize="1rem"  textAlign="left"><br/>To verify, enter the required data below and click Verify.  It may take up to 5 minutes for verification to complete.  </Text>
+                <Text  fontSize="1rem"  textAlign="left"><br/>To verify, enter the required data below and click Verify.  It may take up to 15 minutes for verification to complete.  </Text>
                 </>
                 
 
@@ -427,7 +427,7 @@ function MainFunction()
                    
                     <VStack align="left" spacing="1rem">
                     <HStack>
-                        <FormControl  mb = "1rem" mt = "1rem" id="program_address" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="program_address" maxWidth={"450px"}>
                             <FormLabel>Program Address</FormLabel>
                             <Input
                                 type="text"
@@ -449,7 +449,7 @@ function MainFunction()
                         </VStack>
 
                         <HStack>
-                        <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"300px"}>
                             <FormLabel>Git Repo</FormLabel>
                             <Input
                                 type="text"
@@ -459,7 +459,7 @@ function MainFunction()
                             />
                     
                         </FormControl>
-                        <FormControl  mb = "1rem" mt = "1rem" id="git_commit" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="git_commit" maxWidth={"300px"}>
                             <FormLabel>Git Commit</FormLabel>
                             <Input
                                 type="text"
@@ -469,7 +469,7 @@ function MainFunction()
                             />
                     
                         </FormControl>
-                        <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"250px"}>
+                        <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
                             <FormLabel>Directory</FormLabel>
                             <Input
                                 type="text"
@@ -510,6 +510,7 @@ function MainFunction()
 
                     <>
                         <Alert status='error'>
+                            <AlertIcon />
                             <AlertDescription>Verification process has not produced a match</AlertDescription>
                         </Alert>
                         <Divider mb="1rem" mt = "1rem"/>
@@ -522,6 +523,7 @@ function MainFunction()
 
                     <>
                         <Alert status='warning'>
+                            <AlertIcon />
                             <AlertDescription>Verification was successful, however the program is updatable</AlertDescription>
                         </Alert>
                         <Divider mb="1rem" mt = "1rem"/>
@@ -532,6 +534,7 @@ function MainFunction()
 
                     <>
                         <Alert status='success'>
+                            <AlertIcon />
                             <AlertDescription>Program verified and immutable!</AlertDescription>
                         </Alert>
                         <Divider mb="1rem" mt = "1rem"/>
@@ -548,11 +551,13 @@ function MainFunction()
                             <span id="log_span"> Waiting to start verification.  Progress will be updated here. <br /><br /><br /><br /><br /></span>
                         :
 
-                        status_code > 1 ? 
-                            <span id="log_span"> 
-                                    status code: {status_code} <br/><br/>
-                                    {log_message} <br /><br /><br /><br /><br />
-                            </span>
+                        status_code >= 100 ?
+                            <Alert status='error'>
+                                <AlertIcon />
+                                <AlertDescription>{log_message}</AlertDescription> 
+                            </Alert>
+
+                          
                         :
 
                         <span id="log_span"> 
