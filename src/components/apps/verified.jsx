@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center,
-    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription, AlertIcon
+    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription, AlertIcon,
+    RadioGroup, Radio, Stack
  } from '@chakra-ui/react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { deserialize, serialize } from 'borsh';
 import { isMobile } from "react-device-detect";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import {Card} from 'react-bootstrap';
 
 import * as web3 from '@solana/web3.js';
 
@@ -30,7 +30,7 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-const PROGRAM_KEY = new PublicKey('4xTTRRsDAjme4JoZxQ87czQvmstZ6onJJdNAQXpPw9PA');   
+const PROGRAM_KEY = new PublicKey('5iYtT98ucBf5oVC2PicVTHLqFWgCw2CeBQePn9Zg9PWQ');   
 const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111'); 
 
 
@@ -73,7 +73,10 @@ const submit_schema = new Map([
         ['git_repo', 'string'],
         ['git_commit', 'string'],
         ['directory', 'string'],
-        ['docker_version', 'string']
+        ['docker_version', 'string'],
+        ['rust_version', 'string'],
+        ['solana_version', 'string'],
+        ['anchor_version', 'string']
     ] 
     }]
 ]);
@@ -297,30 +300,59 @@ function DockerInfoBlock({which_docker})
 {
     return(
         <Flex>
-            {which_docker === "solana_1.10.39" && 
-                <Card className="text-left" style={{flexDirection: "row"}} >
-                    <Card.Body>
-                        <Card.Text
-                        className="text-body mb-4"
-                        style={{ fontSize: "1rem" }}
-                        >
-                        <br/>
+            {which_docker === "solana_v1.10.39" && 
+                
+                        <VStack>
                         <SyntaxHighlighter language="text" style={docco}>
-            {
+{
 `FROM rust:1.63
 
-RUN sh -c "$(curl -sSfL https://release.solana.com/v1.10.39/install)"
+RUN sh -c "$(curl -sSL https://release.solana.com/v1.10.39/install)"
 ENV PATH="\${PATH}:/root/.local/share/solana/install/active_release/bin"
+RUN cargo install --git https://github.com/project-serum/anchor --tag v0.25.0 anchor-cli --locked
 
 RUN solana config set --url https://api.devnet.solana.com`
 }
                         </SyntaxHighlighter>
+                        <Text>
                         Find out more <a href="https://hub.docker.com/repository/docker/daoplays/solana_v1.10.39">here</a>.
-
-                        </Card.Text>
-                    </Card.Body>
-                </Card>
+                        </Text>
+                        </VStack>
+                
             }
+            
+        </Flex>
+    );
+}
+
+function CustomEnvBlock({rust_version, solana_version, anchor_version})
+{
+
+    let anchor_string = `RUN cargo install --git https://github.com/project-serum/anchor --tag v`  + anchor_version + ` anchor-cli --locked`;
+    if (anchor_version === "") {
+        anchor_string = "";
+    }
+    return(
+        <Flex>
+                
+            <VStack>
+            <SyntaxHighlighter language="text" style={docco}>
+{
+`FROM rust:`+rust_version+`
+
+RUN sh -c "$(curl -sSL https://release.solana.com/v`+solana_version+`/install)"
+ENV PATH="\${PATH}:/root/.local/share/solana/install/active_release/bin"
+`
++
+anchor_string
++
+`
+RUN solana config set --url https://api.devnet.solana.com`
+}
+            </SyntaxHighlighter>
+            </VStack>
+                
+            
             
         </Flex>
     );
@@ -334,8 +366,11 @@ function MainFunction()
     const [git_commit, setGitCommit] = React.useState("")
     const [directory, setDirectory] = React.useState("")
     const [which_docker, setWhichDocker] = React.useState(null)
+    const [dev_radio, setDevRadio] = React.useState('DockerImage')
 
-
+    const [rust_version, setRustVersion] = React.useState("1.63")
+    const [solana_version, setSolanaVersion] = React.useState("1.10.39")
+    const [anchor_version, setAnchorVersion] = React.useState("0.25.0")
 
     const wallet = useWallet();
     const { connection }  = useConnection();
@@ -345,7 +380,12 @@ function MainFunction()
     const handleGitCommitChange = (e) => setGitCommit(e.target.value);
     const handleDirectoryChange = (e) => setDirectory(e.target.value);     
     const handleWhichDocker = (e) => setWhichDocker(e.target.value);
-      
+
+    const handleRustVersionChange = (e) => setRustVersion(e.target.value);
+    const handleSolanaVersionChange = (e) => setSolanaVersion(e.target.value);
+    const handleAnchorVersionChange = (e) => setAnchorVersion(e.target.value);
+
+     
     const { status_code, log_message, verified_code } = useMetaData();  
 
 
@@ -359,7 +399,7 @@ function MainFunction()
         let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes()], PROGRAM_KEY))[0];
         let user_meta_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
-        
+        console.log(which_docker, rust_version, solana_version, anchor_version);
         const instruction_data = new SubmitMeta(
             { 
                 instruction: VerifyInstruction.submit_program,
@@ -367,7 +407,10 @@ function MainFunction()
                 git_repo: git_repo,
                 git_commit: git_commit,
                 directory: directory,
-                docker_version: which_docker
+                docker_version: dev_radio === "DockerImage" ? which_docker : "",
+                rust_version: dev_radio === "Custom" ? rust_version : "",
+                solana_version: dev_radio === "Custom" ? solana_version : "",
+                anchor_version: dev_radio === "Custom" ? anchor_version : ""
             }
         );
 
@@ -403,7 +446,7 @@ function MainFunction()
 
 
     },
-    [connection, wallet, program_address, git_repo, git_commit, directory, which_docker]
+    [connection, wallet, program_address, git_repo, git_commit, directory, which_docker, rust_version, solana_version, anchor_version, dev_radio]
     );
 
     return(
@@ -415,73 +458,130 @@ function MainFunction()
             {wallet.publicKey &&   
             <>
                 <>
-                <Text  fontSize="2rem"  textAlign="center">Verify Solana Program</Text>
+                <Text  fontSize="2rem"  textAlign="center">SolVerified</Text>
 
                 <Text  fontSize="1rem"  textAlign="left"><br/>To verify, enter the required data below and click Verify.  It may take up to 15 minutes for verification to complete.  </Text>
                 </>
                 
-
-                
-               
-
-                   
+ 
                     <VStack align="left" spacing="1rem">
-                    <HStack>
-                        <FormControl  mb = "1rem" mt = "1rem" id="program_address" maxWidth={"450px"}>
-                            <FormLabel>Program Address</FormLabel>
-                            <Input
-                                type="text"
-                                value={program_address}
-                                onChange={handleAddressChange}
-                                
-                            />
-                    
-                        </FormControl>
+
+                        <Text  fontSize="1rem"  textAlign="left"><br/>1) Enter the address of the program to verify.  Currently we only support programs on the Solana devnet.  </Text>
+
+                        <HStack>
+                            <FormControl  mb = "1rem" mt = "1rem" id="program_address" maxWidth={"450px"}>
+                                <FormLabel>Program Address</FormLabel>
+                                <Input
+                                    type="text"
+                                    value={program_address}
+                                    onChange={handleAddressChange}
+                                    
+                                />
+                        
+                            </FormControl>
 
                         
                         </HStack>
 
-                        <VStack>
-                        <Select placeholder='Select Docker' onChange={handleWhichDocker}>
-                            <option value='solana_1.10.39'>solana v1.10.39</option>
-                        </Select>
-                        <DockerInfoBlock which_docker = {which_docker}/>
+                        <Divider/>
+
+                        <Text  fontSize="1rem"  textAlign="left"><br/>2) Define your dev environment.  Either select a prebuilt docker image that was used to build/deploy your program, or specify the components individually.  </Text>
+
+                        <Box>
+                            <RadioGroup onChange={setDevRadio} value={dev_radio}>
+                                <Stack direction='row'>
+                                    <Box><Radio value='DockerImage'>Docker Image</Radio></Box>
+                                    <Box><Radio value='Custom'>Custom</Radio></Box>
+                                </Stack>
+                            </RadioGroup>
+                        </Box>
+
+                        { dev_radio === "DockerImage" &&
+                            <VStack>
+                                <Select placeholder='Select Docker' onChange={handleWhichDocker}>
+                                    <option value='solana_v1.10.39'>solana v1.10.39</option>
+                                </Select>
+                                <DockerInfoBlock which_docker = {which_docker}/>
+                            </VStack>
+                        }
+
+                        { dev_radio === "Custom" &&
+                        <VStack align="left">
+                        <HStack>
+                            <FormControl  mb = "1rem" mt = "1rem" id="rust_version" maxWidth={"200px"}>
+                                <FormLabel>Rust version</FormLabel>
+                                <Input
+                                    type="text"
+                                    value={rust_version}
+                                    onChange={handleRustVersionChange}
+                                    
+                                />
+                        
+                            </FormControl>
+                            <FormControl  mb = "1rem" mt = "1rem" id="solana_version" maxWidth={"200px"}>
+                                <FormLabel>Solana Version</FormLabel>
+                                <Input
+                                    type="text"
+                                    value={solana_version}
+                                    onChange={handleSolanaVersionChange}
+                                    
+                                />
+                        
+                            </FormControl>
+                            <FormControl  mb = "1rem" mt = "1rem" id="anchor_version" maxWidth={"200px"}>
+                                <FormLabel>Anchor Version</FormLabel>
+                                <Input
+                                    type="text"
+                                    value={anchor_version}
+                                    onChange={handleAnchorVersionChange}
+                                    
+                                />
+                        
+                            </FormControl>
+                        </HStack>
+                        <CustomEnvBlock rust_version={rust_version}  solana_version={solana_version} anchor_version={anchor_version}/>
                         </VStack>
+                        }
+
+
+                        <Divider/>
+
+                        <Text  fontSize="1rem"  textAlign="left"><br/>3) Define how to access the code.  We currently only support git repositories.  The directory is the location within the git repo where the build and deploy occurs, if this is the root directory just enter / </Text>
 
                         <HStack>
-                        <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"300px"}>
-                            <FormLabel>Git Repo</FormLabel>
-                            <Input
-                                type="text"
-                                value={git_repo}
-                                onChange={handleGitRepoChange}
-                                
-                            />
-                    
-                        </FormControl>
-                        <FormControl  mb = "1rem" mt = "1rem" id="git_commit" maxWidth={"300px"}>
-                            <FormLabel>Git Commit</FormLabel>
-                            <Input
-                                type="text"
-                                value={git_commit}
-                                onChange={handleGitCommitChange}
-                                
-                            />
-                    
-                        </FormControl>
-                        <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
-                            <FormLabel>Directory</FormLabel>
-                            <Input
-                                type="text"
-                                value={directory}
-                                onChange={handleDirectoryChange}
-                                
-                            />
-                    
-                        </FormControl>
+                            <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"300px"}>
+                                <FormLabel>Git Repo</FormLabel>
+                                <Input
+                                    type="text"
+                                    value={git_repo}
+                                    onChange={handleGitRepoChange}
+                                    
+                                />
+                        
+                            </FormControl>
+                            <FormControl  mb = "1rem" mt = "1rem" id="git_commit" maxWidth={"300px"}>
+                                <FormLabel>Git Commit</FormLabel>
+                                <Input
+                                    type="text"
+                                    value={git_commit}
+                                    onChange={handleGitCommitChange}
+                                    
+                                />
+                        
+                            </FormControl>
+                            <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
+                                <FormLabel>Directory</FormLabel>
+                                <Input
+                                    type="text"
+                                    value={directory}
+                                    onChange={handleDirectoryChange}
+                                    
+                                />
+                        
+                            </FormControl>
                         </HStack>
                     
-                    {(directory === "" || git_commit === "" || git_repo === "" || which_docker === "" || program_address === "") ?
+                    {(directory === "" || git_commit === "" || git_repo === "" ||  program_address === "" || (which_docker === "" && rust_version === "" && solana_version === "")) ?
                     <Button  disabled onClick={register_user} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
                         Verify
                     </Button>
