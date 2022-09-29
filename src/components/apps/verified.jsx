@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center,
-    FormLabel,  FormControl, Input, Select, Divider, Alert, AlertDescription, AlertIcon,
-    RadioGroup, Radio, Stack
+    FormLabel,  FormControl, Input, Divider, Alert, AlertDescription, AlertIcon,
+    RadioGroup, Radio, Stack, Tooltip
  } from '@chakra-ui/react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { deserialize, serialize } from 'borsh';
@@ -30,13 +30,20 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-const PROGRAM_KEY = new PublicKey('5iYtT98ucBf5oVC2PicVTHLqFWgCw2CeBQePn9Zg9PWQ');   
+const PROGRAM_KEY = new PublicKey('49Ee36zLEqpLQeCmtE7HP5kki1ok6dRyjhvdsiYc9xrq');   
 const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111'); 
 
 
 const VerifyInstruction = {
     submit_program : 0,
     verify_program : 1
+}
+
+
+const VerifyNetwork = {
+    test_net : 0,
+    dev_net : 1,
+    main_net : 2
 }
 
 
@@ -70,6 +77,7 @@ const submit_schema = new Map([
     fields: [
         ['instruction', 'u8'],
         ['address', [32]],
+        ['network', 'u8'],
         ['git_repo', 'string'],
         ['git_commit', 'string'],
         ['directory', 'string'],
@@ -123,207 +131,25 @@ function WalletConnected()
 
 
 
-let intervalId;
-function useSolanaAccount() 
-{
-    const [account, setAccount] = useState(null);
-
-    const { connection } = useConnection();
-    const wallet = useWallet();
-  
-    const init = useCallback(async () => 
-    {       
-        if (wallet.publicKey) {
-
-            let acc = await connection.getAccountInfo(wallet.publicKey);
-            setAccount(acc); 
-        }
-    }, [wallet, connection]);
-
-    useEffect(() => 
-    {
-        if (wallet.publicKey && !intervalId) {
-            intervalId = setInterval(init, 1000);
-        }
-        else{
-            clearInterval(intervalId);
-            intervalId = null;
-        }
-    }, [init, wallet]);
-
-    return { account };
-}
-
-let logintervalId;
-function useMetaData() 
-{
-    const [log_message, setLogMessage] = useState(null);
-    const [status_code, setStatusCode] = useState(null);
-    const [verified_code, setVerifiedCode] = useState(null);
-
-
-    const { connection } = useConnection();
-    const wallet = useWallet();
-  
-
-
-    const init = useCallback(async () => 
-    {       
-        if (wallet.publicKey) {
-
-            let user_meta_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
-
-            let user_data_account = await connection.getAccountInfo(user_meta_key);
-
-            if (user_data_account != null) {
-
-                const status_code_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(0,1));
-                const log_len_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(1,2));
-                const log_array_struct = deserialize(u8_array_scheme, my_u8_array, user_data_account.data.slice(2,257));
-                const uint8array = log_array_struct.value.slice(0,log_len_struct.value);
-
-                //console.log("status code ", status_code_struct.value);
-                //console.log("log len ", log_len_struct.value);
-
-                var string = new TextDecoder().decode(uint8array);
-                //console.log("string ", string.split(/\s+/)[1]);
-
-                setStatusCode(status_code_struct.value);
-                setLogMessage(string);
-
-                const programs_address = string.split(/\s+/)[1];
-
-                let test_program_key = new web3.PublicKey(programs_address)
-                let program_meta_key = (await PublicKey.findProgramAddress([test_program_key.toBytes()], PROGRAM_KEY))[0];
-
-
-                let program_data_account = await connection.getAccountInfo(program_meta_key);
-
-                const program_data = deserialize(program_meta_schema, ProgramMeta, program_data_account.data);
-
-                setVerifiedCode(program_data.verified_code);
-
-            }
-        }
-    }, [wallet, connection]);
-
-    useEffect(() => 
-    {
-        if (wallet.publicKey && !logintervalId) {
-            logintervalId = setInterval(init, 1000);
-        }
-        else{
-            clearInterval(logintervalId);
-            logintervalId = null;
-        }
-    }, [init, wallet]);
-
-    return { log_message, status_code, verified_code };
-}
-
-
-export function AirDropApp() 
-{
-  const wallet = useWallet();
-    return (
-  
-        <Box textAlign="center" fontSize="l">
-          {wallet.publicKey &&  
-          
-              <WalletConnected/>
-          
-          }
-
-
-            {!wallet.publicKey && <WalletNotConnected />}
-
-        </Box>
-
-      
-    );
-}
-
 
 export function AccountInfo() 
 {
-
-  const { account } = useSolanaAccount();  
+    const wallet = useWallet();
     return (
       <>
-      <VStack>
-      <AirDropApp/>
-        <Box textAlign="center" fontSize="l">
-        <Text fontSize="17" mt="1rem" mb = "1rem">
-              {"Your Account Details"}
-          </Text>
-          <HStack>
+       {wallet.publicKey &&  
           
-                  <Box fontSize="17" textAlign = "left" >
-                      
-                      <VStack alignItems="start">
+          <WalletConnected/>
+      
+      }
 
-                          <Text >
-                              {"SOL Balance"}
-                          </Text>
 
-                          <Box></Box>
-                          <Box></Box>
-
-                      </VStack>
-                  </Box>
-                  <Box fontSize="17">
-                      <VStack>
-                          
-                          <FormControl id="balance" maxWidth={"175px"}>
-                              <Input
-                                  type="text"
-                                  value={
-                                      account
-                                      ? account.lamports / web3.LAMPORTS_PER_SOL
-                                      : "Loading.."
-                                  }
-                                  readOnly
-                          />
-                          </FormControl>
-
-                      </VStack>
-                  </Box>
-              </HStack>
-        </Box>
-        </VStack>
+        {!wallet.publicKey && <WalletNotConnected />}
+        
         </>
     );
 }
 
-
-function DockerInfoBlock({which_docker})
-{
-    return(
-        <Flex>
-            {which_docker === "solana_v1.10.39" && 
-                
-                        <VStack>
-                        <SyntaxHighlighter language="text" style={docco}>
-{
-`FROM rust:1.63
-
-RUN sh -c "$(curl -sSL https://release.solana.com/v1.10.39/install)"
-ENV PATH="\${PATH}:/root/.local/share/solana/install/active_release/bin"
-RUN cargo install --git https://github.com/project-serum/anchor --tag v0.25.0 anchor-cli --locked
-
-RUN solana config set --url https://api.devnet.solana.com`
-}
-                        </SyntaxHighlighter>
-                        <Text>
-                        Find out more <a href="https://hub.docker.com/repository/docker/daoplays/solana_v1.10.39">here</a>.
-                        </Text>
-                        </VStack>
-                
-            }
-            
-        </Flex>
-    );
-}
 
 function CustomEnvBlock({rust_version, solana_version, anchor_version})
 {
@@ -357,16 +183,25 @@ RUN solana config set --url https://api.devnet.solana.com`
         </Flex>
     );
 }
-  
+
+let logintervalId;
+
 function MainFunction()
 {
-   
+    const [log_message, setLogMessage] = useState(null);
+    const [status_code, setStatusCode] = useState(null);
+    const [verified_code, setVerifiedCode] = useState(null);
+
     const [program_address, setAddress] = React.useState("")
     const [git_repo, setGitRepo] = React.useState("")
     const [git_commit, setGitCommit] = React.useState("")
     const [directory, setDirectory] = React.useState("")
-    const [which_docker, setWhichDocker] = React.useState(null)
-    const [dev_radio, setDevRadio] = React.useState('DockerImage')
+
+    const [run_status, setRunStatus] = React.useState(0)
+
+
+    const [network_radio, setNetworkRadio] = React.useState('DevNet')
+
 
     const [rust_version, setRustVersion] = React.useState("1.63")
     const [solana_version, setSolanaVersion] = React.useState("1.10.39")
@@ -379,16 +214,126 @@ function MainFunction()
     const handleGitRepoChange = (e) => setGitRepo(e.target.value);
     const handleGitCommitChange = (e) => setGitCommit(e.target.value);
     const handleDirectoryChange = (e) => setDirectory(e.target.value);     
-    const handleWhichDocker = (e) => setWhichDocker(e.target.value);
 
     const handleRustVersionChange = (e) => setRustVersion(e.target.value);
     const handleSolanaVersionChange = (e) => setSolanaVersion(e.target.value);
     const handleAnchorVersionChange = (e) => setAnchorVersion(e.target.value);
 
      
-    const { status_code, log_message, verified_code } = useMetaData();  
+    const init = useCallback(async () => 
+    {       
+        if (wallet.publicKey) {
+
+            let user_meta_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes(), "user_account"], PROGRAM_KEY))[0];
+
+            let user_data_account = null;
+            
+            try {
+                user_data_account = await connection.getAccountInfo(user_meta_key);
+            }
+            catch(error) {
+                console.log(error);
+            }
+
+            if (user_data_account != null) {
+
+                const status_code_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(0,1));
+                const log_len_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(1,2));
+                const log_array_struct = deserialize(u8_array_scheme, my_u8_array, user_data_account.data.slice(2,257));
+                const uint8array = log_array_struct.value.slice(0,log_len_struct.value);
+
+                //console.log("status code ", status_code_struct.value);
+                //console.log("log len ", log_len_struct.value);
+
+                var string = new TextDecoder().decode(uint8array);
+                //console.log("string ", string);
+                //console.log("status_code ", status_code_struct.value);
+
+                setStatusCode(status_code_struct.value);
+                setLogMessage(string);
+
+                let program_address_to_use = program_address;
+
+                if (program_address === ""){
+                    program_address_to_use = string.split(/\s+/)[1];
+                }
+                try {
+
+                    let test_program_key = new web3.PublicKey(program_address_to_use)
+                    let network_string = "dev_net";
+    
+                    //console.log(network_radio);
+                    if (network_radio === "TestNet") {
+                        network_string = "test_net";
+                    }
+                    else if (network_radio === "MainNet") {
+                        network_string = "main_net";
+                    }
+
+                    let program_meta_key = (await PublicKey.findProgramAddress([test_program_key.toBytes(), network_string], PROGRAM_KEY))[0];
+
+                    let program_data_account = await connection.getAccountInfo(program_meta_key);
+
+                    const program_data = deserialize(program_meta_schema, ProgramMeta, program_data_account.data);
+
+                    //console.log("interval ", program_data.verified_code, network_string);
+
+                    setVerifiedCode(program_data.verified_code);
+                }
+                catch(error) {
+                    setVerifiedCode(null);
+                }  
+                
+            }
+        }
+    }, [wallet, connection, program_address, network_radio]);
+
+    useEffect(() => 
+    {
+        if (wallet.publicKey && !logintervalId) {
+            logintervalId = setInterval(init, 1000);
+        }
+        else{
+            clearInterval(logintervalId);
+            logintervalId = null;
+        }
+    }, [init, wallet]); 
+
+    const check_status = useCallback( async () => 
+    {
+        
+        
+        let program_key = new web3.PublicKey(program_address);
+        let network_string = "dev_net";
+
+        if (network_radio === "TestNet") {
+            network_string = "test_net";
+        }
+        else if (network_radio === "MainNet") {
+            network_string = "main_net";
+        }
+
+        let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes(), network_string], PROGRAM_KEY))[0];
 
 
+        try {
+            let program_data_account = await connection.getAccountInfo(program_meta_account);
+
+            const program_data = deserialize(program_meta_schema, ProgramMeta, program_data_account.data);
+    
+            //console.log("have code ", program_data.verified_code);
+            setVerifiedCode(program_data.verified_code);
+
+        } catch(error) {
+            setVerifiedCode(100);
+            console.log(error);
+        }
+
+        setRunStatus(1);
+        
+    },
+    [connection, program_address, network_radio]
+    );
 
 
     const register_user = useCallback( async () => 
@@ -396,21 +341,35 @@ function MainFunction()
         
 
         let program_key = new web3.PublicKey(program_address);
-        let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes()], PROGRAM_KEY))[0];
-        let user_meta_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+        let network_string = "dev_net";
 
-        console.log(which_docker, rust_version, solana_version, anchor_version);
+        console.log(network_radio);
+        let network = VerifyNetwork.dev_net;
+        if (network_radio === "TestNet") {
+            network = VerifyNetwork.test_net;
+            network_string = "test_net";
+        }
+        else if (network_radio === "MainNet") {
+            network = VerifyNetwork.main_net;
+            network_string = "main_net";
+        }
+
+        let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes(), network_string], PROGRAM_KEY))[0];
+        let user_meta_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes(), "user_account"], PROGRAM_KEY))[0];
+
+        console.log(rust_version, solana_version, anchor_version);
         const instruction_data = new SubmitMeta(
             { 
                 instruction: VerifyInstruction.submit_program,
                 address: program_key.toBytes(),
+                network : network,
                 git_repo: git_repo,
                 git_commit: git_commit,
                 directory: directory,
-                docker_version: dev_radio === "DockerImage" ? which_docker : "",
-                rust_version: dev_radio === "Custom" ? rust_version : "",
-                solana_version: dev_radio === "Custom" ? solana_version : "",
-                anchor_version: dev_radio === "Custom" ? anchor_version : ""
+                docker_version:  "",
+                rust_version:  rust_version,
+                solana_version: solana_version,
+                anchor_version: anchor_version
             }
         );
 
@@ -445,31 +404,55 @@ function MainFunction()
         }
 
 
+
     },
-    [connection, wallet, program_address, git_repo, git_commit, directory, which_docker, rust_version, solana_version, anchor_version, dev_radio]
+    [connection, wallet, program_address, git_repo, git_commit, directory, rust_version, solana_version, anchor_version, network_radio]
     );
 
     return(
 
         <Center>
-        <Flex w="100%" mt="2rem" flexDirection="row">
+        <Flex w="100%" ml = "2rem" mr = "2rem" mt="2rem" flexDirection="column">
 
-        <Box w="60%" ml="1rem" borderWidth='2px' borderRadius="2rem" p='1rem'>
+                
+        <Box mb="2rem"  p="1rem">
+            <Center>
+            <HStack>
+                
+                <Text  mr="2rem" fontSize="2rem"  textAlign="center">SolVerified</Text>
+                <AccountInfo/>
+            </HStack>
+            </Center>
+            
+        </Box>
+
+        <Box borderWidth='2px' borderRadius="2rem" p="1rem">
             {wallet.publicKey &&   
             <>
                 <>
-                <Text  fontSize="2rem"  textAlign="center">SolVerified</Text>
+                
 
-                <Text  fontSize="1rem"  textAlign="left"><br/>To verify, enter the required data below and click Verify.  It may take up to 15 minutes for verification to complete.  </Text>
+                <Text  mb="1rem" fontSize="1rem"  textAlign="left"><br/>To verify your program, enter the required data below and click Verify.  It may take up to 15 minutes for verification to complete.  </Text>
                 </>
                 
  
                     <VStack align="left" spacing="1rem">
 
-                        <Text  fontSize="1rem"  textAlign="left"><br/>1) Enter the address of the program to verify.  Currently we only support programs on the Solana devnet.  </Text>
+                        <Text  fontSize="1.5rem"  textAlign="left"><b>Your Program</b>  </Text>
+                        <Text  fontSize="1rem"  textAlign="left">Select the network your program has been deployed to, and enter its address on-chain.  </Text>
+
+                        <Box>
+                            <RadioGroup onChange={setNetworkRadio} value={network_radio}>
+                                <Stack direction='row'>
+                                    <Box><Radio value='TestNet'>Testnet</Radio></Box>
+                                    <Box><Radio value='DevNet'>Devnet</Radio></Box>
+                                    <Box><Radio value='MainNet'>Mainnet</Radio></Box>
+                                </Stack>
+                            </RadioGroup>
+                        </Box>
 
                         <HStack>
-                            <FormControl  mb = "1rem" mt = "1rem" id="program_address" maxWidth={"450px"}>
+                            <FormControl  mb = "1rem" id="program_address" maxWidth={"450px"}>
                                 <FormLabel>Program Address</FormLabel>
                                 <Input
                                     type="text"
@@ -482,33 +465,81 @@ function MainFunction()
 
                         
                         </HStack>
+                        {  run_status === 1 &&
+                            <>
+                            {
+
+                            verified_code === 100 ?
+
+                            <Alert status='error'>
+                                    <AlertIcon />
+                                    <AlertDescription>Verification process has not been started</AlertDescription>
+                            </Alert>
+
+                            :
+
+                            verified_code === 1 ?
+
+                            <>
+                                <Alert status='error'>
+                                    <AlertIcon />
+                                    <AlertDescription>Verification process has not produced a match</AlertDescription>
+                                </Alert>
+
+                            </>
+
+                            :
+
+                            verified_code === 2 ?
+
+                            <>
+                                <Alert status='warning'>
+                                    <AlertIcon />
+                                    <AlertDescription>Verification was successful, however the program is updatable</AlertDescription>
+                                </Alert>
+
+                            </>
+                            :
+
+                            verified_code === 3 ?
+
+                            <>
+                                <Alert status='success'>
+                                    <AlertIcon />
+                                    <AlertDescription>Program verified and immutable!</AlertDescription>
+                                </Alert>
+
+                            </>
+
+                            :
+
+                            verified_code === 0 ?
+                                <Alert status='info'>
+                                    <AlertIcon />
+                                    <AlertDescription>Verification is underway</AlertDescription>
+                                </Alert>
+                            :
+
+                            <></>
+
+                            }
+                            </>
+                        }
+
+                        <Button onClick={check_status} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
+                        Check Status
+                        </Button>
 
                         <Divider/>
 
-                        <Text  fontSize="1rem"  textAlign="left"><br/>2) Define your dev environment.  Either select a prebuilt docker image that was used to build/deploy your program, or specify the components individually.  </Text>
+                        <Text  fontSize="1.5rem"  textAlign="left"><b>Your Build Environment</b>  </Text>
+                        <Text  fontSize="1rem"  textAlign="left"> Input details of your build environment.  SolVerified will build a docker image using the dockerfile displayed below.  </Text>
 
-                        <Box>
-                            <RadioGroup onChange={setDevRadio} value={dev_radio}>
-                                <Stack direction='row'>
-                                    <Box><Radio value='DockerImage'>Docker Image</Radio></Box>
-                                    <Box><Radio value='Custom'>Custom</Radio></Box>
-                                </Stack>
-                            </RadioGroup>
-                        </Box>
-
-                        { dev_radio === "DockerImage" &&
-                            <VStack>
-                                <Select placeholder='Select Docker' onChange={handleWhichDocker}>
-                                    <option value='solana_v1.10.39'>solana v1.10.39</option>
-                                </Select>
-                                <DockerInfoBlock which_docker = {which_docker}/>
-                            </VStack>
-                        }
-
-                        { dev_radio === "Custom" &&
                         <VStack align="left">
                         <HStack>
+                        <Tooltip hasArrow label='cargo --version'>
                             <FormControl  mb = "1rem" mt = "1rem" id="rust_version" maxWidth={"200px"}>
+                                
                                 <FormLabel>Rust version</FormLabel>
                                 <Input
                                     type="text"
@@ -518,6 +549,8 @@ function MainFunction()
                                 />
                         
                             </FormControl>
+                            </Tooltip>
+                            <Tooltip hasArrow label='solana --version'>
                             <FormControl  mb = "1rem" mt = "1rem" id="solana_version" maxWidth={"200px"}>
                                 <FormLabel>Solana Version</FormLabel>
                                 <Input
@@ -528,6 +561,8 @@ function MainFunction()
                                 />
                         
                             </FormControl>
+                            </Tooltip>
+                            <Tooltip hasArrow label="anchor --version (leave blank if you don't use anchor)">
                             <FormControl  mb = "1rem" mt = "1rem" id="anchor_version" maxWidth={"200px"}>
                                 <FormLabel>Anchor Version</FormLabel>
                                 <Input
@@ -538,15 +573,17 @@ function MainFunction()
                                 />
                         
                             </FormControl>
+                            </Tooltip>
                         </HStack>
                         <CustomEnvBlock rust_version={rust_version}  solana_version={solana_version} anchor_version={anchor_version}/>
                         </VStack>
-                        }
+                        
 
 
                         <Divider/>
 
-                        <Text  fontSize="1rem"  textAlign="left"><br/>3) Define how to access the code.  We currently only support git repositories.  The directory is the location within the git repo where the build and deploy occurs, if this is the root directory just enter / </Text>
+                        <Text  fontSize="1.5rem"  textAlign="left"><b>Your Code</b>  </Text>
+                        <Text  fontSize="1rem"  textAlign="left">SolVerified currently only supports git repositories. <br/> Provide the link to the git repo, the commit to build, and the directory within where the build occurs.  If this is the root directory just enter / </Text>
 
                         <HStack>
                             <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"300px"}>
@@ -581,7 +618,7 @@ function MainFunction()
                             </FormControl>
                         </HStack>
                     
-                    {(directory === "" || git_commit === "" || git_repo === "" ||  program_address === "" || (which_docker === "" && rust_version === "" && solana_version === "")) ?
+                    {(directory === "" || git_commit === "" || git_repo === "" ||  program_address === "" || rust_version === "" || solana_version === "") ?
                     <Button  disabled onClick={register_user} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
                         Verify
                     </Button>
@@ -600,7 +637,7 @@ function MainFunction()
 
 
 
-
+                        
                     {verified_code === 0 || verified_code == null?
                     <></>
 
@@ -642,7 +679,7 @@ function MainFunction()
                     </>
 
                     }
-
+                    
 
                     
 
@@ -665,19 +702,19 @@ function MainFunction()
                         </span>
 
                         }
+                        
 
                     </Box>
+
+                   
                 
             </>
             
             }
-            {!wallet.publicKey &&   <Text  fontSize="2rem"  textAlign="center"><br/><br/>Connect A Solana Wallet To Verify</Text>}
+            {!wallet.publicKey &&   <Text p = "4rem" fontSize="2rem"  textAlign="center">Connect A Solana Wallet To Verify A Program</Text>}
         </Box>  
         
-    
-        <Box w="30%" ml="1rem" borderWidth='2px' borderRadius="2rem" p='1rem'>
-            <AccountInfo/>
-        </Box>
+
         
         
         </Flex>
@@ -706,16 +743,16 @@ function Verified()
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
 
-                    {!isMobile &&
-                    <MainFunction/>
-                    }
-                    {isMobile &&
-                    <Text  fontSize="1rem"  textAlign="left"><br/>Rewards Program currently doesn't support mobile use </Text>
-                    }
+                        {!isMobile &&
+                            <MainFunction/>
+                        }
+                        {isMobile &&
+                            <Text  fontSize="1rem"  textAlign="left"><br/>Rewards Program currently doesn't support mobile use </Text>
+                        }
        
-        </WalletModalProvider>
-        </WalletProvider>
-        </ConnectionProvider>
+                    </WalletModalProvider>
+                </WalletProvider>
+            </ConnectionProvider>
         </ChakraProvider>
 
     );
