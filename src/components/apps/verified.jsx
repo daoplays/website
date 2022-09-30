@@ -30,7 +30,7 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-const PROGRAM_KEY = new PublicKey('49Ee36zLEqpLQeCmtE7HP5kki1ok6dRyjhvdsiYc9xrq');   
+const PROGRAM_KEY = new PublicKey('3MjokPePgjwAtXSdvgvLbdx5J5FUXkG4rDBuBgqHVNmc');   
 const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111'); 
 
 
@@ -67,7 +67,8 @@ const program_meta_schema = new Map([
         ['test_address', [32]],
         ['last_verified_slot', 'u64'],
         ['verified_code', 'u8'],
-        ['data_hash', [32]]
+        ['data_hash', [32]],
+        ['code_meta', [512]]
     ] 
     }]
 ]);
@@ -192,6 +193,10 @@ function MainFunction()
     const [status_code, setStatusCode] = useState(null);
     const [verified_code, setVerifiedCode] = useState(null);
 
+    const [meta_git_repo, setMetaGitRepo] = useState(null);
+    const [meta_git_commit, setMetaGitCommit] = useState(null);
+    const [meta_git_dir, setMetaGitDir] = useState(null);
+
     const [program_address, setAddress] = React.useState("")
     const [git_repo, setGitRepo] = React.useState("")
     const [git_commit, setGitCommit] = React.useState("")
@@ -222,6 +227,7 @@ function MainFunction()
      
     const init = useCallback(async () => 
     {       
+        console.log("in interval");
         if (wallet.publicKey) {
 
             let user_meta_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes(), "user_account"], PROGRAM_KEY))[0];
@@ -252,6 +258,8 @@ function MainFunction()
                 setStatusCode(status_code_struct.value);
                 setLogMessage(string);
 
+                //console.log(string);
+
                 let program_address_to_use = program_address;
 
                 if (program_address === ""){
@@ -276,7 +284,20 @@ function MainFunction()
 
                     const program_data = deserialize(program_meta_schema, ProgramMeta, program_data_account.data);
 
-                    //console.log("interval ", program_data.verified_code, network_string);
+                    let code_meta = new TextDecoder().decode(program_data.code_meta); 
+                    let repo_end = code_meta.indexOf("=======BEGIN GIT COMMIT=======");
+                    let commit_end = code_meta.indexOf("=======BEGIN GIT DIR=======");
+                    let dir_end = code_meta.indexOf("=======END GIT DIR=======");
+
+                    let git_repo = code_meta.substring(0, repo_end);
+                    let git_commit = code_meta.substring(repo_end + 31, commit_end);
+                    let git_dir = code_meta.substring(commit_end + 28, dir_end);
+
+                    setMetaGitRepo(git_repo);
+                    setMetaGitCommit(git_commit);
+                    setMetaGitDir(git_dir);
+
+                    
 
                     setVerifiedCode(program_data.verified_code);
                 }
@@ -290,10 +311,13 @@ function MainFunction()
 
     useEffect(() => 
     {
+        
         if (wallet.publicKey && !logintervalId) {
+           // console.log("in use effect with key and no logintervalid");
             logintervalId = setInterval(init, 1000);
         }
         else{
+            //console.log("in use effect without key or with logintervalid");
             clearInterval(logintervalId);
             logintervalId = null;
         }
@@ -343,7 +367,7 @@ function MainFunction()
         let program_key = new web3.PublicKey(program_address);
         let network_string = "dev_net";
 
-        console.log(network_radio);
+        //console.log(network_radio);
         let network = VerifyNetwork.dev_net;
         if (network_radio === "TestNet") {
             network = VerifyNetwork.test_net;
@@ -357,7 +381,7 @@ function MainFunction()
         let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes(), network_string], PROGRAM_KEY))[0];
         let user_meta_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes(), "user_account"], PROGRAM_KEY))[0];
 
-        console.log(rust_version, solana_version, anchor_version);
+        //console.log(rust_version, solana_version, anchor_version);
         const instruction_data = new SubmitMeta(
             { 
                 instruction: VerifyInstruction.submit_program,
@@ -498,6 +522,12 @@ function MainFunction()
                                     <AlertDescription>Verification was successful, however the program is updatable</AlertDescription>
                                 </Alert>
 
+                                <Box borderWidth='2px' borderRadius="2rem" p="1rem">
+                                    <Text>Find the code at <a style={{textDecoration: "underline"}} href={meta_git_repo}>{meta_git_repo}</a></Text>
+                                    <Text>commit: {meta_git_commit}</Text>
+                                    <Text>build directory: {meta_git_dir}</Text>
+                                </Box>
+
                             </>
                             :
 
@@ -508,6 +538,12 @@ function MainFunction()
                                     <AlertIcon />
                                     <AlertDescription>Program verified and immutable!</AlertDescription>
                                 </Alert>
+
+                                <Box borderWidth='2px' borderRadius="2rem" p="1rem">
+                                    <Text>{meta_git_repo}</Text>
+                                    <Text>{meta_git_commit}</Text>
+                                    <Text>{meta_git_dir}</Text>
+                                </Box>
 
                             </>
 
