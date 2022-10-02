@@ -645,7 +645,7 @@ function MainFunction()
                         
                             </FormControl>
                             <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
-                                <FormLabel>Directory</FormLabel>
+                                <FormLabel>Build Directory</FormLabel>
                                 <Input
                                     type="text"
                                     value={directory}
@@ -673,7 +673,7 @@ function MainFunction()
 
                         </FormControl>
                         <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
-                            <FormLabel>Directory</FormLabel>
+                            <FormLabel>Build Directory</FormLabel>
                             <Input
                                 type="text"
                                 value={directory}
