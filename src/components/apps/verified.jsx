@@ -30,7 +30,7 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-const PROGRAM_KEY = new PublicKey('6Eur9ULgxmgcK2Lk8vdCyasBLmU5HzYgmCxsYunr7U52');   
+const PROGRAM_KEY = new PublicKey('CNd6wN4en9Xvbf2e1ubb2YyCkC7J1BbbuhAGhqcdHFbi');   
 const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111'); 
 
 
