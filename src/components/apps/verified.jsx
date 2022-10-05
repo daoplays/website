@@ -190,7 +190,7 @@ function GetLogMessage()
 
                 setStatusCode(status_code_struct.value);
                 setLogMessage(string);
-                //console.log("in message interval ", string);        
+                //console.log("in message interval ", status_code_struct.value, string);        
             }
         }
     }, [wallet, connection]);
