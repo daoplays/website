@@ -30,7 +30,7 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-const PROGRAM_KEY = new PublicKey('3MjokPePgjwAtXSdvgvLbdx5J5FUXkG4rDBuBgqHVNmc');   
+const PROGRAM_KEY = new PublicKey('CNd6wN4en9Xvbf2e1ubb2YyCkC7J1BbbuhAGhqcdHFbi');   
 const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111'); 
 
 
@@ -152,6 +152,67 @@ export function AccountInfo()
 }
 
 
+let messageIntervalID;
+
+function GetLogMessage()
+{
+    const [log_message, setLogMessage] = useState(null);
+    const [status_code, setStatusCode] = useState(null);
+
+    const wallet = useWallet();
+    const { connection }  = useConnection();
+
+     
+    const init = useCallback(async () => 
+    {       
+        
+        if (wallet.publicKey) {
+
+            let user_meta_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes(), "user_account"], PROGRAM_KEY))[0];
+
+            let user_data_account = null;
+            
+            try {
+                user_data_account = await connection.getAccountInfo(user_meta_key);
+            }
+            catch(error) {
+                console.log(error);
+            }
+
+            if (user_data_account != null) {
+
+                const status_code_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(0,1));
+                const log_len_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(1,2));
+                const log_array_struct = deserialize(u8_array_scheme, my_u8_array, user_data_account.data.slice(2,257));
+                const uint8array = log_array_struct.value.slice(0,log_len_struct.value);
+
+                var string = new TextDecoder().decode(uint8array);
+
+                setStatusCode(status_code_struct.value);
+                setLogMessage(string);
+                //console.log("in message interval ", status_code_struct.value, string);        
+            }
+        }
+    }, [wallet, connection]);
+
+    useEffect(() => 
+    {
+        
+        if (wallet.publicKey && !messageIntervalID) {
+           // console.log("in use effect with key and no logintervalid");
+           messageIntervalID = setInterval(init, 1000);
+        }
+        else{
+            //console.log("in use effect without key or with logintervalid");
+            clearInterval(messageIntervalID);
+            messageIntervalID = null;
+        }
+    }, [init, wallet]); 
+
+    return { status_code, log_message };
+}
+
+
 function CustomEnvBlock({rust_version, solana_version, anchor_version})
 {
 
@@ -185,12 +246,10 @@ RUN solana config set --url https://api.devnet.solana.com`
     );
 }
 
-let logintervalId;
-
 function MainFunction()
 {
-    const [log_message, setLogMessage] = useState(null);
-    const [status_code, setStatusCode] = useState(null);
+ 
+    const { status_code, log_message } = GetLogMessage();  
     const [verified_code, setVerifiedCode] = useState(null);
 
     const [meta_git_repo, setMetaGitRepo] = useState(null);
@@ -206,9 +265,11 @@ function MainFunction()
 
 
     const [network_radio, setNetworkRadio] = React.useState('DevNet')
+    const [code_radio, setCodeRadio] = React.useState('git_repo')
 
 
-    const [rust_version, setRustVersion] = React.useState("1.63")
+
+    const [rust_version, setRustVersion] = React.useState("1.63.0")
     const [solana_version, setSolanaVersion] = React.useState("1.10.39")
     const [anchor_version, setAnchorVersion] = React.useState("0.25.0")
 
@@ -224,104 +285,6 @@ function MainFunction()
     const handleSolanaVersionChange = (e) => setSolanaVersion(e.target.value);
     const handleAnchorVersionChange = (e) => setAnchorVersion(e.target.value);
 
-     
-    const init = useCallback(async () => 
-    {       
-        console.log("in interval");
-        if (wallet.publicKey) {
-
-            let user_meta_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes(), "user_account"], PROGRAM_KEY))[0];
-
-            let user_data_account = null;
-            
-            try {
-                user_data_account = await connection.getAccountInfo(user_meta_key);
-            }
-            catch(error) {
-                console.log(error);
-            }
-
-            if (user_data_account != null) {
-
-                const status_code_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(0,1));
-                const log_len_struct = deserialize(u8_scheme, my_u8, user_data_account.data.slice(1,2));
-                const log_array_struct = deserialize(u8_array_scheme, my_u8_array, user_data_account.data.slice(2,257));
-                const uint8array = log_array_struct.value.slice(0,log_len_struct.value);
-
-                //console.log("status code ", status_code_struct.value);
-                //console.log("log len ", log_len_struct.value);
-
-                var string = new TextDecoder().decode(uint8array);
-                //console.log("string ", string);
-                //console.log("status_code ", status_code_struct.value);
-
-                setStatusCode(status_code_struct.value);
-                setLogMessage(string);
-
-                //console.log(string);
-
-                let program_address_to_use = program_address;
-
-                if (program_address === ""){
-                    program_address_to_use = string.split(/\s+/)[1];
-                }
-                try {
-
-                    let test_program_key = new web3.PublicKey(program_address_to_use)
-                    let network_string = "dev_net";
-    
-                    //console.log(network_radio);
-                    if (network_radio === "TestNet") {
-                        network_string = "test_net";
-                    }
-                    else if (network_radio === "MainNet") {
-                        network_string = "main_net";
-                    }
-
-                    let program_meta_key = (await PublicKey.findProgramAddress([test_program_key.toBytes(), network_string], PROGRAM_KEY))[0];
-
-                    let program_data_account = await connection.getAccountInfo(program_meta_key);
-
-                    const program_data = deserialize(program_meta_schema, ProgramMeta, program_data_account.data);
-
-                    let code_meta = new TextDecoder().decode(program_data.code_meta); 
-                    let repo_end = code_meta.indexOf("=======BEGIN GIT COMMIT=======");
-                    let commit_end = code_meta.indexOf("=======BEGIN GIT DIR=======");
-                    let dir_end = code_meta.indexOf("=======END GIT DIR=======");
-
-                    let git_repo = code_meta.substring(0, repo_end);
-                    let git_commit = code_meta.substring(repo_end + 31, commit_end);
-                    let git_dir = code_meta.substring(commit_end + 28, dir_end);
-
-                    setMetaGitRepo(git_repo);
-                    setMetaGitCommit(git_commit);
-                    setMetaGitDir(git_dir);
-
-                    
-
-                    setVerifiedCode(program_data.verified_code);
-                }
-                catch(error) {
-                    setVerifiedCode(null);
-                }  
-                
-            }
-        }
-    }, [wallet, connection, program_address, network_radio]);
-
-    useEffect(() => 
-    {
-        
-        if (wallet.publicKey && !logintervalId) {
-           // console.log("in use effect with key and no logintervalid");
-            logintervalId = setInterval(init, 1000);
-        }
-        else{
-            //console.log("in use effect without key or with logintervalid");
-            clearInterval(logintervalId);
-            logintervalId = null;
-        }
-    }, [init, wallet]); 
 
     const check_status = useCallback( async () => 
     {
@@ -344,7 +307,20 @@ function MainFunction()
             let program_data_account = await connection.getAccountInfo(program_meta_account);
 
             const program_data = deserialize(program_meta_schema, ProgramMeta, program_data_account.data);
-    
+
+            let code_meta = new TextDecoder().decode(program_data.code_meta); 
+            let repo_end = code_meta.indexOf("=======BEGIN GIT COMMIT=======");
+            let commit_end = code_meta.indexOf("=======BEGIN GIT DIR=======");
+            let dir_end = code_meta.indexOf("=======END GIT DIR=======");
+
+            let git_repo = code_meta.substring(0, repo_end);
+            let git_commit = code_meta.substring(repo_end + 31, commit_end);
+            let git_dir = code_meta.substring(commit_end + 28, dir_end);
+
+            setMetaGitRepo(git_repo);
+            setMetaGitCommit(git_commit);
+            setMetaGitDir(git_dir);
+
             //console.log("have code ", program_data.verified_code);
             setVerifiedCode(program_data.verified_code);
 
@@ -378,6 +354,11 @@ function MainFunction()
             network_string = "main_net";
         }
 
+        let commit = git_commit;
+        if (code_radio === "archive") {
+            commit = "";
+        }
+
         let program_meta_account = (await PublicKey.findProgramAddress([program_key.toBytes(), network_string], PROGRAM_KEY))[0];
         let user_meta_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes(), "user_account"], PROGRAM_KEY))[0];
 
@@ -388,7 +369,7 @@ function MainFunction()
                 address: program_key.toBytes(),
                 network : network,
                 git_repo: git_repo,
-                git_commit: git_commit,
+                git_commit: commit,
                 directory: directory,
                 docker_version:  "",
                 rust_version:  rust_version,
@@ -430,7 +411,7 @@ function MainFunction()
 
 
     },
-    [connection, wallet, program_address, git_repo, git_commit, directory, rust_version, solana_version, anchor_version, network_radio]
+    [connection, wallet, program_address, git_repo, git_commit, directory, rust_version, solana_version, anchor_version, network_radio, code_radio]
     );
 
     return(
@@ -562,9 +543,19 @@ function MainFunction()
                             </>
                         }
 
+                        {program_address === ""  ?
+                        <Button disabled onClick={check_status} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
+                        Check Status
+                        </Button>
+
+                        :
                         <Button onClick={check_status} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
                         Check Status
                         </Button>
+
+                        }   
+
+                     
 
                         <Divider/>
 
@@ -619,8 +610,19 @@ function MainFunction()
                         <Divider/>
 
                         <Text  fontSize="1.5rem"  textAlign="left"><b>Your Code</b>  </Text>
-                        <Text  fontSize="1rem"  textAlign="left">SolVerified currently only supports git repositories. <br/> Provide the link to the git repo, the commit to build, and the directory within where the build occurs.  If this is the root directory just enter / </Text>
+                        <Text  fontSize="1rem"  textAlign="left">Either provide the link to the git repo and the commit to build, or to a compressed archive (.zip, .tar, .gz etc), and the directory within where the build occurs.  If this is the root directory just enter / </Text>
 
+                        <Box>
+                            <RadioGroup onChange={setCodeRadio} value={code_radio}>
+                                <Stack direction='row'>
+                                    <Box><Radio value='git_repo'>Git Repo</Radio></Box>
+                                    <Box><Radio value='archive'>Archive</Radio></Box>
+                                </Stack>
+                            </RadioGroup>
+                        </Box>
+                        
+
+                        { code_radio === "git_repo" &&
                         <HStack>
                             <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"300px"}>
                                 <FormLabel>Git Repo</FormLabel>
@@ -643,7 +645,7 @@ function MainFunction()
                         
                             </FormControl>
                             <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
-                                <FormLabel>Directory</FormLabel>
+                                <FormLabel>Build Directory</FormLabel>
                                 <Input
                                     type="text"
                                     value={directory}
@@ -653,8 +655,40 @@ function MainFunction()
                         
                             </FormControl>
                         </HStack>
+
+                        
+                    }
+
+                    {code_radio === "archive" &&
+
+                        <HStack>
+                        <FormControl  mb = "1rem" mt = "1rem" id="git_repo" maxWidth={"300px"}>
+                            <FormLabel>File Location</FormLabel>
+                            <Input
+                                type="text"
+                                value={git_repo}
+                                onChange={handleGitRepoChange}
+                                
+                            />
+
+                        </FormControl>
+                        <FormControl  mb = "1rem" mt = "1rem" id="directory" maxWidth={"300px"}>
+                            <FormLabel>Build Directory</FormLabel>
+                            <Input
+                                type="text"
+                                value={directory}
+                                onChange={handleDirectoryChange}
+                                
+                            />
+
+                        </FormControl>
+                        </HStack>
                     
-                    {(directory === "" || git_commit === "" || git_repo === "" ||  program_address === "" || rust_version === "" || solana_version === "") ?
+                    }
+                    
+                    {((code_radio === "git_repo" && (directory === "" || git_commit === "" || git_repo === "")) 
+                    || (code_radio === "archive" && (directory === "" || git_repo === ""))
+                    ||  program_address === "" || rust_version === "" || solana_version === "") ?
                     <Button  disabled onClick={register_user} mb = "2rem"  mr = "1rem" width='150px' colorScheme='green' variant='solid'>
                         Verify
                     </Button>
@@ -673,51 +707,55 @@ function MainFunction()
 
 
 
-                        
-                    {verified_code === 0 || verified_code == null?
-                    <></>
+                    {status_code === 1 && 
+                    
+                    <>   
+                    {
+                        log_message.includes("not produced a match") ?
 
-                    :
+                            <>
+                                <Alert status='error'>
+                                    <AlertIcon />
+                                    <AlertDescription>Verification process has not produced a match</AlertDescription>
+                                </Alert>
 
-                    verified_code === 1 ?
+                            </>
 
-                    <>
-                        <Alert status='error'>
-                            <AlertIcon />
-                            <AlertDescription>Verification process has not produced a match</AlertDescription>
-                        </Alert>
-                        <Divider mb="1rem" mt = "1rem"/>
+                        :
 
+                        log_message.includes("upgradable") ?
+
+                            <>
+                                <Alert status='warning'>
+                                    <AlertIcon />
+                                    <AlertDescription>Verification was successful, however the program is updatable</AlertDescription>
+                                </Alert>
+
+                            </>
+
+                        :
+
+                        log_message.includes("immutable") ?
+
+                            <>
+                                <Alert status='success'>
+                                    <AlertIcon />
+                                    <AlertDescription>Program verified and immutable!</AlertDescription>
+                                </Alert>
+
+                            </>
+
+                        :
+
+                        <></>
+                    }
                     </>
-
-                    :
-
-                    verified_code === 2 ?
-
-                    <>
-                        <Alert status='warning'>
-                            <AlertIcon />
-                            <AlertDescription>Verification was successful, however the program is updatable</AlertDescription>
-                        </Alert>
-                        <Divider mb="1rem" mt = "1rem"/>
-
-                    </>
-
-                    :
-
-                    <>
-                        <Alert status='success'>
-                            <AlertIcon />
-                            <AlertDescription>Program verified and immutable!</AlertDescription>
-                        </Alert>
-                        <Divider mb="1rem" mt = "1rem"/>
-
-                    </>
-
                     }
                     
-
-                    
+                
+                    {(status_code == null || status_code === 0) &&
+                    <>
+                    {
 
                     <Box mt = "2rem">
                         {log_message == null ?
@@ -742,7 +780,9 @@ function MainFunction()
 
                     </Box>
 
-                   
+                    }
+                    </>
+            }
                 
             </>
             
