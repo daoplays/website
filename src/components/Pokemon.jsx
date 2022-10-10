@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { Link } from "react-router-dom";
 import {Card, Image} from 'react-bootstrap';
 import {IconButton, ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center, Alert, AlertIcon, Divider,
-    FormControl, Input, NumberInput, Slider, NumberInputField, SliderTrack, SliderFilledTrack, SliderThumb, Tooltip, Select, Stat, StatLabel, StatNumber, FormLabel
+    FormControl, Input, NumberInput, Slider, NumberInputField, SliderTrack, SliderFilledTrack, SliderThumb, Tooltip, Select, Stat, StatLabel, StatNumber
  } from '@chakra-ui/react';
 import { TwitchEmbed, TwitchChat} from 'react-twitch-embed';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
