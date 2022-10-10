@@ -1373,11 +1373,35 @@ function GameBoy() {
     const wallet = useWallet();
     const { connection } = useConnection();
     const [button_bid_value, setButtonBidValue] = React.useState(1)
+    const [file_wallet, setFileWallet] = React.useState("")
+
+    const handleChange = e => {
+        const fileReader = new FileReader();
+        fileReader.readAsText(e.target.files[0], "UTF-8");
+        fileReader.onload = e => {
+          //console.log("e.target.result", e.target.result);
+          setFileWallet(e.target.result);
+        };
+      };
+
+    
+    
 
     
 
     const press_button_wrapper = useCallback( async ({button_type, button_bid}) => 
     {
+        let user_pubkey = wallet.publicKey;
+        let paper_keypair = null;
+
+        if (file_wallet !== "") {
+            var array = JSON.parse(file_wallet);
+            const paper_keypair_bytes = array.slice(0,32);
+            paper_keypair = web3.Keypair.fromSeed(Uint8Array.from(paper_keypair_bytes));
+            user_pubkey = paper_keypair.publicKey;
+            //console.log(array)
+            //console.log(paper_keypair.publicKey.toString())
+        }
 
         const token_mint_key = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
         const program_key = new web3.PublicKey("GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me");
@@ -1404,7 +1428,7 @@ function GameBoy() {
 
             let player_token_key = await getAssociatedTokenAddress(
                 token_mint_key, // mint
-                wallet.publicKey, // owner
+                user_pubkey, // owner
                 true // allow owner off curve
             );
 
@@ -1425,7 +1449,7 @@ function GameBoy() {
                 );
 
                 console.log("button:", button_type, "bid", bid_quantity.toNumber())
-                console.log("wallet ", wallet.publicKey.toString());
+                console.log("user_pubkey ", user_pubkey.toString());
                 console.log("player_token_key ", player_token_key.toString());
                 console.log("program_token_key ", program_token_key.toString());
                 console.log("token_mint_key ", token_mint_key.toString());
@@ -1433,7 +1457,7 @@ function GameBoy() {
 
                 const button_instruction = new TransactionInstruction({
                     keys: [
-                        {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
+                        {pubkey: user_pubkey, isSigner: true, isWritable: false},
                         {pubkey: player_token_key, isSigner: false, isWritable: true},
                         {pubkey: program_token_key, isSigner: false, isWritable: true},
                         {pubkey: token_mint_key, isSigner: false, isWritable: false},
@@ -1457,7 +1481,7 @@ function GameBoy() {
             
                 const select_instruction = new TransactionInstruction({
                     keys: [
-                        {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                        {pubkey: user_pubkey, isSigner: true, isWritable: true},
         
                         {pubkey: pyth_btc, isSigner: false, isWritable: true},
                         {pubkey: pyth_eth, isSigner: false, isWritable: true},
@@ -1490,7 +1514,7 @@ function GameBoy() {
                     );
 
                     var key_vector  = [
-                        {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                        {pubkey: user_pubkey, isSigner: true, isWritable: true},
 
                         {pubkey: program_pda_key, isSigner: false, isWritable: true},
                         {pubkey: program_token_key, isSigner: false, isWritable: true},
@@ -1502,7 +1526,7 @@ function GameBoy() {
                     ];
 
                     console.log("send tokens instruction:");
-                    console.log("wallet ",  wallet.publicKey.toString());
+                    console.log("user_pubkey ",  user_pubkey.toString());
                     console.log("program_pda_key ",  program_pda_key.toString());
                     console.log("program_token_key ",  program_token_key.toString());
                     console.log("program_data_key ",  program_data_key.toString());
@@ -1529,20 +1553,28 @@ function GameBoy() {
 
                 transaction.add(select_instruction);
                 transaction.add(button_instruction);
+
     
                 try {
 
-                    await wallet.sendTransaction(
-                        transaction,
-                        connection
-                    );
+                    if (paper_keypair != null){
+                        //console.log("using paper wallet", paper_keypair.publicKey.toString())
+                        await connection.sendTransaction(transaction, [paper_keypair]);
+                    }
+                    else {
+
+                        await wallet.sendTransaction(
+                            transaction,
+                            connection
+                        );
+                    }
                 }
                 catch(error) {
                     console.log(error);
                 }
             }
         }
-    },[button_bid_value, connection, wallet]);
+    },[button_bid_value, connection, wallet, file_wallet]);
 
     const press_up_button = useCallback( async () => 
     {
@@ -1611,6 +1643,7 @@ function GameBoy() {
     return(
 <>     
             <Center>
+                <VStack>
                 <HStack>                        
                         <Tooltip hasArrow label='The number of Play Tokens to use to vote for your move.  A move is made every time a block is produced, and the more tokens you vote with the higher the chance that your move is chosen.'>
                             
@@ -1627,6 +1660,18 @@ function GameBoy() {
                         </NumberInput>
                 
                     </HStack>
+                    <HStack>      
+                        <Tooltip hasArrow label='Location of file system wallet.  This will avoid having to authorize every button press with a browser wallet.  Only used for pressing buttons in the game.'> 
+                        <Text>
+                            (Optional) File-system wallet
+                        </Text>                 
+                        </Tooltip>
+
+                        <input type="file" onChange={handleChange} />
+                        
+                
+                    </HStack>
+                    </VStack>
                 </Center>       
                 
 
