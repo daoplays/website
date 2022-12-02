@@ -3,7 +3,6 @@ import {Card} from 'react-bootstrap';
 import {ChakraProvider, theme, Box, HStack, Flex, Button, Spacer, Text, VStack, Center,
     FormControl, Input, NumberInput, Slider, NumberInputField, SliderTrack, SliderFilledTrack, SliderThumb, Tooltip, Select, Stat, StatLabel, StatNumber
  } from '@chakra-ui/react';
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { struct, u64, u8 } from "@project-serum/borsh";
 import BN from "bn.js";
 import Plot from 'react-plotly.js';
@@ -12,8 +11,8 @@ import { Divider, Alert, AlertIcon } from '@chakra-ui/react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 import { MdFiberManualRecord } from "react-icons/md";
-
-import * as web3 from '@solana/web3.js';
+import bs58 from "bs58";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 
 import {
     getAssociatedTokenAddress,
@@ -22,9 +21,7 @@ import {
   } from "@solana/spl-token";
   
 import {
-    ConnectionProvider,
     WalletProvider,
-    useConnection,
     useWallet,
 } from '@solana/wallet-adapter-react';
 import {
@@ -52,9 +49,11 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 
-
+let have_token_amounts = false;
+let have_charity_stats = false;
 function WalletNotConnected() 
 {
+    have_token_amounts = false;
     return (
         <>
                 <Center mb="1rem">
@@ -68,7 +67,7 @@ function WalletNotConnected()
     );
 }
 
-function WalletConnected({publicKey, tokenKey, account, token_amount, supporter_key, supporter_amount}) 
+function WalletConnected({lamports, token_amount, supporter_amount}) 
 {
 
     return (
@@ -117,8 +116,8 @@ function WalletConnected({publicKey, tokenKey, account, token_amount, supporter_
                                     <Input
                                         type="text"
                                         value={
-                                            account
-                                            ? account.lamports / web3.LAMPORTS_PER_SOL
+                                            lamports
+                                            ? lamports / LAMPORTS_PER_SOL
                                             : "Loading.."
                                         }
                                         readOnly
@@ -216,51 +215,53 @@ function GetCharityStats()
     const [donation_array, setDonationArray] = useState([]);
     const [n_donations, setNDonations] = useState(null);
 
-
-
-    const { connection } = useConnection();
-
     const init = useCallback(async () => 
     {       
         const program_key = new PublicKey('GwsxvpsHURySgnLrkMcnYuSH2Sbd4v9eZwB5ruiVxgjE');
+        if(!have_charity_stats) {
+            try {
+                let program_data_key = await PublicKey.findProgramAddress([Buffer.from("launch_account")], program_key);
 
-        try {
-          let program_data_key = await PublicKey.findProgramAddress([Buffer.from("launch_account")], program_key);
+                const url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+program_data_key[0].toString();
+                const program_data_result = await fetch(url).then((res) => res.json());
 
-          let program_data_account = await connection.getAccountInfo(program_data_key[0]);
+                let program_data = program_data_result["result"]["value"]["data"];
+                let b58_data = bs58.decode(program_data);
 
-          const newValue = deserialize(schema, Test, program_data_account.data);
-          
-          setTotalDonated(newValue["donated_total"].toNumber() / web3.LAMPORTS_PER_SOL);
+                const newValue = deserialize(schema, Test, b58_data);
+                
+                setTotalDonated(newValue["donated_total"].toNumber() / LAMPORTS_PER_SOL);
 
-          let total_paid = newValue["paid_total"].toNumber() / web3.LAMPORTS_PER_SOL;
-          let n_donations = newValue["n_donations"].toNumber();
+                let total_paid = newValue["paid_total"].toNumber() / LAMPORTS_PER_SOL;
+                let n_donations = newValue["n_donations"].toNumber();
 
-          setNDonations(n_donations);
+                setNDonations(n_donations);
 
-          let average = 0;
-          if (n_donations >  0) {
-            average = total_paid / n_donations;
-          }
-          setAveragePrice(average);
+                let average = 0;
+                if (n_donations >  0) {
+                    average = total_paid / n_donations;
+                }
+                setAveragePrice(average);
 
-          let donation_array = [
-          newValue["charity_0_total"].toNumber()/ web3.LAMPORTS_PER_SOL,
-          newValue["charity_1_total"].toNumber() / web3.LAMPORTS_PER_SOL,
-          newValue["charity_2_total"].toNumber() / web3.LAMPORTS_PER_SOL,
-          newValue["charity_3_total"].toNumber() / web3.LAMPORTS_PER_SOL,
-          newValue["charity_4_total"].toNumber() / web3.LAMPORTS_PER_SOL,
-          newValue["charity_5_total"].toNumber() / web3.LAMPORTS_PER_SOL,
-          newValue["charity_6_total"].toNumber() / web3.LAMPORTS_PER_SOL]
+                let donation_array = [
+                newValue["charity_0_total"].toNumber() / LAMPORTS_PER_SOL,
+                newValue["charity_1_total"].toNumber() / LAMPORTS_PER_SOL,
+                newValue["charity_2_total"].toNumber() / LAMPORTS_PER_SOL,
+                newValue["charity_3_total"].toNumber() / LAMPORTS_PER_SOL,
+                newValue["charity_4_total"].toNumber() / LAMPORTS_PER_SOL,
+                newValue["charity_5_total"].toNumber() / LAMPORTS_PER_SOL,
+                newValue["charity_6_total"].toNumber() / LAMPORTS_PER_SOL]
 
-          setDonationArray(donation_array);
+                setDonationArray(donation_array);
+                have_charity_stats = true;
+            }
+            catch(error) {
+                console.log(error);
+                have_charity_stats = false;
+            }   
         }
-        catch(error) {
-          console.log(error);
-      }   
 
-
-    }, [connection]);
+    }, []);
 
     useEffect(() => {
           setInterval(init, 2000);
@@ -274,74 +275,81 @@ function GetCharityStats()
   let intervalId;
   function useSolanaAccount() 
   {
-      const [account, setAccount] = useState(null);
-      const [token_pubkey, setTokenAccount] = useState(null);
+      const [lamports, setLamports] = useState(null);
       const [token_amount, setTokenAmount] = useState(null);
-      const [supporter_pubkey, setSupporterAccount] = useState(null);
       const [supporter_amount, setSupporterAmount] = useState(null);
 
-
-      const { connection } = useConnection();
       const wallet = useWallet();
   
       const init = useCallback(async () => 
       {       
-          if (wallet.publicKey) {
-              let acc = await connection.getAccountInfo(wallet.publicKey);
-              setAccount(acc);
 
-                const mintAccount = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
+          if (!have_token_amounts && wallet.publicKey) {
+
+                const url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+wallet.publicKey.toString();
+                const program_data_result = await fetch(url).then((res) => res.json());
+                let lamports_amount = program_data_result["result"]["value"]["lamports"];
+                setLamports(lamports_amount);
+
+                const mintAccount = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
                 
                 let token_pubkey = await getAssociatedTokenAddress(
                     mintAccount, // mint
                     wallet.publicKey, // owner
                     false // allow owner off curve
                 );
-                setTokenAccount(token_pubkey);
                 try {
-                    let aWalletMyTokenBalance = await connection.getTokenAccountBalance(
-                        token_pubkey
-                    );
-                    let token_amount = aWalletMyTokenBalance["value"].amount;
-                    let decimals = aWalletMyTokenBalance["value"].decimals;
+
+                    const url = `/.netlify/functions/solana_main?function_name=getTokenAccountBalance&p1=`+token_pubkey.toString();
+                    const token_data_result = await fetch(url).then((res) => res.json());
+
+                    let token_amount = token_data_result["result"]["value"]["amount"];
+                    let decimals = token_data_result["result"]["value"]["decimals"];
+
                     let token_decs = token_amount / 10.0**decimals;
                     setTokenAmount(token_decs)
+                    have_token_amounts = true;
                 }
                 catch(error) {
                     console.log(error);
                     setTokenAmount(null)
+                    have_token_amounts = false;
                 }   
 
-                const supporter_mintAccount = new web3.PublicKey("7B1yoU3EsbABt1kNXcJLeJRT8jwPy9rZfhrhWzuCA9Fq");
+                const supporter_mintAccount = new PublicKey("7B1yoU3EsbABt1kNXcJLeJRT8jwPy9rZfhrhWzuCA9Fq");
                 
                 let supporter_pubkey = await getAssociatedTokenAddress(
                     supporter_mintAccount, // mint
                     wallet.publicKey, // owner
                     false // allow owner off curve
                 );
-                setSupporterAccount(supporter_pubkey);
                 try {
-                    let aWalletMyTokenBalance = await connection.getTokenAccountBalance(
-                        supporter_pubkey
-                    );
-                    let token_amount = aWalletMyTokenBalance["value"].amount;
-                    let decimals = aWalletMyTokenBalance["value"].decimals;
+
+                    const url = `/.netlify/functions/solana_main?function_name=getTokenAccountBalance&p1=`+supporter_pubkey.toString();
+                    const token_data_result = await fetch(url).then((res) => res.json());
+
+                    let token_amount = token_data_result["result"]["value"]["amount"];
+                    let decimals = token_data_result["result"]["value"]["decimals"];
+
                     let token_decs = token_amount / 10.0**decimals;
                     setSupporterAmount(token_decs)
+                    have_token_amounts = true;
                 }
                 catch(error) {
                     console.log(error);
-                    setSupporterAmount(null)
+                    setSupporterAmount(null);
+                    have_token_amounts = false;
                 }   
           }
-
+        
  
   
-      }, [wallet, connection]);
+      }, [wallet]);
   
       useEffect(() => 
       {
           if (wallet.publicKey && !intervalId) {
+            
               intervalId = setInterval(init, 2000);
           }
           else{
@@ -350,8 +358,9 @@ function GetCharityStats()
           }
       }, [init, wallet]);
   
-      return { account, token_pubkey, token_amount, supporter_pubkey, supporter_amount };
+      return { lamports, token_amount, supporter_amount };
   }
+
 
   function StatsBlock({total_donated, n_donations, average_price})
   {
@@ -541,10 +550,9 @@ function CharityInfoBlock({which_charity})
   export function AirDropApp() 
   {
       const wallet = useWallet();
-      const { connection } = useConnection();
       const { total_donated, donation_array, average_price, n_donations } = GetCharityStats();
 
-      const { account, token_pubkey, token_amount, supporter_pubkey, supporter_amount} = useSolanaAccount();
+      const { lamports, token_amount, supporter_amount} = useSolanaAccount();
 
       const [slide_value, setSlideValue] = React.useState(90)
       const [which_charity, setWhichCharity] = React.useState("")
@@ -568,11 +576,11 @@ function CharityInfoBlock({which_charity})
             let dao_amount = parseFloat(((100-slide_value) * sol_value * 0.01).toFixed(4));
 
             const data = Buffer.alloc(ICOData.span);
-            let ch_bn = new BN(charity_amount* web3.LAMPORTS_PER_SOL, 10);
-            let dao_bn = new BN(dao_amount* web3.LAMPORTS_PER_SOL, 10);
+            let ch_bn = new BN(charity_amount* LAMPORTS_PER_SOL, 10);
+            let dao_bn = new BN(dao_amount* LAMPORTS_PER_SOL, 10);
 
-            console.log("charity : ", charity_amount, charity_amount * web3.LAMPORTS_PER_SOL, ch_bn.toNumber());
-            console.log("dao : ", dao_amount,  dao_amount * web3.LAMPORTS_PER_SOL, dao_bn.toNumber());
+            console.log("charity : ", charity_amount, charity_amount * LAMPORTS_PER_SOL, ch_bn.toNumber());
+            console.log("dao : ", dao_amount,  dao_amount * LAMPORTS_PER_SOL, dao_bn.toNumber());
 
 
             let charity_key = new PublicKey('E6TPLh77cx9b5aWsmxM8geit2PBLVEBVAvF6ye9Qe4ZQ');
@@ -616,10 +624,10 @@ function CharityInfoBlock({which_charity})
                 data
             );
 
-            const token_mint_key = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
-            const supporters_token_mint_key = new web3.PublicKey("7B1yoU3EsbABt1kNXcJLeJRT8jwPy9rZfhrhWzuCA9Fq");
+            const token_mint_key = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
+            const supporters_token_mint_key = new PublicKey("7B1yoU3EsbABt1kNXcJLeJRT8jwPy9rZfhrhWzuCA9Fq");
 
-            const daoplays_key = new web3.PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
+            const daoplays_key = new PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
             const program_key = new PublicKey('GwsxvpsHURySgnLrkMcnYuSH2Sbd4v9eZwB5ruiVxgjE');
             const SYSTEM_PROGRAM_ID = new PublicKey(
                 '11111111111111111111111111111111',
@@ -678,26 +686,30 @@ function CharityInfoBlock({which_charity})
             });
     
             try {
-                let signature = await wallet.sendTransaction(
-                    new Transaction().add(ico_instruction),
-                    connection
-                );
-        
-                await connection.confirmTransaction(signature, 'processed');
-        
-                var response = null;
-                while (response == null) {
-                    response = await connection.getTransaction(signature);
-                }   
-        
-                console.log("result: ", response);
+
+
+                const url = `/.netlify/functions/solana_main?function_name=getLatestBlockhash&p1=`;
+                const blockhash_data_result = await fetch(url).then((res) => res.json());
+                let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+                let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+                const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+                let transaction = new Transaction(txArgs).add(ico_instruction);
+                transaction.feePayer = wallet.publicKey;
+
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                const send_url = `/.netlify/functions/solana_main?function_name=sendTransaction&p1=`+encoded_transaction;
+                await fetch(send_url).then((res) => res.json());
+                
             }catch(error) {
                 console.log(error);
             }
         
 
       },
-      [connection, wallet, sol_value, slide_value, which_charity]
+      [wallet, sol_value, slide_value, which_charity]
       );
   
       return (
@@ -753,7 +765,7 @@ function CharityInfoBlock({which_charity})
             </Flex>
             <Divider mt="2rem" mb="2rem"/>
 
-            {wallet.publicKey &&  <WalletConnected publicKey={wallet.publicKey} tokenKey={token_pubkey} account={account} token_amount={token_amount} supporter_key={supporter_pubkey} supporter_amount={supporter_amount}/>}
+            {wallet.publicKey &&  <WalletConnected lamports={lamports} token_amount={token_amount} supporter_amount={supporter_amount}/>}
 
             {wallet.publicKey && 
 
@@ -895,10 +907,15 @@ function CharityInfoBlock({which_charity})
                             }
                             {
                                 token_amount > 0 &&
+                                <>
                                 <Alert status='success'>
                                     <AlertIcon />
                                     Thank you for taking part in the DaoPlays Token Launch!
                                 </Alert>
+                                <Button onClick={join_ico}  width='100px' colorScheme='green' variant='solid'>
+                                Join!
+                                </Button>
+                                </>
                             }
                         </Box>
 
@@ -917,8 +934,8 @@ function CharityInfoBlock({which_charity})
 
 export function PokeTokenLaunch()
 {
+
     const network = 'mainnet-beta';
-    const endpoint = web3.clusterApiUrl(network);
     const wallets = useMemo(() => 
     [
         getPhantomWallet(),
@@ -931,15 +948,11 @@ export function PokeTokenLaunch()
 
     return(
         <ChakraProvider theme={theme}>
-            <ConnectionProvider endpoint={endpoint}>
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
-
                         <AirDropApp/>
-
                     </WalletModalProvider>
                 </WalletProvider>
-            </ConnectionProvider>
         </ChakraProvider>
 
     );
