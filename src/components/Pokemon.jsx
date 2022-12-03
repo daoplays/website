@@ -5,7 +5,6 @@ import {IconButton, ChakraProvider, theme, Box, HStack, Flex, Button, Text, VSta
     FormControl, Input, NumberInput, Slider, NumberInputField, SliderTrack, SliderFilledTrack, SliderThumb, Tooltip, Select, Stat, StatLabel, StatNumber
  } from '@chakra-ui/react';
 import { TwitchEmbed, TwitchChat} from 'react-twitch-embed';
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { struct, u64, u8 } from "@project-serum/borsh";
 import BN from "bn.js";
 import { deserialize } from 'borsh';
@@ -13,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 import { MdFiberManualRecord } from "react-icons/md";
 import Plot from 'react-plotly.js';
+import bs58 from "bs58";
 
 import badge_1 from "./pokemon/badge_1_boulder.png"
 import badge_2 from "./pokemon/badge_2_cascade.png"
@@ -31,8 +31,7 @@ import LifeYouCanSave_img from "./blog/posts/4_CharityICO/thelifeyoucansave_logo
 import OneTreePlanted_img from "./blog/posts/4_CharityICO/onetreeplanted_logo.jpg"
 import Outright_img from "./blog/posts/4_CharityICO/outrightaction_logo.jpg"
 
-
-import * as web3 from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 
 import {
     getAssociatedTokenAddress,
@@ -41,9 +40,7 @@ import {
   } from "@solana/spl-token";
   
 import {
-    ConnectionProvider,
     WalletProvider,
-    useConnection,
     useWallet,
 } from '@solana/wallet-adapter-react';
 import {
@@ -61,9 +58,12 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 
-
+let have_token_amounts = false;
+let have_charity_stats = false;
+let have_bidder_stats = false;
 function WalletNotConnected() 
 {
+    have_token_amounts = false;
     return (
         <Box mb  = "10px"  mt = "1rem">
             
@@ -234,55 +234,61 @@ function GetCharityStats()
     const [donation_array, setDonationArray] = useState([]);
     const [n_donations, setNDonations] = useState(null);
 
-
-
-    const { connection } = useConnection();
-
     const init = useCallback(async () => 
     {       
         const launch_program_key = new PublicKey('GwsxvpsHURySgnLrkMcnYuSH2Sbd4v9eZwB5ruiVxgjE');
         const auction_program_data_key = new PublicKey('77k4yGn6V8gDszdKMTvjwBSLiJAUHbNB493wEXMEiqfP');
 
+        let launch_program_data_key = await PublicKey.findProgramAddress([Buffer.from("launch_account")], launch_program_key);
+
+        if (!have_charity_stats) {
+            try {
+                
+                const auction_account_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+auction_program_data_key.toString()+`&p2=base64`;
+                const auction_account_result = await fetch(auction_account_url).then((res) => res.json());
+
+                let auction_account_encoded_data = auction_account_result["result"]["value"]["data"];
+                let auction_account_data = Buffer.from(auction_account_encoded_data[0], "base64");
+               
+                
+                const launch_account_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+launch_program_data_key[0].toString()+`&p2=base64`;;
+                const launch_account_result = await fetch(launch_account_url).then((res) => res.json());
+
+                let launch_account_encoded_data = launch_account_result["result"]["value"]["data"];
+                let launch_account_data = Buffer.from(launch_account_encoded_data[0], "base64");
+
+                const launch_data = deserialize(schema, Test, launch_account_data);
+                const auction_data = deserialize(schema, Test, auction_account_data.slice(49299, 49379));
+
+                let total_donated = (launch_data["donated_total"].toNumber() + auction_data["donated_total"].toNumber()) / LAMPORTS_PER_SOL;
+
+                setTotalDonated(total_donated);
+
+                let n_donations = launch_data["n_donations"].toNumber() + auction_data["n_donations"].toNumber();
+
+                setNDonations(n_donations);
 
 
-        try {
-            if (connection) {
-            
-            let auction_data_account = await connection.getAccountInfo(auction_program_data_key);
+                let donation_array = [
+                    (launch_data["charity_0_total"].toNumber() + auction_data["charity_0_total"].toNumber()) / LAMPORTS_PER_SOL,
+                    (launch_data["charity_1_total"].toNumber() + auction_data["charity_1_total"].toNumber()) / LAMPORTS_PER_SOL,
+                    (launch_data["charity_2_total"].toNumber() + auction_data["charity_2_total"].toNumber()) / LAMPORTS_PER_SOL,
+                    (launch_data["charity_3_total"].toNumber() + auction_data["charity_3_total"].toNumber()) / LAMPORTS_PER_SOL,
+                    (launch_data["charity_4_total"].toNumber() + auction_data["charity_4_total"].toNumber()) / LAMPORTS_PER_SOL,
+                    (launch_data["charity_5_total"].toNumber() + auction_data["charity_5_total"].toNumber()) / LAMPORTS_PER_SOL,
+                    (launch_data["charity_6_total"].toNumber() + auction_data["charity_6_total"].toNumber()) / LAMPORTS_PER_SOL]
 
-            let launch_program_data_key = await PublicKey.findProgramAddress([Buffer.from("launch_account")], launch_program_key);
-            let launch_program_data_account = await connection.getAccountInfo(launch_program_data_key[0]);
-
-            const launch_data = deserialize(schema, Test, launch_program_data_account.data);
-            const auction_data = deserialize(schema, Test, auction_data_account.data.slice(49299, 49379));
-
-            let total_donated = (launch_data["donated_total"].toNumber() + auction_data["donated_total"].toNumber()) / web3.LAMPORTS_PER_SOL;
-
-            setTotalDonated(total_donated);
-
-            let n_donations = launch_data["n_donations"].toNumber() + auction_data["n_donations"].toNumber();
-
-            setNDonations(n_donations);
-
-
-          let donation_array = [
-            (launch_data["charity_0_total"].toNumber() + auction_data["charity_0_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_1_total"].toNumber() + auction_data["charity_1_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_2_total"].toNumber() + auction_data["charity_2_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_3_total"].toNumber() + auction_data["charity_3_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_4_total"].toNumber() + auction_data["charity_4_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_5_total"].toNumber() + auction_data["charity_5_total"].toNumber()) / web3.LAMPORTS_PER_SOL,
-            (launch_data["charity_6_total"].toNumber() + auction_data["charity_6_total"].toNumber()) / web3.LAMPORTS_PER_SOL]
-
-          setDonationArray(donation_array);
+                setDonationArray(donation_array);
+                have_charity_stats = true;
+                
             }
+            catch(error) {
+                console.log(error);
+                have_charity_stats = false;
+            }   
         }
-        catch(error) {
-          console.log(error);
-      }   
 
-
-    }, [connection]);
+    }, []);
 
     useEffect(() => {
           setInterval(init, 3000);
@@ -305,18 +311,22 @@ function GetBidderStats()
 
 
     const wallet = useWallet();
-    const { connection } = useConnection();
 
     const init = useCallback(async () => 
     {       
         const program_key = new PublicKey('GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me');
-        const daoplays_key = new web3.PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
-        const token_mint_key = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
+        const daoplays_key = new PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
+        const token_mint_key = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
         //console.log("in biddata");
         try {
-            if (connection) {
+            if (!have_bidder_stats) {
                 let program_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", program_key));
-                let program_data_account = await connection.getAccountInfo(program_data_key);
+                const program_account_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+program_data_key.toString()+`&p2=base64`;
+                const program_account_result = await fetch(program_account_url).then((res) => res.json());
+                let program_account_encoded_data = program_account_result["result"]["value"]["data"];
+                let program_account_data = Buffer.from(program_account_encoded_data[0], "base64");
+
+
                 let program_pda_key = (await PublicKey.findProgramAddress(["token_account"], program_key))[0];
 
                 
@@ -327,17 +337,25 @@ function GetBidderStats()
                     true // allow owner off curve
                 );
 
-                let aWalletMyTokenBalance = await connection.getTokenAccountBalance(
-                    program_token_key
-                );
 
-                const n_bidders_struct = deserialize(u16_scheme, my_u16, program_data_account.data.slice(8,10));
-                const total_bid_amount_struct = deserialize(u64_scheme, my_u64, program_data_account.data.slice(10,18));
-                const n_winners_struct = deserialize(u8_scheme, my_u8, program_data_account.data.slice(49170,49171));
-                const last_selected_struct = deserialize(u64_scheme, my_u64, program_data_account.data.slice(0,8));
+                const token_url = `/.netlify/functions/solana_main?function_name=getTokenAccountBalance&p1=`+program_token_key.toString();
+                const token_data_result = await fetch(token_url).then((res) => res.json());
+                try {
+                    setTokensRemaining(token_data_result["result"]["value"]["amount"]);
+                }
+                catch(error) {
+                    console.log(token_data_result);
+                    console.log(error);
+                }   
+            
 
-                setTokensRemaining(aWalletMyTokenBalance.value.amount);
-                setTotalBid(total_bid_amount_struct.value.toNumber() / web3.LAMPORTS_PER_SOL);
+                const n_bidders_struct = deserialize(u16_scheme, my_u16, program_account_data.slice(8,10));
+                const total_bid_amount_struct = deserialize(u64_scheme, my_u64, program_account_data.slice(10,18));
+                const n_winners_struct = deserialize(u8_scheme, my_u8, program_account_data.slice(49170,49171));
+                const last_selected_struct = deserialize(u64_scheme, my_u64, program_account_data.slice(0,8));
+
+                
+                setTotalBid(total_bid_amount_struct.value.toNumber() / LAMPORTS_PER_SOL);
                 setNBidders(n_bidders_struct.value);
 
                 let ts = last_selected_struct.value.toNumber();
@@ -347,8 +365,9 @@ function GetBidderStats()
                 if (wallet.publicKey) {
 
                     let bidder_pda_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], program_key))[0];
-                    let bidder_data_account = await connection.getAccountInfo(bidder_pda_key);
-
+                    const bidder_account_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+bidder_pda_key.toString()+`&p2=base64`;
+                    const bidder_account_result = await fetch(bidder_account_url).then((res) => res.json());
+                    
                 
                 
                     let bidder_token_key = await getAssociatedTokenAddress(
@@ -357,26 +376,32 @@ function GetBidderStats()
                         false // allow owner off curve
                     );
 
-                    if (bidder_data_account) {
-                        const bidder_data_struct = deserialize(u16_scheme, my_u16, bidder_data_account.data);        
+                    try {
+                        let bidder_account_encoded_data = bidder_account_result["result"]["value"]["data"];
+                        let bidder_account_data = Buffer.from(bidder_account_encoded_data[0], "base64");
+
+                        //console.log(bidder_account_encoded_data);
+                        //console.log(bidder_account_data);
+
+                        const bidder_data_struct = deserialize(u16_scheme, my_u16, bidder_account_data);        
                         let key_start_index = 18 + bidder_data_struct.value * 32;
-                        const bid_key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_data_account.data.slice(key_start_index, key_start_index + 32)).value);
+                        const bid_key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_account_data.slice(key_start_index, key_start_index + 32)).value);
 
                         let bid_start_index = 32786 + bidder_data_struct.value * 8;
-                        const bid_amount = deserialize(u64_scheme, my_u64, program_data_account.data.slice(bid_start_index, bid_start_index + 8));
+                        const bid_amount = deserialize(u64_scheme, my_u64, program_account_data.slice(bid_start_index, bid_start_index + 8));
 
 
                         let time_start_index = 40978 + bidder_data_struct.value * 8;
-                        const bid_time = deserialize(u64_scheme, my_u64, program_data_account.data.slice(time_start_index, time_start_index + 8)).value.toNumber();
+                        const bid_time = deserialize(u64_scheme, my_u64, program_account_data.slice(time_start_index, time_start_index + 8)).value.toNumber();
 
                         if (bid_key.toString() === bidder_token_key.toString()) {
-                            setCurrentBid(bid_amount.value.toNumber() / web3.LAMPORTS_PER_SOL);
-                            //console.log("bidder position", bidder_data_struct.value, "bid amount", bid_amount.value.toNumber() / web3.LAMPORTS_PER_SOL);
+                            setCurrentBid(bid_amount.value.toNumber() / LAMPORTS_PER_SOL);
+                            //console.log("bidder position", bidder_data_struct.value, "bid amount", bid_amount.value.toNumber() / LAMPORTS_PER_SOL);
 
                             let age_count = 0;
                             for (let i = 0; i < 1024; i++) {
                                 let time_start_index = 40978 + i * 8;
-                                const one_time = deserialize(u64_scheme, my_u64, program_data_account.data.slice(time_start_index, time_start_index + 8)).value.toNumber();
+                                const one_time = deserialize(u64_scheme, my_u64, program_account_data.slice(time_start_index, time_start_index + 8)).value.toNumber();
                                 //console.log(i, one_time, bid_time, age_count);
                                 if (one_time < bid_time) {
                                     age_count += 1;
@@ -388,14 +413,14 @@ function GetBidderStats()
                         }
                         else {
                             setCurrentBid(0);
-                            //console.log("no bid ", bid_amount.value.toNumber() / web3.LAMPORTS_PER_SOL);
+                            //console.log("no bid ", bid_amount.value.toNumber() / LAMPORTS_PER_SOL);
 
                         }
 
                         let is_winner = false;
                         for (let i = 0; i < n_winners_struct.value; i++) {
                             let key_start_index = 49171 + i * 32;
-                            const winner_key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_data_account.data.slice(key_start_index, key_start_index + 32)).value);
+                            const winner_key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_account_data.slice(key_start_index, key_start_index + 32)).value);
 
                             if (winner_key.toString() === bidder_token_key.toString()) {
                                 is_winner = true;
@@ -404,20 +429,24 @@ function GetBidderStats()
                         }
                         setIsWinner(is_winner);
                     }
-                    else{
+                    catch(error) {
+                        console.log(bidder_account_result);
+                        console.log(error);
                         setCurrentBid(0);
                     }
                 }
                 
 
             }
+            have_bidder_stats = true;
         }
         catch(error) {
           console.log(error);
+          have_bidder_stats = false;
       }   
 
 
-    }, [connection, wallet]);
+    }, [wallet]);
 
     useEffect(() => {
         if (wallet.publicKey && !bid_intervalId) {
@@ -641,9 +670,7 @@ function StatsBlock()
 
 function GetTokens() {
     const wallet = useWallet();
-    const { connection } = useConnection();
     
-
     const [slide_value, setSlideValue] = React.useState(90)
     const [which_charity, setWhichCharity] = React.useState("")
 
@@ -664,251 +691,276 @@ function GetTokens() {
   
     const join_ico = useCallback( async () => 
     {
-          console.log("Sol value:", sol_value);
-          console.log("Slide value:", slide_value);
+            //console.log("Sol value:", sol_value);
+            //console.log("Slide value:", slide_value);
 
-          const token_mint_key = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");      
-          const daoplays_key = new web3.PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
-          const pyth_btc = new web3.PublicKey("GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU");
-          const pyth_eth = new web3.PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB");
-          const pyth_sol = new web3.PublicKey("H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG");
-          const program_key = new PublicKey('GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me');   
-          const SYSTEM_PROGRAM_ID = new PublicKey(
-              '11111111111111111111111111111111',
-          );          
-      
-          let program_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", program_key));
-          let program_data_account = await connection.getAccountInfo(program_data_key);
-          let program_pda_key = (await PublicKey.findProgramAddress(["token_account"], program_key))[0];
+            const token_mint_key = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");      
+            const daoplays_key = new PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
+            const pyth_btc = new PublicKey("GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU");
+            const pyth_eth = new PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB");
+            const pyth_sol = new PublicKey("H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG");
+            const program_key = new PublicKey('GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me');   
+            const SYSTEM_PROGRAM_ID = new PublicKey(
+                '11111111111111111111111111111111',
+            );          
+        
+            let program_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", program_key));
+            const program_account_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+program_data_key.toString()+`&p2=base64`;
+            const program_account_result = await fetch(program_account_url).then((res) => res.json());
+            let program_account_encoded_data = program_account_result["result"]["value"]["data"];
+            let program_account_data = Buffer.from(program_account_encoded_data[0], "base64");
 
-          let program_token_key = await getAssociatedTokenAddress(
-              token_mint_key, // mint
-              program_pda_key, // owner
-              true // allow owner off curve
-          );
+            let program_pda_key = (await PublicKey.findProgramAddress(["token_account"], program_key))[0];
 
-          let joiner_token_key = await getAssociatedTokenAddress(
-              token_mint_key, // mint
-              wallet.publicKey, // owner
-              false // allow owner off curve
-          );
-      
-          let bidder_pda_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], program_key))[0];
+            let program_token_key = await getAssociatedTokenAddress(
+                token_mint_key, // mint
+                program_pda_key, // owner
+                true // allow owner off curve
+            );
 
-          let charity_key = new PublicKey('E6TPLh77cx9b5aWsmxM8geit2PBLVEBVAvF6ye9Qe4ZQ');
-          let chosen_charity = Charity.UkraineERF;
-          if(which_charity === "UkraineERF") {
-              chosen_charity = Charity.UkraineERF;
-              charity_key = new PublicKey('E6TPLh77cx9b5aWsmxM8geit2PBLVEBVAvF6ye9Qe4ZQ');
-          }
-          else if(which_charity === "WaterOrg"){
-              chosen_charity = Charity.WaterOrg;
-              charity_key = new PublicKey('5UNSVwtiSdfsCbJokL4fHtzV28mVNi8fQkMjPQw6v7Xd');
-          }
-          else if(which_charity === "OneTreePlanted"){
-              chosen_charity = Charity.OneTreePlanted;
-              charity_key = new PublicKey('GeCaNYhRswBFoTxtNaf9wKYJEBZoxHa9Fao6aQKzDDo2');
-          }
-          else if(which_charity === "EvidenceAction"){
-              chosen_charity = Charity.EvidenceAction;
-              charity_key = new PublicKey('9fF5EQV6FVy7V5SaHBXfAaTUBvuyimQ9X3jarc2mRHzi');
-          }
-          else if(which_charity === "GirlsWhoCode"){
-              chosen_charity = Charity.GirlsWhoCode;
-              charity_key = new PublicKey('5qrmDeRFhBTnEkqJsRKJAkTJzrZnyC9bWmRhL6RZqWt1');
-          }
-          else if(which_charity === "OutrightActionInt"){
-              chosen_charity = Charity.OutrightActionInt;
-              charity_key = new PublicKey('AiY4t79umvBqGvR43f5rL8jR8F2JZwG87mB55adAF2cf');
-          }
-          else if(which_charity === "TheLifeYouCanSave"){
-              chosen_charity = Charity.TheLifeYouCanSave;
-              charity_key = new PublicKey('8qQpHYjLkNiKvLtFzrjzgFZfveNJZ9AnQuBUoQj1t3DB');
-          }
+            let joiner_token_key = await getAssociatedTokenAddress(
+                token_mint_key, // mint
+                wallet.publicKey, // owner
+                false // allow owner off curve
+            );
+        
+            let bidder_pda_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], program_key))[0];
 
-          let charity_amount = parseFloat((slide_value * sol_value * 0.01).toFixed(4));
-          let dao_amount = parseFloat(((100-slide_value) * sol_value * 0.01).toFixed(4));
+            let charity_key = new PublicKey('E6TPLh77cx9b5aWsmxM8geit2PBLVEBVAvF6ye9Qe4ZQ');
+            let chosen_charity = Charity.UkraineERF;
+            if(which_charity === "UkraineERF") {
+                chosen_charity = Charity.UkraineERF;
+                charity_key = new PublicKey('E6TPLh77cx9b5aWsmxM8geit2PBLVEBVAvF6ye9Qe4ZQ');
+            }
+            else if(which_charity === "WaterOrg"){
+                chosen_charity = Charity.WaterOrg;
+                charity_key = new PublicKey('5UNSVwtiSdfsCbJokL4fHtzV28mVNi8fQkMjPQw6v7Xd');
+            }
+            else if(which_charity === "OneTreePlanted"){
+                chosen_charity = Charity.OneTreePlanted;
+                charity_key = new PublicKey('GeCaNYhRswBFoTxtNaf9wKYJEBZoxHa9Fao6aQKzDDo2');
+            }
+            else if(which_charity === "EvidenceAction"){
+                chosen_charity = Charity.EvidenceAction;
+                charity_key = new PublicKey('9fF5EQV6FVy7V5SaHBXfAaTUBvuyimQ9X3jarc2mRHzi');
+            }
+            else if(which_charity === "GirlsWhoCode"){
+                chosen_charity = Charity.GirlsWhoCode;
+                charity_key = new PublicKey('5qrmDeRFhBTnEkqJsRKJAkTJzrZnyC9bWmRhL6RZqWt1');
+            }
+            else if(which_charity === "OutrightActionInt"){
+                chosen_charity = Charity.OutrightActionInt;
+                charity_key = new PublicKey('AiY4t79umvBqGvR43f5rL8jR8F2JZwG87mB55adAF2cf');
+            }
+            else if(which_charity === "TheLifeYouCanSave"){
+                chosen_charity = Charity.TheLifeYouCanSave;
+                charity_key = new PublicKey('8qQpHYjLkNiKvLtFzrjzgFZfveNJZ9AnQuBUoQj1t3DB');
+            }
 
-          const data = Buffer.alloc(BidData.span);
-          let ch_bn = new BN(charity_amount* web3.LAMPORTS_PER_SOL, 10);
-          let dao_bn = new BN(dao_amount* web3.LAMPORTS_PER_SOL, 10);
+            let charity_amount = parseFloat((slide_value * sol_value * 0.01).toFixed(4));
+            let dao_amount = parseFloat(((100-slide_value) * sol_value * 0.01).toFixed(4));
 
-          console.log("charity : ", charity_amount, charity_amount * web3.LAMPORTS_PER_SOL, ch_bn.toNumber());
-          console.log("dao : ", dao_amount,  dao_amount * web3.LAMPORTS_PER_SOL, dao_bn.toNumber());
+            const data = Buffer.alloc(BidData.span);
+            let ch_bn = new BN(charity_amount* LAMPORTS_PER_SOL, 10);
+            let dao_bn = new BN(dao_amount* LAMPORTS_PER_SOL, 10);
+
+            //console.log("charity : ", charity_amount, charity_amount * LAMPORTS_PER_SOL, ch_bn.toNumber());
+            //console.log("dao : ", dao_amount,  dao_amount * LAMPORTS_PER_SOL, dao_bn.toNumber());
 
 
-          BidData.encode(
-              {
-                  instruction: AuctionInstruction.place_bid,
-                  amount_charity: ch_bn,
-                  amount_daoplays: dao_bn,
-                  charity: chosen_charity
-              },
-              data
-          );
+            BidData.encode(
+                {
+                    instruction: AuctionInstruction.place_bid,
+                    amount_charity: ch_bn,
+                    amount_daoplays: dao_bn,
+                    charity: chosen_charity
+                },
+                data
+            );
 
               
 
 
-          console.log("wallet: ",  wallet.publicKey.toString());
-          console.log("joiner token: ", joiner_token_key.toString());
-          console.log("bidder pda: ", bidder_pda_key.toString());
-          console.log("daoplays: ", daoplays_key.toString());
-          console.log("charity: ", charity_key.toString());
-          console.log("program data: ", program_data_key.toString());
-          console.log("program token: ", program_token_key.toString());
-          console.log("token mint: ", token_mint_key.toString());
+            /*console.log("wallet: ",  wallet.publicKey.toString());
+            console.log("joiner token: ", joiner_token_key.toString());
+            console.log("bidder pda: ", bidder_pda_key.toString());
+            console.log("daoplays: ", daoplays_key.toString());
+            console.log("charity: ", charity_key.toString());
+            console.log("program data: ", program_data_key.toString());
+            console.log("program token: ", program_token_key.toString());
+            console.log("token mint: ", token_mint_key.toString());*/
 
 
-          const bid_instruction = new TransactionInstruction({
-              keys: [
-                  {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-                  {pubkey: joiner_token_key, isSigner: false, isWritable: true},
-                  {pubkey: bidder_pda_key, isSigner: false, isWritable: true},
- 
-                  {pubkey: daoplays_key, isSigner: false, isWritable: true},
-                  {pubkey: charity_key, isSigner: false, isWritable: true},
+            const bid_instruction = new TransactionInstruction({
+                keys: [
+                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                    {pubkey: joiner_token_key, isSigner: false, isWritable: true},
+                    {pubkey: bidder_pda_key, isSigner: false, isWritable: true},
+    
+                    {pubkey: daoplays_key, isSigner: false, isWritable: true},
+                    {pubkey: charity_key, isSigner: false, isWritable: true},
 
-                  {pubkey: program_data_key, isSigner: false, isWritable: true},
-                  {pubkey: program_token_key, isSigner: false, isWritable: true},
+                    {pubkey: program_data_key, isSigner: false, isWritable: true},
+                    {pubkey: program_token_key, isSigner: false, isWritable: true},
 
-                  {pubkey: token_mint_key, isSigner: false, isWritable: false},
+                    {pubkey: token_mint_key, isSigner: false, isWritable: false},
 
-                  {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
-                  {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
-                  {pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false}
+                    {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+                    {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+                    {pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false}
 
-              ],
-              programId: program_key,
-              data: data
-          });
+                ],
+                programId: program_key,
+                data: data
+            });
 
 
-          const select_data = Buffer.alloc(SelectData.span);
-          SelectData.encode(
-              {
-                  instruction: AuctionInstruction.select_winners
-              },
-              select_data
-          );
+            const select_data = Buffer.alloc(SelectData.span);
+            SelectData.encode(
+                {
+                    instruction: AuctionInstruction.select_winners
+                },
+                select_data
+            );
 
 
           
-          const select_instruction = new TransactionInstruction({
-              keys: [
-                  {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-  
-                  {pubkey: pyth_btc, isSigner: false, isWritable: true},
-                  {pubkey: pyth_eth, isSigner: false, isWritable: true},
-                  {pubkey: pyth_sol, isSigner: false, isWritable: true},
-  
-                  {pubkey: program_data_key, isSigner: false, isWritable: true},
-                  {pubkey: program_token_key, isSigner: false, isWritable: true}
-  
-              ],
-              programId: program_key,
-              data: select_data
-          });
+            const select_instruction = new TransactionInstruction({
+                keys: [
+                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+    
+                    {pubkey: pyth_btc, isSigner: false, isWritable: true},
+                    {pubkey: pyth_eth, isSigner: false, isWritable: true},
+                    {pubkey: pyth_sol, isSigner: false, isWritable: true},
+    
+                    {pubkey: program_data_key, isSigner: false, isWritable: true},
+                    {pubkey: program_token_key, isSigner: false, isWritable: true}
+    
+                ],
+                programId: program_key,
+                data: select_data
+            });
 
-          let transaction = new Transaction();
-          
+            const blockhash_url = `/.netlify/functions/solana_main?function_name=getLatestBlockhash&p1=`;
+            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
 
-          // check if we should add a send_tokens instruction
-          // this may not end up doing anything if they have already been sent
-          let n_winners = deserialize(u8_scheme, my_u8, program_data_account.data.slice(49170,49171)).value;
-          console.log("have ", n_winners, " winners");
-          if (n_winners > 0) {
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
 
-              const send_data = Buffer.alloc(SelectData.span);
-              SelectData.encode(
-                  {
-                      instruction: AuctionInstruction.send_tokens
-                  },
-                  send_data
-              );
+        
+            // check if we should add a send_tokens instruction
+            // this may not end up doing anything if they have already been sent
+            let n_winners = deserialize(u8_scheme, my_u8, program_account_data.slice(49170,49171)).value;
+            //console.log("have ", n_winners, " winners");
+            if (n_winners > 0) {
 
-              var key_vector  = [
-                  {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-
-                  {pubkey: program_pda_key, isSigner: false, isWritable: true},
-                  {pubkey: program_token_key, isSigner: false, isWritable: true},
-                  {pubkey: program_data_key, isSigner: false, isWritable: true},
-
-                  {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
-
-
-              ];
-
-              console.log("wallet ",  wallet.publicKey.toString());
-              console.log("program_pda_key ",  program_pda_key.toString());
-              console.log("program_token_key ",  program_token_key.toString());
-              console.log("program_data_key ",  program_data_key.toString());
-              console.log("TOKEN_PROGRAM_ID ",  TOKEN_PROGRAM_ID.toString());
-
-
-              for (let i = 0; i < n_winners; i++) {
-                  let key_start_index = 49171 + i * 32;
-                  const key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_data_account.data.slice(key_start_index, key_start_index + 32)).value);
-                  key_vector.push({pubkey: key, isSigner: false, isWritable: true});
-                  console.log("winner ",  key.toString());
-              }
-
-
-              const send_instruction = new TransactionInstruction({
-                  keys: key_vector,
-                  programId: program_key,
-                  data: send_data
-              });
-
-              transaction.add(send_instruction);
-          }
-
-          transaction.add(bid_instruction);
-          transaction.add(select_instruction);
-  
-          try {
-                await wallet.sendTransaction(
-                  transaction,
-                  connection
+                const send_data = Buffer.alloc(SelectData.span);
+                SelectData.encode(
+                    {
+                        instruction: AuctionInstruction.send_tokens
+                    },
+                    send_data
                 );
 
-          } catch(error) {
-              console.log(error);
-          }
+                var key_vector  = [
+                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+
+                    {pubkey: program_pda_key, isSigner: false, isWritable: true},
+                    {pubkey: program_token_key, isSigner: false, isWritable: true},
+                    {pubkey: program_data_key, isSigner: false, isWritable: true},
+
+                    {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+
+
+                ];
+
+                /*console.log("wallet ",  wallet.publicKey.toString());
+                console.log("program_pda_key ",  program_pda_key.toString());
+                console.log("program_token_key ",  program_token_key.toString());
+                console.log("program_data_key ",  program_data_key.toString());
+                console.log("TOKEN_PROGRAM_ID ",  TOKEN_PROGRAM_ID.toString());*/
+
+
+                for (let i = 0; i < n_winners; i++) {
+                    let key_start_index = 49171 + i * 32;
+                    const key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_account_data.slice(key_start_index, key_start_index + 32)).value);
+                    key_vector.push({pubkey: key, isSigner: false, isWritable: true});
+                    //console.log("winner ",  key.toString());
+                }
+
+
+                const send_instruction = new TransactionInstruction({
+                    keys: key_vector,
+                    programId: program_key,
+                    data: send_data
+                });
+
+                transaction.add(send_instruction);
+            }
+
+            transaction.add(bid_instruction);
+            transaction.add(select_instruction);
+  
+            try {
+                    let signed_transaction = await wallet.signTransaction(transaction);
+                    const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                    const send_url = `/.netlify/functions/solana_main?function_name=sendTransaction&p1=`+encoded_transaction;
+                    await fetch(send_url).then((res) => res.json());
+
+            } catch(error) {
+                console.log(error);
+            }
       
 
     },
-    [connection, wallet, sol_value, slide_value, which_charity]
+    [wallet, sol_value, slide_value, which_charity]
     );
 
     const select_winners = useCallback( async () => 
     {
 
-          const token_mint_key = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
-          const daoplays_key = new web3.PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
-          const pyth_btc = new web3.PublicKey("GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU");
-          const pyth_eth = new web3.PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB");
-          const pyth_sol = new web3.PublicKey("H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG");
-          const program_key = new PublicKey('GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me');   
+            const token_mint_key = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
+            const daoplays_key = new PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
+            const pyth_btc = new PublicKey("GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU");
+            const pyth_eth = new PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB");
+            const pyth_sol = new PublicKey("H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG");
+            const program_key = new PublicKey('GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me');   
 
-      
-          let program_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", program_key));
-          let program_data_account = await connection.getAccountInfo(program_data_key);
-          let program_pda_key = (await PublicKey.findProgramAddress(["token_account"], program_key))[0];
+        
+            let program_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", program_key));
 
-          let program_token_key = await getAssociatedTokenAddress(
-              token_mint_key, // mint
-              program_pda_key, // owner
-              true // allow owner off curve
-          );
+            const program_account_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+program_data_key.toString()+`&p2=base64`;
+            const program_account_result = await fetch(program_account_url).then((res) => res.json());
+            let program_account_encoded_data = program_account_result["result"]["value"]["data"];
+            let program_account_data = Buffer.from(program_account_encoded_data[0], "base64");
 
-          let transaction = new Transaction();
 
-          // just check the winners struct to see if we have already select winners, as we can skip
-          // the first step if so
-          let n_winners = deserialize(u8_scheme, my_u8, program_data_account.data.slice(49170,49171)).value;
+            let program_pda_key = (await PublicKey.findProgramAddress(["token_account"], program_key))[0];
 
-          if (n_winners > 0) {
+            let program_token_key = await getAssociatedTokenAddress(
+                token_mint_key, // mint
+                program_pda_key, // owner
+                true // allow owner off curve
+            );
+
+            const blockhash_url = `/.netlify/functions/solana_main?function_name=getLatestBlockhash&p1=`;
+            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            // just check the winners struct to see if we have already select winners, as we can skip
+            // the first step if so
+            let n_winners = deserialize(u8_scheme, my_u8, program_account_data.slice(49170,49171)).value;
+
+            if (n_winners > 0) {
 
               const send_data = Buffer.alloc(SelectData.span);
               SelectData.encode(
@@ -930,18 +982,18 @@ function GetTokens() {
 
               ];
 
-              console.log("wallet ",  wallet.publicKey.toString());
+              /*console.log("wallet ",  wallet.publicKey.toString());
               console.log("program_pda_key ",  program_pda_key.toString());
               console.log("program_token_key ",  program_token_key.toString());
               console.log("program_data_key ",  program_data_key.toString());
-              console.log("TOKEN_PROGRAM_ID ",  TOKEN_PROGRAM_ID.toString());
+              console.log("TOKEN_PROGRAM_ID ",  TOKEN_PROGRAM_ID.toString());*/
 
 
               for (let i = 0; i < n_winners; i++) {
                   let key_start_index = 49171 + i * 32;
-                  const key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_data_account.data.slice(key_start_index, key_start_index + 32)).value);
+                  const key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_account_data.slice(key_start_index, key_start_index + 32)).value);
                   key_vector.push({pubkey: key, isSigner: false, isWritable: true});
-                  console.log("winner ",  key.toString());
+                  //console.log("winner ",  key.toString());
               }
 
 
@@ -985,17 +1037,18 @@ function GetTokens() {
           transaction.add(select_instruction);
   
           try {
-                await wallet.sendTransaction(
-                  transaction,
-                  connection
-                );
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                const send_url = `/.netlify/functions/solana_main?function_name=sendTransaction&p1=`+encoded_transaction;
+                await fetch(send_url).then((res) => res.json());
       
               
           }catch(error) {
               console.log(error);
           }
     },
-    [connection, wallet]
+    [wallet]
     );
 
     return(
@@ -1371,52 +1424,37 @@ function GetTokens() {
 function GameBoy() {
 
     const wallet = useWallet();
-    const { connection } = useConnection();
     const [button_bid_value, setButtonBidValue] = React.useState(1)
-    const [file_wallet, setFileWallet] = React.useState("")
+    const [team_name, setTeamName] = React.useState("")
 
-    const handleChange = e => {
-        const fileReader = new FileReader();
-        fileReader.readAsText(e.target.files[0], "UTF-8");
-        fileReader.onload = e => {
-          //console.log("e.target.result", e.target.result);
-          setFileWallet(e.target.result);
-        };
-      };
-
-    
-    
-
+    const handleTeamNameChange = (e) => setTeamName(e.target.value)
     
 
     const press_button_wrapper = useCallback( async ({button_type, button_bid}) => 
     {
         let user_pubkey = wallet.publicKey;
-        let paper_keypair = null;
 
-        if (file_wallet !== "") {
-            var array = JSON.parse(file_wallet);
-            const paper_keypair_bytes = array.slice(0,32);
-            paper_keypair = web3.Keypair.fromSeed(Uint8Array.from(paper_keypair_bytes));
-            user_pubkey = paper_keypair.publicKey;
-            //console.log(array)
-            //console.log(paper_keypair.publicKey.toString())
-        }
+        console.log("team name: ", team_name);
 
-        const token_mint_key = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
-        const program_key = new web3.PublicKey("GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me");
-        const daoplays_key = new web3.PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
+        const token_mint_key = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
+        const program_key = new PublicKey("GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me");
+        const daoplays_key = new PublicKey("FxVpjJ5AGY6cfCwZQP5v8QBfS4J2NPa62HbGh1Fu2LpD");
     
-        const pyth_btc = new web3.PublicKey("GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU");
-        const pyth_eth = new web3.PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB");
-        const pyth_sol = new web3.PublicKey("H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG");
+        const pyth_btc = new PublicKey("GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU");
+        const pyth_eth = new PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB");
+        const pyth_sol = new PublicKey("H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG");
     
     
-        if (wallet && connection && button_bid_value > 0) {
-            console.log("button value", button_bid_value);
+        if (wallet  && button_bid_value > 0) {
+            //console.log("button value", button_bid_value);
 
             let program_data_key = (await PublicKey.createWithSeed(daoplays_key, "data_account", program_key));
-            let program_data_account = await connection.getAccountInfo(program_data_key);
+            const program_account_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+program_data_key.toString()+`&p2=base64`;
+            const program_account_result = await fetch(program_account_url).then((res) => res.json());
+            let program_account_encoded_data = program_account_result["result"]["value"]["data"];
+            let program_account_data = Buffer.from(program_account_encoded_data[0], "base64");
+
+
 
             let program_pda_key = (await PublicKey.findProgramAddress(["token_account"], program_key))[0];
 
@@ -1432,10 +1470,22 @@ function GameBoy() {
                 true // allow owner off curve
             );
 
-            let token_account = await connection.getAccountInfo(player_token_key);
 
+            let token_amount = 0;
+            const token_url = `/.netlify/functions/solana_main?function_name=getTokenAccountBalance&p1=`+player_token_key.toString();
+            const token_data_result = await fetch(token_url).then((res) => res.json());
+            
+            //console.log(token_data_result);
+            try {
+                token_amount = token_data_result["result"]["value"]["amount"];
+            }
+            catch(error) {
+                console.log(token_data_result);
+                console.log(error);
+            }
 
-            if (token_account != null) {
+            //console.log("token amount:", token_amount);
+            if (token_amount > 0) {
                     
                 const bid_quantity = new BN(button_bid_value, 10);
                 const data = Buffer.alloc(ButtonData.span);
@@ -1448,12 +1498,12 @@ function GameBoy() {
                     data
                 );
 
-                console.log("button:", button_type, "bid", bid_quantity.toNumber())
+                /*console.log("button:", button_type, "bid", bid_quantity.toNumber())
                 console.log("user_pubkey ", user_pubkey.toString());
                 console.log("player_token_key ", player_token_key.toString());
                 console.log("program_token_key ", program_token_key.toString());
                 console.log("token_mint_key ", token_mint_key.toString());
-                console.log("TOKEN_PROGRAM_ID ", TOKEN_PROGRAM_ID.toString());
+                console.log("TOKEN_PROGRAM_ID ", TOKEN_PROGRAM_ID.toString());*/
 
                 const button_instruction = new TransactionInstruction({
                     keys: [
@@ -1496,13 +1546,19 @@ function GameBoy() {
                 });
 
             
+                const blockhash_url = `/.netlify/functions/solana_main?function_name=getLatestBlockhash&p1=`;
+                const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+                let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+                let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+                const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
 
-                let transaction = new Transaction();
+                let transaction = new Transaction(txArgs);
+                transaction.feePayer = user_pubkey;
 
                 // check if we should add a send_tokens instruction
                 // this may not end up doing anything if they have already been sent
-                let n_winners = deserialize(u8_scheme, my_u8, program_data_account.data.slice(49170,49171)).value;
-                console.log("have ", n_winners, " winners");
+                let n_winners = deserialize(u8_scheme, my_u8, program_account_data.slice(49170,49171)).value;
+                //console.log("have ", n_winners, " winners");
                 if (n_winners > 0) {
 
                     const send_data = Buffer.alloc(SelectData.span);
@@ -1525,19 +1581,19 @@ function GameBoy() {
 
                     ];
 
-                    console.log("send tokens instruction:");
+                    /*console.log("send tokens instruction:");
                     console.log("user_pubkey ",  user_pubkey.toString());
                     console.log("program_pda_key ",  program_pda_key.toString());
                     console.log("program_token_key ",  program_token_key.toString());
                     console.log("program_data_key ",  program_data_key.toString());
-                    console.log("TOKEN_PROGRAM_ID ",  TOKEN_PROGRAM_ID.toString());
+                    console.log("TOKEN_PROGRAM_ID ",  TOKEN_PROGRAM_ID.toString());*/
 
 
                     for (let i = 0; i < n_winners; i++) {
                         let key_start_index = 49171 + i * 32;
-                        const key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_data_account.data.slice(key_start_index, key_start_index + 32)).value);
+                        const key = new PublicKey(deserialize(pubkey_scheme, my_pubkey, program_account_data.slice(key_start_index, key_start_index + 32)).value);
                         key_vector.push({pubkey: key, isSigner: false, isWritable: true});
-                        console.log("winner ",  key.toString());
+                        //console.log("winner ",  key.toString());
                     }
 
 
@@ -1557,24 +1613,20 @@ function GameBoy() {
     
                 try {
 
-                    if (paper_keypair != null){
-                        //console.log("using paper wallet", paper_keypair.publicKey.toString())
-                        await connection.sendTransaction(transaction, [paper_keypair]);
-                    }
-                    else {
 
-                        await wallet.sendTransaction(
-                            transaction,
-                            connection
-                        );
-                    }
+                        let signed_transaction = await wallet.signTransaction(transaction);
+                        const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                        const send_url = `/.netlify/functions/solana_main?function_name=sendTransaction&p1=`+encoded_transaction;
+                        await fetch(send_url).then((res) => res.json());
                 }
+                
                 catch(error) {
                     console.log(error);
                 }
             }
         }
-    },[button_bid_value, connection, wallet, file_wallet]);
+    },[button_bid_value, wallet, team_name]);
 
     const press_up_button = useCallback( async () => 
     {
@@ -1661,13 +1713,19 @@ function GameBoy() {
                 
                     </HStack>
                     <HStack>      
-                        <Tooltip hasArrow label='Location of file system wallet.  This will avoid having to authorize every button press with a browser wallet.  Only used for pressing buttons in the game.'> 
+                        <Tooltip hasArrow label='Valid Team Name.  You will share the token resources owned by the team when playing.'> 
                         <Text>
-                            (Optional) File-system wallet
+                            (Optional) Team Name
                         </Text>                 
                         </Tooltip>
 
-                        <input type="file" onChange={handleChange} />
+                        <FormControl id="team_name" maxWidth={"150px"} >
+                            <Input
+                                type="text"
+                                value={team_name}
+                                onChange={handleTeamNameChange}
+                            />
+                        </FormControl>
                         
                 
                     </HStack>
@@ -1728,21 +1786,22 @@ function GameBoy() {
   let intervalId;
   function useSolanaAccount() 
   {
-      const [account, setAccount] = useState(null);
+      const [lamports, setLamports] = useState(null);
       const [token_amount, setTokenAmount] = useState(null);
       const [supporter_amount, setSupporterAmount] = useState(null);
 
-
-      const { connection } = useConnection();
       const wallet = useWallet();
     
       const init = useCallback(async () => 
       {       
-          if (wallet.publicKey) {
-              let acc = await connection.getAccountInfo(wallet.publicKey);
-              setAccount(acc);
+          if (!have_token_amounts && wallet.publicKey) {
 
-                const mintAccount = new web3.PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
+                const wallet_url = `/.netlify/functions/solana_main?function_name=getAccountInfo&p1=`+wallet.publicKey.toString();
+                const program_data_result = await fetch(wallet_url).then((res) => res.json());
+                let lamports_amount = program_data_result["result"]["value"]["lamports"];
+                setLamports(lamports_amount);
+
+                const mintAccount = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
                 
                 let token_pubkey = await getAssociatedTokenAddress(
                     mintAccount, // mint
@@ -1750,20 +1809,24 @@ function GameBoy() {
                     false // allow owner off curve
                 );
                 try {
-                    let aWalletMyTokenBalance = await connection.getTokenAccountBalance(
-                        token_pubkey
-                    );
-                    let token_amount = aWalletMyTokenBalance["value"].amount;
-                    let decimals = aWalletMyTokenBalance["value"].decimals;
+
+                    const token_url = `/.netlify/functions/solana_main?function_name=getTokenAccountBalance&p1=`+token_pubkey.toString();
+                    const token_data_result = await fetch(token_url).then((res) => res.json());
+
+                    let token_amount = token_data_result["result"]["value"]["amount"];
+                    let decimals = token_data_result["result"]["value"]["decimals"];
+
                     let token_decs = token_amount / 10.0**decimals;
                     setTokenAmount(token_decs)
+                    have_token_amounts = true;
                 }
                 catch(error) {
                     console.log(error);
                     setTokenAmount(null)
+                    have_token_amounts = false;
                 }   
 
-                const supporter_mintAccount = new web3.PublicKey("7B1yoU3EsbABt1kNXcJLeJRT8jwPy9rZfhrhWzuCA9Fq");
+                const supporter_mintAccount = new PublicKey("7B1yoU3EsbABt1kNXcJLeJRT8jwPy9rZfhrhWzuCA9Fq");
                 
                 let supporter_pubkey = await getAssociatedTokenAddress(
                     supporter_mintAccount, // mint
@@ -1771,23 +1834,25 @@ function GameBoy() {
                     false // allow owner off curve
                 );
                 try {
-                    let aWalletMyTokenBalance = await connection.getTokenAccountBalance(
-                        supporter_pubkey
-                    );
-                    let token_amount = aWalletMyTokenBalance["value"].amount;
-                    let decimals = aWalletMyTokenBalance["value"].decimals;
+                    const token_url = `/.netlify/functions/solana_main?function_name=getTokenAccountBalance&p1=`+supporter_pubkey.toString();
+                    const token_data_result = await fetch(token_url).then((res) => res.json());
+
+                    let token_amount = token_data_result["result"]["value"]["amount"];
+                    let decimals = token_data_result["result"]["value"]["decimals"];
                     let token_decs = token_amount / 10.0**decimals;
                     setSupporterAmount(token_decs)
+                    have_token_amounts = true;
                 }
                 catch(error) {
                     console.log(error);
                     setSupporterAmount(null)
+                    have_token_amounts = false;
                 }   
           }
 
  
   
-      }, [wallet, connection]);
+      }, [wallet]);
   
       useEffect(() => 
       {
@@ -1800,7 +1865,7 @@ function GameBoy() {
           }
       }, [init, wallet]);
   
-      return { account, token_amount, supporter_amount };
+      return { lamports, token_amount, supporter_amount };
   }
 
   
@@ -1828,7 +1893,7 @@ function GameBoy() {
   export function AccountInfo() 
   {
 
-    const { account, token_amount, supporter_amount} = useSolanaAccount();  
+    const { lamports, token_amount, supporter_amount} = useSolanaAccount();  
       return (
         <>
         <VStack>
@@ -1870,8 +1935,8 @@ function GameBoy() {
                                 <Input
                                     type="text"
                                     value={
-                                        account
-                                        ? account.lamports / web3.LAMPORTS_PER_SOL
+                                        lamports
+                                        ? lamports / LAMPORTS_PER_SOL
                                         : "Loading.."
                                     }
                                     readOnly
@@ -1979,7 +2044,6 @@ function MainFunction()
 function Pokemon()
 {
     const network = 'mainnet-beta';
-    const endpoint = web3.clusterApiUrl(network);
     const wallets = useMemo(() => 
     [
         getPhantomWallet(),
@@ -1993,15 +2057,13 @@ function Pokemon()
 
     return(
         <ChakraProvider theme={theme}>
-            <ConnectionProvider endpoint={endpoint}>
-                <WalletProvider wallets={wallets} autoConnect>
-                    <WalletModalProvider>
+            <WalletProvider wallets={wallets} autoConnect>
+                <WalletModalProvider>
 
                     <MainFunction/>
-       
-        </WalletModalProvider>
-        </WalletProvider>
-        </ConnectionProvider>
+    
+                </WalletModalProvider>
+            </WalletProvider>
         </ChakraProvider>
 
     );

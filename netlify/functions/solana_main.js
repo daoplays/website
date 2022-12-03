@@ -21,7 +21,12 @@ exports.handler = async function (event, context) {
             params.push(event.queryStringParameters.p1)
         }
         if (event.queryStringParameters.p2) {
-            params.push(event.queryStringParameters.p2)
+            if (event.queryStringParameters.p2 == "base64") {
+                params.push({"encoding" : "base64"});
+            }
+            else {
+                params.push(event.queryStringParameters.p2);
+            }
         }
 
         console.log("have param names ", function_name, params);
