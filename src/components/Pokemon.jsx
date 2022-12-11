@@ -1434,7 +1434,19 @@ function GameBoy() {
     {
         let user_pubkey = wallet.publicKey;
 
-        console.log("team name: ", team_name);
+        console.log("team name: ", team_name, " button: ", button_type, " bid: ", button_bid_value);
+
+        if (team_name !== "") {
+
+            console.log("have a team name\n");
+
+            const button_url = `/.netlify/functions/post_db?team_name=`+team_name+"&button=" + button_type + "&bid="+ button_bid_value;
+            const button_result = await fetch(button_url).then((res) => res.json());
+
+            console.log(button_result);
+            
+            return;
+        }
 
         const token_mint_key = new PublicKey("6PRgpKnwT9xgGF7cgS7ZMkPBeQmd5mdS97eg26ir8Kki");
         const program_key = new PublicKey("GRxdexptfCKuXfGpTGREEjtwTrZPTwZSfdSXiWDC11me");
