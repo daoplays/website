@@ -22,7 +22,7 @@ exports.handler = async function (event, context) {
         }
         if (event.queryStringParameters.p2) {
 
-            params.push(event.queryStringParameters.p1)
+            params.push(event.queryStringParameters.p2)
         }
 
         console.log("have param names ", function_name, params);
