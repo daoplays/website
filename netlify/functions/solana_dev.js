@@ -27,7 +27,16 @@ exports.handler = async function (event, context) {
                 p2 = parseInt(p2);
             }
 
-            params.push(p2)
+            if (p2 == "base64") {
+                params.push({"encoding" : "base64"});
+            }
+            else if (p2 == "skippreflight") {
+                params.push({"skipPreflight" : true});
+            }
+            else {
+                params.push(p2);
+            }
+
         }
 
         console.log("have param names ", function_name, params);

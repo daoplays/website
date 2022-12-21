@@ -70,26 +70,11 @@ function Posts() {
     };
 
 
-    const serverless_solana = {
-        title:"Running a serverless Solana backend",
-        sub_title:"December 01 2022",
-        post_text:"",
-        image:"solana.jpg",
-        display_image: !isMobile
-    
-    };
-
     return (
         <div className="home">
             <div className="container">
 
                 <Box marginBottom={"20px"} />
-
-                <Link to="/blog/serverless_solana">
-                    <RowCard {...serverless_solana}/>
-	    	    </Link>
-	    	    <br />
-
 
                 <Link to="/blog/pokemon_guide">
                     <RowCard {...pokemon_post}/>
