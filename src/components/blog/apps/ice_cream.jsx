@@ -324,7 +324,7 @@ function sleep(time){
     return new Promise((resolve)=>setTimeout(resolve,time))
 }
 
-const program_pubkey_string = "4gvkmbyVPgiorM6uiQnqdPpSSidwLcwctbTfrt9bCxsn";
+const program_pubkey_string = "EWGpDRyDoPJ25WNM6UToKsEHcRaraGuPmUXsAQnJxYrc";
 
 function GetTopTen() 
 {
@@ -403,6 +403,7 @@ function usePicture()
 {
     const [picture, setPicture] = useState("");
     const [artist, setArtist] = useState("");
+    const [user, setUser] = useState("");
 
 
     const init = useCallback(async () => 
@@ -415,6 +416,7 @@ function usePicture()
     //        setPicture(image_result["urls"]["regular"]);
             setPicture("https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80");
             setArtist("Ian Dooley");
+            setUser("https://unsplash.com/@sadswim?utm_source=ice_cream_battle&utm_medium=referral");
             have_picture = true;
         }
     }, []);
@@ -430,7 +432,7 @@ function usePicture()
         }
     }, [init]);
 
-    return {picture, artist};
+    return {picture, artist, user};
 }
 
 
@@ -440,7 +442,7 @@ export function IceCreamApp()
     const wallet = useWallet();
     const { connection } = useConnection();
 
-    const {picture, artist} = usePicture();
+    const {picture, artist, user} = usePicture();
     const {current_team_score}  = useCurrentTeamAccount();
 
     
@@ -503,7 +505,6 @@ export function IceCreamApp()
             //console.log("program data ", program_data_key.toString());
             //console.log("team data ", team_data_key.toString());
 
-            let sysvar_rent_key = new PublicKey("SysvarRent111111111111111111111111111111111");
             let system_key = new PublicKey("11111111111111111111111111111111");
             
 
@@ -520,9 +521,7 @@ export function IceCreamApp()
                     
                     {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
                     {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
-                    {pubkey: system_key, isSigner: false, isWritable: true},
-                    {pubkey: sysvar_rent_key, isSigner: false, isWritable: true}
-
+                    {pubkey: system_key, isSigner: false, isWritable: true}
                 ],
                 programId: program_key,
                 data: create_team_data
@@ -921,7 +920,7 @@ export function IceCreamApp()
                                                 
                                                 <a href='#!'><Figure.Image fluid={true} src={picture} onClick={Eat}/></a>
                                                 <Figure.Caption>
-                                                    Photo by <a style={{textDecoration: "underline"}}  href = {'https://unsplash.com/@sadswim?utm_source=ice_cream_battle&utm_medium=referral'}>{artist}</a> on <a style={{textDecoration: "underline"}}  href = {'https://unsplash.com/?utm_source=ice_cream_battle&utm_medium=referral'}>Unsplash</a>
+                                                    Photo by <a style={{textDecoration: "underline"}}  href = {user}>{artist}</a> on <a style={{textDecoration: "underline"}}  href = {'https://unsplash.com/?utm_source=ice_cream_battle&utm_medium=referral'}>Unsplash</a>
                                                 </Figure.Caption>
                                             </Figure>
                                         
