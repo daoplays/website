@@ -1,12 +1,12 @@
 import React from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { ChakraProvider, theme, Code, HStack } from '@chakra-ui/react';
+import { Code } from '@chakra-ui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 
 import { IceCream } from '../../apps/ice_cream';
-import {Donate} from '../../../apps/donate'
+
 const create_account = 
 `// in create_program_account
 let space : u64 = data_size.try_into().unwrap();

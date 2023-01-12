@@ -24,7 +24,8 @@ import {
     CharityAuction,
     Rewards,
     Verified,
-    IceCreamPost
+    IceCreamPost,
+    Dungeon
 
 } from "./components";
 
@@ -47,7 +48,7 @@ root.render(
         <Route path="/rewards" element={<Rewards />} />
         <Route path="/verified" element={<Verified />} />
         <Route path="/blog/ice_cream" element={<IceCreamPost />} />
-
+        <Route path="/sol_dungeon" element={<Dungeon />} />
 
     </Routes>
     <Footer />
