@@ -39,6 +39,7 @@ import knight from "./Knight.gif"
 import ranger from "./Ranger.gif"
 import wizard from "./Wizard.gif"
 import corpse from "./Corpse.png"
+import selector from "./Selector.gif"
 
 //enemies
 import chest from "./Mimic.gif"
@@ -59,19 +60,22 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 
-const PROGRAM_KEY = new PublicKey('8vrwPyHgHgdXzosYvHdmiE2n723KB4deahAwYgJme3vJ');
+const PROGRAM_KEY = new PublicKey('5Dr6fw8NbK8VUAuwX3QrcYj6AxG9KF4vp2gdbCSfAqgA');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("GrTcMZ5qxQwxCo7ePrYaHgf3gLjetDT6Vew8n1ihNPG4");
 
+const DungeonStatus = {
+    alive : 0,
+    dead : 1
+}
 
-/*
 const DungeonCharacter = {
-    warrior : 0,
-    archer : 1,
+    knight : 0,
+    ranger : 1,
     wizard : 2
 }
-*/
+
 
 const Screen = {
     HOME_SCREEN : 0,
@@ -116,13 +120,15 @@ class Assignable {
 
 class PlayerData extends Assignable { }
 class InstructionMeta extends Assignable { }
+class PlayMeta extends Assignable { }
 
 const player_data_schema = new Map([
   [PlayerData, { kind: 'struct', 
   fields: [
         ['in_progress', 'u8'],
         ['player_status', 'u8'],
-        ['dungeon_enemy', 'u8']],
+        ['dungeon_enemy', 'u8'],
+        ['player_character', 'u8']],
     }]
 ]);
 
@@ -131,7 +137,16 @@ const instruction_schema = new Map([
     fields: [
           ['instruction', 'u8']],
       }]
-  ]);
+]);
+
+const play_scheme = new Map([
+    [PlayMeta, { kind: 'struct', 
+    fields: [
+          ['instruction', 'u8'],
+          ['character', 'u8']
+        ],
+      }]
+]);
 
 
 export function WalletConnected() 
@@ -144,72 +159,6 @@ export function WalletConnected()
 }
 
 let intervalId;
-/*
-function useSolanaAccount() 
-{
-    const [currentLevel, setCurrentLevel] = useState(0);
-    const [player_alive, setAlive] = useState(true);
-    const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
-
-    const [sol_balance, setSolBalance] = useState(null);
-    const { connection } = useConnection();
-    const wallet = useWallet();
-
-    const init = useCallback(async () => 
-    {       
-        if (wallet.publicKey) {
-
-            let acc = await connection.getAccountInfo(wallet.publicKey);
-            setSolBalance(acc.lamports  / LAMPORTS_PER_SOL);
-
-            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
-
-            try {
-
-                let player_data_account = await connection.getAccountInfo(player_data_key);
-                const player_data = deserialize(player_data_schema, PlayerData, player_data_account.data);
-
-                console.log("player in progress: ", player_data["in_progress"], " status: ", player_data["player_status"], "enemy: ", player_data["dungeon_enemy"]);
-                //console.log("clcked play:", has_clicked_play);
-
-                setCurrentEnemy(player_data["dungeon_enemy"]);
-                
-                setCurrentLevel(player_data["in_progress"]);
-
-                
-                if (player_data["player_status"] === 0) {
-                    setAlive(true);
-                }
-
-                if (player_data["player_status"] === 1) {
-                    setAlive(false)
-                }
-
-            } catch(error) {
-                console.log(error);
-                setCurrentLevel(0);
-                setAlive(true);
-                setCurrentEnemy(DungeonEnemy.None);
-            }
-        }
-
-    }, [wallet, connection]);
-
-    useEffect(() => 
-    {
-        if (wallet.publicKey && !intervalId) {
-            intervalId = setInterval(init, 1000);
-        }
-        else{
-            clearInterval(intervalId);
-            intervalId = null;
-        }
-    }, [init, wallet]);
-
-    return { currentLevel, sol_balance, player_alive, current_enemy };
-}
-*/
-
 var first_living_update = false;
 export function AirDropApp() 
 {
@@ -219,13 +168,12 @@ export function AirDropApp()
     // these come from the blockchain
     const [sol_balance, setSolBalance] = useState(null);
     const [currentLevel, setCurrentLevel] = useState(0);
-    const [player_alive, setAlive] = useState(true);
+    const [currentStatus, setCurrentStatus] = useState(true);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
-
-    //const { progress, sol_balance, player_alive, current_enemy } = useSolanaAccount();
 
     const [screen, setScreen] = useState(Screen.HOME_SCREEN);
 
+    const [which_character, setWhichCharacter] = useState(DungeonCharacter.knight);
     const [enemy_state, setEnemyState] = useState(0);
     const [player_state, setPlayerState] = useState(0);
     const [animateLevel, setAnimateLevel] = useState(0);
@@ -249,7 +197,7 @@ export function AirDropApp()
 
                 //console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] === 0);
 
-                if (player_data["player_status"] === 0){
+                if (player_data["player_status"] === DungeonStatus.alive){
                     first_living_update = true;
                 }
 
@@ -263,19 +211,13 @@ export function AirDropApp()
                 
                 setCurrentLevel(player_data["in_progress"]);
 
+                setCurrentStatus(player_data["player_status"]);
+
                 
-                if (player_data["player_status"] === 0) {
-                    setAlive(true);
-                }
-
-                if (player_data["player_status"] === 1) {
-                    setAlive(false)
-                }
-
             } catch(error) {
                 console.log(error);
                 setCurrentLevel(0);
-                setAlive(true);
+                setCurrentStatus(DungeonStatus.alive);
                 setCurrentEnemy(DungeonEnemy.None);
             }
         }
@@ -302,13 +244,13 @@ export function AirDropApp()
             if (currentLevel === 0)
                 return;
 
-            if (player_alive) {
+            if (currentStatus === DungeonStatus.alive) {
                 setScreen(Screen.DUNGEON_SCREEN);
             }
 
             // display the current enemy
             setEnemyState(1);
-            if (player_alive) {
+            if (currentStatus === DungeonStatus.alive) {
                 //setEnemyState(2);
                 setAnimateLevel(1);
             }
@@ -317,7 +259,7 @@ export function AirDropApp()
                 setAnimateLevel(2);
             }
 
-        }, [currentLevel, current_enemy, player_alive]);
+        }, [currentLevel, current_enemy, currentStatus]);
 
     useEffect(() => 
     {
@@ -365,8 +307,8 @@ export function AirDropApp()
             let eth_key = new PublicKey("EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw");
             let sol_key = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix");
 
-            const instruction_meta = new InstructionMeta({ instruction: DungeonInstruction.play});
-            const instruction_data = serialize(instruction_schema, instruction_meta);
+            const play_meta = new PlayMeta({ instruction: DungeonInstruction.play, character: which_character});
+            const instruction_data = serialize(play_scheme, play_meta);
 
             const play_instruction = new TransactionInstruction({
                 keys: [
@@ -402,7 +344,7 @@ export function AirDropApp()
             setEnemyState(0);
             setPlayerState(1);        
 
-    },[wallet, connection]);
+    },[wallet, connection, which_character]);
 
 
     const Quit = useCallback( async () => 
@@ -473,19 +415,109 @@ export function AirDropApp()
         </Box>)
     }
 
+    const SelectKnight = useCallback( async () => 
+    {
+        setWhichCharacter(DungeonCharacter.knight);
+        return;
+        
+    },[]);
+
+    const SelectRanger = useCallback( async () => 
+    {
+        setWhichCharacter(DungeonCharacter.ranger);
+        return;
+        
+    },[]);
+
+    const SelectWizard = useCallback( async () => 
+    {
+        setWhichCharacter(DungeonCharacter.wizard);
+        return;
+        
+    },[]);
+
+
+
     const CharacterSelect = () => {
 
         return (
             <HStack>
-                <Box bg='black' mt="2rem">
-                    <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
-                </Box>
-                <Box bg='black' mt="2rem">
-                    <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
-                </Box>
-                <Box bg='black' mt="2rem">
-                    <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
-                </Box>
+                {which_character === DungeonCharacter.knight &&
+                    <Box  style={{
+                        backgroundImage: `url(${selector})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        imageRendering: "pixelated"
+
+                    } } width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectKnight}>
+                                <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                }
+                {which_character !== DungeonCharacter.knight &&
+                    <Box  width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectKnight}>
+                                <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                }
+                
+                {which_character === DungeonCharacter.ranger &&
+                    <Box  style={{
+                        backgroundImage: `url(${selector})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        imageRendering: "pixelated"
+
+                    } } width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectRanger}>
+                                <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                }
+                {which_character !== DungeonCharacter.ranger &&
+                    <Box  width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectRanger}>
+                                <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                }
+                {which_character === DungeonCharacter.wizard &&
+                    <Box  style={{
+                        backgroundImage: `url(${selector})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        imageRendering: "pixelated"
+
+                    } } width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectWizard}>
+                                <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                }
+                {which_character !== DungeonCharacter.wizard &&
+                    <Box  width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectWizard}>
+                                <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                }
             </HStack>
         )
     }
@@ -556,9 +588,9 @@ export function AirDropApp()
                 </Box>  
             </HStack>
             <HStack mb = "2rem" mt="2rem">
-                <Box width="33%"/>
-                <Box width="33%"><CharacterSelect/></Box>
-                <Box width="33%"/>
+                <Box width="33%" mt="2rem"/>
+                <Box width="33%" mt="2rem"><CharacterSelect/></Box>
+                <Box width="33%" mt="2rem"/>
             </HStack>
             </VStack>
         )
@@ -585,7 +617,17 @@ export function AirDropApp()
         }
         
         // otherwise just return the player
-        return ( <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/> );
+        if (which_character === DungeonCharacter.knight){
+            return ( <img style={{"imageRendering":"pixelated"}} src={knight} width="10000" alt={""}/> );
+        }
+
+        if (which_character === DungeonCharacter.ranger){
+            return ( <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/> );
+        }
+
+        if (which_character === DungeonCharacter.wizard){
+            return ( <img style={{"imageRendering":"pixelated"}} src={wizard} width="10000" alt={""}/> );
+        }
         
     }
 
@@ -808,7 +850,7 @@ export function AirDropApp()
                     {screen === Screen.DUNGEON_SCREEN  && player_state === 2 && first_living_update &&
                     <>
                         <div className="font-face-sfpb">
-                        <Text  fontSize='50px' textAlign="center" color="white">The {DungeonEnemyName[current_enemy]} Won.  You Have Died {player_alive} </Text>
+                        <Text  fontSize='50px' textAlign="center" color="white">The {DungeonEnemyName[current_enemy]} Won.  You Have Died </Text>
                         <Button size='lg' onClick={Reset}>
                             Try Again
                         </Button>
