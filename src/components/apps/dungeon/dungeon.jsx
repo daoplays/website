@@ -73,6 +73,12 @@ const DungeonCharacter = {
 }
 */
 
+const Screen = {
+    HOME_SCREEN : 0,
+    DUNGEON_SCREEN : 1,
+    DEATH_SCREEN : 2
+}
+
 const DungeonEnemy = {
     
     Chest : 0,
@@ -137,13 +143,14 @@ export function WalletConnected()
     );
 }
 
-var first_move = false;
 let intervalId;
+/*
 function useSolanaAccount() 
 {
-    const [progress, setProgress] = useState(null);
+    const [currentLevel, setCurrentLevel] = useState(0);
     const [player_alive, setAlive] = useState(true);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
+
     const [sol_balance, setSolBalance] = useState(null);
     const { connection } = useConnection();
     const wallet = useWallet();
@@ -161,28 +168,26 @@ function useSolanaAccount()
 
                 let player_data_account = await connection.getAccountInfo(player_data_key);
                 const player_data = deserialize(player_data_schema, PlayerData, player_data_account.data);
-                console.log("have player in progress ", player_data["in_progress"], player_data["player_status"], player_data["dungeon_enemy"]);
 
-                setProgress(player_data["in_progress"]);
-                setCurrentEnemy(player_data["dungeon_enemy"]);    
+                console.log("player in progress: ", player_data["in_progress"], " status: ", player_data["player_status"], "enemy: ", player_data["dungeon_enemy"]);
+                //console.log("clcked play:", has_clicked_play);
 
+                setCurrentEnemy(player_data["dungeon_enemy"]);
+                
+                setCurrentLevel(player_data["in_progress"]);
+
+                
                 if (player_data["player_status"] === 0) {
                     setAlive(true);
                 }
 
-                if (first_move === true && player_data["player_status"] === 1) {
+                if (player_data["player_status"] === 1) {
                     setAlive(false)
-                    setCurrentEnemy(player_data["dungeon_enemy"]);
                 }
-
-                if (first_move === false && player_data["player_status"] === 1) {
-                    setAlive(true)
-                }
-
 
             } catch(error) {
                 console.log(error);
-                setProgress(-1);
+                setCurrentLevel(0);
                 setAlive(true);
                 setCurrentEnemy(DungeonEnemy.None);
             }
@@ -201,14 +206,154 @@ function useSolanaAccount()
         }
     }, [init, wallet]);
 
-    return { progress, sol_balance, player_alive, current_enemy };
+    return { currentLevel, sol_balance, player_alive, current_enemy };
 }
+*/
 
+var first_living_update = false;
 export function AirDropApp() 
 {
     const { connection } = useConnection();
     const wallet = useWallet();
-    const { progress, sol_balance, player_alive, current_enemy } = useSolanaAccount();
+
+    // these come from the blockchain
+    const [sol_balance, setSolBalance] = useState(null);
+    const [currentLevel, setCurrentLevel] = useState(0);
+    const [player_alive, setAlive] = useState(true);
+    const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
+
+    //const { progress, sol_balance, player_alive, current_enemy } = useSolanaAccount();
+
+    const [screen, setScreen] = useState(Screen.HOME_SCREEN);
+
+    const [enemy_state, setEnemyState] = useState(0);
+    const [player_state, setPlayerState] = useState(0);
+    const [animateLevel, setAnimateLevel] = useState(0);
+
+    //const { connection } = useConnection();
+    //const wallet = useWallet();
+
+    const init = useCallback(async () => 
+    {       
+        if (wallet.publicKey) {
+
+            let acc = await connection.getAccountInfo(wallet.publicKey);
+            setSolBalance(acc.lamports  / LAMPORTS_PER_SOL);
+
+            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+
+            try {
+
+                let player_data_account = await connection.getAccountInfo(player_data_key);
+                const player_data = deserialize(player_data_schema, PlayerData, player_data_account.data);
+
+                //console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] === 0);
+
+                if (player_data["player_status"] === 0){
+                    first_living_update = true;
+                }
+
+                if (!first_living_update) {
+                    return;
+                }
+                //console.log("updating stats");
+                
+
+                setCurrentEnemy(player_data["dungeon_enemy"]);
+                
+                setCurrentLevel(player_data["in_progress"]);
+
+                
+                if (player_data["player_status"] === 0) {
+                    setAlive(true);
+                }
+
+                if (player_data["player_status"] === 1) {
+                    setAlive(false)
+                }
+
+            } catch(error) {
+                console.log(error);
+                setCurrentLevel(0);
+                setAlive(true);
+                setCurrentEnemy(DungeonEnemy.None);
+            }
+        }
+
+    }, [wallet, connection]);
+
+    useEffect(() => 
+    {
+        if (wallet.publicKey && !intervalId) {
+            intervalId = setInterval(init, 1000);
+        }
+        else{
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }, [init, wallet]);
+
+
+    
+    useEffect(() => 
+        {
+            //console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "alive", player_alive);
+
+            if (currentLevel === 0)
+                return;
+
+            if (player_alive) {
+                setScreen(Screen.DUNGEON_SCREEN);
+            }
+
+            // display the current enemy
+            setEnemyState(1);
+            if (player_alive) {
+                //setEnemyState(2);
+                setAnimateLevel(1);
+            }
+            else {
+                //setPlayerState(2);
+                setAnimateLevel(2);
+            }
+
+        }, [currentLevel, current_enemy, player_alive]);
+
+    useEffect(() => 
+    {
+            if (animateLevel === 0) {
+                return;
+            }
+
+            const timer = setTimeout(() => {
+                //console.log('This will run after 5 seconds!');
+
+                // player killed enemy
+                if (animateLevel === 1) {
+                    setPlayerState(1);
+                    setEnemyState(2);
+                }
+                // enemy killed player
+                else {
+                    setPlayerState(2);
+                    setEnemyState(1);
+                }
+
+                setAnimateLevel(0);
+                }, 5000);
+                return () => clearTimeout(timer);
+        
+
+    }, [animateLevel]);
+
+    useEffect(() => 
+    {
+        setPlayerState(1);
+        setEnemyState(0);
+        //console.log("this is only called once");
+
+    }, []);
+
 
     const Play = useCallback( async () => 
     {
@@ -252,8 +397,10 @@ export function AirDropApp()
                 console.log(error);
             }
 
-            first_move = true;
-        
+            //console.log("setting screen to dungeon");
+            setScreen(Screen.DUNGEON_SCREEN);
+            setEnemyState(0);
+            setPlayerState(1);        
 
     },[wallet, connection]);
 
@@ -294,6 +441,9 @@ export function AirDropApp()
                 console.log(error);
             }
 
+            setScreen(Screen.HOME_SCREEN);
+            setEnemyState(0);
+
             return;
         
 
@@ -301,27 +451,16 @@ export function AirDropApp()
 
     const Reset = useCallback( async () => 
     {
-
-            first_move = false;
-
+            setScreen(Screen.HOME_SCREEN);
+            setEnemyState(0);
             return;
         
-
     },[]);
 
-    const VanillaMapper = (props) => {
- 
-        const handleOnClick = (e) => {
-            e.preventDefault();
-            console.log("You have clicked in the specified area")
-        }
- 
+    const VanillaMapper = () => {
      return (
         <Box bg='black' mt="2rem">
-        <img style={{"imageRendering":"pixelated"}} src={large_door} width={1000} alt={"generic"} useMap="#workmap"/>
-        <map id = "workmap" name="workmap">
-            <area shape="poly" coords="50,47,56,454,257,357,254,139" alt="test" href="#" onClick={handleOnClick}/>
-        </map>
+        <img style={{"imageRendering":"pixelated"}} src={large_door} width={1000} alt={"generic"}/>
         </Box>
      )
  }
@@ -425,7 +564,101 @@ export function AirDropApp()
         )
     }
 
+    const DisplayPlayer = () => {
+
+       // console.log("player state ", player_state);
+        if (player_state === 0) {
+            return(<></>);
+        }
+
+        if (player_state === 2)  {
+            // if the current enemy is a trap we should return that here
+            if (current_enemy === 10) {
+                return ( <img style={{"imageRendering":"pixelated"}} src={boulder} width="10000" alt={""}/> );
+            }
+            if (current_enemy === 11) {
+                return ( <img style={{"imageRendering":"pixelated"}} src={floor_spikes} width="10000" alt={""}/> );
+            }
+
+            // otherwise return the corpse
+            return ( <img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/> );
+        }
+        
+        // otherwise just return the player
+        return ( <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/> );
+        
+    }
+
+    const DisplayEnemyInitialText = () => {
+
+         
+         // for the traps we report an empty room
+         if (current_enemy === 10 || current_enemy === 11) {
+             return(
+             <div className="font-face-sfpb">
+                <Text fontSize='50px' textAlign="center" color="white">You enter a suspiciously empty room...</Text>
+            </div>
+            );
+         };
+         
+
+         // otherwise say the enemy type
+         return(
+            <div className="font-face-sfpb">
+                <Text fontSize='50px' textAlign="center" color="white">You have encountered the {DungeonEnemyName[current_enemy]} in room {currentLevel}</Text>
+                <Text fontSize='50px' textAlign="center" color="white">Prepare yourself!</Text>
+            </div>
+         );
+     }
+
+    const DisplayEnemyResultText = () => {
+
+         
+        // for the traps we report an empty room
+        if (current_enemy === 10 || current_enemy === 11) {
+            return(
+            <div className="font-face-sfpb">
+                <Text fontSize='50px' textAlign="center" color="white">...but pass through without incident.</Text>
+                <Text fontSize='50px' textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
+                <Text fontSize='50px' textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
+           </div>
+           );
+        };
+        
+
+        // otherwise say the enemy type
+        return(
+            <div className="font-face-sfpb">
+                <Text fontSize='50px' textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]} in room {currentLevel}</Text>
+                <Text fontSize='50px' textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
+                <Text fontSize='50px' textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
+        </div>
+        );
+    }
+
     const DisplayEnemy = () => {
+
+       // console.log("enemy state ", enemy_state);
+        if (enemy_state === 0) {
+            return(<></>);
+        }
+
+        if (enemy_state === 2)  {
+
+            // for the traps we don't return anything
+            if (current_enemy === 10) {
+                return(<></>);
+            }
+            if (current_enemy === 11) {
+                return(<></>);
+            }
+
+
+            return ( <img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/> );
+        }
+
+        
+
         if (current_enemy === 0) {
             return ( <img style={{"imageRendering":"pixelated"}} src={chest} width="10000" alt={""}/> );
         }
@@ -456,11 +689,13 @@ export function AirDropApp()
         if (current_enemy === 9) {
             return ( <img style={{"imageRendering":"pixelated"}} src={reaper} width="10000" alt={""}/> );
         }
+
+        // for the traps we don't return anything
         if (current_enemy === 10) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={boulder} width="10000" alt={""}/> );
+            return(<></>);
         }
         if (current_enemy === 11) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={floor_spikes} width="10000" alt={""}/> );
+            return(<></>);
         }
     }
 
@@ -485,15 +720,10 @@ export function AirDropApp()
                 } } width="80%">
                  <HStack mb = "2rem" mt="2rem">
            
-                    <Box width="30%"></Box>    
-                            
-                                
-                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/></Box>  
-
+                    <Box width="30%"></Box>            
+                    <Box width="15%"> <DisplayPlayer/></Box>  
                     <Box width="10%"></Box> 
-
                     <Box width="15%"> <DisplayEnemy/> </Box>  
-
                     <Box width="30%"></Box> 
 
                 </HStack>
@@ -536,77 +766,90 @@ export function AirDropApp()
     return (
         
         <Center>
-        <VStack>
-        {wallet.publicKey &&
-            <Box  borderRadius="2rem" p='1rem' width='50%' mt="2rem">   
-            
+            <VStack>
+                {wallet.publicKey &&
+                    <Box  borderRadius="2rem" p='1rem' width='50%' mt="2rem">   
+                    
+                        <Box width="100%">
+                                <HStack>
+                                    <WalletConnected />
+                                    <div className="font-face-sfpb">
+                                        <Text color="white">
+                                            {
+                                                sol_balance
+                                                ? "Balance: " + sol_balance + ' SOL'
+                                                : '                                 '
+                                            }
+                                        </Text>
+                                    </div>
+                                </HStack>
+                            
+                        </Box>
+                    </Box>
+                }
                 <Box width="100%">
-                    <VStack>
-                    <HStack>
-                        <WalletConnected />
-                        <div className="font-face-sfpb">
-                            <Text color="white">
-                                {
-                                    sol_balance
-                                    ? "Balance: " + sol_balance + ' SOL'
-                                    : '                                 '
-                                }
-                            </Text>
-                        </div>
-                    </HStack>
-                    <VStack  alignItems="center" marginBottom  = "10px" >
-                       
-                        {(progress === 0  && player_alive === false) &&
+                    {!wallet.publicKey && <ConnectPage/>}
+                    {wallet.publicKey && 
                         <>
-                            <div className="font-face-sfpb">
-                            <Text  textAlign="center" color="white">The {DungeonEnemyName[current_enemy]} Won.  You Have Died {player_alive} </Text>
-                            <Button size='md' onClick={Reset}>
-                                Try Again
-                            </Button>
-                            </div>
-                        </>
+                        {screen === Screen.HOME_SCREEN &&
+                            <ConnectedPage/>
                         }
-                        {(progress > 0)  &&
-                        <>
+                        {screen === Screen.DUNGEON_SCREEN  &&
+                            <InDungeon/>
+                        }
+                        {screen === Screen.DEATH_SCREEN &&
+                            <DeathScreen/>
+                        }
+                        </>
+                    }                    
+                </Box>
+                <VStack  alignItems="center" marginBottom  = "10px" >
+                            
+                    {screen === Screen.DUNGEON_SCREEN  && player_state === 2 && first_living_update &&
+                    <>
                         <div className="font-face-sfpb">
-                            <Text textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]} in room {progress}</Text>
-                            <Text textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,progress) *  0.2} SOL</Text>
-                            <Text textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,progress+1) *  0.2} SOL</Text>
+                        <Text  fontSize='50px' textAlign="center" color="white">The {DungeonEnemyName[current_enemy]} Won.  You Have Died {player_alive} </Text>
+                        <Button size='lg' onClick={Reset}>
+                            Try Again
+                        </Button>
                         </div>
-                        <HStack>
-                            <Button size='md' onClick={Play}>
+                    </>
+                    }
+                    {screen === Screen.DUNGEON_SCREEN  && currentLevel > 0  &&
+                    <>
+                    {/* enemy_state  === 0  && <>
+                        <div className="font-face-sfpb">
+                            <Text textAlign="center" color="white">Enemy State is zero</Text>
+                        </div>
+                        <Button size='md' onClick={Play}>
                                 Explore Further
                             </Button>
-                            <Button size='md' onClick={Quit}>
-                                Escape
-                            </Button>
-                        </HStack>
-                        </>
-                        }
-                        
-                        
-                    </VStack>
-                    </VStack>
-                </Box>
-            </Box>
-        }
-        <Box width="100%">
-            {!wallet.publicKey && <ConnectPage/>}
-            {wallet.publicKey && 
-                <>
-                {(progress === -1 || progress === 0)  && player_alive === true &&
-                    <ConnectedPage/>
-                }
-                {(progress > 0)  &&
-                    <InDungeon/>
-                }
-                {(progress === 0  && player_alive === false) &&
-                    <DeathScreen/>
-                }
-                </>
-            }                    
-        </Box>
-        </VStack>               
+                    </>
+                    */}
+                    { player_state === 1 && enemy_state  === 1  && 
+                        <DisplayEnemyInitialText/>
+                    }
+                    {enemy_state === 2 &&
+                    <>
+                        <VStack alignItems="center">
+                            <DisplayEnemyResultText/>
+                            <HStack>
+                                <Button size='lg' onClick={Play}>
+                                    Explore Further
+                                </Button>
+                                <Button size='lg' onClick={Quit}>
+                                    Escape
+                                </Button>
+                            </HStack>
+                        </VStack>
+                    </>
+                    }
+                    </>
+                    }
+                    
+                    
+                </VStack>
+            </VStack>               
         </Center>
     );
 }
