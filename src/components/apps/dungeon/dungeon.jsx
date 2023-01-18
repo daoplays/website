@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { serialize, deserialize } from 'borsh';
 
-import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL, clusterApiUrl } from '@solana/web3.js';
+import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
     WalletProvider,
     useWallet,
