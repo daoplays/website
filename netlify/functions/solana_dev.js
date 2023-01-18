@@ -27,11 +27,31 @@ exports.handler = async function (event, context) {
                 p2 = parseInt(p2);
             }
 
-            if (p2 == "base64") {
-                params.push({"encoding" : "base64"});
-            }
-            else if (p2 == "skippreflight") {
-                params.push({"skipPreflight" : true});
+            if (p2 == "config") {
+                var extra_config = {};
+
+                if (event.queryStringParameters.p3) {
+                    let p3 = event.queryStringParameters.p3;
+
+                    if (p3 == "base64") {
+                        extra_config["encoding"] = "base64";
+                    }
+                    else if (p3 == "skippreflight") {
+                        extra_config["skipPreflight"] = true;
+                    }
+                }
+
+                if (event.queryStringParameters.p4) {
+                    let p4 = event.queryStringParameters.p4;
+                    
+                    if (p4 == "commitment") {
+                        extra_config["commitment"] = "confirmed";
+                    }
+                    
+                }
+                
+
+                params.push(extra_config);
             }
             else {
                 params.push(p2);

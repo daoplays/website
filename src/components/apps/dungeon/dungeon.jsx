@@ -13,9 +13,7 @@ import { serialize, deserialize } from 'borsh';
 
 import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL, clusterApiUrl } from '@solana/web3.js';
 import {
-    ConnectionProvider,
     WalletProvider,
-    useConnection,
     useWallet,
 } from '@solana/wallet-adapter-react';
 import {
@@ -29,6 +27,7 @@ import {
     WalletMultiButton,
     WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
+import bs58 from "bs58";
 
 import dungeon_title from "./Dungeon_Logo.png"
 import large_door from "./Large_Door.gif"
@@ -60,10 +59,22 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 
-const PROGRAM_KEY = new PublicKey('5Dr6fw8NbK8VUAuwX3QrcYj6AxG9KF4vp2gdbCSfAqgA');
+const PROGRAM_KEY = new PublicKey('53L6SWoPTx8tAfaBkxKRiRewzuMnQ8NoyeYRyoLLh3gC');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("GrTcMZ5qxQwxCo7ePrYaHgf3gLjetDT6Vew8n1ihNPG4");
+
+const AccountStatus = {
+    unknown : 0,
+    created : 1,
+    not_created : 2
+}
+
+const InitialDungeonStatus = {
+    unknown : 0,
+    alive : 1,
+    dead : 2
+}
 
 const DungeonStatus = {
     alive : 0,
@@ -100,7 +111,7 @@ const DungeonEnemy = {
     None : 12
 }
 
-const DungeonEnemyName = ["Chest", "Slime", "Goblins", "Hallway Skeletons", "Graveyard Skeletons", "Elves", "Orc", "Skeleton Knight", "Skeleton Wizard", "Reaper", "Boulder", "Floor Spikes"];
+const DungeonEnemyName = ["Mimic", "Slime", "Goblins", "Skeletons", "Skeletons", "Elves", "Orc", "Skeleton Knight", "Skeleton Wizard", "Reaper", "Boulder", "Floor Spikes"];
 
 
 const DungeonInstruction = {
@@ -125,6 +136,7 @@ class PlayMeta extends Assignable { }
 const player_data_schema = new Map([
   [PlayerData, { kind: 'struct', 
   fields: [
+        ['num_plays', 'u64'],
         ['in_progress', 'u8'],
         ['player_status', 'u8'],
         ['dungeon_enemy', 'u8'],
@@ -159,14 +171,22 @@ export function WalletConnected()
 }
 
 let intervalId;
-var first_living_update = false;
-export function AirDropApp() 
+var check_balance = true;
+var initial_status_is_set = false;
+var initial_num_plays = -1;
+var need_to_create_account = false;
+
+export function DungeonApp() 
 {
-    const { connection } = useConnection();
     const wallet = useWallet();
+
+    // properties used to set what to display
+    const [data_account_status, setDataAccountStatus] = useState(AccountStatus.unknown);
+    const [initial_status, setInitialStatus] = useState(InitialDungeonStatus.unknown);
 
     // these come from the blockchain
     const [sol_balance, setSolBalance] = useState(null);
+    const [numPlays, setNumPlays] = useState(0);
     const [currentLevel, setCurrentLevel] = useState(0);
     const [currentStatus, setCurrentStatus] = useState(true);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
@@ -178,34 +198,101 @@ export function AirDropApp()
     const [player_state, setPlayerState] = useState(0);
     const [animateLevel, setAnimateLevel] = useState(0);
 
-    //const { connection } = useConnection();
-    //const wallet = useWallet();
-
     const init = useCallback(async () => 
     {       
         if (wallet.publicKey) {
 
-            let acc = await connection.getAccountInfo(wallet.publicKey);
-            setSolBalance(acc.lamports  / LAMPORTS_PER_SOL);
+            const account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+wallet.publicKey.toString();
+
+            var account_info_result;
+            try {
+                account_info_result = await fetch(account_info_url).then((res) => res.json());
+            }
+            catch(error) {
+                console.log(error);
+                return;
+            }
+
+            let lamports_amount = account_info_result["result"]["value"]["lamports"];
+
+            setSolBalance(lamports_amount  / LAMPORTS_PER_SOL);
 
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
-            try {
+            if (check_balance) {
+                
+                // first check if the data account exists
+                try {
 
-                let player_data_account = await connection.getAccountInfo(player_data_key);
-                const player_data = deserialize(player_data_schema, PlayerData, player_data_account.data);
-
-                //console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] === 0);
-
-                if (player_data["player_status"] === DungeonStatus.alive){
-                    first_living_update = true;
+                    const balance_url = `/.netlify/functions/solana_dev?function_name=getBalance&p1=`+player_data_key.toString();
+                    var balance_result;
+                    try {
+                        balance_result = await fetch(balance_url).then((res) => res.json());
+                    }
+                    catch(error) {
+                        console.log(error);
+                        return;
+                    }
+                    
+                    let balance = balance_result["result"]["value"];
+                    if (balance > 0) {
+                        setDataAccountStatus(AccountStatus.created);
+                        check_balance = false;
+                    }
+                    else {
+                        need_to_create_account = true;
+                        setDataAccountStatus(AccountStatus.not_created);
+                        return;
+                    }
                 }
-
-                if (!first_living_update) {
+                catch(error) {
+                    console.log(error);
                     return;
                 }
-                //console.log("updating stats");
-                
+            }
+
+            try {
+
+                const player_account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+player_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+                var player_account_info_result;
+                try {
+                    player_account_info_result = await fetch(player_account_info_url).then((res) => res.json());
+                }
+                catch(error) {
+                    console.log(error);
+                    return;
+                }
+
+                let player_account_encoded_data = player_account_info_result["result"]["value"]["data"];
+                let player_account_data = Buffer.from(player_account_encoded_data[0], "base64");
+                const player_data = deserialize(player_data_schema, PlayerData, player_account_data);
+
+
+                if (!initial_status_is_set) {
+                    if (player_data["player_status"] === DungeonStatus.alive){
+                        setInitialStatus(InitialDungeonStatus.alive);
+                    }
+
+                    if (player_data["player_status"] === DungeonStatus.dead){
+                        setInitialStatus(InitialDungeonStatus.dead);
+                    }
+                    
+                }
+
+                let num_plays = player_data["num_plays"].toNumber();
+
+                setNumPlays(num_plays);
+
+                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] === 0, "num_plays", num_plays);
+
+                if (initial_num_plays ===  -1)
+                {
+                    initial_num_plays =  num_plays;
+                }
+                if (num_plays === 0)  {
+                    return;
+                }  
 
                 setCurrentEnemy(player_data["dungeon_enemy"]);
                 
@@ -222,7 +309,7 @@ export function AirDropApp()
             }
         }
 
-    }, [wallet, connection]);
+    }, [wallet]);
 
     useEffect(() => 
     {
@@ -239,14 +326,17 @@ export function AirDropApp()
     
     useEffect(() => 
         {
-            //console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "alive", player_alive);
-
+            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays);
+      
             if (currentLevel === 0)
                 return;
 
             if (currentStatus === DungeonStatus.alive) {
                 setScreen(Screen.DUNGEON_SCREEN);
             }
+
+            if (numPlays === initial_num_plays && !need_to_create_account && currentStatus === DungeonStatus.dead)
+                return;
 
             // display the current enemy
             setEnemyState(1);
@@ -259,7 +349,7 @@ export function AirDropApp()
                 setAnimateLevel(2);
             }
 
-        }, [currentLevel, current_enemy, currentStatus]);
+        }, [numPlays, currentLevel, current_enemy, currentStatus]);
 
     useEffect(() => 
     {
@@ -290,6 +380,7 @@ export function AirDropApp()
 
     useEffect(() => 
     {
+        setInitialStatus(InitialDungeonStatus.unknown);
         setPlayerState(1);
         setEnemyState(0);
         //console.log("this is only called once");
@@ -328,15 +419,28 @@ export function AirDropApp()
                 data: instruction_data
             });
 
+            const blockhash_url = `/.netlify/functions/solana_dev?function_name=getLatestBlockhash&p1=`;
+            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+
+            transaction.add(play_instruction);
 
             try {
-                await wallet.sendTransaction(
-                    new Transaction().add(play_instruction),
-                    connection
-                );
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction;
+                await fetch(send_url).then((res) => res.json());
 
             } catch(error) {
                 console.log(error);
+                return;
             }
 
             //console.log("setting screen to dungeon");
@@ -344,7 +448,7 @@ export function AirDropApp()
             setEnemyState(0);
             setPlayerState(1);        
 
-    },[wallet, connection, which_character]);
+    },[wallet, which_character]);
 
 
     const Quit = useCallback( async () => 
@@ -372,15 +476,28 @@ export function AirDropApp()
                 data: instruction_data
             });
 
+            const blockhash_url = `/.netlify/functions/solana_dev?function_name=getLatestBlockhash&p1=`;
+            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+
+            transaction.add(quit_instruction);
 
             try {
-                await wallet.sendTransaction(
-                    new Transaction().add(quit_instruction),
-                    connection
-                );
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction;
+                await fetch(send_url).then((res) => res.json());
 
             } catch(error) {
                 console.log(error);
+                return;
             }
 
             setScreen(Screen.HOME_SCREEN);
@@ -389,7 +506,7 @@ export function AirDropApp()
             return;
         
 
-    },[wallet, connection]);
+    },[wallet]);
 
     const Reset = useCallback( async () => 
     {
@@ -399,20 +516,21 @@ export function AirDropApp()
         
     },[]);
 
-    const VanillaMapper = () => {
-     return (
-        <Box bg='black' mt="2rem">
-        <img style={{"imageRendering":"pixelated"}} src={large_door} width={1000} alt={"generic"}/>
-        </Box>
-     )
- }
+    const LargeDoor = () => {
+        return (
+            <Box bg='black' mt="2rem">
+            <img style={{"imageRendering":"pixelated"}} src={large_door} width={1000} alt={"generic"}/>
+            </Box>
+        )
+    }
 
     const Title = () =>  {
 
         return (
-        <Box bg='black' mt="2rem">
-            <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="1000" alt={""}/>
-        </Box>)
+            <Box bg='black' mt="2rem">
+                <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="1000" alt={""}/>
+            </Box>
+        )
     }
 
     const SelectKnight = useCallback( async () => 
@@ -440,86 +558,111 @@ export function AirDropApp()
 
     const CharacterSelect = () => {
 
-        return (
-            <HStack>
-                {which_character === DungeonCharacter.knight &&
-                    <Box  style={{
-                        backgroundImage: `url(${selector})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        imageRendering: "pixelated"
+        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "create account", need_to_create_account, "initial status", initial_status, initial_status === InitialDungeonStatus.unknown);
 
-                    } } width="100%">
-                        <Box>
-                            <Button variant='link' size='md' onClick={SelectKnight}>
-                                <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
-                            </Button>
-                        </Box>
-                    </Box>
-                }
-                {which_character !== DungeonCharacter.knight &&
-                    <Box  width="100%">
-                        <Box>
-                            <Button variant='link' size='md' onClick={SelectKnight}>
-                                <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
-                            </Button>
-                        </Box>
-                    </Box>
-                }
-                
-                {which_character === DungeonCharacter.ranger &&
-                    <Box  style={{
-                        backgroundImage: `url(${selector})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        imageRendering: "pixelated"
+        // if i don't need to make an account but player status is unknown return nothing
+        if (!need_to_create_account  && initial_status === InitialDungeonStatus.unknown) {
+            return(<></>);
+        }
 
-                    } } width="100%">
-                        <Box>
-                            <Button variant='link' size='md' onClick={SelectRanger}>
-                                <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
-                            </Button>
-                        </Box>
-                    </Box>
-                }
-                {which_character !== DungeonCharacter.ranger &&
-                    <Box  width="100%">
-                        <Box>
-                            <Button variant='link' size='md' onClick={SelectRanger}>
-                                <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
-                            </Button>
-                        </Box>
-                    </Box>
-                }
-                {which_character === DungeonCharacter.wizard &&
-                    <Box  style={{
-                        backgroundImage: `url(${selector})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        imageRendering: "pixelated"
+        //console.log("have made it here in CS 1");
+        // if i didn't need to create an account and have only recieved the initial update, and that shows I am alive, don't display
+        if (!need_to_create_account && numPlays === initial_num_plays && InitialDungeonStatus === InitialDungeonStatus.alive) {
+            return(<></>);
+        }
+       // console.log("have made it here in CS 2");
+        // if i am alive and  the level is > 0 never show this
+        if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && currentStatus === DungeonStatus.alive)) {
+            return(<></>);
+        }
+        //console.log("have made it here in CS");
+        // if the data account hasn't been created the initial status must also be unknown, just return character select
+        if (data_account_status !== AccountStatus.unknown &&  (currentLevel === 0 || (currentLevel !== 0 && currentStatus === DungeonStatus.dead))) {
+            return (
+                <HStack>
+                    {which_character === DungeonCharacter.knight &&
+                        <Box  style={{
+                            backgroundImage: `url(${selector})`,
+                            backgroundPosition: 'center',
+                            backgroundSize: 'contain',
+                            backgroundRepeat: 'no-repeat',
+                            imageRendering: "pixelated"
 
-                    } } width="100%">
-                        <Box>
-                            <Button variant='link' size='md' onClick={SelectWizard}>
-                                <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
-                            </Button>
+                        } } width="100%">
+                            <Box>
+                                <Button variant='link' size='md' onClick={SelectKnight}>
+                                    <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
+                                </Button>
+                            </Box>
                         </Box>
-                    </Box>
-                }
-                {which_character !== DungeonCharacter.wizard &&
-                    <Box  width="100%">
-                        <Box>
-                            <Button variant='link' size='md' onClick={SelectWizard}>
-                                <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
-                            </Button>
+                    }
+                    {which_character !== DungeonCharacter.knight &&
+                        <Box  width="100%">
+                            <Box>
+                                <Button variant='link' size='md' onClick={SelectKnight}>
+                                    <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
+                                </Button>
+                            </Box>
                         </Box>
-                    </Box>
-                }
-            </HStack>
-        )
+                    }
+                    
+                    {which_character === DungeonCharacter.ranger &&
+                        <Box  style={{
+                            backgroundImage: `url(${selector})`,
+                            backgroundPosition: 'center',
+                            backgroundSize: 'contain',
+                            backgroundRepeat: 'no-repeat',
+                            imageRendering: "pixelated"
+
+                        } } width="100%">
+                            <Box>
+                                <Button variant='link' size='md' onClick={SelectRanger}>
+                                    <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
+                                </Button>
+                            </Box>
+                        </Box>
+                    }
+                    {which_character !== DungeonCharacter.ranger &&
+                        <Box  width="100%">
+                            <Box>
+                                <Button variant='link' size='md' onClick={SelectRanger}>
+                                    <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
+                                </Button>
+                            </Box>
+                        </Box>
+                    }
+                    {which_character === DungeonCharacter.wizard &&
+                        <Box  style={{
+                            backgroundImage: `url(${selector})`,
+                            backgroundPosition: 'center',
+                            backgroundSize: 'contain',
+                            backgroundRepeat: 'no-repeat',
+                            imageRendering: "pixelated"
+
+                        } } width="100%">
+                            <Box>
+                                <Button variant='link' size='md' onClick={SelectWizard}>
+                                    <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
+                                </Button>
+                            </Box>
+                        </Box>
+                    }
+                    {which_character !== DungeonCharacter.wizard &&
+                        <Box  width="100%">
+                            <Box>
+                                <Button variant='link' size='md' onClick={SelectWizard}>
+                                    <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
+                                </Button>
+                            </Box>
+                        </Box>
+                    }
+                </HStack>
+            );
+        }
+
+        // otherwise don't display
+        return (<></>);
+        
     }
 
     const ConnectPage = () =>  {
@@ -537,7 +680,7 @@ export function AirDropApp()
                         <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
                     </div>    
                 </Box>            
-                <VanillaMapper/>
+                <LargeDoor/>
                 <Box width="33%">
                     <Box ml="1%" mr="10%">
                         <VStack alignItems="center">
@@ -562,6 +705,78 @@ export function AirDropApp()
 
     const ConnectedPage = () =>  {
 
+        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "create account", need_to_create_account, "initial status", initial_status, initial_status === InitialDungeonStatus.unknown);
+
+        // if i don't need to make an account but player status is unknown return nothing
+        if (!need_to_create_account  && (initial_status === InitialDungeonStatus.unknown || (numPlays === initial_num_plays && InitialDungeonStatus === InitialDungeonStatus.alive))) {
+            return(
+                    <VStack>
+                    <HStack mb = "2rem" mt="2rem">
+                        <Box width="33%"/>
+                        <Title/>
+                        <Box width="33%"/>
+                    </HStack>
+                    <HStack mb = "10rem" mt="2rem">
+                        <Box width="33%">
+                            <div className="font-face-sfpb">
+                                <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                            </div>    
+                        </Box>   
+                        <LargeDoor/>
+                        <Box width="33%">
+                            <Center>
+                                    <div className="font-face-sfpb">
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="black">ENTER<br/>DUNGEON</Text>
+                                    </div> 
+                            </Center>
+                            
+                        </Box>  
+                    </HStack>
+                    <HStack mb = "2rem" mt="2rem">
+                        <Box width="33%" mt="2rem"/>
+                        <Box width="33%" mt="2rem"></Box>
+                        <Box width="33%" mt="2rem"/>
+                    </HStack>
+                </VStack>
+                );
+        }
+
+        //console.log("have made it here in CS 2");
+        // if i am alive and  the level is > 0 never show this
+        if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && currentStatus === DungeonStatus.alive)) {
+            return(
+                    <VStack>
+                        <HStack mb = "2rem" mt="2rem">
+                            <Box width="33%"/>
+                            <Title/>
+                            <Box width="33%"/>
+                        </HStack>
+                        <HStack mb = "10rem" mt="2rem">
+                            <Box width="33%">
+                                <div className="font-face-sfpb">
+                                    <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                                </div>    
+                            </Box>   
+                            <LargeDoor/>
+                            <Box width="33%">
+                                <Center>
+                                        <div className="font-face-sfpb">
+                                            <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="black">ENTER<br/>DUNGEON</Text>
+                                        </div> 
+                                </Center>
+                                
+                            </Box>  
+                        </HStack>
+                        <HStack mb = "2rem" mt="2rem">
+                            <Box width="33%" mt="2rem"/>
+                            <Box width="33%" mt="2rem"></Box>
+                            <Box width="33%" mt="2rem"/>
+                        </HStack>
+                    </VStack>
+            );
+        }
+        //console.log("have made it here in CS");
+
         return (
             <VStack>
             <HStack mb = "2rem" mt="2rem">
@@ -575,7 +790,7 @@ export function AirDropApp()
                         <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
                     </div>    
                 </Box>            
-                <VanillaMapper/>
+                <LargeDoor/>
                 <Box width="33%">
                     <Center>
                         <Button variant='link' size='md' onClick={Play}>
@@ -653,10 +868,10 @@ export function AirDropApp()
          );
      }
 
-    const DisplayEnemyResultText = () => {
+    const DisplaySuccessEnemyResultText = () => {
 
          
-        // for the traps we report an empty room
+        // for the traps we have special text for survival
         if (current_enemy === 10 || current_enemy === 11) {
             return(
             <div className="font-face-sfpb">
@@ -675,6 +890,35 @@ export function AirDropApp()
                 <Text fontSize='50px' textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
                 <Text fontSize='50px' textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
         </div>
+        );
+    }
+
+    const DisplayFailureEnemyResultText = () => {
+
+         
+        // for the traps we have special text for failure
+        if (current_enemy === 10) {
+            return(
+                <div className="font-face-sfpb">
+                    <Text  fontSize='50px' textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.  <br/>You Have Died </Text>
+                </div>
+            );
+        }
+
+        if (current_enemy === 11) {
+            return(
+                <div className="font-face-sfpb">
+                    <Text  fontSize='50px' textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.<br/>You Have Died </Text>
+                </div>
+            );
+        }
+        
+
+        // otherwise say the enemy type
+        return(
+            <div className="font-face-sfpb">
+                <Text  fontSize='50px' textAlign="center" color="white">The {DungeonEnemyName[current_enemy]} Won.  You Have Died </Text>
+            </div>
         );
     }
 
@@ -809,25 +1053,48 @@ export function AirDropApp()
         
         <Center>
             <VStack>
-                {wallet.publicKey &&
-                    <Box  borderRadius="2rem" p='1rem' width='50%' mt="2rem">   
+                 {!wallet.publicKey &&
+                    <Box  borderRadius="2rem" p='1rem' width='50%' mt="2rem"  mb="1rem">   
                     
-                        <Box width="100%">
+                        
                                 <HStack>
-                                    <WalletConnected />
+                                    <Button variant='link'  size='lg'>
+                                    
+                                    </Button>
                                     <div className="font-face-sfpb">
-                                        <Text color="white">
+                                        <Text fontSize='25px' color="black">
                                             {
-                                                sol_balance
-                                                ? "Balance: " + sol_balance + ' SOL'
-                                                : '                                 '
+                                                "no balance"
                                             }
                                         </Text>
                                     </div>
                                 </HStack>
                             
-                        </Box>
+                        
                     </Box>
+                }
+                {wallet.publicKey &&
+                    <Box width="100%">
+                        <Box  borderRadius="2rem" p='1rem' width='50%' mt="2rem">   
+                        
+                           
+                                    <HStack>
+                                        <WalletConnected />
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='25px'  color="white">
+                                                {
+                                                    sol_balance
+                                                    ? "Balance: " + sol_balance + ' SOL'
+                                                    : '                                 '
+                                                }
+                                            </Text>
+                                        </div>
+                                    </HStack>
+                                
+                            
+                        </Box>
+                </Box>
+                    
                 }
                 <Box width="100%">
                     {!wallet.publicKey && <ConnectPage/>}
@@ -847,41 +1114,44 @@ export function AirDropApp()
                 </Box>
                 <VStack  alignItems="center" marginBottom  = "10px" >
                             
-                    {screen === Screen.DUNGEON_SCREEN  && player_state === 2 && first_living_update &&
+                    {screen === Screen.DUNGEON_SCREEN  && player_state === 2 &&
                     <>
+                    <VStack alignItems="center" spacing="3%">
                         <div className="font-face-sfpb">
-                        <Text  fontSize='50px' textAlign="center" color="white">The {DungeonEnemyName[current_enemy]} Won.  You Have Died </Text>
-                        <Button size='lg' onClick={Reset}>
-                            Try Again
-                        </Button>
+                            <DisplayFailureEnemyResultText/>
+                            <Center mt="3%">
+                                <Button variant='link' size='md' onClick={Reset}>
+                                    <div className="font-face-sfpb">
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white"> Try Again</Text>
+                                    </div> 
+                                </Button> 
+                            </Center>
                         </div>
+                        </VStack>
                     </>
                     }
                     {screen === Screen.DUNGEON_SCREEN  && currentLevel > 0  &&
                     <>
-                    {/* enemy_state  === 0  && <>
-                        <div className="font-face-sfpb">
-                            <Text textAlign="center" color="white">Enemy State is zero</Text>
-                        </div>
-                        <Button size='md' onClick={Play}>
-                                Explore Further
-                            </Button>
-                    </>
-                    */}
                     { player_state === 1 && enemy_state  === 1  && 
                         <DisplayEnemyInitialText/>
                     }
                     {enemy_state === 2 &&
                     <>
-                        <VStack alignItems="center">
-                            <DisplayEnemyResultText/>
+                        <VStack alignItems="center" spacing="3%">
+                            <DisplaySuccessEnemyResultText/>
                             <HStack>
-                                <Button size='lg' onClick={Play}>
-                                    Explore Further
-                                </Button>
-                                <Button size='lg' onClick={Quit}>
-                                    Escape
-                                </Button>
+                            <Center>
+                                <Button variant='link' size='md' onClick={Play} mr="3rem">
+                                    <div className="font-face-sfpb">
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Explore Further</Text>
+                                    </div> 
+                                </Button> 
+                                <Button variant='link' size='md' onClick={Quit} ml="10rem">
+                                    <div className="font-face-sfpb">
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Escape</Text>
+                                    </div> 
+                                </Button> 
+                            </Center>
                             </HStack>
                         </VStack>
                     </>
@@ -898,7 +1168,6 @@ export function AirDropApp()
 
 function Dungeon() {
     const network = 'devnet';
-    const endpoint = clusterApiUrl(network);
     const wallets = useMemo(() => 
     [
         getPhantomWallet(),
@@ -911,13 +1180,11 @@ function Dungeon() {
   document.body.style = 'background: black;';
     return (
         <ChakraProvider theme={theme}>
-            <ConnectionProvider endpoint={endpoint}>
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
-                        <AirDropApp />
+                        <DungeonApp />
                     </WalletModalProvider>
                 </WalletProvider>
-            </ConnectionProvider>
         </ChakraProvider>
     );
 }
