@@ -172,7 +172,7 @@ const play_scheme = new Map([
 export function WalletConnected() 
 {
     return (
-        <Box marginBottom  = "10px">
+        <Box>
             <WalletDisconnectButton />
         </Box>
     );
@@ -806,11 +806,13 @@ export function DungeonApp()
                         </div>   
                     <Box width="33%"/>
                 </HStack>
+                {!isMobile &&
                 <HStack>
                     <Box width="33%" mt="2rem"/>
                     <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
                     <Box width="33%" mt="2rem"/>
                 </HStack>
+                }
             </VStack>
         )
     }
