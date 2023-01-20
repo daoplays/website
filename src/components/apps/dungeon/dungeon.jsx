@@ -62,7 +62,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 
-
+const DEFAULT_FONT_SIZE = "50px"
 const PROGRAM_KEY = new PublicKey('53L6SWoPTx8tAfaBkxKRiRewzuMnQ8NoyeYRyoLLh3gC');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
@@ -772,9 +772,9 @@ export function DungeonApp()
 
     const UnconnectedPage = () =>  {
 
-        var font_size = "50px";
+        var font_size = DEFAULT_FONT_SIZE;
         if (isMobile) {
-            font_size = "25px";
+            font_size = "20px";
         }
 
         return (
@@ -792,7 +792,9 @@ export function DungeonApp()
                                 <div className="font-face-sfpb">
                                     <Text align="center" fontSize={font_size} color="white">CONNECT WALLET</Text>
                                 </div>  
-                                <WalletMultiButton />
+                                {!isMobile &&
+                                    <WalletMultiButton />
+                                }
                             </VStack>  
                         </Box>
                     </Box>  
@@ -819,14 +821,14 @@ export function DungeonApp()
             <HStack mb = "10rem" mt="2rem">
                 <Box width="33%">
                     <div className="font-face-sfpb">
-                        <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                        <Text  align="center"  ml="10%" mr="1%" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
                     </div>    
                 </Box>   
                 <LargeDoor/>
                 <Box width="33%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="black">ENTER<br/>DUNGEON</Text>
+                                <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
                             </div> 
                     </Center>
                     
@@ -866,7 +868,7 @@ export function DungeonApp()
                 <HStack mb = "10rem" mt="2rem">
                     <Box width="33%">
                         <div className="font-face-sfpb">
-                            <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                            <Text  align="center"  ml="10%" mr="1%" fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
                         </div>    
                     </Box>            
                     <LargeDoor/>
@@ -874,7 +876,7 @@ export function DungeonApp()
                         <Center>
                             <Button variant='link' size='md' onClick={Play}>
                                 <div className="font-face-sfpb">
-                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">ENTER<br/>DUNGEON</Text>
+                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
                                 </div> 
                             </Button> 
                         </Center>
@@ -932,7 +934,7 @@ export function DungeonApp()
          if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
              return(
              <div className="font-face-sfpb">
-                <Text fontSize='50px' textAlign="center" color="white">You enter a suspiciously empty room...</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You enter a suspiciously empty room...</Text>
             </div>
             );
          };
@@ -940,7 +942,7 @@ export function DungeonApp()
          if (current_enemy === DungeonEnemy.Chest) {
             return(
             <div className="font-face-sfpb">
-               <Text fontSize='50px' textAlign="center" color="white">You have encountered a <del>treasure chest</del> mimic in room {currentLevel}</Text>
+               <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You have encountered a <del>treasure chest</del> mimic in room {currentLevel}</Text>
            </div>
            );
         };
@@ -949,8 +951,8 @@ export function DungeonApp()
          // otherwise say the enemy type
          return(
             <div className="font-face-sfpb">
-                <Text fontSize='50px' textAlign="center" color="white">You have encountered {DungeonEnemyInitialText[current_enemy]} in room {currentLevel}</Text>
-                <Text fontSize='50px' textAlign="center" color="white">Prepare yourself!</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You have encountered {DungeonEnemyInitialText[current_enemy]} in room {currentLevel}</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Prepare yourself!</Text>
             </div>
          );
      }
@@ -962,9 +964,9 @@ export function DungeonApp()
         if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
             return(
             <div className="font-face-sfpb">
-                <Text fontSize='50px' textAlign="center" color="white">...but pass through without incident.</Text>
-                <Text fontSize='50px' textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
-                <Text fontSize='50px' textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">...but pass through without incident.</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
            </div>
            );
         };
@@ -973,9 +975,9 @@ export function DungeonApp()
         // otherwise say the enemy type
         return(
             <div className="font-face-sfpb">
-                <Text fontSize='50px' textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>
-                <Text fontSize='50px' textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
-                <Text fontSize='50px' textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
+                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
         </div>
         );
     }
@@ -989,7 +991,7 @@ export function DungeonApp()
                 <Center>
                 <Box width="80%">
                 <div className="font-face-sfpb">
-                    <Text  fontSize='50px' textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
+                    <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
                 </div>
                 </Box>
                 </Center>
@@ -1001,7 +1003,7 @@ export function DungeonApp()
                 <Center>
                 <Box width="80%">
                 <div className="font-face-sfpb">
-                    <Text  fontSize='50px' textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
+                    <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
                 </div>
                 </Box>
                 </Center>
@@ -1014,7 +1016,7 @@ export function DungeonApp()
             <Center>
             <Box width="80%">
             <div className="font-face-sfpb">
-                <Text  fontSize='50px' textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
+                <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
             </div>
             </Box>
             </Center>
@@ -1119,7 +1121,7 @@ export function DungeonApp()
                 { transaction_failed &&
                     <div className="font-face-sfpb">
                         <Center>
-                                <Text  fontSize='50px' textAlign="center" color="red">Transaction Failed. <br/>Please Refresh.</Text>
+                                <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="red">Transaction Failed. <br/>Please Refresh.</Text>
                         </Center>
                     </div>
                 }
@@ -1132,7 +1134,7 @@ export function DungeonApp()
                         <Center mt="3%">
                             <Button variant='link' size='md' onClick={ShowDeath}>
                                 <div className="font-face-sfpb">
-                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Exit</Text>
+                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Exit</Text>
                                 </div> 
                             </Button> 
                         </Center>
@@ -1153,12 +1155,12 @@ export function DungeonApp()
                             <Center>
                                 <Button variant='link' size='md' onClick={Play} mr="3rem">
                                     <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Explore Further</Text>
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
                                     </div> 
                                 </Button> 
                                 <Button variant='link' size='md' onClick={Quit} ml="10rem">
                                     <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Escape</Text>
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Escape</Text>
                                     </div> 
                                 </Button> 
                             </Center>
@@ -1188,7 +1190,7 @@ export function DungeonApp()
                 <Box width="100%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize='50px' color="Red">You Have Died<br/><del>{Math.pow(2,currentLevel - 1) *  0.2} SOL</del></Text>
+                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,currentLevel - 1) *  0.2} SOL</del></Text>
                             </div> 
                     </Center>
                 </Box>
@@ -1198,7 +1200,7 @@ export function DungeonApp()
                         <Center>
                             <Button variant='link' size='md' onClick={Reset}>
                                 <div className="font-face-sfpb">
-                                    <Text textAlign="center" fontSize='50px' color="white">Try Again</Text>
+                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Try Again</Text>
                                 </div> 
                             </Button> 
                         </Center>
