@@ -9,6 +9,8 @@ import {
     Text,
     VStack
 } from '@chakra-ui/react';
+import { isMobile } from "react-device-detect";
+
 import { serialize, deserialize } from 'borsh';
 
 import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -56,6 +58,8 @@ import floor_spikes from "./Spikes.png"
 
 import './fonts.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
+
+
 
 
 
@@ -768,38 +772,43 @@ export function DungeonApp()
 
     const UnconnectedPage = () =>  {
 
+        var font_size = "50px";
+        if (isMobile) {
+            font_size = "25px";
+        }
+
         return (
             <VStack>
-            <HStack mb = "10rem" mt="2rem">
-                <Box width="33%">
-                    <div className="font-face-sfpb">
-                        <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
-                    </div>    
-                </Box>            
-                <LargeDoor/>
-                <Box width="33%">
-                    <Box ml="1%" mr="10%">
-                        <VStack alignItems="center">
-                            <div className="font-face-sfpb">
-                                <Text align="center" fontSize='50px' color="white">CONNECT WALLET</Text>
-                            </div>  
-                            <WalletMultiButton />
-                        </VStack>  
-                    </Box>
-                </Box>  
-            </HStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%"/>
-                    <div className="font-face-sfpb">
-                        <Text align="center" fontSize='50px' color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
-                    </div>   
-                <Box width="33%"/>
-            </HStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%" mt="2rem"/>
-                <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
-                <Box width="33%" mt="2rem"/>
-            </HStack>
+                <HStack>
+                    <Box width="33%">
+                        <div className="font-face-sfpb">
+                            <Text  align="center"  ml="10%" mr="1%" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                        </div>    
+                    </Box>            
+                    <LargeDoor/>
+                    <Box width="33%">
+                        <Box ml="1%" mr="10%">
+                            <VStack alignItems="center">
+                                <div className="font-face-sfpb">
+                                    <Text align="center" fontSize={font_size} color="white">CONNECT WALLET</Text>
+                                </div>  
+                                <WalletMultiButton />
+                            </VStack>  
+                        </Box>
+                    </Box>  
+                </HStack>
+                <HStack>
+                    <Box width="33%"/>
+                        <div className="font-face-sfpb">
+                            <Text align="center" fontSize={font_size} color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
+                        </div>   
+                    <Box width="33%"/>
+                </HStack>
+                <HStack>
+                    <Box width="33%" mt="2rem"/>
+                    <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
+                    <Box width="33%" mt="2rem"/>
+                </HStack>
             </VStack>
         )
     }
