@@ -114,6 +114,10 @@ const DungeonEnemy = {
 const DungeonEnemyName = ["Mimic", "Slime", "Goblins", "Skeletons", "Skeletons", "Elves", "Orc", "Skeleton Knight", "Skeleton Wizard", "Reaper", "Boulder", "Floor Spikes"];
 
 
+const DungeonEnemyInitialText = ["mimic", "an oozing green slime", "a pair of goblins", "a horde of skeletons", "a horde of skeletons", "a group of elven archers", "a huge orc", "a skeleton knight", "a skeleton wizard", "the Grim Reaper", "Boulder", "Floor Spikes"];
+
+const DungeonEnemyDefeatText = ["The mimic's transformation stuns you for just a moment, but that is all it needed", "The slime oozes past your defenses and envelopes you, suffocating you where you stand", "The goblins are too fast, you lose sight of them for just a second and the next thing you see is a knife to your throat", "The skeletons manage to surround you, and strike from all sides", "There were just.. too many skeletons", "You take an arrow to the knee, and while stumbling are unable to dodge the next volley to the heart", "With one swing from it's axe the orc cracks your head open like an egg", "Your attacks are simply deflected off the knight's armour until it gets bored and strikes you down", "Hoarsely croaking some ancient incantation the wizard turns you inside out before you even have a chance to attack", "The Reaper's scythe passes through you as though you were no more than air as it claims another soul", "Boulder", "Floor Spikes"];
+
 const DungeonInstruction = {
     add_funds : 0,
     distribute : 1,
@@ -175,6 +179,8 @@ var check_balance = true;
 var initial_status_is_set = false;
 var initial_num_plays = -1;
 var need_to_create_account = false;
+var last_num_plays = -1;
+var transaction_failed = false;
 
 export function DungeonApp() 
 {
@@ -190,6 +196,8 @@ export function DungeonApp()
     const [currentLevel, setCurrentLevel] = useState(0);
     const [currentStatus, setCurrentStatus] = useState(true);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
+    const [current_signature, setCurrentSignature] = useState(null);
+
 
     const [screen, setScreen] = useState(Screen.HOME_SCREEN);
 
@@ -197,6 +205,51 @@ export function DungeonApp()
     const [enemy_state, setEnemyState] = useState(0);
     const [player_state, setPlayerState] = useState(0);
     const [animateLevel, setAnimateLevel] = useState(0);
+
+    const check_signature = useCallback(async() =>
+    {
+        
+            if (current_signature === null)
+                return;
+
+            //console.log("in check signature");
+            const confirm_url = `/.netlify/functions/sig_status_dev?function_name=getSignatureStatuses&p1=`+current_signature;
+            var signature_response = await fetch(confirm_url).then((res) => res.json());
+            let confirmation = signature_response["result"]["value"][0];
+            //console.log(confirmation);
+            if (confirmation !== null) {
+
+                if (confirmation["err"] !== null) {
+                    console.log("error: ", confirmation["err"]);
+                    transaction_failed = true;
+                }
+                else {
+                    transaction_failed = false;
+                    
+                }
+
+                setCurrentSignature(null)
+            }
+
+    }, [current_signature]);
+
+    useEffect(() => 
+    {
+        if (current_signature === null)
+            return;
+
+        //console.log("in use effect of check signature");
+        check_signature();
+
+        if (current_signature === null)
+            return;
+        
+        const timer = setTimeout(() => {
+            check_signature();
+            }, 1000);
+            return () => clearTimeout(timer);
+
+    }, [current_signature, check_signature]);
 
     const init = useCallback(async () => 
     {       
@@ -282,9 +335,16 @@ export function DungeonApp()
 
                 let num_plays = player_data["num_plays"].toNumber();
 
+
+                if (num_plays < last_num_plays) {
+                    return;
+                }
+
+                last_num_plays = num_plays;
+
                 setNumPlays(num_plays);
 
-                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] === 0, "num_plays", num_plays);
+                //console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] === 0, "num_plays", num_plays);
 
                 if (initial_num_plays ===  -1)
                 {
@@ -322,11 +382,24 @@ export function DungeonApp()
         }
     }, [init, wallet]);
 
+    // reset things when the wallet changes
+    useEffect(() => 
+    {
+        //console.log("wallet things changed")
+
+        check_balance = true;
+        initial_status_is_set = false;
+        initial_num_plays = -1;
+        need_to_create_account = false;
+        last_num_plays = -1;
+        transaction_failed = false;
+    }, [wallet]);
+
 
     
     useEffect(() => 
         {
-            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays);
+            //console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays);
       
             if (currentLevel === 0)
                 return;
@@ -388,6 +461,8 @@ export function DungeonApp()
     }, []);
 
 
+
+
     const Play = useCallback( async () => 
     {
 
@@ -436,7 +511,10 @@ export function DungeonApp()
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
                 const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction;
-                await fetch(send_url).then((res) => res.json());
+                var transaction_response = await fetch(send_url).then((res) => res.json());
+                let signature = transaction_response["result"];
+
+                setCurrentSignature(signature);
 
             } catch(error) {
                 console.log(error);
@@ -493,7 +571,11 @@ export function DungeonApp()
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
                 const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction;
-                await fetch(send_url).then((res) => res.json());
+                let transaction_response = await fetch(send_url).then((res) => res.json());
+
+                let signature = transaction_response["result"];
+
+                setCurrentSignature(signature);
 
             } catch(error) {
                 console.log(error);
@@ -511,6 +593,14 @@ export function DungeonApp()
     const Reset = useCallback( async () => 
     {
             setScreen(Screen.HOME_SCREEN);
+            setEnemyState(0);
+            return;
+        
+    },[]);
+
+    const ShowDeath = useCallback( async () => 
+    {
+            setScreen(Screen.DEATH_SCREEN);
             setEnemyState(0);
             return;
         
@@ -554,30 +644,46 @@ export function DungeonApp()
         
     },[]);
 
+    const HiddenCharacterSelect = () => {
 
+        return (
+            <HStack>
+                
+                    <Box  width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectKnight}>
+                                <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={knight} width="10000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                
+                
+                
+                    <Box  width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectRanger}>
+                                <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={ranger} width="10000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                
+                
+                    <Box  width="100%">
+                        <Box>
+                            <Button variant='link' size='md' onClick={SelectWizard}>
+                                <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={wizard} width="10000" alt={""}/>
+                            </Button>
+                        </Box>
+                    </Box>
+                
+            </HStack>
+        );  
+    }
 
     const CharacterSelect = () => {
 
         //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "create account", need_to_create_account, "initial status", initial_status, initial_status === InitialDungeonStatus.unknown);
 
-        // if i don't need to make an account but player status is unknown return nothing
-        if (!need_to_create_account  && initial_status === InitialDungeonStatus.unknown) {
-            return(<></>);
-        }
-
-        //console.log("have made it here in CS 1");
-        // if i didn't need to create an account and have only recieved the initial update, and that shows I am alive, don't display
-        if (!need_to_create_account && numPlays === initial_num_plays && InitialDungeonStatus === InitialDungeonStatus.alive) {
-            return(<></>);
-        }
-       // console.log("have made it here in CS 2");
-        // if i am alive and  the level is > 0 never show this
-        if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && currentStatus === DungeonStatus.alive)) {
-            return(<></>);
-        }
-        //console.log("have made it here in CS");
-        // if the data account hasn't been created the initial status must also be unknown, just return character select
-        if (data_account_status !== AccountStatus.unknown &&  (currentLevel === 0 || (currentLevel !== 0 && currentStatus === DungeonStatus.dead))) {
             return (
                 <HStack>
                     {which_character === DungeonCharacter.knight &&
@@ -591,7 +697,7 @@ export function DungeonApp()
                         } } width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectKnight}>
-                                    <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
+                                    <img style={{"imageRendering":"pixelated"}} src={knight} width="10000" alt={""}/>
                                 </Button>
                             </Box>
                         </Box>
@@ -600,7 +706,7 @@ export function DungeonApp()
                         <Box  width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectKnight}>
-                                    <img style={{"imageRendering":"pixelated"}} src={knight} width="1000" alt={""}/>
+                                    <img style={{"imageRendering":"pixelated"}} src={knight} width="10000" alt={""}/>
                                 </Button>
                             </Box>
                         </Box>
@@ -617,7 +723,7 @@ export function DungeonApp()
                         } } width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectRanger}>
-                                    <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
+                                    <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/>
                                 </Button>
                             </Box>
                         </Box>
@@ -626,7 +732,7 @@ export function DungeonApp()
                         <Box  width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectRanger}>
-                                    <img style={{"imageRendering":"pixelated"}} src={ranger} width="1000" alt={""}/>
+                                    <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/>
                                 </Button>
                             </Box>
                         </Box>
@@ -642,7 +748,7 @@ export function DungeonApp()
                         } } width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectWizard}>
-                                    <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
+                                    <img style={{"imageRendering":"pixelated"}} src={wizard} width="10000" alt={""}/>
                                 </Button>
                             </Box>
                         </Box>
@@ -651,29 +757,19 @@ export function DungeonApp()
                         <Box  width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectWizard}>
-                                    <img style={{"imageRendering":"pixelated"}} src={wizard} width="1000" alt={""}/>
+                                    <img style={{"imageRendering":"pixelated"}} src={wizard} width="10000" alt={""}/>
                                 </Button>
                             </Box>
                         </Box>
                     }
                 </HStack>
-            );
-        }
-
-        // otherwise don't display
-        return (<></>);
-        
+            );        
     }
 
-    const ConnectPage = () =>  {
+    const UnconnectedPage = () =>  {
 
         return (
             <VStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%"/>
-                <Title/>
-                <Box width="33%"/>
-            </HStack>
             <HStack mb = "10rem" mt="2rem">
                 <Box width="33%">
                     <div className="font-face-sfpb">
@@ -699,8 +795,41 @@ export function DungeonApp()
                     </div>   
                 <Box width="33%"/>
             </HStack>
+            <HStack mb = "2rem" mt="2rem">
+                <Box width="33%" mt="2rem"/>
+                <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
+                <Box width="33%" mt="2rem"/>
+            </HStack>
             </VStack>
         )
+    }
+
+    const ConnectedPageNoCS = () =>  {
+        return(
+            <VStack>
+            <HStack mb = "10rem" mt="2rem">
+                <Box width="33%">
+                    <div className="font-face-sfpb">
+                        <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                    </div>    
+                </Box>   
+                <LargeDoor/>
+                <Box width="33%">
+                    <Center>
+                            <div className="font-face-sfpb">
+                                <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="black">ENTER<br/>DUNGEON</Text>
+                            </div> 
+                    </Center>
+                    
+                </Box>  
+            </HStack>
+            <HStack mb = "2rem" mt="2rem">
+                <Box width="33%" mt="2rem"/>
+                <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
+                <Box width="33%" mt="2rem"/>
+            </HStack>
+        </VStack>
+        );
     }
 
     const ConnectedPage = () =>  {
@@ -710,103 +839,44 @@ export function DungeonApp()
         // if i don't need to make an account but player status is unknown return nothing
         if (!need_to_create_account  && (initial_status === InitialDungeonStatus.unknown || (numPlays === initial_num_plays && InitialDungeonStatus === InitialDungeonStatus.alive))) {
             return(
-                    <VStack>
-                    <HStack mb = "2rem" mt="2rem">
-                        <Box width="33%"/>
-                        <Title/>
-                        <Box width="33%"/>
-                    </HStack>
-                    <HStack mb = "10rem" mt="2rem">
-                        <Box width="33%">
-                            <div className="font-face-sfpb">
-                                <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
-                            </div>    
-                        </Box>   
-                        <LargeDoor/>
-                        <Box width="33%">
-                            <Center>
-                                    <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="black">ENTER<br/>DUNGEON</Text>
-                                    </div> 
-                            </Center>
-                            
-                        </Box>  
-                    </HStack>
-                    <HStack mb = "2rem" mt="2rem">
-                        <Box width="33%" mt="2rem"/>
-                        <Box width="33%" mt="2rem"></Box>
-                        <Box width="33%" mt="2rem"/>
-                    </HStack>
-                </VStack>
-                );
+                <ConnectedPageNoCS/>
+            );
         }
 
         //console.log("have made it here in CS 2");
         // if i am alive and  the level is > 0 never show this
         if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && currentStatus === DungeonStatus.alive)) {
             return(
-                    <VStack>
-                        <HStack mb = "2rem" mt="2rem">
-                            <Box width="33%"/>
-                            <Title/>
-                            <Box width="33%"/>
-                        </HStack>
-                        <HStack mb = "10rem" mt="2rem">
-                            <Box width="33%">
-                                <div className="font-face-sfpb">
-                                    <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
-                                </div>    
-                            </Box>   
-                            <LargeDoor/>
-                            <Box width="33%">
-                                <Center>
-                                        <div className="font-face-sfpb">
-                                            <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="black">ENTER<br/>DUNGEON</Text>
-                                        </div> 
-                                </Center>
-                                
-                            </Box>  
-                        </HStack>
-                        <HStack mb = "2rem" mt="2rem">
-                            <Box width="33%" mt="2rem"/>
-                            <Box width="33%" mt="2rem"></Box>
-                            <Box width="33%" mt="2rem"/>
-                        </HStack>
-                    </VStack>
+                <ConnectedPageNoCS/>
             );
         }
         //console.log("have made it here in CS");
 
         return (
             <VStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%"/>
-                <Title/>
-                <Box width="33%"/>
-            </HStack>
-            <HStack mb = "10rem" mt="2rem">
-                <Box width="33%">
-                    <div className="font-face-sfpb">
-                        <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
-                    </div>    
-                </Box>            
-                <LargeDoor/>
-                <Box width="33%">
-                    <Center>
-                        <Button variant='link' size='md' onClick={Play}>
-                            <div className="font-face-sfpb">
-                                <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">ENTER<br/>DUNGEON</Text>
-                            </div> 
-                        </Button> 
-                    </Center>
-                    
-                </Box>  
-            </HStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%" mt="2rem"/>
-                <Box width="33%" mt="2rem"><CharacterSelect/></Box>
-                <Box width="33%" mt="2rem"/>
-            </HStack>
+                <HStack mb = "10rem" mt="2rem">
+                    <Box width="33%">
+                        <div className="font-face-sfpb">
+                            <Text  align="center"  ml="10%" mr="1%" fontSize='50px' color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                        </div>    
+                    </Box>            
+                    <LargeDoor/>
+                    <Box width="33%">
+                        <Center>
+                            <Button variant='link' size='md' onClick={Play}>
+                                <div className="font-face-sfpb">
+                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">ENTER<br/>DUNGEON</Text>
+                                </div> 
+                            </Button> 
+                        </Center>
+                        
+                    </Box>  
+                </HStack>
+                <HStack mb = "2rem" mt="2rem">
+                    <Box width="33%" mt="2rem"/>
+                    <Box width="33%" mt="2rem"><CharacterSelect/></Box>
+                    <Box width="33%" mt="2rem"/>
+                </HStack>
             </VStack>
         )
     }
@@ -820,10 +890,10 @@ export function DungeonApp()
 
         if (player_state === 2)  {
             // if the current enemy is a trap we should return that here
-            if (current_enemy === 10) {
+            if (current_enemy === DungeonEnemy.Boulder) {
                 return ( <img style={{"imageRendering":"pixelated"}} src={boulder} width="10000" alt={""}/> );
             }
-            if (current_enemy === 11) {
+            if (current_enemy === DungeonEnemy.FloorSpikes) {
                 return ( <img style={{"imageRendering":"pixelated"}} src={floor_spikes} width="10000" alt={""}/> );
             }
 
@@ -850,19 +920,27 @@ export function DungeonApp()
 
          
          // for the traps we report an empty room
-         if (current_enemy === 10 || current_enemy === 11) {
+         if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
              return(
              <div className="font-face-sfpb">
                 <Text fontSize='50px' textAlign="center" color="white">You enter a suspiciously empty room...</Text>
             </div>
             );
          };
+
+         if (current_enemy === DungeonEnemy.Chest) {
+            return(
+            <div className="font-face-sfpb">
+               <Text fontSize='50px' textAlign="center" color="white">You have encountered a <del>treasure chest</del> mimic in room {currentLevel}</Text>
+           </div>
+           );
+        };
          
 
          // otherwise say the enemy type
          return(
             <div className="font-face-sfpb">
-                <Text fontSize='50px' textAlign="center" color="white">You have encountered the {DungeonEnemyName[current_enemy]} in room {currentLevel}</Text>
+                <Text fontSize='50px' textAlign="center" color="white">You have encountered {DungeonEnemyInitialText[current_enemy]} in room {currentLevel}</Text>
                 <Text fontSize='50px' textAlign="center" color="white">Prepare yourself!</Text>
             </div>
          );
@@ -872,7 +950,7 @@ export function DungeonApp()
 
          
         // for the traps we have special text for survival
-        if (current_enemy === 10 || current_enemy === 11) {
+        if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
             return(
             <div className="font-face-sfpb">
                 <Text fontSize='50px' textAlign="center" color="white">...but pass through without incident.</Text>
@@ -886,7 +964,7 @@ export function DungeonApp()
         // otherwise say the enemy type
         return(
             <div className="font-face-sfpb">
-                <Text fontSize='50px' textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]} in room {currentLevel}</Text>
+                <Text fontSize='50px' textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>
                 <Text fontSize='50px' textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
                 <Text fontSize='50px' textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
         </div>
@@ -897,28 +975,40 @@ export function DungeonApp()
 
          
         // for the traps we have special text for failure
-        if (current_enemy === 10) {
+        if (current_enemy === DungeonEnemy.Boulder) {
             return(
+                <Center>
+                <Box width="80%">
                 <div className="font-face-sfpb">
-                    <Text  fontSize='50px' textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.  <br/>You Have Died </Text>
+                    <Text  fontSize='50px' textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
                 </div>
+                </Box>
+                </Center>
             );
         }
 
-        if (current_enemy === 11) {
+        if (current_enemy === DungeonEnemy.FloorSpikes) {
             return(
+                <Center>
+                <Box width="80%">
                 <div className="font-face-sfpb">
-                    <Text  fontSize='50px' textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.<br/>You Have Died </Text>
+                    <Text  fontSize='50px' textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
                 </div>
+                </Box>
+                </Center>
             );
         }
         
 
         // otherwise say the enemy type
         return(
+            <Center>
+            <Box width="80%">
             <div className="font-face-sfpb">
-                <Text  fontSize='50px' textAlign="center" color="white">The {DungeonEnemyName[current_enemy]} Won.  You Have Died </Text>
+                <Text  fontSize='50px' textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
             </div>
+            </Box>
+            </Center>
         );
     }
 
@@ -932,10 +1022,10 @@ export function DungeonApp()
         if (enemy_state === 2)  {
 
             // for the traps we don't return anything
-            if (current_enemy === 10) {
+            if (current_enemy === DungeonEnemy.Boulder) {
                 return(<></>);
             }
-            if (current_enemy === 11) {
+            if (current_enemy === DungeonEnemy.FloorSpikes) {
                 return(<></>);
             }
 
@@ -945,42 +1035,42 @@ export function DungeonApp()
 
         
 
-        if (current_enemy === 0) {
+        if (current_enemy === DungeonEnemy.Chest) {
             return ( <img style={{"imageRendering":"pixelated"}} src={chest} width="10000" alt={""}/> );
         }
-        if (current_enemy === 1) {
+        if (current_enemy === DungeonEnemy.Slime) {
             return ( <img style={{"imageRendering":"pixelated"}} src={slime} width="10000" alt={""}/> );
         }
-        if (current_enemy === 2) {
+        if (current_enemy === DungeonEnemy.Goblins) {
             return ( <img style={{"imageRendering":"pixelated"}} src={goblins} width="10000" alt={""}/> );
         }
-        if (current_enemy === 3) {
+        if (current_enemy === DungeonEnemy.SkeletonsHallway) {
             return ( <img style={{"imageRendering":"pixelated"}} src={skeletons_hallway} width="10000" alt={""}/> );
         }
-        if (current_enemy === 4) {
+        if (current_enemy === DungeonEnemy.SkeletonsGraveyard) {
             return ( <img style={{"imageRendering":"pixelated"}} src={skeletons_graveyard} width="10000" alt={""}/> );
         }
-        if (current_enemy === 5) {
+        if (current_enemy === DungeonEnemy.Elves) {
             return ( <img style={{"imageRendering":"pixelated"}} src={elves} width="10000" alt={""}/> );
         }
-        if (current_enemy === 6) {
+        if (current_enemy === DungeonEnemy.Orc) {
             return ( <img style={{"imageRendering":"pixelated"}} src={orc} width="10000" alt={""}/> );
         }
-        if (current_enemy === 7) {
+        if (current_enemy === DungeonEnemy.SkellyKnight) {
             return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_knight} width="10000" alt={""}/> );
         }
-        if (current_enemy === 8) {
+        if (current_enemy === DungeonEnemy.SkellyWizard) {
             return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_wizard} width="10000" alt={""}/> );
         }
-        if (current_enemy === 9) {
+        if (current_enemy === DungeonEnemy.Reaper) {
             return ( <img style={{"imageRendering":"pixelated"}} src={reaper} width="10000" alt={""}/> );
         }
 
         // for the traps we don't return anything
-        if (current_enemy === 10) {
+        if (current_enemy === DungeonEnemy.Boulder) {
             return(<></>);
         }
-        if (current_enemy === 11) {
+        if (current_enemy === DungeonEnemy.FloorSpikes) {
             return(<></>);
         }
     }
@@ -988,63 +1078,126 @@ export function DungeonApp()
     const InDungeon = () =>  {
 
         return (
+        <>
             <VStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%"/>
-                <Title/>
-                <Box width="33%"/>
-            </HStack>
-            <HStack mb = "10rem" mt="2rem">
-                <Box width="10%"></Box>         
-                <Box  style={{
-                    backgroundImage: `url(${hallway})`,
-                    backgroundPosition: 'center',
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'no-repeat',
-                    imageRendering: "pixelated"
+                <HStack mb = "10rem" mt="2rem">
+                    <Box width="10%"></Box>         
+                    <Box  style={{
+                        backgroundImage: `url(${hallway})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        imageRendering: "pixelated"
 
-                } } width="80%">
-                 <HStack mb = "2rem" mt="2rem">
-           
-                    <Box width="30%"></Box>            
-                    <Box width="15%"> <DisplayPlayer/></Box>  
+                    } } width="80%">
+                    <HStack mb = "2rem" mt="2rem">
+            
+                        <Box width="30%"></Box>            
+                        <Box width="15%"> <DisplayPlayer/></Box>  
+                        <Box width="10%"></Box> 
+                        <Box width="15%"> <DisplayEnemy/> </Box>  
+                        <Box width="30%"></Box> 
+
+                    </HStack>
+                    </Box>
                     <Box width="10%"></Box> 
-                    <Box width="15%"> <DisplayEnemy/> </Box>  
-                    <Box width="30%"></Box> 
-
+                    
                 </HStack>
-                </Box>
-                <Box width="10%"></Box> 
-                 
-            </HStack>
-
             </VStack>
+
+            <VStack  alignItems="center" marginBottom  = "10px" >
+
+                { transaction_failed &&
+                    <div className="font-face-sfpb">
+                        <Center>
+                                <Text  fontSize='50px' textAlign="center" color="red">Transaction Failed. <br/>Please Refresh.</Text>
+                        </Center>
+                    </div>
+                }
+                                        
+                {player_state === 2 &&
+                <>
+                <VStack alignItems="center" spacing="3%">
+                    <div className="font-face-sfpb">
+                        <DisplayFailureEnemyResultText/>
+                        <Center mt="3%">
+                            <Button variant='link' size='md' onClick={ShowDeath}>
+                                <div className="font-face-sfpb">
+                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Exit</Text>
+                                </div> 
+                            </Button> 
+                        </Center>
+                    </div>
+                    </VStack>
+                </>
+                }
+                {currentLevel > 0  &&
+                    <>
+                    { player_state === 1 && enemy_state  === 1  && 
+                        <DisplayEnemyInitialText/>
+                    }
+                    {enemy_state === 2 &&
+
+                        <VStack alignItems="center" spacing="3%">
+                            <DisplaySuccessEnemyResultText/>
+                            <HStack>
+                            <Center>
+                                <Button variant='link' size='md' onClick={Play} mr="3rem">
+                                    <div className="font-face-sfpb">
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Explore Further</Text>
+                                    </div> 
+                                </Button> 
+                                <Button variant='link' size='md' onClick={Quit} ml="10rem">
+                                    <div className="font-face-sfpb">
+                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Escape</Text>
+                                    </div> 
+                                </Button> 
+                            </Center>
+                            </HStack>
+                        </VStack>
+
+                    }
+                </>
+                }
+            </VStack>
+        </>
         )
     }
 
     const DeathScreen = () =>  {
 
+
         return (
+            <>            
             <VStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%"/>
-                <Title/>
-                <Box width="33%"/>
-            </HStack>
-            <HStack mb = "10rem" mt="2rem">
-                <Box width="33%"></Box>    
-                     
-                        
-                <Box width="33%"><img style={{"imageRendering":"pixelated"}} src={corpse} width="1000" alt={""}/></Box>    
-                <Box width="33%"></Box> 
-                 
-            </HStack>
-            <HStack mb = "2rem" mt="2rem">
-                <Box width="33%"/>
-                <Box width="33%"></Box>
-                <Box width="33%"/>
-            </HStack>
+                <HStack>
+                    <Box width="40%"></Box>    
+                    <Box width="20%"><img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/></Box>    
+                    <Box width="40%"></Box> 
+                </HStack>
+
+                <Box width="100%">
+                    <Center>
+                            <div className="font-face-sfpb">
+                                <Text textAlign="center" fontSize='50px' color="Red">You Have Died<br/><del>{Math.pow(2,currentLevel - 1) *  0.2} SOL</del></Text>
+                            </div> 
+                    </Center>
+                </Box>
+                   
+                <HStack>
+                    <Box width="33%"/>
+                        <Center>
+                            <Button variant='link' size='md' onClick={Reset}>
+                                <div className="font-face-sfpb">
+                                    <Text textAlign="center" fontSize='50px' color="white">Try Again</Text>
+                                </div> 
+                            </Button> 
+                        </Center>
+                    <Box width="33%"/>
+                </HStack>
             </VStack>
+        </>
+
         )
     }
 
@@ -1097,7 +1250,15 @@ export function DungeonApp()
                     
                 }
                 <Box width="100%">
-                    {!wallet.publicKey && <ConnectPage/>}
+                    <HStack mb = "2rem" mt="2rem">
+                        <Box width="33%"/>
+                        <Title/>
+                        <Box width="33%"/>
+                    </HStack>
+                </Box>
+                <Box width="100%">
+                    
+                    {!wallet.publicKey && <UnconnectedPage/>}
                     {wallet.publicKey && 
                         <>
                         {screen === Screen.HOME_SCREEN &&
@@ -1112,55 +1273,6 @@ export function DungeonApp()
                         </>
                     }                    
                 </Box>
-                <VStack  alignItems="center" marginBottom  = "10px" >
-                            
-                    {screen === Screen.DUNGEON_SCREEN  && player_state === 2 &&
-                    <>
-                    <VStack alignItems="center" spacing="3%">
-                        <div className="font-face-sfpb">
-                            <DisplayFailureEnemyResultText/>
-                            <Center mt="3%">
-                                <Button variant='link' size='md' onClick={Reset}>
-                                    <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white"> Try Again</Text>
-                                    </div> 
-                                </Button> 
-                            </Center>
-                        </div>
-                        </VStack>
-                    </>
-                    }
-                    {screen === Screen.DUNGEON_SCREEN  && currentLevel > 0  &&
-                    <>
-                    { player_state === 1 && enemy_state  === 1  && 
-                        <DisplayEnemyInitialText/>
-                    }
-                    {enemy_state === 2 &&
-                    <>
-                        <VStack alignItems="center" spacing="3%">
-                            <DisplaySuccessEnemyResultText/>
-                            <HStack>
-                            <Center>
-                                <Button variant='link' size='md' onClick={Play} mr="3rem">
-                                    <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Explore Further</Text>
-                                    </div> 
-                                </Button> 
-                                <Button variant='link' size='md' onClick={Quit} ml="10rem">
-                                    <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize='50px' color="white">Escape</Text>
-                                    </div> 
-                                </Button> 
-                            </Center>
-                            </HStack>
-                        </VStack>
-                    </>
-                    }
-                    </>
-                    }
-                    
-                    
-                </VStack>
             </VStack>               
         </Center>
     );
