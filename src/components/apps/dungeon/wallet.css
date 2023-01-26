@@ -1,0 +1,28 @@
+.wallet-button{
+    background-color: black !important;
+    color: white !important;
+    font-family: "SFPixelate" !important;
+    font-size: 50px !important;
+    height: 75px !important;
+    line-height: 55px !important;
+    padding: 0 0px !important;
+    border-radius: 0px !important;
+ }
+  
+ .wallet-button:hover {
+   border: 1px solid white !important;
+   color: white !important;
+ }
+
+ .wallet-adapter-button-trigger {
+    background-color: #512da8;
+}
+
+ .wallet-disconnect-button{
+    background-color: black !important;
+    color: white !important;
+    font-family: "SFPixelate" !important;
+    font-size: 25px !important;
+    height: 60px !important;
+    line-height: 60px !important;
+ }

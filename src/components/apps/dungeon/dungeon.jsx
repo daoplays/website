@@ -10,7 +10,7 @@ import {
     VStack
 } from '@chakra-ui/react';
 import { isMobile } from "react-device-detect";
-
+import { randomBytes } from 'crypto'
 import { serialize, deserialize } from 'borsh';
 
 import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -57,16 +57,23 @@ import boulder from "./Boulder.png"
 import floor_spikes from "./Spikes.png"
 
 import './fonts.css';
+import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 
 
 const DEFAULT_FONT_SIZE = "50px"
-const PROGRAM_KEY = new PublicKey('53L6SWoPTx8tAfaBkxKRiRewzuMnQ8NoyeYRyoLLh3gC');
+const PROGRAM_KEY = new PublicKey('CsG2XYHj7McFGK9PL4ynycUf7NdnEX9UVds3ptswqki8');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("GrTcMZ5qxQwxCo7ePrYaHgf3gLjetDT6Vew8n1ihNPG4");
+const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
+
+const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
+const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
+
+
 
 const AccountStatus = {
     unknown : 0,
@@ -74,15 +81,11 @@ const AccountStatus = {
     not_created : 2
 }
 
-const InitialDungeonStatus = {
+const DungeonStatus = {
     unknown : 0,
     alive : 1,
-    dead : 2
-}
-
-const DungeonStatus = {
-    alive : 0,
-    dead : 1
+    dead : 2,
+    exploring : 3
 }
 
 const DungeonCharacter = {
@@ -126,7 +129,8 @@ const DungeonInstruction = {
     add_funds : 0,
     distribute : 1,
     play : 2,
-    quit : 3
+    quit : 3,
+    explore : 4
 }
 
 class Assignable {
@@ -140,6 +144,9 @@ class Assignable {
 class PlayerData extends Assignable { }
 class InstructionMeta extends Assignable { }
 class PlayMeta extends Assignable { }
+class ExploreMeta extends Assignable { }
+class my_pubkey extends Assignable { }
+
 
 const player_data_schema = new Map([
   [PlayerData, { kind: 'struct', 
@@ -148,7 +155,8 @@ const player_data_schema = new Map([
         ['in_progress', 'u8'],
         ['player_status', 'u8'],
         ['dungeon_enemy', 'u8'],
-        ['player_character', 'u8']],
+        ['player_character', 'u8'],
+        ['randoms_key',  [32]]],
     }]
 ]);
 
@@ -168,46 +176,85 @@ const play_scheme = new Map([
       }]
 ]);
 
+const explore_scheme = new Map([
+    [ExploreMeta, { kind: 'struct', 
+    fields: [
+          ['instruction', 'u8'],
+          ['seed', [32]],
+          ['character', 'u8']
+        ],
+      }]
+]);
+
+
+const pubkey_scheme = new Map([
+    [my_pubkey, { kind: 'struct', 
+    fields: [
+    ['value', [32]]] }]
+]);
 
 export function WalletConnected() 
 {
     return (
         <Box>
-            <WalletDisconnectButton />
+            <WalletDisconnectButton  
+                className="wallet-disconnect-button"  
+            />
         </Box>
     );
 }
 
+export function check_json({json_response}) 
+{
+    if (json_response["result"] == null) {
+        if (json_response["error"] !== null) {
+            console.log(json_response["error"])
+            
+        }
+        return  false;
+    }
+
+    return true;
+}
+
 let intervalId;
+let randomsIntervalId;
 var check_balance = true;
 var initial_status_is_set = false;
 var initial_num_plays = -1;
-var need_to_create_account = false;
 var last_num_plays = -1;
 var transaction_failed = false;
+var global_randoms_address = null;
 
+var have_created_randoms_account = false;
 export function DungeonApp() 
 {
     const wallet = useWallet();
 
     // properties used to set what to display
     const [data_account_status, setDataAccountStatus] = useState(AccountStatus.unknown);
-    const [initial_status, setInitialStatus] = useState(InitialDungeonStatus.unknown);
+    const [initial_status, setInitialStatus] = useState(DungeonStatus.unknown);
 
     // these come from the blockchain
     const [sol_balance, setSolBalance] = useState(null);
     const [numPlays, setNumPlays] = useState(0);
     const [currentLevel, setCurrentLevel] = useState(0);
-    const [currentStatus, setCurrentStatus] = useState(true);
+    const [currentStatus, setCurrentStatus] = useState(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
     const [current_signature, setCurrentSignature] = useState(null);
+
+    // there are three bits of information to store about the randoms account
+    // the key, whether the account has been created, and whether the randoms have been fulfilled
+    const [current_randoms_key, setCurrentRandomsKey] = useState(null);
+    const [randoms_fulfilled, setRandomsFullfilled] = useState(false);
+
 
 
     const [screen, setScreen] = useState(Screen.HOME_SCREEN);
 
     const [which_character, setWhichCharacter] = useState(DungeonCharacter.knight);
-    const [enemy_state, setEnemyState] = useState(0);
-    const [player_state, setPlayerState] = useState(0);
+    const [enemy_state, setEnemyState] = useState(DungeonStatus.unknown);
+    const [player_state, setPlayerState] = useState(DungeonStatus.unknown);
     const [animateLevel, setAnimateLevel] = useState(0);
 
     const check_signature = useCallback(async() =>
@@ -219,7 +266,14 @@ export function DungeonApp()
             //console.log("in check signature");
             const confirm_url = `/.netlify/functions/sig_status_dev?function_name=getSignatureStatuses&p1=`+current_signature;
             var signature_response = await fetch(confirm_url).then((res) => res.json());
+
+            let valid_response = check_json({json_response: signature_response})
+            if (!valid_response) {
+                return;
+            }
+
             let confirmation = signature_response["result"]["value"][0];
+            
             //console.log(confirmation);
             if (confirmation !== null) {
 
@@ -255,10 +309,114 @@ export function DungeonApp()
 
     }, [current_signature, check_signature]);
 
+    const check_randoms = useCallback(async() =>
+    {
+
+            if (global_randoms_address === null) {
+                //console.log("in check randoms: null")
+
+                return
+            }
+
+            //console.log("in check randoms: ", global_randoms_address.toString())
+
+            //console.log("check account created")
+            if (!have_created_randoms_account) {
+            
+                // first check if the data account exists
+                try {
+
+                    const balance_url = `/.netlify/functions/solana_dev?function_name=getBalance&p1=`+global_randoms_address.toString();
+                    var balance_result;
+                    try {
+                        balance_result = await fetch(balance_url).then((res) => res.json());
+                    }
+                    catch(error) {
+                        console.log(error);
+                        return;
+                    }
+
+                    let valid_response = check_json({json_response: balance_result})
+                    if (!valid_response) {
+                        return;
+                    }
+                    
+                    let balance = balance_result["result"]["value"];
+                    if (balance > 0) {
+                        have_created_randoms_account = true;
+                    }
+                    else {
+                        have_created_randoms_account = false;
+                        return;
+                    }
+                }
+                catch(error) {
+                    console.log(error);
+                    return;
+                }
+            }
+
+            const randoms_account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+global_randoms_address.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+            var randoms_account_info_result;
+            try {
+                randoms_account_info_result = await fetch(randoms_account_info_url).then((res) => res.json());
+            }
+            catch(error) {
+                console.log(error);
+                return;
+            }
+
+            let valid_response = check_json({json_response: randoms_account_info_result})
+            if (!valid_response) {
+                return;
+            }
+
+            let randoms_account_encoded_data = randoms_account_info_result["result"]["value"]["data"];
+            let randoms_account_data = Buffer.from(randoms_account_encoded_data[0], "base64");
+
+            // data structure of randomness:
+            // 8 bytes anchor stuff
+            // 32 bytes seed
+            // 64 bytes randomness
+            // vector of responses, each 32 (key) + 64 (randomness) = 96 bytes
+            let randoms = randoms_account_data.slice(8 + 32, 8 + 32 + 64)
+            //console.log(randoms_account_data);
+            //console.log(randoms);
+    
+            if (Buffer.alloc(64).equals(randoms)) {
+                //console.log("randoms still zero");
+                return;
+            }
+
+            //console.log("randoms ha ve been fulfilled");
+            setRandomsFullfilled(true);
+            global_randoms_address = null;
+            
+
+    }, []);
+
+    
+    useEffect(() => 
+    {
+        //console.log("in randoms use effect", randomsIntervalId);
+
+        if (wallet.publicKey && !randomsIntervalId) {
+            randomsIntervalId = setInterval(check_randoms, 1000);
+        }
+        else{
+            clearInterval(randomsIntervalId);
+            randomsIntervalId = null;
+        }
+        
+
+    }, [wallet, check_randoms]);
+    
     const init = useCallback(async () => 
     {       
         if (wallet.publicKey) {
 
+            
             const account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+wallet.publicKey.toString();
 
             var account_info_result;
@@ -269,7 +427,10 @@ export function DungeonApp()
                 console.log(error);
                 return;
             }
-
+            let valid_response = check_json({json_response: account_info_result})
+            if (!valid_response) {
+                return;
+            }
             let lamports_amount = account_info_result["result"]["value"]["lamports"];
 
             setSolBalance(lamports_amount  / LAMPORTS_PER_SOL);
@@ -290,6 +451,11 @@ export function DungeonApp()
                         console.log(error);
                         return;
                     }
+
+                    let valid_response = check_json({json_response: balance_result})
+                    if (!valid_response) {
+                        return;
+                    }
                     
                     let balance = balance_result["result"]["value"];
                     if (balance > 0) {
@@ -297,7 +463,6 @@ export function DungeonApp()
                         check_balance = false;
                     }
                     else {
-                        need_to_create_account = true;
                         setDataAccountStatus(AccountStatus.not_created);
                         return;
                     }
@@ -321,18 +486,28 @@ export function DungeonApp()
                     return;
                 }
 
+                let valid_response = check_json({json_response: player_account_info_result})
+                if (!valid_response) {
+                    return;
+                }
+
                 let player_account_encoded_data = player_account_info_result["result"]["value"]["data"];
                 let player_account_data = Buffer.from(player_account_encoded_data[0], "base64");
                 const player_data = deserialize(player_data_schema, PlayerData, player_account_data);
 
 
+                let current_status = player_data["player_status"] + 1;
                 if (!initial_status_is_set) {
-                    if (player_data["player_status"] === DungeonStatus.alive){
-                        setInitialStatus(InitialDungeonStatus.alive);
+                    if (current_status === DungeonStatus.alive){
+                        setInitialStatus(DungeonStatus.alive);
                     }
 
-                    if (player_data["player_status"] === DungeonStatus.dead){
-                        setInitialStatus(InitialDungeonStatus.dead);
+                    if (current_status === DungeonStatus.dead){
+                        setInitialStatus(DungeonStatus.dead);
+                    }
+
+                    if (current_status === DungeonStatus.exploring){
+                        setInitialStatus(DungeonStatus.exploring);
                     }
                     
                 }
@@ -340,7 +515,8 @@ export function DungeonApp()
                 let num_plays = player_data["num_plays"].toNumber();
 
 
-                if (num_plays < last_num_plays) {
+
+                if (num_plays <= last_num_plays) {
                     return;
                 }
 
@@ -348,7 +524,7 @@ export function DungeonApp()
 
                 setNumPlays(num_plays);
 
-                //console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] === 0, "num_plays", num_plays);
+                //console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] + 1, "num_plays", num_plays);
 
                 if (initial_num_plays ===  -1)
                 {
@@ -358,17 +534,29 @@ export function DungeonApp()
                     return;
                 }  
 
+                const randoms_key = new PublicKey(player_data["randoms_key"]);
+
+                //console.log(randoms_key.toString());
+
+
                 setCurrentEnemy(player_data["dungeon_enemy"]);
                 
                 setCurrentLevel(player_data["in_progress"]);
 
-                setCurrentStatus(player_data["player_status"]);
+                setCurrentStatus(current_status);
+
+                // only update the randoms key here if we are exploring
+                if (current_status === DungeonStatus.exploring) {
+                    //console.log("set current randoms key", randoms_key)
+                    setCurrentRandomsKey(randoms_key);
+                    global_randoms_address = randoms_key;
+                }
 
                 
             } catch(error) {
                 console.log(error);
                 setCurrentLevel(0);
-                setCurrentStatus(DungeonStatus.alive);
+                setCurrentStatus(DungeonStatus.unknown);
                 setCurrentEnemy(DungeonEnemy.None);
             }
         }
@@ -394,7 +582,6 @@ export function DungeonApp()
         check_balance = true;
         initial_status_is_set = false;
         initial_num_plays = -1;
-        need_to_create_account = false;
         last_num_plays = -1;
         transaction_failed = false;
     }, [wallet]);
@@ -403,30 +590,39 @@ export function DungeonApp()
     
     useEffect(() => 
         {
-            //console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays);
+            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays);
       
             if (currentLevel === 0)
                 return;
 
-            if (currentStatus === DungeonStatus.alive) {
+            //console.log(currentStatus === DungeonStatus.alive , currentStatus === DungeonStatus.exploring)
+            if (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring) {
+                //console.log("set dungeon screen")
                 setScreen(Screen.DUNGEON_SCREEN);
             }
 
-            if (numPlays === initial_num_plays && !need_to_create_account && currentStatus === DungeonStatus.dead)
+            // if we are exploring we shouldn't display the enemy
+            if (currentStatus === DungeonStatus.exploring) {
+                setPlayerState(DungeonStatus.exploring);
+                return;
+            }
+
+            // if we aren't alive and numplays is still initial num plays we shouldn't display the enemy
+            if (numPlays > 1 && numPlays === initial_num_plays && data_account_status === AccountStatus.created && currentStatus !== DungeonStatus.alive)
                 return;
 
+            console.log("display enemy")
             // display the current enemy
-            setEnemyState(1);
+            setEnemyState(DungeonStatus.alive);
+            setPlayerState(DungeonStatus.alive);
             if (currentStatus === DungeonStatus.alive) {
-                //setEnemyState(2);
                 setAnimateLevel(1);
             }
             else {
-                //setPlayerState(2);
                 setAnimateLevel(2);
             }
 
-        }, [numPlays, currentLevel, current_enemy, currentStatus]);
+        }, [numPlays, currentLevel, current_enemy, currentStatus, data_account_status]);
 
     useEffect(() => 
     {
@@ -439,13 +635,15 @@ export function DungeonApp()
 
                 // player killed enemy
                 if (animateLevel === 1) {
-                    setPlayerState(1);
-                    setEnemyState(2);
+                    console.log("player killed enemy");
+                    setPlayerState(DungeonStatus.alive);
+                    setEnemyState(DungeonStatus.dead);
                 }
                 // enemy killed player
                 else {
-                    setPlayerState(2);
-                    setEnemyState(1);
+                    console.log("enemy killed player")
+                    setPlayerState(DungeonStatus.dead);
+                    setEnemyState(DungeonStatus.alive);
                 }
 
                 setAnimateLevel(0);
@@ -457,9 +655,9 @@ export function DungeonApp()
 
     useEffect(() => 
     {
-        setInitialStatus(InitialDungeonStatus.unknown);
-        setPlayerState(1);
-        setEnemyState(0);
+        setInitialStatus(DungeonStatus.unknown);
+        setPlayerState(DungeonStatus.unknown);
+        setEnemyState(DungeonStatus.unknown);
         //console.log("this is only called once");
 
     }, []);
@@ -473,10 +671,6 @@ export function DungeonApp()
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
-            let btc_key = new PublicKey("HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J");
-            let eth_key = new PublicKey("EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw");
-            let sol_key = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix");
-
             const play_meta = new PlayMeta({ instruction: DungeonInstruction.play, character: which_character});
             const instruction_data = serialize(play_scheme, play_meta);
 
@@ -484,10 +678,8 @@ export function DungeonApp()
                 keys: [
                     {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
                     {pubkey: player_data_key, isSigner: false, isWritable: true},
+                    {pubkey: current_randoms_key, isSigner: false, isWritable: true},
 
-                    {pubkey: btc_key, isSigner: false, isWritable: true},
-                    {pubkey: eth_key, isSigner: false, isWritable: true},
-                    {pubkey: sol_key, isSigner: false, isWritable: true},
 
                     {pubkey: program_data_key, isSigner: false, isWritable: true},
 
@@ -514,8 +706,15 @@ export function DungeonApp()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction;
+                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
                 var transaction_response = await fetch(send_url).then((res) => res.json());
+
+                let valid_response = check_json({json_response: transaction_response})
+                if (!valid_response) {
+                    console.log(transaction_response)
+                    return;
+                }
+
                 let signature = transaction_response["result"];
 
                 setCurrentSignature(signature);
@@ -527,8 +726,115 @@ export function DungeonApp()
 
             //console.log("setting screen to dungeon");
             setScreen(Screen.DUNGEON_SCREEN);
-            setEnemyState(0);
-            setPlayerState(1);        
+            setEnemyState(DungeonStatus.unknown);
+            setPlayerState(DungeonStatus.alive);
+
+
+    },[wallet, which_character, current_randoms_key]);
+
+    const Explore = useCallback( async () => 
+    {
+
+            let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
+            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+
+            let networkStateAddress = (await PublicKey.findProgramAddress([ORAO_CONFIG_ACCOUNT_SEED], ORAO_KEY))[0];
+
+            const network_account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+networkStateAddress.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+            var network_account_info_result;
+            try {
+                network_account_info_result = await fetch(network_account_info_url).then((res) => res.json());
+            }
+            catch(error) {
+                console.log(error);
+                return;
+            }
+
+            let valid_response = check_json({json_response: network_account_info_result})
+            if (!valid_response) {
+                return;
+            }
+
+            let network_account_encoded_data = network_account_info_result["result"]["value"]["data"];
+            let network_account_data = Buffer.from(network_account_encoded_data[0], "base64");
+
+            //console.log(network_account_data)
+            const treasuryAddress = new PublicKey(deserialize(pubkey_scheme, my_pubkey, network_account_data.slice(8+32, 8+32 + 32)).value);
+
+            //console.log(treasuryAddress.toString())
+            const seed = randomBytes(32)
+
+            let randomAddress = (await PublicKey.findProgramAddress([ORAO_RANDOMNESS_ACCOUNT_SEED, seed], ORAO_KEY))[0];
+
+            const explore_meta = new ExploreMeta({ instruction: DungeonInstruction.explore, seed : seed, character: which_character});
+            const instruction_data = serialize(explore_scheme, explore_meta);
+
+            //console.log("orao ", ORAO_KEY.toString())
+            //console.log("network ", networkStateAddress.toString())
+            //console.log("seed: ", seed);
+            //console.log("random ", randomAddress.toString())
+
+
+            const play_instruction = new TransactionInstruction({
+                keys: [
+                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                    {pubkey: player_data_key, isSigner: false, isWritable: true},
+                    {pubkey: program_data_key, isSigner: false, isWritable: true},
+
+                    {pubkey: networkStateAddress, isSigner: false, isWritable: true},
+                    {pubkey: treasuryAddress, isSigner: false, isWritable: true},
+                    {pubkey: randomAddress, isSigner: false, isWritable: true},
+
+                    {pubkey: ORAO_KEY, isSigner: false, isWritable: false},
+                    {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+
+                ],
+                programId: PROGRAM_KEY,
+                data: instruction_data
+            });
+
+            const blockhash_url = `/.netlify/functions/solana_dev?function_name=getLatestBlockhash&p1=`;
+            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+
+            transaction.add(play_instruction);
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
+                var transaction_response = await fetch(send_url).then((res) => res.json());
+
+                let valid_response = check_json({json_response: network_account_info_result})
+                if (!valid_response) {
+                    console.log(transaction_response)
+                    return;
+                }
+                let signature = transaction_response["result"];
+
+                setCurrentSignature(signature);
+
+            } catch(error) {
+                console.log(error);
+                return;
+            }
+
+            //console.log("setting screen to dungeon");
+            setScreen(Screen.DUNGEON_SCREEN);
+            setEnemyState(DungeonStatus.unknown);
+            setPlayerState(DungeonStatus.exploring);
+
+            global_randoms_address  = null;
+            setCurrentRandomsKey(null);
+            setRandomsFullfilled(false);
 
     },[wallet, which_character]);
 
@@ -587,7 +893,7 @@ export function DungeonApp()
             }
 
             setScreen(Screen.HOME_SCREEN);
-            setEnemyState(0);
+            setEnemyState(DungeonStatus.unknown);
 
             return;
         
@@ -597,7 +903,7 @@ export function DungeonApp()
     const Reset = useCallback( async () => 
     {
             setScreen(Screen.HOME_SCREEN);
-            setEnemyState(0);
+            setEnemyState(DungeonStatus.unknown);
             return;
         
     },[]);
@@ -605,7 +911,7 @@ export function DungeonApp()
     const ShowDeath = useCallback( async () => 
     {
             setScreen(Screen.DEATH_SCREEN);
-            setEnemyState(0);
+            setEnemyState(DungeonStatus.unknown);
             return;
         
     },[]);
@@ -686,7 +992,7 @@ export function DungeonApp()
 
     const CharacterSelect = () => {
 
-        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "create account", need_to_create_account, "initial status", initial_status, initial_status === InitialDungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "initial status", initial_status, initial_status === DungeonStatus.unknown);
 
             return (
                 <HStack>
@@ -788,14 +1094,13 @@ export function DungeonApp()
                     <LargeDoor/>
                     <Box width="33%">
                         <Box ml="1%" mr="10%">
-                            <VStack alignItems="center">
-                                <div className="font-face-sfpb">
-                                    <Text align="center" fontSize={font_size} color="white">CONNECT WALLET</Text>
-                                </div>  
                                 {!isMobile &&
-                                    <WalletMultiButton />
+                                    <div className="font-face-sfpb">
+                                    <WalletMultiButton  
+                                    className="wallet-button"  
+                                    >CONNECT WALLET</WalletMultiButton>
+                                    </div>
                                 }
-                            </VStack>  
                         </Box>
                     </Box>  
                 </HStack>
@@ -829,9 +1134,15 @@ export function DungeonApp()
                 <LargeDoor/>
                 <Box width="33%">
                     <Center>
+                        <HStack>
                             <div className="font-face-sfpb">
-                                <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
+                                <Button variant='link' size='md' onClick={Play}>
+                                        <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
+                                </Button> 
+                            
+                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">0.2 SOL</Text>
                             </div> 
+                        </HStack>
                     </Center>
                     
                 </Box>  
@@ -847,18 +1158,18 @@ export function DungeonApp()
 
     const ConnectedPage = () =>  {
 
-        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "create account", need_to_create_account, "initial status", initial_status, initial_status === InitialDungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status,  "initial status", initial_status, initial_status === DungeonStatus.unknown);
 
         // if i don't need to make an account but player status is unknown return nothing
-        if (!need_to_create_account  && (initial_status === InitialDungeonStatus.unknown || (numPlays === initial_num_plays && InitialDungeonStatus === InitialDungeonStatus.alive))) {
+        if (data_account_status === AccountStatus.created  && (initial_status === DungeonStatus.unknown || (numPlays === initial_num_plays && (DungeonStatus === DungeonStatus.alive || DungeonStatus === DungeonStatus.exploring)))) {
             return(
                 <ConnectedPageNoCS/>
             );
         }
 
         //console.log("have made it here in CS 2");
-        // if i am alive and  the level is > 0 never show this
-        if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && currentStatus === DungeonStatus.alive)) {
+        // if i am alive or e xploring and  the level is > 0 never show this
+        if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring))) {
             return(
                 <ConnectedPageNoCS/>
             );
@@ -876,11 +1187,15 @@ export function DungeonApp()
                     <LargeDoor/>
                     <Box width="33%">
                         <Center>
-                            <Button variant='link' size='md' onClick={Play}>
+                            <HStack>
                                 <div className="font-face-sfpb">
-                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
+                                    <Button variant='link' size='md' onClick={Explore}>
+                                            <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
+                                    </Button> 
+                                
+                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">0.2 SOL</Text>
                                 </div> 
-                            </Button> 
+                            </HStack>
                         </Center>
                         
                     </Box>  
@@ -897,11 +1212,11 @@ export function DungeonApp()
     const DisplayPlayer = () => {
 
        // console.log("player state ", player_state);
-        if (player_state === 0) {
+        if (player_state === DungeonStatus.unknown) {
             return(<></>);
         }
 
-        if (player_state === 2)  {
+        if (player_state === DungeonStatus.dead)  {
             // if the current enemy is a trap we should return that here
             if (current_enemy === DungeonEnemy.Boulder) {
                 return ( <img style={{"imageRendering":"pixelated"}} src={boulder} width="10000" alt={""}/> );
@@ -1016,11 +1331,11 @@ export function DungeonApp()
         // otherwise say the enemy type
         return(
             <Center>
-            <Box width="80%">
-            <div className="font-face-sfpb">
-                <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
-            </div>
-            </Box>
+                <Box width="80%">
+                    <div className="font-face-sfpb">
+                        <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
+                    </div>
+                </Box>
             </Center>
         );
     }
@@ -1028,11 +1343,11 @@ export function DungeonApp()
     const DisplayEnemy = () => {
 
        // console.log("enemy state ", enemy_state);
-        if (enemy_state === 0) {
+        if (enemy_state === DungeonStatus.unknown) {
             return(<></>);
         }
 
-        if (enemy_state === 2)  {
+        if (enemy_state === DungeonStatus.dead)  {
 
             // for the traps we don't return anything
             if (current_enemy === DungeonEnemy.Boulder) {
@@ -1089,7 +1404,7 @@ export function DungeonApp()
     }
 
     const InDungeon = () =>  {
-
+        console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state);
         return (
         <>
             <VStack>
@@ -1128,7 +1443,7 @@ export function DungeonApp()
                     </div>
                 }
                                         
-                {player_state === 2 &&
+                {currentStatus === DungeonStatus.dead && player_state === DungeonStatus.dead &&
                 <>
                 <VStack alignItems="center" spacing="3%">
                     <div className="font-face-sfpb">
@@ -1146,16 +1461,37 @@ export function DungeonApp()
                 }
                 {currentLevel > 0  &&
                     <>
-                    { player_state === 1 && enemy_state  === 1  && 
+                    
+                    { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === false  &&
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You stumble through the darkened passage ways </Text>
+                        </div>
+                    }
+                    { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === true  &&
+                    <VStack  alignItems="center" spacing="3%">
+                            <Box width = "80%">
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You come across an unlocked door, and cracking it ajar hear the chittering sounds of some ancient evil from within</Text>
+                            </div>
+                            </Box>
+                            <Button variant='link' size='md' onClick={Play} ml="10rem">
+                                <div className="font-face-sfpb">
+                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Enter Room</Text>
+                                </div> 
+                            </Button> 
+                        
+                    </VStack>
+                    }
+                    { player_state === DungeonStatus.alive && enemy_state  === DungeonStatus.alive  && 
                         <DisplayEnemyInitialText/>
                     }
-                    {enemy_state === 2 &&
+                    {player_state === DungeonStatus.alive && enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="3%">
                             <DisplaySuccessEnemyResultText/>
                             <HStack>
                             <Center>
-                                <Button variant='link' size='md' onClick={Play} mr="3rem">
+                                <Button variant='link' size='md' onClick={Explore} mr="3rem">
                                     <div className="font-face-sfpb">
                                         <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
                                     </div> 
