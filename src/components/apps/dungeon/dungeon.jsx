@@ -831,6 +831,7 @@ export function DungeonApp()
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.exploring);
+            setCurrentStatus(DungeonStatus.exploring);
 
             global_randoms_address  = null;
             setCurrentRandomsKey(null);
