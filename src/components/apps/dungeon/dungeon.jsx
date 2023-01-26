@@ -61,10 +61,14 @@ import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 
+//pyth oracles
+const PYTH_BTC_DEV = new PublicKey('HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J');   
+const PYTH_ETH_DEV = new PublicKey('EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw');   
+const PYTH_SOL_DEV = new PublicKey('J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix');   
 
 
 const DEFAULT_FONT_SIZE = "50px"
-const PROGRAM_KEY = new PublicKey('CsG2XYHj7McFGK9PL4ynycUf7NdnEX9UVds3ptswqki8');
+const PROGRAM_KEY = new PublicKey('CmcapRK1UW4FbSr94TdGW8ozYrDeP8wDUbDUzohwcXSt');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("GrTcMZ5qxQwxCo7ePrYaHgf3gLjetDT6Vew8n1ihNPG4");
@@ -245,7 +249,7 @@ export function DungeonApp()
 
     // there are three bits of information to store about the randoms account
     // the key, whether the account has been created, and whether the randoms have been fulfilled
-    const [current_randoms_key, setCurrentRandomsKey] = useState(null);
+    //const [current_randoms_key, setCurrentRandomsKey] = useState(null);
     const [randoms_fulfilled, setRandomsFullfilled] = useState(false);
 
 
@@ -372,6 +376,10 @@ export function DungeonApp()
                 return;
             }
 
+            if (randoms_account_info_result["result"]["value"]["data"]  === null) {
+                return;
+            }
+
             let randoms_account_encoded_data = randoms_account_info_result["result"]["value"]["data"];
             let randoms_account_data = Buffer.from(randoms_account_encoded_data[0], "base64");
 
@@ -417,7 +425,7 @@ export function DungeonApp()
         if (wallet.publicKey) {
 
             
-            const account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+wallet.publicKey.toString();
+            const account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+wallet.publicKey.toString()+"&p2=config&p3=base64&p4=commitment";
 
             var account_info_result;
             try {
@@ -442,7 +450,7 @@ export function DungeonApp()
                 // first check if the data account exists
                 try {
 
-                    const balance_url = `/.netlify/functions/solana_dev?function_name=getBalance&p1=`+player_data_key.toString();
+                    const balance_url = `/.netlify/functions/solana_dev?function_name=getBalance&p1=`+player_data_key.toString()+"&p2=config&p3=base64&p4=commitment";
                     var balance_result;
                     try {
                         balance_result = await fetch(balance_url).then((res) => res.json());
@@ -524,7 +532,7 @@ export function DungeonApp()
 
                 setNumPlays(num_plays);
 
-                //console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] + 1, "num_plays", num_plays);
+                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] + 1, "num_plays", num_plays);
 
                 if (initial_num_plays ===  -1)
                 {
@@ -548,7 +556,7 @@ export function DungeonApp()
                 // only update the randoms key here if we are exploring
                 if (current_status === DungeonStatus.exploring) {
                     //console.log("set current randoms key", randoms_key)
-                    setCurrentRandomsKey(randoms_key);
+                    //setCurrentRandomsKey(randoms_key);
                     global_randoms_address = randoms_key;
                 }
 
@@ -577,13 +585,23 @@ export function DungeonApp()
     // reset things when the wallet changes
     useEffect(() => 
     {
-        //console.log("wallet things changed")
+        console.log("wallet things changed")
 
         check_balance = true;
         initial_status_is_set = false;
         initial_num_plays = -1;
         last_num_plays = -1;
         transaction_failed = false;
+        setSolBalance(null);
+        setScreen(Screen.HOME_SCREEN);
+        setCurrentLevel(0);
+        setNumPlays(0);
+        setDataAccountStatus(AccountStatus.not_created);
+        setInitialStatus(DungeonStatus.unknown);
+        setCurrentStatus(DungeonStatus.unknown);
+        setPlayerState(DungeonStatus.unknown);
+        setCurrentEnemy(DungeonEnemy.None);
+        setEnemyState(DungeonStatus.unknown);
     }, [wallet]);
 
 
@@ -678,7 +696,10 @@ export function DungeonApp()
                 keys: [
                     {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
                     {pubkey: player_data_key, isSigner: false, isWritable: true},
-                    {pubkey: current_randoms_key, isSigner: false, isWritable: true},
+                    {pubkey: PYTH_BTC_DEV, isSigner: false, isWritable: false},
+                    {pubkey: PYTH_ETH_DEV, isSigner: false, isWritable: false},
+                    {pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false},
+
 
 
                     {pubkey: program_data_key, isSigner: false, isWritable: true},
@@ -730,7 +751,7 @@ export function DungeonApp()
             setPlayerState(DungeonStatus.alive);
 
 
-    },[wallet, which_character, current_randoms_key]);
+    },[wallet, which_character]);
 
     const Explore = useCallback( async () => 
     {
@@ -834,10 +855,10 @@ export function DungeonApp()
             setCurrentStatus(DungeonStatus.exploring);
 
             global_randoms_address  = null;
-            setCurrentRandomsKey(null);
+            //setCurrentRandomsKey(null);
             setRandomsFullfilled(false);
 
-    },[wallet, which_character]);
+    },[wallet, which_character]);  
 
 
     const Quit = useCallback( async () => 
@@ -1190,7 +1211,7 @@ export function DungeonApp()
                         <Center>
                             <HStack>
                                 <div className="font-face-sfpb">
-                                    <Button variant='link' size='md' onClick={Explore}>
+                                    <Button variant='link' size='md' onClick={Play}>
                                             <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
                                     </Button> 
                                 
@@ -1475,7 +1496,7 @@ export function DungeonApp()
                                 <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You come across an unlocked door, and cracking it ajar hear the chittering sounds of some ancient evil from within</Text>
                             </div>
                             </Box>
-                            <Button variant='link' size='md' onClick={Play} ml="10rem">
+                            <Button variant='link' size='md' onClick={Explore} ml="10rem">
                                 <div className="font-face-sfpb">
                                     <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Enter Room</Text>
                                 </div> 
@@ -1492,7 +1513,7 @@ export function DungeonApp()
                             <DisplaySuccessEnemyResultText/>
                             <HStack>
                             <Center>
-                                <Button variant='link' size='md' onClick={Explore} mr="3rem">
+                                <Button variant='link' size='md' onClick={Play} mr="3rem">
                                     <div className="font-face-sfpb">
                                         <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
                                     </div> 
