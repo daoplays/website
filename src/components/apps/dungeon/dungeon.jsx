@@ -1609,7 +1609,7 @@ export function DungeonApp()
         )
     }
 
-    const VictoryScreen = () =>  {
+    /*const VictoryScreen = () =>  {
 
 
         return (
@@ -1645,7 +1645,7 @@ export function DungeonApp()
         </>
 
         )
-    }
+    }*/
 
 
     return (
