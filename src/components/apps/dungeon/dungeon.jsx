@@ -68,6 +68,7 @@ const PYTH_SOL_DEV = new PublicKey('J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix
 
 
 const DEFAULT_FONT_SIZE = "50px"
+const DUNGEON_FONT_SIZE = "25px"
 const PROGRAM_KEY = new PublicKey('CmcapRK1UW4FbSr94TdGW8ozYrDeP8wDUbDUzohwcXSt');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
@@ -77,7 +78,7 @@ const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
 const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
 
-
+const BET_SIZE = 0.1;
 
 const AccountStatus = {
     unknown : 0,
@@ -344,6 +345,9 @@ export function DungeonApp()
                     if (!valid_response) {
                         return;
                     }
+
+                    if (balance_result["result"]["value"] == null)
+                        return;
                     
                     let balance = balance_result["result"]["value"];
                     if (balance > 0) {
@@ -439,6 +443,12 @@ export function DungeonApp()
             if (!valid_response) {
                 return;
             }
+
+            if (account_info_result["result"]["value"] == null || account_info_result["result"]["value"]["lamports"] == null) {
+                console.log("Error getting lamports for ", wallet.publicKey.toString());
+                return;
+            }
+
             let lamports_amount = account_info_result["result"]["value"]["lamports"];
 
             setSolBalance(lamports_amount  / LAMPORTS_PER_SOL);
@@ -462,6 +472,10 @@ export function DungeonApp()
 
                     let valid_response = check_json({json_response: balance_result})
                     if (!valid_response) {
+                        return;
+                    }
+
+                    if (balance_result["result"]["value"] == null) {
                         return;
                     }
                     
@@ -496,6 +510,10 @@ export function DungeonApp()
 
                 let valid_response = check_json({json_response: player_account_info_result})
                 if (!valid_response) {
+                    return;
+                }
+
+                if (player_account_info_result["result"]["value"] == null || player_account_info_result["result"]["value"]["data"] == null ) {
                     return;
                 }
 
@@ -777,6 +795,10 @@ export function DungeonApp()
                 return;
             }
 
+            if (network_account_info_result["result"]["value"] == null || network_account_info_result["result"]["value"]["data"] == null ) {
+                return;
+            }
+
             let network_account_encoded_data = network_account_info_result["result"]["value"]["data"];
             let network_account_data = Buffer.from(network_account_encoded_data[0], "base64");
 
@@ -905,6 +927,13 @@ export function DungeonApp()
                 const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction;
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
+                let valid_response = check_json({json_response: transaction_response})
+
+                if (!valid_response) {
+                    console.log(transaction_response)
+                    return;
+                }
+
                 let signature = transaction_response["result"];
 
                 setCurrentSignature(signature);
@@ -941,7 +970,7 @@ export function DungeonApp()
     const LargeDoor = () => {
         return (
             <Box bg='black' mt="2rem">
-            <img style={{"imageRendering":"pixelated"}} src={large_door} width={1000} alt={"generic"}/>
+            <img style={{"imageRendering":"pixelated"}} src={large_door} width={700} alt={"generic"}/>
             </Box>
         )
     }
@@ -949,8 +978,8 @@ export function DungeonApp()
     const Title = () =>  {
 
         return (
-            <Box bg='black' mt="2rem">
-                <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="1000" alt={""}/>
+            <Box bg='black'>
+                <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="700" alt={""}/>
             </Box>
         )
     }
@@ -1106,16 +1135,20 @@ export function DungeonApp()
         }
 
         return (
+            <Center>
+            <Box width="100%">
+            
             <VStack>
-                <HStack>
+                
+                <HStack mb = "2rem" mt="2rem">
                     <Box width="33%">
                         <div className="font-face-sfpb">
-                            <Text  align="center"  ml="10%" mr="1%" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                            <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
                         </div>    
                     </Box>            
                     <LargeDoor/>
                     <Box width="33%">
-                        <Box ml="1%" mr="10%">
+                        <Box>
                                 {!isMobile &&
                                     <div className="font-face-sfpb">
                                     <WalletMultiButton  
@@ -1126,6 +1159,7 @@ export function DungeonApp()
                         </Box>
                     </Box>  
                 </HStack>
+                
                 <HStack>
                     <Box width="33%"/>
                         <div className="font-face-sfpb">
@@ -1141,16 +1175,19 @@ export function DungeonApp()
                 </HStack>
                 }
             </VStack>
+            
+            </Box>
+            </Center>
         )
     }
 
     const ConnectedPageNoCS = () =>  {
         return(
             <VStack>
-            <HStack mb = "10rem" mt="2rem">
+            <HStack mb = "2rem" mt="2rem">
                 <Box width="33%">
                     <div className="font-face-sfpb">
-                        <Text  align="center"  ml="10%" mr="1%" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                        <Text  align="center" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
                     </div>    
                 </Box>   
                 <LargeDoor/>
@@ -1162,7 +1199,7 @@ export function DungeonApp()
                                         <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
                                 </Button> 
                             
-                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">0.2 SOL</Text>
+                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">{BET_SIZE} SOL</Text>
                             </div> 
                         </HStack>
                     </Center>
@@ -1200,10 +1237,10 @@ export function DungeonApp()
 
         return (
             <VStack>
-                <HStack mb = "10rem" mt="2rem">
+                <HStack mb = "2rem" mt="2rem">
                     <Box width="33%">
                         <div className="font-face-sfpb">
-                            <Text  align="center"  ml="10%" mr="1%" fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                            <Text  align="center"  fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
                         </div>    
                     </Box>            
                     <LargeDoor/>
@@ -1215,7 +1252,7 @@ export function DungeonApp()
                                             <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
                                     </Button> 
                                 
-                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">0.2 SOL</Text>
+                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">{BET_SIZE} SOL</Text>
                                 </div> 
                             </HStack>
                         </Center>
@@ -1273,7 +1310,7 @@ export function DungeonApp()
          if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
              return(
              <div className="font-face-sfpb">
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You enter a suspiciously empty room...</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You enter a suspiciously empty room...</Text>
             </div>
             );
          };
@@ -1281,7 +1318,7 @@ export function DungeonApp()
          if (current_enemy === DungeonEnemy.Chest) {
             return(
             <div className="font-face-sfpb">
-               <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You have encountered a <del>treasure chest</del> mimic in room {currentLevel}</Text>
+               <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have encountered a <del>treasure chest</del> mimic in room {currentLevel}</Text>
            </div>
            );
         };
@@ -1290,8 +1327,8 @@ export function DungeonApp()
          // otherwise say the enemy type
          return(
             <div className="font-face-sfpb">
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You have encountered {DungeonEnemyInitialText[current_enemy]} in room {currentLevel}</Text>
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Prepare yourself!</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have encountered {DungeonEnemyInitialText[current_enemy]} in room {currentLevel}</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Prepare yourself!</Text>
             </div>
          );
      }
@@ -1303,9 +1340,9 @@ export function DungeonApp()
         if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
             return(
             <div className="font-face-sfpb">
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">...but pass through without incident.</Text>
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">...but pass through without incident.</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  BET_SIZE} SOL</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  BET_SIZE} SOL</Text>
            </div>
            );
         };
@@ -1314,9 +1351,9 @@ export function DungeonApp()
         // otherwise say the enemy type
         return(
             <div className="font-face-sfpb">
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  0.2} SOL</Text>
-                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  0.2} SOL</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  BET_SIZE} SOL</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  BET_SIZE} SOL</Text>
         </div>
         );
     }
@@ -1330,7 +1367,7 @@ export function DungeonApp()
                 <Center>
                 <Box width="80%">
                 <div className="font-face-sfpb">
-                    <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
+                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
                 </div>
                 </Box>
                 </Center>
@@ -1342,7 +1379,7 @@ export function DungeonApp()
                 <Center>
                 <Box width="80%">
                 <div className="font-face-sfpb">
-                    <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
+                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
                 </div>
                 </Box>
                 </Center>
@@ -1355,7 +1392,7 @@ export function DungeonApp()
             <Center>
                 <Box width="80%">
                     <div className="font-face-sfpb">
-                        <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
+                        <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
                     </div>
                 </Box>
             </Center>
@@ -1430,7 +1467,7 @@ export function DungeonApp()
         return (
         <>
             <VStack>
-                <HStack mb = "10rem" mt="2rem">
+                <HStack mb = "2rem" mt="2rem">
                     <Box width="10%"></Box>         
                     <Box  style={{
                         backgroundImage: `url(${hallway})`,
@@ -1550,7 +1587,7 @@ export function DungeonApp()
                 <Box width="100%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,currentLevel - 1) *  0.2} SOL</del></Text>
+                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,currentLevel - 1) *  BET_SIZE} SOL</del></Text>
                             </div> 
                     </Center>
                 </Box>
@@ -1572,13 +1609,51 @@ export function DungeonApp()
         )
     }
 
+    const VictoryScreen = () =>  {
+
+
+        return (
+            <>            
+            <VStack>
+                <HStack>
+                    <Box width="40%"></Box>    
+                    <Box width="20%"><DisplayPlayer/></Box>    
+                    <Box width="40%"></Box> 
+                </HStack>
+
+                <Box width="100%">
+                    <Center>
+                            <div className="font-face-sfpb">
+                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="Green">You Have Survived Level {currentLevel}<br/>Loot: {Math.pow(2,currentLevel - 1) *  BET_SIZE} SOL</Text>
+                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="Red">DM Fee: {Math.pow(2,currentLevel - 1) *  BET_SIZE * 0.02} SOL</Text>
+                            </div> 
+                    </Center>
+                </Box>
+                   
+                <HStack>
+                    <Box width="33%"/>
+                        <Center>
+                            <Button variant='link' size='md' onClick={Reset}>
+                                <div className="font-face-sfpb">
+                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Exit</Text>
+                                </div> 
+                            </Button> 
+                        </Center>
+                    <Box width="33%"/>
+                </HStack>
+            </VStack>
+        </>
+
+        )
+    }
+
 
     return (
         
         <Center>
             <VStack>
                  {!wallet.publicKey &&
-                    <Box  borderRadius="2rem" p='1rem' width='50%' mt="2rem"  mb="1rem">   
+                    <Box   width='50%' mb="1rem">   
                     
                         
                                 <HStack>
@@ -1586,7 +1661,7 @@ export function DungeonApp()
                                     
                                     </Button>
                                     <div className="font-face-sfpb">
-                                        <Text fontSize='25px' color="black">
+                                        <Text fontSize='16px' color="black">
                                             {
                                                 "no balance"
                                             }
@@ -1599,13 +1674,13 @@ export function DungeonApp()
                 }
                 {wallet.publicKey &&
                     <Box width="100%">
-                        <Box  borderRadius="2rem" p='1rem' width='50%' mt="2rem">   
+                        <Box    width='50%'>   
                         
                            
                                     <HStack>
                                         <WalletConnected />
                                         <div className="font-face-sfpb">
-                                            <Text fontSize='25px'  color="white">
+                                            <Text fontSize='16px'  color="white">
                                                 {
                                                     sol_balance
                                                     ? "Balance: " + sol_balance + ' SOL'
@@ -1620,13 +1695,11 @@ export function DungeonApp()
                 </Box>
                     
                 }
-                <Box width="100%">
-                    <HStack mb = "2rem" mt="2rem">
-                        <Box width="33%"/>
-                        <Title/>
-                        <Box width="33%"/>
-                    </HStack>
-                </Box>
+                <Center>
+                    <Box width="100%" mb = "2%">
+                            <Title/>
+                    </Box>
+                </Center>
                 <Box width="100%">
                     
                     {!wallet.publicKey && <UnconnectedPage/>}
