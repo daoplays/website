@@ -13,6 +13,8 @@ import { isMobile } from "react-device-detect";
 import { randomBytes } from 'crypto'
 import { serialize, deserialize } from 'borsh';
 
+import useSound from 'use-sound';
+
 import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
     WalletProvider,
@@ -56,6 +58,9 @@ import reaper from "./Reaper.gif"
 import boulder from "./Boulder.png"
 import floor_spikes from "./Spikes.png"
 
+//sounds
+import click_sound from './sounds/click.mp3';
+
 import './fonts.css';
 import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
@@ -67,8 +72,8 @@ const PYTH_ETH_DEV = new PublicKey('EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw
 const PYTH_SOL_DEV = new PublicKey('J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix');   
 
 
-const DEFAULT_FONT_SIZE = "50px"
-const DUNGEON_FONT_SIZE = "25px"
+const DEFAULT_FONT_SIZE = "30px"
+const DUNGEON_FONT_SIZE = "20px"
 const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
@@ -265,6 +270,7 @@ export function DungeonApp()
     const [which_character, setWhichCharacter] = useState(DungeonCharacter.knight);
     const [enemy_state, setEnemyState] = useState(DungeonStatus.unknown);
     const [player_state, setPlayerState] = useState(DungeonStatus.unknown);
+    const [player_xp, setPlayerXP] = useState(0);
     const [animateLevel, setAnimateLevel] = useState(0);
 
     const check_signature = useCallback(async() =>
@@ -456,7 +462,7 @@ export function DungeonApp()
 
             let lamports_amount = account_info_result["result"]["value"]["lamports"];
 
-            setSolBalance(lamports_amount  / LAMPORTS_PER_SOL);
+            setSolBalance((lamports_amount  / LAMPORTS_PER_SOL).toFixed(3));
 
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
@@ -529,6 +535,9 @@ export function DungeonApp()
 
                 let current_status = player_data["player_status"] + 1;
                 if (!initial_status_is_set) {
+                    //console.log("update player xp");
+                    setPlayerXP(player_data["num_wins"].toNumber());
+
                     if (current_status === DungeonStatus.alive){
                         setInitialStatus(DungeonStatus.alive);
                     }
@@ -540,6 +549,8 @@ export function DungeonApp()
                     if (current_status === DungeonStatus.exploring){
                         setInitialStatus(DungeonStatus.exploring);
                     }
+
+                    initial_status_is_set = true;
                     
                 }
 
@@ -610,7 +621,7 @@ export function DungeonApp()
     // reset things when the wallet changes
     useEffect(() => 
     {
-        console.log("wallet things changed")
+        //console.log("wallet things changed")
 
         check_balance = true;
         initial_status_is_set = false;
@@ -622,6 +633,7 @@ export function DungeonApp()
         setCurrentLevel(0);
         setNumPlays(0);
         setNumWins(0);
+        setPlayerXP(0);
         setDataAccountStatus(AccountStatus.unknown);
         setInitialStatus(DungeonStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
@@ -634,7 +646,7 @@ export function DungeonApp()
     
     useEffect(() => 
         {
-            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays);
+            //console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays);
       
             if (currentLevel === 0)
                 return;
@@ -655,7 +667,7 @@ export function DungeonApp()
             if (numPlays > 1 && numPlays === initial_num_plays && data_account_status === AccountStatus.created && currentStatus !== DungeonStatus.alive)
                 return;
 
-            console.log("display enemy")
+            //console.log("display enemy")
             // display the current enemy
             setEnemyState(DungeonStatus.alive);
             setPlayerState(DungeonStatus.alive);
@@ -673,19 +685,20 @@ export function DungeonApp()
             if (animateLevel === 0) {
                 return;
             }
-
+            //console.log('This will run after 5 seconds!');
             const timer = setTimeout(() => {
-                //console.log('This will run after 5 seconds!');
+                //console.log('5 seconds has passed!');
 
                 // player killed enemy
                 if (animateLevel === 1) {
-                    console.log("player killed enemy");
+                    //console.log("player killed enemy");
                     setPlayerState(DungeonStatus.alive);
                     setEnemyState(DungeonStatus.dead);
+                    setPlayerXP(numWins)
                 }
                 // enemy killed player
                 else {
-                    console.log("enemy killed player")
+                    //console.log("enemy killed player")
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
                 }
@@ -695,13 +708,14 @@ export function DungeonApp()
                 return () => clearTimeout(timer);
         
 
-    }, [animateLevel]);
+    }, [animateLevel, numWins]);
 
     useEffect(() => 
     {
         setInitialStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
         setEnemyState(DungeonStatus.unknown);
+        
         //console.log("this is only called once");
 
     }, []);
@@ -977,9 +991,11 @@ export function DungeonApp()
 
     const LargeDoor = () => {
         return (
-            <Box bg='black' mt="2rem">
-            <img style={{"imageRendering":"pixelated"}} src={large_door} width={700} alt={"generic"}/>
+            <>
+            <Box bg='black'>
+            <img style={{"imageRendering":"pixelated"}} src={large_door} width={500} alt={"generic"}/>
             </Box>
+            </>
         )
     }
 
@@ -987,40 +1003,31 @@ export function DungeonApp()
 
         return (
             <Box bg='black'>
-                <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="700" alt={""}/>
+                <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="500" alt={""}/>
             </Box>
         )
     }
 
-    const SelectKnight = useCallback( async () => 
-    {
-        setWhichCharacter(DungeonCharacter.knight);
-        return;
-        
-    },[]);
+    const [SelectKnight] = useSound(click_sound, {
+        onplay: () => setWhichCharacter(DungeonCharacter.knight)
+    });
 
-    const SelectRanger = useCallback( async () => 
-    {
-        setWhichCharacter(DungeonCharacter.ranger);
-        return;
-        
-    },[]);
+    const [SelectRanger] = useSound(click_sound, {
+        onplay: () => setWhichCharacter(DungeonCharacter.ranger)
+    });
 
-    const SelectWizard = useCallback( async () => 
-    {
-        setWhichCharacter(DungeonCharacter.wizard);
-        return;
-        
-    },[]);
+    const [SelectWizard] = useSound(click_sound, {
+        onplay: () => setWhichCharacter(DungeonCharacter.wizard)
+    });
 
-    const HiddenCharacterSelect = () => {
+     const HiddenCharacterSelect = () => {
 
         return (
             <HStack>
-                
+                    
                     <Box  width="100%">
                         <Box>
-                            <Button variant='link' size='md' onClick={SelectKnight}>
+                            <Button variant='link' size='md'>
                                 <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={knight} width="10000" alt={""}/>
                             </Button>
                         </Box>
@@ -1030,7 +1037,7 @@ export function DungeonApp()
                 
                     <Box  width="100%">
                         <Box>
-                            <Button variant='link' size='md' onClick={SelectRanger}>
+                            <Button variant='link' size='md'>
                                 <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={ranger} width="10000" alt={""}/>
                             </Button>
                         </Box>
@@ -1039,7 +1046,7 @@ export function DungeonApp()
                 
                     <Box  width="100%">
                         <Box>
-                            <Button variant='link' size='md' onClick={SelectWizard}>
+                            <Button variant='link' size='md'>
                                 <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={wizard} width="10000" alt={""}/>
                             </Button>
                         </Box>
@@ -1052,8 +1059,8 @@ export function DungeonApp()
     const CharacterSelect = () => {
 
         //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "initial status", initial_status, initial_status === DungeonStatus.unknown);
-
             return (
+                
                 <HStack>
                     {which_character === DungeonCharacter.knight &&
                         <Box  style={{
@@ -1065,7 +1072,7 @@ export function DungeonApp()
 
                         } } width="100%">
                             <Box>
-                                <Button variant='link' size='md' onClick={SelectKnight}>
+                                <Button variant='link' size='md'  onClick={SelectKnight}>
                                     <img style={{"imageRendering":"pixelated"}} src={knight} width="10000" alt={""}/>
                                 </Button>
                             </Box>
@@ -1143,25 +1150,26 @@ export function DungeonApp()
         }
 
         return (
+            <>
+            
             <Center>
             <Box width="100%">
-            
-            <VStack>
-                
-                <HStack mb = "2rem" mt="2rem">
-                    <Box width="33%">
+            <VStack alignItems="center" spacing="3%" mt="2%">                
+                <HStack alignItems="center" spacing="1%">
+                    <Box width="30%">
                         <div className="font-face-sfpb">
                             <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
                         </div>    
-                    </Box>            
+                    </Box>  
                     <LargeDoor/>
-                    <Box width="33%">
+                    <Box width="2%"/>
+                    <Box width="31%">
                         <Box>
                                 {!isMobile &&
                                     <div className="font-face-sfpb">
                                     <WalletMultiButton  
                                     className="wallet-button"  
-                                    >CONNECT WALLET</WalletMultiButton>
+                                    >CONNECT<br/>WALLET</WalletMultiButton>
                                     </div>
                                 }
                         </Box>
@@ -1186,6 +1194,7 @@ export function DungeonApp()
             
             </Box>
             </Center>
+            </>
         )
     }
 
@@ -1203,7 +1212,7 @@ export function DungeonApp()
                     <Center>
                         <HStack>
                             <div className="font-face-sfpb">
-                                <Button variant='link' size='md' onClick={Play}>
+                                <Button variant='link' size='md'>
                                         <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
                                 </Button> 
                             
@@ -1244,6 +1253,8 @@ export function DungeonApp()
         //console.log("have made it here in CS");
 
         return (
+            <>
+            
             <VStack>
                 <HStack mb = "2rem" mt="2rem">
                     <Box width="33%">
@@ -1273,6 +1284,7 @@ export function DungeonApp()
                     <Box width="33%" mt="2rem"/>
                 </HStack>
             </VStack>
+            </>
         )
     }
 
@@ -1491,15 +1503,13 @@ export function DungeonApp()
         
         return(
             <Center>
-            <HStack>
-            <Box>
-            <div className="font-face-sfpb">
-                    
-                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {numWins}</Text>
-                    
-            </div>
-            </Box>
-            </HStack>
+                <Box>
+                    <div className="font-face-sfpb">
+                            
+                            <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {player_xp}</Text>
+                            
+                    </div>
+                </Box>
             </Center>
         );
     }
@@ -1508,34 +1518,36 @@ export function DungeonApp()
         console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state, numWins);
         return (
         <>
-            <VStack>
+            <HStack>
+                <Box width="70%"></Box>     
                 <DisplayXP/>
-                <HStack mb = "2rem" mt="2rem">
-                    <Box width="10%"></Box>         
-                    <Box  style={{
-                        backgroundImage: `url(${hallway})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        imageRendering: "pixelated"
+            </HStack>
+            <HStack mb = "2%" mt="1%">
+                <Box width="10%"></Box>         
+                <Box  style={{
+                    backgroundImage: `url(${hallway})`,
+                    backgroundPosition: 'center',
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'no-repeat',
+                    imageRendering: "pixelated"
 
-                    } } width="80%">
-                    <HStack mb = "2rem" mt="2rem">
-            
-                        <Box width="30%"></Box>            
-                        <Box width="15%"> <DisplayPlayer/></Box>  
-                        <Box width="10%"></Box> 
-                        <Box width="15%"> <DisplayEnemy/> </Box>  
-                        <Box width="30%"></Box> 
-
-                    </HStack>
-                    </Box>
+                } } width="80%">
+                <HStack>
+        
+                    <Box width="30%"></Box>            
+                    <Box width="15%"> <DisplayPlayer/></Box>  
                     <Box width="10%"></Box> 
-                    
-                </HStack>
-            </VStack>
+                    <Box width="15%"> <DisplayEnemy/> </Box>  
+                    <Box width="30%"></Box> 
 
-            <VStack  alignItems="center" marginBottom  = "10px" >
+                </HStack>
+                </Box>
+                <Box width="10%"></Box> 
+                
+            </HStack>
+            
+
+            <VStack  alignItems="center">
 
                 { transaction_failed &&
                     <div className="font-face-sfpb">

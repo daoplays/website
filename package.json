@@ -46,6 +46,7 @@
     "react-syntax-highlighter": "15.5.0",
     "react-twitch-embed": "^3.0.1",
     "reactstrap": "^9.1.1",
+    "use-sound": "^4.0.1",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
