@@ -85,6 +85,7 @@ const AccountStatus = {
     created : 1,
     not_created : 2
 }
+const AccountStatusString = ["unknown", "created", "not_created"];
 
 const DungeonStatus = {
     unknown : 0,
@@ -92,6 +93,8 @@ const DungeonStatus = {
     dead : 2,
     exploring : 3
 }
+const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
+
 
 const DungeonCharacter = {
     knight : 0,
@@ -619,7 +622,7 @@ export function DungeonApp()
         setCurrentLevel(0);
         setNumPlays(0);
         setNumWins(0);
-        setDataAccountStatus(AccountStatus.not_created);
+        setDataAccountStatus(AccountStatus.unknown);
         setInitialStatus(DungeonStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
@@ -631,7 +634,7 @@ export function DungeonApp()
     
     useEffect(() => 
         {
-            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays);
+            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays, numWins);
       
             if (currentLevel === 0)
                 return;
@@ -663,7 +666,7 @@ export function DungeonApp()
                 setAnimateLevel(2);
             }
 
-        }, [numPlays, currentLevel, current_enemy, currentStatus, data_account_status]);
+        }, [numPlays, numWins, currentLevel, current_enemy, currentStatus, data_account_status]);
 
     useEffect(() => 
     {
@@ -1222,7 +1225,7 @@ export function DungeonApp()
 
     const ConnectedPage = () =>  {
 
-        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status,  "initial status", initial_status, initial_status === DungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", numPlays,  initial_num_plays, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status], initial_status === DungeonStatus.unknown);
 
         // if i don't need to make an account but player status is unknown return nothing
         if (data_account_status === AccountStatus.created  && (initial_status === DungeonStatus.unknown || (numPlays === initial_num_plays && (DungeonStatus === DungeonStatus.alive || DungeonStatus === DungeonStatus.exploring)))) {
