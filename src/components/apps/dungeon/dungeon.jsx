@@ -85,7 +85,7 @@ const AccountStatus = {
     created : 1,
     not_created : 2
 }
-const AccountStatusString = ["unknown", "created", "not_created"];
+//const AccountStatusString = ["unknown", "created", "not_created"];
 
 const DungeonStatus = {
     unknown : 0,
@@ -93,7 +93,7 @@ const DungeonStatus = {
     dead : 2,
     exploring : 3
 }
-const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
+//const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
 
 const DungeonCharacter = {
@@ -576,7 +576,7 @@ export function DungeonApp()
 
                 setCurrentStatus(current_status);
 
-                setNumWins(player_data["num_wins"]);
+                setNumWins(player_data["num_wins"].toNumber());
 
                 // only update the randoms key here if we are exploring
                 if (current_status === DungeonStatus.exploring) {
@@ -634,7 +634,7 @@ export function DungeonApp()
     
     useEffect(() => 
         {
-            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays, numWins);
+            console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays);
       
             if (currentLevel === 0)
                 return;
@@ -666,7 +666,7 @@ export function DungeonApp()
                 setAnimateLevel(2);
             }
 
-        }, [numPlays, numWins, currentLevel, current_enemy, currentStatus, data_account_status]);
+        }, [numPlays, currentLevel, current_enemy, currentStatus, data_account_status]);
 
     useEffect(() => 
     {
@@ -1486,11 +1486,27 @@ export function DungeonApp()
         }
     }
 
+    const DisplayXP = () =>  {
+
+        
+        return(
+            <HStack>
+            <Box width = "80%"/>
+            <div className="font-face-sfpb">
+                    
+                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {numWins}</Text>
+                    
+            </div>
+            </HStack>
+        );
+    }
+
     const InDungeon = () =>  {
-        console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state);
+        console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state, numWins);
         return (
         <>
             <VStack>
+                <DisplayXP/>
                 <HStack mb = "2rem" mt="2rem">
                     <Box width="10%"></Box>         
                     <Box  style={{
