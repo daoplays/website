@@ -1490,14 +1490,17 @@ export function DungeonApp()
 
         
         return(
+            <Center>
             <HStack>
-            <Box width = "80%"/>
+            <Box>
             <div className="font-face-sfpb">
                     
                     <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {numWins}</Text>
                     
             </div>
+            </Box>
             </HStack>
+            </Center>
         );
     }
 
