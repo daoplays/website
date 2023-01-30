@@ -69,7 +69,7 @@ const PYTH_SOL_DEV = new PublicKey('J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix
 
 const DEFAULT_FONT_SIZE = "50px"
 const DUNGEON_FONT_SIZE = "25px"
-const PROGRAM_KEY = new PublicKey('CmcapRK1UW4FbSr94TdGW8ozYrDeP8wDUbDUzohwcXSt');
+const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("GrTcMZ5qxQwxCo7ePrYaHgf3gLjetDT6Vew8n1ihNPG4");
@@ -157,6 +157,7 @@ const player_data_schema = new Map([
   [PlayerData, { kind: 'struct', 
   fields: [
         ['num_plays', 'u64'],
+        ['num_wins', 'u64'],
         ['in_progress', 'u8'],
         ['player_status', 'u8'],
         ['dungeon_enemy', 'u8'],
@@ -243,6 +244,7 @@ export function DungeonApp()
     // these come from the blockchain
     const [sol_balance, setSolBalance] = useState(null);
     const [numPlays, setNumPlays] = useState(0);
+    const [numWins, setNumWins] = useState(0);
     const [currentLevel, setCurrentLevel] = useState(0);
     const [currentStatus, setCurrentStatus] = useState(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
@@ -550,7 +552,7 @@ export function DungeonApp()
 
                 setNumPlays(num_plays);
 
-                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] + 1, "num_plays", num_plays);
+                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] + 1, "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
 
                 if (initial_num_plays ===  -1)
                 {
@@ -570,6 +572,8 @@ export function DungeonApp()
                 setCurrentLevel(player_data["in_progress"]);
 
                 setCurrentStatus(current_status);
+
+                setNumWins(player_data["num_wins"]);
 
                 // only update the randoms key here if we are exploring
                 if (current_status === DungeonStatus.exploring) {
@@ -614,6 +618,7 @@ export function DungeonApp()
         setScreen(Screen.HOME_SCREEN);
         setCurrentLevel(0);
         setNumPlays(0);
+        setNumWins(0);
         setDataAccountStatus(AccountStatus.not_created);
         setInitialStatus(DungeonStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
@@ -1143,7 +1148,7 @@ export function DungeonApp()
                 <HStack mb = "2rem" mt="2rem">
                     <Box width="33%">
                         <div className="font-face-sfpb">
-                            <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                            <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
                         </div>    
                     </Box>            
                     <LargeDoor/>
@@ -1187,7 +1192,7 @@ export function DungeonApp()
             <HStack mb = "2rem" mt="2rem">
                 <Box width="33%">
                     <div className="font-face-sfpb">
-                        <Text  align="center" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                        <Text  align="center" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 3%</Text>
                     </div>    
                 </Box>   
                 <LargeDoor/>
@@ -1240,7 +1245,7 @@ export function DungeonApp()
                 <HStack mb = "2rem" mt="2rem">
                     <Box width="33%">
                         <div className="font-face-sfpb">
-                            <Text  align="center"  fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 2%</Text>
+                            <Text  align="center"  fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
                         </div>    
                     </Box>            
                     <LargeDoor/>
@@ -1333,29 +1338,45 @@ export function DungeonApp()
          );
      }
 
-    const DisplaySuccessEnemyResultText = () => {
+    const SuccessEnemyResultText = () => {
 
-         
         // for the traps we have special text for survival
         if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
             return(
-            <div className="font-face-sfpb">
                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">...but pass through without incident.</Text>
+             );
+        };
+
+        // otherwise say the enemy type
+        return(
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>  
+        );
+        
+
+    }
+
+    const DisplaySuccessEnemyResultText = () => {
+
+        if (currentLevel <  7) {
+            return(
+            <div className="font-face-sfpb">
+                <SuccessEnemyResultText/>
                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  BET_SIZE} SOL</Text>
                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  BET_SIZE} SOL</Text>
            </div>
            );
-        };
-        
+        }
 
-        // otherwise say the enemy type
+        // otherwise  we retire
         return(
             <div className="font-face-sfpb">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  BET_SIZE} SOL</Text>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  BET_SIZE} SOL</Text>
-        </div>
-        );
+                <SuccessEnemyResultText/>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {Math.pow(2,currentLevel) *  BET_SIZE} SOL</Text>
+                
+           </div>
+           );
+
     }
 
     const DisplayFailureEnemyResultText = () => {
@@ -1518,7 +1539,7 @@ export function DungeonApp()
                     </VStack>
                 </>
                 }
-                {currentLevel > 0  &&
+                {currentLevel > 0  && 
                     <>
                     
                     { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === false  &&
@@ -1548,20 +1569,31 @@ export function DungeonApp()
 
                         <VStack alignItems="center" spacing="3%">
                             <DisplaySuccessEnemyResultText/>
-                            <HStack>
+                            {currentLevel < 7 &&
+                                <HStack>
+                                <Center>
+                                    <Button variant='link' size='md' onClick={Play} mr="3rem">
+                                        <div className="font-face-sfpb">
+                                            <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
+                                        </div> 
+                                    </Button> 
+                                    <Button variant='link' size='md' onClick={Quit} ml="10rem">
+                                        <div className="font-face-sfpb">
+                                            <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Escape</Text>
+                                        </div> 
+                                    </Button> 
+                                </Center>
+                                </HStack>
+                        }
+                        {currentLevel >= 7  &&
                             <Center>
-                                <Button variant='link' size='md' onClick={Play} mr="3rem">
-                                    <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
-                                    </div> 
-                                </Button> 
-                                <Button variant='link' size='md' onClick={Quit} ml="10rem">
-                                    <div className="font-face-sfpb">
-                                        <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Escape</Text>
-                                    </div> 
-                                </Button> 
+                             <Button variant='link' size='md' onClick={Quit}>
+                                <div className="font-face-sfpb">
+                                    <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retire</Text>
+                                </div> 
+                            </Button> 
                             </Center>
-                            </HStack>
+                        }
                         </VStack>
 
                     }
