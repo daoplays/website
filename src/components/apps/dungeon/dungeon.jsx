@@ -33,10 +33,6 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 import bs58 from "bs58";
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { brands } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
-
-
 import dungeon_title from "./Dungeon_Logo.png"
 import large_door from "./Large_Door.gif"
 import hallway from "./Hallway.gif"
@@ -63,6 +59,11 @@ import skeleton_wizard from "./Skelly_Wiz.gif"
 import reaper from "./Reaper.gif"
 import boulder from "./Boulder.png"
 import floor_spikes from "./Spikes.png"
+
+//icons
+import discord_icon from "./Discord_Pix.png"
+import twitter_icon from "./Twitter_Pix.png"
+
 
 //sounds
 import click_sound from './sounds/click.mp3';
@@ -283,7 +284,7 @@ export function DungeonApp()
           <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
               {wallet.publicKey &&
-                    <Box width="90%">
+                    <Box width="80%">
                         <HStack>
                             <WalletConnected />
                             <div className="font-face-sfpb">
@@ -300,16 +301,32 @@ export function DungeonApp()
                     
                 }
                 {!wallet.publicKey &&
-                    <Box width="90%"></Box>
+                    <Box width="80%"></Box>
                 }
-                <Box width="10%">
-                    <HStack>
-                            <a href="https://twitter.com/sol_dungeon">
-                                <FontAwesomeIcon style={{"color":"white"}} icon={brands('twitter')} size="lg"/>
-                            </a>
+                <Box width="20%">
+                    <HStack spacing="5%">
+                        <a href="https://twitter.com/sol_dungeon">
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> Odds </Text>      
+                            </div> 
+                        </a>
+                        <a href="https://twitter.com/sol_dungeon">
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> FAQ </Text>      
+                            </div> 
+                        </a>
+                        <a href="https://twitter.com/sol_dungeon">
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> Help </Text>      
+                            </div> 
+                        </a>
+                        <a href="https://twitter.com/sol_dungeon">
+                            <img style={{"imageRendering":"pixelated"}} src={twitter_icon} width={20} alt={"generic"}/>
+                        </a>
 
-                            <FontAwesomeIcon style={{"color":"white"}} icon={brands('discord')} size="lg"/>
-
+                        <a href="https://discord.gg/HeKJZZEaPn">
+                            <img style={{"imageRendering":"pixelated"}} src={discord_icon} width={28} alt={"generic"}/>
+                        </a>
                     </HStack>
                 </Box>
                 </HStack>
@@ -1560,15 +1577,28 @@ export function DungeonApp()
 
         
         return(
-            <Center>
-                <Box>
+                <Box width="10%">
                     <div className="font-face-sfpb">
                             
                             <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {numXP}</Text>
                             
                     </div>
                 </Box>
-            </Center>
+        );
+    }
+
+
+    const DisplayLVL = () =>  {
+
+        
+        return(
+                <Box width="10%">
+                    <div className="font-face-sfpb">
+                            
+                            <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Lvl. {currentLevel}</Text>
+                            
+                    </div>
+                </Box>
         );
     }
 
@@ -1576,10 +1606,16 @@ export function DungeonApp()
         console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state, numXP);
         return (
         <>
-            <HStack>
-                <Box width="70%"></Box>     
-                <DisplayXP/>
-            </HStack>
+            <Box width="100%">
+                    <HStack>
+                        <Box width="25%"></Box>  
+                        <DisplayLVL/>
+                        <Box width="30%"></Box>     
+                        <DisplayXP/>
+                        <Box width="25%"></Box>  
+                </HStack>
+            </Box>
+
             <HStack mb = "2%" mt="1%">
                 <Box width="10%"></Box>         
                 <Box  style={{
@@ -1617,18 +1653,24 @@ export function DungeonApp()
                                         
                 {currentStatus === DungeonStatus.dead && player_state === DungeonStatus.dead &&
                 <>
-                <VStack alignItems="center" spacing="3%">
-                    <div className="font-face-sfpb">
+                <VStack alignItems="center" spacing="2%">
                         <DisplayFailureEnemyResultText/>
-                        <Center mt="3%">
-                            <Button variant='link' size='md' onClick={ShowDeath}>
-                                <div className="font-face-sfpb">
-                                    <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Exit</Text>
-                                </div> 
-                            </Button> 
+                        <Center>
+                            <HStack alignItems="center">
+                                
+                                <Button variant='link' size='md' onClick={ShowDeath} mr="5rem">
+                                    <div className="font-face-sfpb">
+                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Exit</Text>
+                                    </div> 
+                                </Button> 
+                                <Button variant='link' size='md' onClick={Play} ml="5rem">
+                                    <div className="font-face-sfpb">
+                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retry</Text>
+                                    </div> 
+                                </Button> 
+                            </HStack>
                         </Center>
-                    </div>
-                    </VStack>
+                </VStack>
                 </>
                 }
                 {currentLevel > 0  && 
@@ -1659,31 +1701,33 @@ export function DungeonApp()
                     }
                     {player_state === DungeonStatus.alive && enemy_state === DungeonStatus.dead &&
 
-                        <VStack alignItems="center" spacing="3%">
+                        <VStack alignItems="center" spacing="2%">
                             <DisplaySuccessEnemyResultText/>
                             {currentLevel < 7 &&
-                                <HStack>
                                 <Center>
+
+                                <HStack>
                                     <Button variant='link' size='md' onClick={Play} mr="3rem">
                                         <div className="font-face-sfpb">
-                                            <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
+                                            <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
                                         </div> 
                                     </Button> 
                                     <Button variant='link' size='md' onClick={Quit} ml="10rem">
                                         <div className="font-face-sfpb">
-                                            <Text  ml="1%" mr="10%" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Escape</Text>
+                                            <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Escape</Text>
                                         </div> 
                                     </Button> 
-                                </Center>
+                                
                                 </HStack>
-                        }
-                        {currentLevel >= 7  &&
+                                </Center>
+                            }
+                            {currentLevel >= 7  &&
                             <Center>
-                             <Button variant='link' size='md' onClick={Quit}>
-                                <div className="font-face-sfpb">
-                                    <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retire</Text>
-                                </div> 
-                            </Button> 
+                                <Button variant='link' size='md' onClick={Quit}>
+                                    <div className="font-face-sfpb">
+                                        <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retire</Text>
+                                    </div> 
+                                </Button> 
                             </Center>
                         }
                         </VStack>
