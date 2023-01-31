@@ -23,6 +23,8 @@
     color: white !important;
     font-family: "SFPixelate" !important;
     font-size: 16px !important;
-    height: 60px !important;
-    line-height: 60px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    padding-left: 0px !important;
+    margin-left: 0px !important;
  }
