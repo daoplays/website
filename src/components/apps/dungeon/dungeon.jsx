@@ -9,6 +9,21 @@ import {
     Text,
     VStack
 } from '@chakra-ui/react';
+
+import {
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  TableContainer,
+} from '@chakra-ui/react'
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { brands } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
+
+
 import { isMobile } from "react-device-detect";
 import { randomBytes } from 'crypto'
 import { serialize, deserialize } from 'borsh';
@@ -59,11 +74,6 @@ import skeleton_wizard from "./Skelly_Wiz.gif"
 import reaper from "./Reaper.gif"
 import boulder from "./Boulder.png"
 import floor_spikes from "./Spikes.png"
-
-//icons
-import discord_icon from "./Discord_Pix.png"
-import twitter_icon from "./Twitter_Pix.png"
-
 
 //sounds
 import click_sound from './sounds/click.mp3';
@@ -118,7 +128,10 @@ const DungeonCharacter = {
 const Screen = {
     HOME_SCREEN : 0,
     DUNGEON_SCREEN : 1,
-    DEATH_SCREEN : 2
+    DEATH_SCREEN : 2,
+    FAQ_SCREEN : 3,
+    ODDS_SCREEN : 4,
+    HELP_SCREEN : 5
 }
 
 const DungeonEnemy = {
@@ -238,6 +251,195 @@ export function check_json({json_response})
     return true;
 }
 
+export function OddsScreen()
+{
+    return(
+        <>
+        <Center>
+        <Box width = "80%">
+        <div className="font-face-sfpb" style={{color: "white"}}>
+
+        <h2 className="mt-5" style={{fontSize: "22px"}}>Overview</h2><br />
+
+        Each Room in the DUNGEON spawns a Peril. Most Perils are Enemies you will need to fight, but some are Traps such as falling boulders, or spike pits.
+
+        Each type of Peril has its own chance of death, with some Perils being more likely to kill  than others. However, each Room has an overall 50/50 chance of success.
+
+        <h2 className="mt-5" style={{fontSize: "22px"}}>Probability Table</h2><br />
+
+        <TableContainer>
+        <Table variant='simple'>
+            <Thead>
+            <Tr>
+                <Th>Peril</Th>
+                <Th isNumeric>Spawn %</Th>
+                <Th isNumeric>Death %</Th>
+                <Th isNumeric>Weighted Probability</Th>
+            </Tr>
+            </Thead>
+            <Tbody>
+            <Tr>
+                <Td>Mimic</Td>
+                <Td isNumeric>5</Td>
+                <Td isNumeric>22</Td>
+                <Td isNumeric>1.1</Td>
+            </Tr>
+            <Tr>
+                <Td>Slime</Td>
+                <Td isNumeric>10</Td>
+                <Td isNumeric>10</Td>
+                <Td isNumeric>1</Td>
+            </Tr>
+            <Tr>
+                <Td>Goblins</Td>
+                <Td isNumeric>15</Td>
+                <Td isNumeric>40</Td>
+                <Td isNumeric>6</Td>
+            </Tr>
+            <Tr>
+                <Td>Skeletons</Td>
+                <Td isNumeric>12</Td>
+                <Td isNumeric>50</Td>
+                <Td isNumeric>6</Td>
+            </Tr>
+            <Tr>
+                <Td>Elves</Td>
+                <Td isNumeric>10</Td>
+                <Td isNumeric>55</Td>
+                <Td isNumeric>5.5</Td>
+            </Tr>
+            <Tr>
+                <Td>Orc</Td>
+                <Td isNumeric>10</Td>
+                <Td isNumeric>65</Td>
+                <Td isNumeric>6.5</Td>
+            </Tr>
+            <Tr>
+                <Td>Skeleton Knight</Td>
+                <Td isNumeric>8</Td>
+                <Td isNumeric>75</Td>
+                <Td isNumeric>6</Td>
+            </Tr>
+            <Tr>
+                <Td>Skeleton Wizard</Td>
+                <Td isNumeric>8</Td>
+                <Td isNumeric>90</Td>
+                <Td isNumeric>7.2</Td>
+            </Tr>
+            <Tr>
+                <Td>Reaper</Td>
+                <Td isNumeric>10</Td>
+                <Td isNumeric>65</Td>
+                <Td isNumeric>6.5</Td>
+            </Tr>
+            <Tr>
+                <Td>Boulder Trap</Td>
+                <Td isNumeric>6</Td>
+                <Td isNumeric>35</Td>
+                <Td isNumeric>2.1</Td>
+            </Tr>
+            <Tr>
+                <Td>Spike Trap</Td>
+                <Td isNumeric>6</Td>
+                <Td isNumeric>35</Td>
+                <Td isNumeric>2.1</Td>
+            </Tr>
+             <Tr>
+                <Td></Td>
+                <Td isNumeric>100</Td>
+                <Td isNumeric></Td>
+                <Td isNumeric>50</Td>
+            </Tr>
+            </Tbody>
+        </Table>
+        </TableContainer>
+
+        </div>
+        </Box>
+        </Center>
+        </>
+    );
+}
+
+export function FAQScreen()
+{
+    return(
+        <>
+        <Center>
+        <Box width = "80%">
+        <div className="font-face-sfpb" style={{color: "white"}}>
+
+        <h2 className="mt-5" style={{fontSize: "22px"}}>What is Dungeons & Degens</h2><br />
+        
+        
+        DUNGEONS & DEGENS is a Web3 gaming site inspired by retro dungeon crawlers and RPGs. It combines elements of wagering and RPG progression to create an exciting and immersive entertainment experience.
+
+        The XP System grants Players XP points as they progress through the dungeon. XP points can be spent on a variety of rewards such as free raffle entries and Solana Loot NFTs.
+
+        The Solana Loot System is similar to Loot NFTs on Ethereum but intended to be interoperable within the Solana network instead.
+
+        Our first game available, DUNGEON, puts a fresh spin on the tired coin-flip games while keeping the appealing 50/50 odds of doubling your wager.
+
+        
+        <h2 className="mt-5" style={{fontSize: "22px"}}>Is there a cost to play</h2><br />
+        
+        
+        There is a 3% Dungeon Fee applied to Player winnings when exiting the dungeon alive. No fee is taken on losses.
+
+        Coming Soon: The Dungeon Fee can be reduced by entering a Key Code from our Dungeon Key NFTs. A set of 10 Keys can also be burned for a Dungeon Master NFT.
+
+        To find out more about our NFT collections please visit our Discord channel.
+        
+        <h2 className="mt-5" style={{fontSize: "22px"}}>How does Dungeon work</h2><br />
+
+        <ul>
+            <li>Connect your Phantom Wallet. A dedicated burner wallet is recommended</li>
+            <li>Select your Hero (Cosmetic only - No gameplay impact)</li>
+            <li>Click "Enter Dungeon" and accept the wager transaction.   The first time you play this will create a data account to track your progress</li>
+            <li>Wait for the Room to spawn a Peril and resolve it</li>
+            <li>Exit the dungeon or Continue to the next Room (Double or Nothing)</li>
+            <li>After earning 100XP, visit the Merchant to redeem a Whitelist Token to our Dungeon Key Mint (Coming Soon) </li>
+            <li>If you need any further help please submit a support ticket in our Discord channel  </li>
+        </ul>
+        
+        
+        <h2 className="mt-5" style={{fontSize: "22px"}}>Who are the team</h2><br />
+        
+        <i>Master Mason</i> is the sole creator of DUNGEONS & DEGENS. They are responsible for the art, design, and programming of the game.
+
+        They are an active Solana NFT project founder but using a different alias for regulatory purposes.  You can find them hanging out on our discord channel!
+        
+        <h2 className="mt-5" style={{fontSize: "22px"}}>Do you have a gambling license</h2><br />
+        
+        No. At this point in time DUNGEONS & DEGENS is not a licensed gambling operation, hence the need for the <i>Master Mason</i> alias.
+
+        However, if the game does well enough to justify the costs, then a license will be obtained and the creator will doxx themselves.
+
+        </div>
+        </Box>
+        </Center>
+        </>
+    );
+}
+
+export function HelpScreen()
+{
+    return(
+        <>
+        <Center>
+        <Box width = "80%">
+        <div className="font-face-sfpb" style={{color: "white"}}>
+        <h2 className="mt-5" style={{fontSize: "22px"}}>Help!</h2><br />
+
+        If you have any questions that aren't covered in the FAQ, or find any technical issues with the site, please head over to our Discord channel and make a support ticket to let us know.
+
+        </div>
+        </Box>
+        </Center>
+        </>
+    );
+}
+
 let intervalId;
 let randomsIntervalId;
 var check_balance = true;
@@ -284,7 +486,7 @@ export function DungeonApp()
           <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
               {wallet.publicKey &&
-                    <Box width="80%">
+                    <Box width="75%">
                         <HStack>
                             <WalletConnected />
                             <div className="font-face-sfpb">
@@ -301,31 +503,37 @@ export function DungeonApp()
                     
                 }
                 {!wallet.publicKey &&
-                    <Box width="80%"></Box>
+                    <Box width="75%"></Box>
                 }
-                <Box width="20%">
+                <Box width="25%">
                     <HStack spacing="5%">
-                        <a href="https://twitter.com/sol_dungeon">
+                        <Button variant='link' size='md' onClick={ShowHome}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> Home </Text>      
+                            </div> 
+                        </Button>
+                        <Button variant='link' size='md' onClick={ShowOdds}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Odds </Text>      
                             </div> 
-                        </a>
-                        <a href="https://twitter.com/sol_dungeon">
+                        </Button>
+                        <Button variant='link' size='md' onClick={ShowFAQ}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> FAQ </Text>      
                             </div> 
-                        </a>
-                        <a href="https://twitter.com/sol_dungeon">
+                        </Button>
+                        
+                        <Button variant='link' size='md' onClick={ShowHelp}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Help </Text>      
                             </div> 
-                        </a>
+                        </Button>
                         <a href="https://twitter.com/sol_dungeon">
-                            <img style={{"imageRendering":"pixelated"}} src={twitter_icon} width={20} alt={"generic"}/>
+                            <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
                         </a>
 
                         <a href="https://discord.gg/HeKJZZEaPn">
-                            <img style={{"imageRendering":"pixelated"}} src={discord_icon} width={28} alt={"generic"}/>
+                            <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
                     </HStack>
                 </Box>
@@ -1042,6 +1250,34 @@ export function DungeonApp()
     {
             setScreen(Screen.DEATH_SCREEN);
             setEnemyState(DungeonStatus.unknown);
+            return;
+        
+    },[]);
+
+    const ShowFAQ = useCallback( async () => 
+    {
+            setScreen(Screen.FAQ_SCREEN);
+            return;
+        
+    },[]);
+
+    const ShowOdds = useCallback( async () => 
+    {
+            setScreen(Screen.ODDS_SCREEN);
+            return;
+        
+    },[]);
+
+    const ShowHelp = useCallback( async () => 
+    {
+            setScreen(Screen.HELP_SCREEN);
+            return;
+        
+    },[]);
+
+    const ShowHome = useCallback( async () => 
+    {
+            setScreen(Screen.HOME_SCREEN);
             return;
         
     },[]);
@@ -1829,7 +2065,22 @@ export function DungeonApp()
                 </Center>
                 <Box width="100%">
                     
-                    {!wallet.publicKey && <UnconnectedPage/>}
+                    {!wallet.publicKey && 
+                    <>
+                        {screen === Screen.ODDS_SCREEN &&
+                            <OddsScreen/>
+                        }
+                        {screen === Screen.FAQ_SCREEN &&
+                            <FAQScreen/>
+                        }
+                        {screen === Screen.HELP_SCREEN &&
+                            <HelpScreen/>
+                        }
+                        {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) &&
+                            <UnconnectedPage/>
+                        }
+                    </>
+                    }
                     {wallet.publicKey && 
                         <>
                         {screen === Screen.HOME_SCREEN &&
@@ -1840,6 +2091,15 @@ export function DungeonApp()
                         }
                         {screen === Screen.DEATH_SCREEN &&
                             <DeathScreen/>
+                        }
+                        {screen === Screen.ODDS_SCREEN &&
+                            <OddsScreen/>
+                        }
+                        {screen === Screen.FAQ_SCREEN &&
+                            <FAQScreen/>
+                        }
+                        {screen === Screen.HELP_SCREEN &&
+                            <HelpScreen/>
                         }
                         </>
                     }                    
