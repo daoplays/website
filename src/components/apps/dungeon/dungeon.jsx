@@ -82,19 +82,29 @@ import './fonts.css';
 import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
+const PROD = true;
+
+var network_string = "devnet";
+if (PROD) {
+    network_string = "mainnet"
+}
 
 //pyth oracles
 const PYTH_BTC_DEV = new PublicKey('HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J');   
 const PYTH_ETH_DEV = new PublicKey('EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw');   
-const PYTH_SOL_DEV = new PublicKey('J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix');   
+const PYTH_SOL_DEV = new PublicKey('J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix');  
 
+const PYTH_BTC_PROD = new PublicKey('GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU');   
+const PYTH_ETH_PROD = new PublicKey('JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB');   
+const PYTH_SOL_PROD = new PublicKey('H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG');
+
+const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 
 const DEFAULT_FONT_SIZE = "30px"
 const DUNGEON_FONT_SIZE = "20px"
-const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
-const KAYAK_KEY = new PublicKey("GrTcMZ5qxQwxCo7ePrYaHgf3gLjetDT6Vew8n1ihNPG4");
+const KAYAK_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
 const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
@@ -448,6 +458,7 @@ var initial_num_plays = -1;
 var last_num_plays = -1;
 var transaction_failed = false;
 var global_randoms_address = null;
+var check_for_updates = true;
 
 var have_created_randoms_account = false;
 export function DungeonApp() 
@@ -549,7 +560,7 @@ export function DungeonApp()
                 return;
 
             //console.log("in check signature");
-            const confirm_url = `/.netlify/functions/sig_status_dev?function_name=getSignatureStatuses&p1=`+current_signature;
+            const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature;
             var signature_response = await fetch(confirm_url).then((res) => res.json());
 
             let valid_response = check_json({json_response: signature_response})
@@ -611,7 +622,7 @@ export function DungeonApp()
                 // first check if the data account exists
                 try {
 
-                    const balance_url = `/.netlify/functions/solana_dev?function_name=getBalance&p1=`+global_randoms_address.toString();
+                    const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+global_randoms_address.toString();
                     var balance_result;
                     try {
                         balance_result = await fetch(balance_url).then((res) => res.json());
@@ -644,7 +655,7 @@ export function DungeonApp()
                 }
             }
 
-            const randoms_account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+global_randoms_address.toString()+`&p2=config&p3=base64&p4=commitment`;
+            const randoms_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+global_randoms_address.toString()+`&p2=config&p3=base64&p4=commitment`;
 
             var randoms_account_info_result;
             try {
@@ -705,11 +716,14 @@ export function DungeonApp()
     }, [wallet, check_randoms]);
     
     const init = useCallback(async () => 
-    {       
+    {     
+        if (!check_for_updates)
+            return;
+
         if (wallet.publicKey) {
 
             
-            const account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+wallet.publicKey.toString()+"&p2=config&p3=base64&p4=commitment";
+            const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+wallet.publicKey.toString()+"&p2=config&p3=base64&p4=commitment";
 
             var account_info_result;
             try {
@@ -740,7 +754,7 @@ export function DungeonApp()
                 // first check if the data account exists
                 try {
 
-                    const balance_url = `/.netlify/functions/solana_dev?function_name=getBalance&p1=`+player_data_key.toString()+"&p2=config&p3=base64&p4=commitment";
+                    const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+player_data_key.toString()+"&p2=config&p3=base64&p4=commitment";
                     var balance_result;
                     try {
                         balance_result = await fetch(balance_url).then((res) => res.json());
@@ -777,7 +791,7 @@ export function DungeonApp()
 
             try {
 
-                const player_account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+player_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
+                const player_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+player_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
 
                 var player_account_info_result;
                 try {
@@ -863,6 +877,8 @@ export function DungeonApp()
                     global_randoms_address = randoms_key;
                 }
 
+                check_for_updates = false;
+
                 
             } catch(error) {
                 console.log(error);
@@ -906,6 +922,7 @@ export function DungeonApp()
         setPlayerState(DungeonStatus.unknown);
         setCurrentEnemy(DungeonEnemy.None);
         setEnemyState(DungeonStatus.unknown);
+        check_for_updates = true;
     }, [wallet]);
 
 
@@ -997,26 +1014,32 @@ export function DungeonApp()
             const play_meta = new PlayMeta({ instruction: DungeonInstruction.play, character: which_character});
             const instruction_data = serialize(play_scheme, play_meta);
 
+            var account_vector  = [
+                {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                {pubkey: player_data_key, isSigner: false, isWritable: true}
+            ];
+
+            if (PROD) {
+                account_vector.push({pubkey: PYTH_BTC_PROD, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_ETH_PROD, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_SOL_PROD, isSigner: false, isWritable: false});
+            }
+            else {
+                account_vector.push({pubkey: PYTH_BTC_DEV, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_ETH_DEV, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false});
+            } 
+
+            account_vector.push({pubkey: program_data_key, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: false});
+
             const play_instruction = new TransactionInstruction({
-                keys: [
-                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-                    {pubkey: player_data_key, isSigner: false, isWritable: true},
-                    {pubkey: PYTH_BTC_DEV, isSigner: false, isWritable: false},
-                    {pubkey: PYTH_ETH_DEV, isSigner: false, isWritable: false},
-                    {pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false},
-
-
-
-                    {pubkey: program_data_key, isSigner: false, isWritable: true},
-
-                    {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
-
-                ],
+                keys: account_vector,
                 programId: PROGRAM_KEY,
                 data: instruction_data
             });
 
-            const blockhash_url = `/.netlify/functions/solana_dev?function_name=getLatestBlockhash&p1=`;
+            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
             const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
             let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
             let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
@@ -1032,7 +1055,7 @@ export function DungeonApp()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
                 var transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json({json_response: transaction_response})
@@ -1054,6 +1077,7 @@ export function DungeonApp()
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.alive);
+            check_for_updates = true;
 
 
     },[wallet, which_character]);
@@ -1066,7 +1090,7 @@ export function DungeonApp()
 
             let networkStateAddress = (await PublicKey.findProgramAddress([ORAO_CONFIG_ACCOUNT_SEED], ORAO_KEY))[0];
 
-            const network_account_info_url = `/.netlify/functions/solana_dev?function_name=getAccountInfo&p1=`+networkStateAddress.toString()+`&p2=config&p3=base64&p4=commitment`;
+            const network_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+networkStateAddress.toString()+`&p2=config&p3=base64&p4=commitment`;
 
             var network_account_info_result;
             try {
@@ -1124,7 +1148,7 @@ export function DungeonApp()
                 data: instruction_data
             });
 
-            const blockhash_url = `/.netlify/functions/solana_dev?function_name=getLatestBlockhash&p1=`;
+            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
             const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
             let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
             let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
@@ -1140,7 +1164,7 @@ export function DungeonApp()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
                 var transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json({json_response: network_account_info_result})
@@ -1166,6 +1190,7 @@ export function DungeonApp()
             global_randoms_address  = null;
             //setCurrentRandomsKey(null);
             setRandomsFullfilled(false);
+            check_for_updates = true;
 
     },[wallet, which_character]);  
 
@@ -1195,7 +1220,7 @@ export function DungeonApp()
                 data: instruction_data
             });
 
-            const blockhash_url = `/.netlify/functions/solana_dev?function_name=getLatestBlockhash&p1=`;
+            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
             const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
             let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
             let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
@@ -1211,7 +1236,7 @@ export function DungeonApp()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana_dev?function_name=sendTransaction&p1=`+encoded_transaction;
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json({json_response: transaction_response})
@@ -1232,7 +1257,7 @@ export function DungeonApp()
 
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
-
+            check_for_updates = true;
             return;
         
 

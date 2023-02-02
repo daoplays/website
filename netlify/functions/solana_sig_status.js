@@ -5,7 +5,26 @@ exports.handler = async function (event, context) {
     console.log(event);
     console.log(context);
 
-    let baseURL =  process.env.DEVNET_URL;
+    if (!event.queryStringParameters.function_name || !event.queryStringParameters.network) {
+        console.log("FUNCTION OR NETWORK NOT PRESENT");
+        return;
+    }
+
+    const function_name = event.queryStringParameters.function_name;
+    const network = event.queryStringParameters.network;
+
+    var baseURL = null;
+    
+    if (network === "devnet") {
+        baseURL = process.env.DEVNET_URL;
+    }
+    else if (network === "mainnet") {
+        baseURL = process.env.MAINNET_URL;
+    }
+    else {
+        console.log("UNKNOWN NETWORK RECIEVED");
+        return;
+    }
 
     let config = {
         timeout: 10000,
@@ -13,8 +32,6 @@ exports.handler = async function (event, context) {
     };
 
     try {
-
-        const function_name = event.queryStringParameters.function_name;
 
         var params = []
         if (event.queryStringParameters.p1) {
