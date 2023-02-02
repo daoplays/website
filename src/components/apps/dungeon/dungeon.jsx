@@ -110,7 +110,7 @@ const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
 const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
 
-const BET_SIZE = 0.1;
+const BET_SIZE = 0.005;
 
 const AccountStatus = {
     unknown : 0,
@@ -1310,9 +1310,9 @@ export function DungeonApp()
     const LargeDoor = () => {
         return (
             <>
-            <Box bg='black'>
+            
             <img style={{"imageRendering":"pixelated"}} src={large_door} width={500} alt={"generic"}/>
-            </Box>
+            
             </>
         )
     }
@@ -1469,86 +1469,94 @@ export function DungeonApp()
 
         return (
             <>
-            
-            <Center>
             <Box width="100%">
-            <VStack alignItems="center" spacing="3%" mt="2%">                
-                <HStack alignItems="center" spacing="1%">
-                    <Box width="30%">
-                        <div className="font-face-sfpb">
-                            <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
-                        </div>    
-                    </Box>  
-                    <LargeDoor/>
-                    <Box width="2%"/>
-                    <Box width="31%">
-                        <Box>
-                                {!isMobile &&
-                                    <div className="font-face-sfpb">
-                                    <WalletMultiButton  
-                                    className="wallet-button"  
-                                    >CONNECT<br/>WALLET</WalletMultiButton>
-                                    </div>
-                                }
-                        </Box>
-                    </Box>  
-                </HStack>
+                <Center>
                 
-                <HStack>
-                    <Box width="33%"/>
-                        <div className="font-face-sfpb">
-                            <Text align="center" fontSize={font_size} color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
-                        </div>   
-                    <Box width="33%"/>
-                </HStack>
-                {!isMobile &&
-                <HStack>
-                    <Box width="33%" mt="2rem"/>
-                    <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
-                    <Box width="33%" mt="2rem"/>
-                </HStack>
-                }
-            </VStack>
-            
+                    <VStack alignItems="center" spacing="3%" mt="2%">                
+                        <HStack alignItems="center" spacing="1%">
+                            <Box width="27%">
+                                <div className="font-face-sfpb">
+                                    <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
+                                </div>    
+                            </Box>  
+                            <Box width="46%">
+                                <LargeDoor/>
+                            </Box>
+                            <Box width="27%">
+                                
+                                    {!isMobile &&
+                                        <div className="font-face-sfpb">
+                                        <WalletMultiButton  
+                                        className="wallet-button"  
+                                        >CONNECT<br/>WALLET</WalletMultiButton>
+                                        </div>
+                                    }
+                                
+                            </Box>  
+                        </HStack>
+                        
+                        <HStack>
+                            <Box width="33%"/>
+                                <div className="font-face-sfpb">
+                                    <Text align="center" fontSize={font_size} color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
+                                </div>   
+                            <Box width="33%"/>
+                        </HStack>
+
+                        {!isMobile &&
+                        <HStack>
+                            <Box width="33%" mt="2rem"/>
+                            <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
+                            <Box width="33%" mt="2rem"/>
+                        </HStack>
+                        }
+                    </VStack>
+                
+                
+                </Center>
             </Box>
-            </Center>
             </>
         )
     }
 
     const ConnectedPageNoCS = () =>  {
         return(
-            <Center>
             <Box width="100%">
-            <VStack alignItems="center" spacing="3%" mt="2%">  
-                <HStack alignItems="center" spacing="1%">
-                    <Box width="33%">
-                        <div className="font-face-sfpb">
-                            <Text  align="center" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 3%</Text>
-                        </div>    
-                    </Box>   
-                    <LargeDoor/>
-                    <Box width="33%">
-                        <VStack>
-                            <div className="font-face-sfpb">
-                                <Button variant='link' size='md'>
-                                        <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
-                                </Button> 
-                            
-                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">{BET_SIZE} SOL</Text>
-                            </div> 
-                        </VStack>
+                <Center>
+                
+                    <VStack alignItems="center" spacing="3%" mt="2%">  
+                        <HStack alignItems="center" spacing="1%">
+                            <Box width="27%">
+                                <div className="font-face-sfpb">
+                                    <Text  align="center" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 3%</Text>
+                                </div>    
+                            </Box>   
+                            <Box width="46%">
+                                <LargeDoor/>
+                            </Box>
+                            <Box width="27%">
+                                <VStack style={{"visibility": "hidden"}}>
+                                    <div className="font-face-sfpb">
+                                        <Button variant='link' size='md'>
+                                                <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
+                                        </Button> 
+                                    
+                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">{BET_SIZE} SOL</Text>
+                                    </div> 
+                                </VStack>
 
-                </Box>  
-            </HStack>
-            <HStack>
-                <Box width="33%" mt="2rem"/>
-                <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
-                <Box width="33%" mt="2rem"/>
-            </HStack>
-        </VStack>
-        </Box>
-        </Center>
+                            </Box>  
+                        </HStack>
+                        <HStack>
+                            <Box width="33%" mt="2rem"/>
+                            <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
+                            <Box width="33%" mt="2rem"/>
+                        </HStack>
+                    </VStack>
+                </Center>
+                
+            </Box>
+        
         );
     }
 
@@ -1574,36 +1582,41 @@ export function DungeonApp()
 
         return (
             <>
-            <Center>
             <Box width="100%">
-            <VStack alignItems="center" spacing="3%" mt="2%">  
-                <HStack alignItems="center" spacing="1%">
-                    <Box width="30%">
-                        <div className="font-face-sfpb">
-                            <Text  align="center"  fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
-                        </div>    
-                    </Box>            
-                    <LargeDoor/>
-                    <Box width="33%">
-                        <VStack>
-                            <div className="font-face-sfpb">
-                                <Button variant='link' size='md' onClick={Play}>
-                                        <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
-                                </Button> 
-                            
-                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">{BET_SIZE} SOL</Text>
-                            </div> 
-                        </VStack>
-                    </Box>  
-                </HStack>
-                <HStack>
-                    <Box width="33%" mt="2rem"/>
-                    <Box width="33%" mt="2rem"><CharacterSelect/></Box>
-                    <Box width="33%" mt="2rem"/>
-                </HStack>
-            </VStack>
+                <Center>
+                    <VStack alignItems="center" spacing="3%" mt="2%">  
+                        <HStack alignItems="center" spacing="1%">
+                            <Box width="27%">
+                                <div className="font-face-sfpb">
+                                    <Text  align="center"  fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
+                                </div>    
+                            </Box>            
+                            <Box width="46%">
+                                <LargeDoor/>
+                            </Box>
+                            <Box width="27%">
+                                <VStack alignItems="center">
+                                    <div className="font-face-sfpb">
+                                        <Button variant='link' size='md' onClick={Play}>
+                                                <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
+                                        </Button> 
+                                    </div> 
+                                    <div className="font-face-sfpb">
+                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">{BET_SIZE} SOL</Text>
+                                    </div>
+                                    
+                                </VStack>
+                            </Box>  
+                        </HStack>
+                        <HStack>
+                            <Box width="33%" mt="2rem"/>
+                            <Box width="33%" mt="2rem"><CharacterSelect/></Box>
+                            <Box width="33%" mt="2rem"/>
+                        </HStack>
+                    </VStack>
+            
+                </Center>
             </Box>
-            </Center>
             </>
         )
     }
@@ -2080,15 +2093,19 @@ export function DungeonApp()
     return (
         <>
         <Navigation/>
-        <Center>
-            <VStack>
+        
+        <Box width="100%" mb = "2%">
+            <Center>
+                <Title/>
+            </Center>
+        </Box>
+
+        <Box width="100%">       
+            <Center>
+                <VStack alignItems="center">
                  
-                <Center>
-                    <Box width="100%" mb = "2%">
-                            <Title/>
-                    </Box>
-                </Center>
-                <Box width="100%">
+                
+                
                     
                     {!wallet.publicKey && 
                     <>
@@ -2128,9 +2145,10 @@ export function DungeonApp()
                         }
                         </>
                     }                    
-                </Box>
-            </VStack>               
-        </Center>
+                
+                </VStack>               
+            </Center>
+        </Box>
         </>
     );
 }
