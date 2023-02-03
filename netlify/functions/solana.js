@@ -56,6 +56,9 @@ exports.handler = async function (event, context) {
                     if (p3 == "base64") {
                         extra_config["encoding"] = "base64";
                     }
+                    else if (p3 == "jsonParsed") {
+                        extra_config["encoding"] = "jsonParsed";
+                    }
                     else if (p3 == "skippreflight") {
                         extra_config["skipPreflight"] = true;
                     }
