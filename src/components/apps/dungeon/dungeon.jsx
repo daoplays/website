@@ -91,6 +91,7 @@ import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 const PROD = false;
+const DEBUG = true;
 
 var network_string = "devnet";
 if (PROD) {
@@ -118,7 +119,7 @@ const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
 const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
 
-const SHOP_PROGRAM = new PublicKey("96ryvPGUy7Y31NN5FUvTNURqDdMCGiXek3wwV7C6X7e8");
+const SHOP_PROGRAM = new PublicKey("CFfJ3HNgomj9bj1LcG1zbhc6ggVuGn1ecL5oBnWSTLwu");
 
 const BET_SIZE = 0.005;
 
@@ -188,8 +189,9 @@ const DungeonInstruction = {
 }
 
 const ShopInstruction = {
-    create_token : 0,
-    use_token : 1
+    init : 0,
+    create_token : 1,
+    use_token : 2,
 }
 
 class Assignable {
@@ -648,7 +650,7 @@ export function ShopScreen()
             //console.log("no mint provided, generating");
             var team_token_mint_pubkey = team_token_mint_keypair.publicKey;
             
-     
+            let program_data_key = (await PublicKey.findProgramAddress(["data_account"], SHOP_PROGRAM))[0];
             let token_data_key = (await PublicKey.findProgramAddress([referral_code], SHOP_PROGRAM))[0];
 
             console.log(team_token_mint_pubkey.toString(), wallet.publicKey.toString());
@@ -669,6 +671,7 @@ export function ShopScreen()
                     {pubkey: user_token_key, isSigner: false, isWritable: true},
 
                     {pubkey: token_data_key, isSigner: false, isWritable: true},
+                    {pubkey: program_data_key, isSigner: false, isWritable: true},
 
                     
                     {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
@@ -698,7 +701,7 @@ export function ShopScreen()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json({json_response: transaction_response})
