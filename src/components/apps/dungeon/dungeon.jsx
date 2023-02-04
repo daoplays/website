@@ -907,7 +907,9 @@ export function DungeonApp()
     // reset things when the wallet changes
     useEffect(() => 
     {
-        //console.log("wallet things changed")
+        if (DEBUG) {
+            console.log("wallet things changed")
+        }
 
         check_balance = true;
         initial_status_is_set = false;
@@ -1005,11 +1007,15 @@ export function DungeonApp()
 
     useEffect(() => 
     {
+        if (DEBUG) {
+            console.log("In initial use effect");
+        }
+
         setInitialStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
         setEnemyState(DungeonStatus.unknown);
         
-        //console.log("this is only called once");
+
 
     }, []);
 
@@ -1084,7 +1090,9 @@ export function DungeonApp()
                 return;
             }
 
-            //console.log("setting screen to dungeon");
+            if (DEBUG) {
+                console.log("In Play - setting state");
+            }
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.alive);
@@ -1192,7 +1200,9 @@ export function DungeonApp()
                 return;
             }
 
-            //console.log("setting screen to dungeon");
+            if (DEBUG) {
+                console.log("in explore: setting state");
+            }
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.exploring);
@@ -1266,6 +1276,10 @@ export function DungeonApp()
                 return;
             }
 
+            if (DEBUG) {
+                console.log("In quit, setting state");
+            }
+
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             check_for_updates = true;
@@ -1276,6 +1290,9 @@ export function DungeonApp()
 
     const Reset = useCallback( async () => 
     {
+            if (DEBUG) {
+                console.log("In reset - setting state");
+            }
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             return;
@@ -1284,6 +1301,9 @@ export function DungeonApp()
 
     const ShowDeath = useCallback( async () => 
     {
+            if (DEBUG) {
+                console.log("In show death - setting state");
+            }
             setScreen(Screen.DEATH_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             return;
