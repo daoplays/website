@@ -753,7 +753,7 @@ export function DungeonApp()
 
             let lamports_amount = account_info_result["result"]["value"]["lamports"];
 
-            if (lamports_amount != last_sol_balance) {
+            if (lamports_amount !== last_sol_balance) {
                 last_sol_balance = lamports_amount;
                 check_for_sol_updates = false;
             }
