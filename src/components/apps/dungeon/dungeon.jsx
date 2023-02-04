@@ -718,6 +718,9 @@ export function DungeonApp()
     
     const init = useCallback(async () => 
     {     
+        if (DEBUG) {
+            console.log("in in it check_updates ", check_for_updates, " check balance: ", check_balance);
+        }
         if (!check_for_updates)
             return;
 
@@ -736,6 +739,7 @@ export function DungeonApp()
             }
             let valid_response = check_json({json_response: account_info_result})
             if (!valid_response) {
+                console.log(account_info_result);
                 return;
             }
 
@@ -805,6 +809,7 @@ export function DungeonApp()
 
                 let valid_response = check_json({json_response: player_account_info_result})
                 if (!valid_response) {
+                    console.log("get data error ", player_account_info_result);
                     return;
                 }
 
@@ -841,6 +846,9 @@ export function DungeonApp()
 
 
                 if (num_plays <= last_num_plays) {
+                    if (DEBUG) {
+                        console.log("num plays not increased", num_plays);
+                    }
                     return;
                 }
 
