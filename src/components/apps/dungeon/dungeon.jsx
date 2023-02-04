@@ -1033,6 +1033,9 @@ export function DungeonApp()
     const Play = useCallback( async () => 
     {
 
+            if (DEBUG) {
+                console.log("In play");
+            }
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
@@ -1090,6 +1093,10 @@ export function DungeonApp()
                 }
 
                 let signature = transaction_response["result"];
+
+                if (DEBUG) {
+                    console.log("play signature: ", signature);
+                }
 
                 setCurrentSignature(signature);
 
