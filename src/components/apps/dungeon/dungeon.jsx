@@ -82,6 +82,7 @@ import './fonts.css';
 import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
+const DEBUG = true;
 const PROD = true;
 
 var network_string = "devnet";
@@ -125,7 +126,7 @@ const DungeonStatus = {
     dead : 2,
     exploring : 3
 }
-//const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
+const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
 
 const DungeonCharacter = {
@@ -847,7 +848,9 @@ export function DungeonApp()
 
                 setNumPlays(num_plays);
 
-                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] + 1, "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
+                if (DEBUG) {
+                    console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", DungeonStatusString[player_data["player_status"] + 1], "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
+                }
 
                 if (initial_num_plays ===  -1)
                 {
@@ -929,7 +932,9 @@ export function DungeonApp()
     
     useEffect(() => 
         {
-            //console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays);
+            if (DEBUG) {
+                console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", numPlays, "init num plays", initial_num_plays);
+            }
       
             if (currentLevel === 0)
                 return;
@@ -950,7 +955,9 @@ export function DungeonApp()
             if (numPlays > 1 && numPlays === initial_num_plays && data_account_status === AccountStatus.created && currentStatus !== DungeonStatus.alive)
                 return;
 
-            //console.log("display enemy")
+            if (DEBUG) {
+                console.log("display enemy")
+            }
             // display the current enemy
             setEnemyState(DungeonStatus.alive);
             setPlayerState(DungeonStatus.alive);
@@ -974,13 +981,17 @@ export function DungeonApp()
 
                 // player killed enemy
                 if (animateLevel === 1) {
-                    //console.log("player killed enemy");
+                    if (DEBUG) {
+                        console.log("player killed enemy");
+                    }
                     setPlayerState(DungeonStatus.alive);
                     setEnemyState(DungeonStatus.dead);
                 }
                 // enemy killed player
                 else {
-                    //console.log("enemy killed player")
+                    if (DEBUG) {
+                        console.log("enemy killed player")
+                    }
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
                 }
@@ -1877,7 +1888,9 @@ export function DungeonApp()
     }
 
     const InDungeon = () =>  {
-        console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state, numXP);
+        if (DEBUG) {
+            console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", DungeonStatusString[enemy_state], numXP);
+        }
         return (
         <>
             <Box width="100%">
