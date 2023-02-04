@@ -457,9 +457,12 @@ var check_balance = true;
 var initial_status_is_set = false;
 var initial_num_plays = -1;
 var last_num_plays = -1;
+var last_sol_balance = -1;
+
 var transaction_failed = false;
 var global_randoms_address = null;
-var check_for_updates = true;
+var check_for_data_updates = true;
+var check_for_sol_updates = true;
 
 var have_created_randoms_account = false;
 export function DungeonApp() 
@@ -719,12 +722,12 @@ export function DungeonApp()
     const init = useCallback(async () => 
     {     
         if (DEBUG) {
-            console.log("in in it check_updates ", check_for_updates, " check balance: ", check_balance);
+            console.log("in in it check_updates ", check_for_data_updates, " check balance: ", check_balance, "check sol", check_for_sol_updates);
         }
-        if (!check_for_updates)
+        if (!check_for_data_updates && !check_for_sol_updates)
             return;
 
-        if (wallet.publicKey) {
+        if (wallet.publicKey && check_for_sol_updates) {
 
             
             const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+wallet.publicKey.toString()+"&p2=config&p3=base64&p4=commitment";
@@ -749,6 +752,11 @@ export function DungeonApp()
             }
 
             let lamports_amount = account_info_result["result"]["value"]["lamports"];
+
+            if (lamports_amount != last_sol_balance) {
+                last_sol_balance = lamports_amount;
+                check_for_sol_updates = false;
+            }
 
             setSolBalance((lamports_amount  / LAMPORTS_PER_SOL).toFixed(3));
 
@@ -793,6 +801,9 @@ export function DungeonApp()
                     return;
                 }
             }
+
+            if (!check_for_data_updates)
+                return;
 
             try {
 
@@ -888,7 +899,7 @@ export function DungeonApp()
                     global_randoms_address = randoms_key;
                 }
 
-                check_for_updates = false;
+                check_for_data_updates = false;
 
                 
             } catch(error) {
@@ -923,6 +934,7 @@ export function DungeonApp()
         initial_status_is_set = false;
         initial_num_plays = -1;
         last_num_plays = -1;
+        last_sol_balance = -1;
         transaction_failed = false;
         setSolBalance(null);
         setScreen(Screen.HOME_SCREEN);
@@ -935,7 +947,8 @@ export function DungeonApp()
         setPlayerState(DungeonStatus.unknown);
         setCurrentEnemy(DungeonEnemy.None);
         setEnemyState(DungeonStatus.unknown);
-        check_for_updates = true;
+        check_for_data_updates = true;
+        check_for_sol_updates = true;
     }, [wallet]);
 
 
@@ -1111,7 +1124,8 @@ export function DungeonApp()
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.alive);
-            check_for_updates = true;
+            check_for_data_updates = true;
+            check_for_sol_updates = true;
 
 
     },[wallet, which_character]);
@@ -1226,7 +1240,8 @@ export function DungeonApp()
             global_randoms_address  = null;
             //setCurrentRandomsKey(null);
             setRandomsFullfilled(false);
-            check_for_updates = true;
+            check_for_data_updates = true;
+            check_for_sol_updates = true;
 
     },[wallet, which_character]);  
 
@@ -1297,7 +1312,8 @@ export function DungeonApp()
 
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
-            check_for_updates = true;
+            check_for_data_updates = true;
+            check_for_sol_updates = true;
             return;
         
 
