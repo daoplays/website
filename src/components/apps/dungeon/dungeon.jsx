@@ -7,10 +7,7 @@ import {
     theme,
     Center,
     Text,
-    VStack,
-    FormControl,
-    Tooltip,
-    Input
+    VStack
 } from '@chakra-ui/react';
 
 import {
@@ -29,7 +26,7 @@ import { brands } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- i
 
 import { isMobile } from "react-device-detect";
 import { randomBytes } from 'crypto'
-import { serialize, deserialize } from 'borsh';
+import { serialize, deserialize, deserializeUnchecked } from 'borsh';
 
 import useSound from 'use-sound';
 
@@ -54,11 +51,20 @@ import {
     WalletMultiButton,
     WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
+
+import { Metaplex } from "@metaplex-foundation/js";
+import { Connection, clusterApiUrl } from "@solana/web3.js";
+
+
 import bs58 from "bs58";
 
 import dungeon_title from "./Dungeon_Logo.png"
 import large_door from "./Large_Door.gif"
 import hallway from "./Hallway.gif"
+import shop from "./ShopBuild.gif"
+
+// shop items
+import key from "./Key.png"
 
 //characters
 import knight from "./Knight.gif"
@@ -107,6 +113,13 @@ const PYTH_BTC_PROD = new PublicKey('GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoM
 const PYTH_ETH_PROD = new PublicKey('JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB');   
 const PYTH_SOL_PROD = new PublicKey('H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG');
 
+const METAPLEX_META = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+
+const SHOP_PROGRAM = new PublicKey("AmpJFh12xUCB4kE7SVWam3wPUM8ueoBaMbFhfBxPZKs2");
+const COLLECTION_MASTER = new PublicKey('13PZs3LcwEsRty4FGRUEpsk5JrA9XcBb96iWJgd9yaHq');
+const COLLECTION_META = new PublicKey('3kJaWWbvZ64ULp765Rjn5sP39BJzMck1AG8iyy4XHxtb');
+const COLLECTION_MINT = new PublicKey('2MSRBUehKEZoYs9n39ysGLkdGPJn2EwTDy3QvUfQxMKT');
+
 const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 
 const DEFAULT_FONT_SIZE = "30px"
@@ -119,7 +132,6 @@ const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
 const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
 
-const SHOP_PROGRAM = new PublicKey("CFfJ3HNgomj9bj1LcG1zbhc6ggVuGn1ecL5oBnWSTLwu");
 
 const BET_SIZE = 0.005;
 
@@ -138,6 +150,15 @@ const DungeonStatus = {
 }
 //const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
+const ChestStatus = {
+    closed : 0,
+    open : 1,
+    lead : 2,
+    bronze : 3,
+    silver : 4,
+    gold : 5,
+    obsidian  : 6
+}
 
 const DungeonCharacter = {
     knight : 0,
@@ -191,7 +212,7 @@ const DungeonInstruction = {
 const ShopInstruction = {
     init : 0,
     create_token : 1,
-    use_token : 2,
+    create_collection : 2
 }
 
 class Assignable {
@@ -202,34 +223,11 @@ class Assignable {
     }
   }
 
-class TokenData extends Assignable { }
-class TokenMeta extends Assignable { }
 class PlayerData extends Assignable { }
 class InstructionMeta extends Assignable { }
 class PlayMeta extends Assignable { }
 class ExploreMeta extends Assignable { }
 class my_pubkey extends Assignable { }
-
-const token_data_schema = new Map([
-    [TokenData, { kind: 'struct', 
-    fields: [
-          ['referral_code', [256]], 
-          ['name_len', 'u64'], 
-          ['mint_address', [32]],
-          ['num_referrals', 'u64']],
-      }]
-  ]);
-  
-
-const token_meta_schema = new Map([
-    [TokenMeta, { kind: 'struct', 
-    fields: [
-          ['instruction', 'u8'], 
-          ['referral_code', 'string']
-        ],
-      }]
-  ]);
-
 
 const player_data_schema = new Map([
   [PlayerData, { kind: 'struct', 
@@ -276,6 +274,9 @@ const pubkey_scheme = new Map([
     fields: [
     ['value', [32]]] }]
 ]);
+
+
+
 
 export function WalletConnected() 
 {
@@ -490,196 +491,180 @@ export function HelpScreen()
     );
 }
 
+let keyIntervalId;
+let current_key = null;
 export function ShopScreen()
 {
     const wallet = useWallet();
+    const [chest_state, setChestState] = useState(ChestStatus.closed);
+    //const [current_key, setCurrentKey]  = useState(null);
+    const [which_key, setWhichKey] = useState(null);
+    const [key_description, setKeyDescription] = useState(null);
+    const [key_image, setKeyImage] = useState(null);
 
-
-    const [referral_code, setReferralCode] = React.useState("")
-    const handleReferralCodeChange = (e) => setReferralCode(e.target.value)
-
-    const [token_mint, setTokenMint] = React.useState(null)
-    const [currentOwner, setCurrentOwner] = React.useState(null)
-    const [show_result, setShowResult] = React.useState(false);
-    const [num_referrals, setNumReferrals] = React.useState(null)
-
-
-    const Use = useCallback( async () => 
+    const check_key = useCallback(async() =>
     {
-            //console.log("team name: ", desired_team_name);
-            //console.log("min: ", existing_mint);
-            if (referral_code === ""){
+        
+            if (current_key  === null)
+                return;
+
+            const connection = new Connection(clusterApiUrl("devnet"));
+            const metaplex = new Metaplex(connection);
+
+            const mintAddress = current_key;
+
+            try {
+                const nft = await metaplex.nfts().findByMint({ mintAddress }, {commitment: "confirmed"});
+                
+
+                console.log(nft);
+
+                console.log(nft.name);
+                console.log(nft.json);
+
+                setWhichKey(nft.name);
+                setKeyDescription(nft.json["description"]);
+                setKeyImage(nft.json["image"]);
+
+                current_key = null;
+            
+            } catch(error) {
+                console.log(error);
                 return;
             }
-
-     
-            let token_data_key = (await PublicKey.findProgramAddress([referral_code], SHOP_PROGRAM))[0];
-
-            const token_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+token_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
-
-                var player_account_info_result;
-                try {
-                    player_account_info_result = await fetch(token_account_info_url).then((res) => res.json());
-                }
-                catch(error) {
-                    console.log(error);
-                    return;
-                }
-
-                let valid_response = check_json({json_response: player_account_info_result})
-                if (!valid_response) {
-                    return;
-                }
-
-                if (player_account_info_result["result"]["value"] == null || player_account_info_result["result"]["value"]["data"] == null ) {
-                    return;
-                }
-
-                let player_account_encoded_data = player_account_info_result["result"]["value"]["data"];
-                let player_account_data = Buffer.from(player_account_encoded_data[0], "base64");
-                const token_data = deserialize(token_data_schema, TokenData, player_account_data);
-
-                console.log(token_data);
-
-                let num_referrals = token_data["num_referrals"].toNumber();
-                let mint_key = new PublicKey(token_data["mint_address"]);
-                setTokenMint(mint_key)
-                setNumReferrals(num_referrals);
-                setShowResult(true);
-
-                const largest_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenLargestAccounts&p1=`+mint_key.toString()+`&p2=config&p3=base64&p4=commitment`;
-
-
-                var largest_account_info_result;
-                try {
-                    largest_account_info_result = await fetch(largest_account_info_url).then((res) => res.json());
-                }
-                catch(error) {
-                    console.log(error);
-                    return;
-                }
-
-                valid_response = check_json({json_response: largest_account_info_result})
-                if (!valid_response) {
-                    return;
-                }
-                console.log(largest_account_info_result["result"]["value"][0]["address"]);
-                let largest_address = largest_account_info_result["result"]["value"][0]["address"];
-
-                const parsed_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+largest_address.toString()+`&p2=config&p3=jsonParsed&p4=commitment`;
-
-                var parsed_account_info_result;
-                try {
-                    parsed_account_info_result = await fetch(parsed_account_info_url).then((res) => res.json());
-                }
-                catch(error) {
-                    console.log(error);
-                    return;
-                }
-
-                valid_response = check_json({json_response: parsed_account_info_result})
-                if (!valid_response) {
-                    return;
-                }
-
-                console.log(parsed_account_info_result);
-                let owner = parsed_account_info_result["result"]["value"]["data"]["parsed"]["info"]["owner"];
-
-                console.log(owner);
-                setCurrentOwner(owner);
-
-
-                const use_token_meta = new TokenMeta({ instruction: ShopInstruction.use_token, referral_code: referral_code.toString() });
-                const use_token_data = serialize(token_meta_schema, use_token_meta);
-
-                const use_token_instruction = new TransactionInstruction({
-                    keys: [
-                        {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-                        {pubkey: token_data_key, isSigner: false, isWritable: true}
-                    ],
-                    programId: SHOP_PROGRAM,
-                    data: use_token_data
-                });
-
-                const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-                const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-                let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-                let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-                const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
-
-                let transaction = new Transaction(txArgs);
-                transaction.feePayer = wallet.publicKey;
-
-
-                transaction.add(use_token_instruction);
-
-                try {
-                    let signed_transaction = await wallet.signTransaction(transaction);
-                    const encoded_transaction = bs58.encode(signed_transaction.serialize());
-    
-                    const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
-                    let transaction_response = await fetch(send_url).then((res) => res.json());
-    
-                    let valid_response = check_json({json_response: transaction_response})
-    
-                    if (!valid_response) {
-                        console.log(transaction_response)
-                        return;
-                    }
-         
-                } catch(error) {
-                    console.log(error);
-                    return;
-                }
             
-            return;
-        
 
-    },[wallet, referral_code]);
-    
+    }, [wallet]);
+
+    useEffect(() => 
+    {
+        if (wallet.publicKey && !keyIntervalId) {
+            keyIntervalId = setInterval(check_key, 1000);
+        }
+        else{
+            clearInterval(keyIntervalId);
+            keyIntervalId = null;
+        }
+    }, [check_key, wallet]);
+
+
+    const DisplayChest = () => {
+
+         
+ 
+         if (chest_state === ChestStatus.closed) {
+             return ( <img style={{"imageRendering":"pixelated"}} src={closed_chest} width="10000" alt={""}/> );
+         }
+         if (chest_state === ChestStatus.open) {
+             return ( <img style={{"imageRendering":"pixelated"}} src={open_chest} width="10000" alt={""}/> );
+         }
+         if (chest_state === ChestStatus.lead) {
+             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
+         }
+         if (chest_state === ChestStatus.bronze) {
+             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
+         }
+         if (chest_state === ChestStatus.silver) {
+             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
+         }
+         if (chest_state === ChestStatus.gold) {
+             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
+         }
+         if (chest_state === ChestStatus.obsidian) {
+             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
+         }
+        
+     }
+
+
     const Mint = useCallback( async () => 
     {
-            //console.log("team name: ", desired_team_name);
-            //console.log("min: ", existing_mint);
-            if (referral_code === ""){
-                return;
-            }
 
-            const team_token_mint_keypair = Keypair.generate();
-            
-            //console.log("no mint provided, generating");
-            var team_token_mint_pubkey = team_token_mint_keypair.publicKey;
+            setWhichKey(null);
+            setKeyDescription(null);
+            setKeyImage(null);
+       
+            setChestState(ChestStatus.open);
+
+            const nft_mint_keypair = Keypair.generate();
+            var nft_mint_pubkey = nft_mint_keypair.publicKey;
             
             let program_data_key = (await PublicKey.findProgramAddress(["data_account"], SHOP_PROGRAM))[0];
-            let token_data_key = (await PublicKey.findProgramAddress([referral_code], SHOP_PROGRAM))[0];
+            let dungeon_key_data_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
 
-            console.log(team_token_mint_pubkey.toString(), wallet.publicKey.toString());
-            let user_token_key = await getAssociatedTokenAddress(
-                team_token_mint_pubkey, // mint
+
+            let nft_meta_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
+
+            let nft_master_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
+
+            let nft_account_key = await getAssociatedTokenAddress(
+                nft_mint_pubkey, // mint
                 wallet.publicKey, // owner
                 true // allow owner off curve
             );
 
-            const create_token_meta = new TokenMeta({ instruction: ShopInstruction.create_token, referral_code: referral_code.toString() });
-            const create_token_data = serialize(token_meta_schema, create_token_meta);
+            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+
+            const create_token_meta = new InstructionMeta({ instruction: ShopInstruction.create_token});
+            const create_token_data = serialize(instruction_schema, create_token_meta);
+
+            const init_meta = new InstructionMeta({ instruction: ShopInstruction.init});
+            const init_data = serialize(instruction_schema, init_meta);
+
+            var account_vector  = [
+                {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+
+                {pubkey: nft_mint_pubkey, isSigner: true, isWritable: true},
+                {pubkey: nft_account_key, isSigner: false, isWritable: true},
+                {pubkey: nft_meta_key, isSigner: false, isWritable: true},
+                {pubkey: nft_master_key, isSigner: false, isWritable: true},
+
+                {pubkey: player_data_key, isSigner: false, isWritable: true},
+                {pubkey: dungeon_key_data_account, isSigner: false, isWritable: true},
+                {pubkey: program_data_key, isSigner: false, isWritable: true}
+            ];
+
+            account_vector.push({pubkey: COLLECTION_MINT, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: COLLECTION_META, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: COLLECTION_MASTER, isSigner: false, isWritable: true});
+
+
+            if (PROD) {
+                account_vector.push({pubkey: PYTH_BTC_PROD, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_ETH_PROD, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_SOL_PROD, isSigner: false, isWritable: false});
+            }
+            else {
+                account_vector.push({pubkey: PYTH_BTC_DEV, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_ETH_DEV, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false});
+            } 
+
+
+            
+            account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: METAPLEX_META, isSigner: false, isWritable: false});
+
+
 
             const create_token_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: SHOP_PROGRAM,
+                data: create_token_data
+            });
+
+            const init_instruction = new TransactionInstruction({
                 keys: [
                     {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-
-                    {pubkey: team_token_mint_pubkey, isSigner: true, isWritable: true},
-                    {pubkey: user_token_key, isSigner: false, isWritable: true},
-
-                    {pubkey: token_data_key, isSigner: false, isWritable: true},
                     {pubkey: program_data_key, isSigner: false, isWritable: true},
-
-                    
-                    {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
-                    {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
                     {pubkey: SYSTEM_KEY, isSigner: false, isWritable: true}
                 ],
                 programId: SHOP_PROGRAM,
-                data: create_token_data
+                data: init_data
             });
 
             const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
@@ -693,8 +678,9 @@ export function ShopScreen()
 
 
             transaction.add(create_token_instruction);
+            transaction.add(init_instruction);
 
-            transaction.partialSign(team_token_mint_keypair);
+            transaction.partialSign(nft_mint_keypair);
 
 
             try {
@@ -710,6 +696,10 @@ export function ShopScreen()
                     console.log(transaction_response)
                     return;
                 }
+
+                console.log(transaction_response);
+                let signature = transaction_response["result"];
+                console.log("sig: ", signature);
      
             } catch(error) {
                 console.log(error);
@@ -717,70 +707,73 @@ export function ShopScreen()
             }
 
             
+            current_key = nft_mint_pubkey;
+            
             return;
         
 
-    },[wallet, referral_code]);
+    },[wallet]);
 
     return(
         <>
-        <Center>
-        <Box width = "80%">
-        <div className="font-face-sfpb" style={{color: "white"}}>
+        <Box width="100%">       
+            <Center>
+                <VStack alignItems="center">
 
-            <Text mt="2rem" mb="1rem" textAlign="center" fontSize="1.5rem">Referral Token Scheme</Text>
-            <VStack alignItems="center">
-                <HStack marginBottom  = "10px" >
-                        <Box >
-                            <Tooltip hasArrow label='Desired Referral Code.  Must be unique amongst all existing tokens.'> 
-                            <Text mt="7px">
-                                Referral Code
-                            </Text>                 
-                            </Tooltip>
-                        </Box>
-                    
-                        <Box width='350px'>  
-                            <FormControl id="referral_code" maxWidth={"350px"} >
-                                <Input
-                                    type="text"
-                                    value={referral_code}
-                                    onChange={handleReferralCodeChange}
-                                />
-                            </FormControl>
-                        </Box>
-                </HStack>
-
-                <HStack spacing="10rem">
-                    <Button variant='link' size='lg' onClick={Mint}>
+                    <HStack mb = "2%">
+                        <Box width="25%"></Box>            
+                        <Box width="50%"> <img style={{"imageRendering":"pixelated"}} src={shop} width="10000" alt={""}/></Box>  
+                        <Box width="25%"></Box> 
+                    </HStack>
+                    <Box width="80%" mb = "-10rem">
                         <div className="font-face-sfpb">
-                            <Text fontSize='25px'  color="white"> Mint Token </Text>      
-                        </div> 
-                    </Button>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!</Text>
+                        </div>
+                    </Box>
+                    <HStack alignItems="center" mb="-10rem">
+                        <Box width="35%"></Box>
+                        <Box width="15%"> <DisplayChest/></Box>
+                        <Box width="15%">
+                        <Button pt="30%" variant='link' size='lg' onClick={Mint}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='25px'  color="white"> Buy Key (1 SOL) </Text>      
+                            </div> 
+                        </Button>
+                        </Box>
+                        <Box width="35%"></Box>
+                       
+                    </HStack>
 
-                    <Button variant='link' size='lg' onClick={Use}>
-                        <div className="font-face-sfpb">
-                            <Text fontSize='25px'  color="white"> Use Token </Text>      
-                        </div> 
-                    </Button>
+                    {which_key !== null &&
 
-                </HStack>
-            </VStack>
+                    <Box width="80%">
+                        <VStack alignItems="center">
+                            <HStack>
+                                <Box width="25%"></Box>
+                                <Box width="5%">
+                                <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
+                                </Box>
+                                <Box width="45%">
+                                <VStack>
+                                    <div className="font-face-sfpb">
+                                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key}!</Text>
+                                    </div>
+                                    <div className="font-face-sfpb">
+                                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}</Text>
+                                    </div>
+                                </VStack>
+                                </Box>
+                                <Box width="25%"></Box>
+                            </HStack>
+                            
+                        </VStack>
+                    </Box>
+                    }
 
-            {show_result &&
-            <>
-            <VStack>
-            <Text mt="2rem" mb="1rem" textAlign="center" fontSize="1.5rem">Mint address: {token_mint.toString()}</Text>
-            <Text mt="2rem" mb="1rem" textAlign="center" fontSize="1.5rem">Current Owner: {currentOwner}</Text>
-            <Text mt="2rem" mb="1rem" textAlign="center" fontSize="1.5rem">Num referrals: {num_referrals + 1}</Text>
 
-            </VStack>
-            
-            </>
-            }
-
-        </div>
+                </VStack>
+            </Center>
         </Box>
-        </Center>
         </>
     );
 }
