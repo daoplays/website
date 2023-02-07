@@ -26,7 +26,7 @@ import { brands } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- i
 
 import { isMobile } from "react-device-detect";
 import { randomBytes } from 'crypto'
-import { serialize, deserialize, deserializeUnchecked } from 'borsh';
+import { serialize, deserialize } from 'borsh';
 
 import useSound from 'use-sound';
 
@@ -97,7 +97,7 @@ import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 const PROD = false;
-const DEBUG = true;
+//const DEBUG = true;
 
 var network_string = "devnet";
 if (PROD) {
@@ -534,7 +534,7 @@ export function ShopScreen()
             }
             
 
-    }, [wallet]);
+    }, []);
 
     useEffect(() => 
     {
