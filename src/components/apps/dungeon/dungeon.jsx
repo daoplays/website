@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, createContext, useContext } from 'react';
 import {
     ChakraProvider,
     Box,
@@ -52,8 +52,7 @@ import {
     WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
 
-import { Metaplex } from "@metaplex-foundation/js";
-import { Connection, clusterApiUrl } from "@solana/web3.js";
+import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
 
 import bs58 from "bs58";
@@ -115,10 +114,10 @@ const PYTH_SOL_PROD = new PublicKey('H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJE
 
 const METAPLEX_META = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
-const SHOP_PROGRAM = new PublicKey("AmpJFh12xUCB4kE7SVWam3wPUM8ueoBaMbFhfBxPZKs2");
-const COLLECTION_MASTER = new PublicKey('13PZs3LcwEsRty4FGRUEpsk5JrA9XcBb96iWJgd9yaHq');
-const COLLECTION_META = new PublicKey('3kJaWWbvZ64ULp765Rjn5sP39BJzMck1AG8iyy4XHxtb');
-const COLLECTION_MINT = new PublicKey('2MSRBUehKEZoYs9n39ysGLkdGPJn2EwTDy3QvUfQxMKT');
+const SHOP_PROGRAM = new PublicKey("7furJTvAgYYEjFkCbhiYsmEXMtzbUyMj1Q6gwspioCpk");
+const COLLECTION_MASTER = new PublicKey('DoQvfRLYGS2bgjc63cGCFpB4P9WVr325Qxm4QHcwdZ8P');
+const COLLECTION_META = new PublicKey('CZptrCQokZCuou1B6HPoEXoT6hg4LcsRZczsoJQRKhEw');
+const COLLECTION_MINT = new PublicKey('6QWFyyfNfDgzhzhZ5Ry2rVvyBHRyMhD2xDymu7Bc9KiK');
 
 const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 
@@ -131,6 +130,12 @@ const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
 const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
+
+const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
+
+
+// context for all the state
+const StateContext = createContext();
 
 
 const BET_SIZE = 0.005;
@@ -212,7 +217,8 @@ const DungeonInstruction = {
 const ShopInstruction = {
     init : 0,
     create_token : 1,
-    create_collection : 2
+    create_collection : 2,
+    burn_token : 3
 }
 
 class Assignable {
@@ -228,6 +234,9 @@ class InstructionMeta extends Assignable { }
 class PlayMeta extends Assignable { }
 class ExploreMeta extends Assignable { }
 class my_pubkey extends Assignable { }
+class ShopData extends Assignable { }
+class ShopUserData extends Assignable { }
+
 
 const player_data_schema = new Map([
   [PlayerData, { kind: 'struct', 
@@ -275,6 +284,21 @@ const pubkey_scheme = new Map([
     ['value', [32]]] }]
 ]);
 
+const shop_data_schema = new Map([
+    [ShopData, { kind: 'struct', 
+    fields: [
+          ['keys_bought', 'u64'],
+          ['key_types_bought',  [40]]],
+      }]
+  ]);
+
+const shop_user_data_schema = new Map([
+    [ShopUserData, { kind: 'struct', 
+    fields: [
+          ['num_keys', 'u64'],
+          ['last_xp',   'u64']],
+      }]
+  ]);
 
 
 
@@ -491,47 +515,188 @@ export function HelpScreen()
     );
 }
 
+async function get_account_data({pubkey, schema, map, raw})
+{
+
+    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+    var account_info_result;
+    try {
+        account_info_result = await fetch(account_info_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return null;
+    }
+
+    let valid_response = check_json({json_response: account_info_result})
+    if (!valid_response) {
+        return  null;
+    }
+
+    if (account_info_result["result"]["value"] == null || account_info_result["result"]["value"]["data"] == null ) {
+        return null;
+    }
+
+    let account_encoded_data = account_info_result["result"]["value"]["data"];
+    let account_data = Buffer.from(account_encoded_data[0], "base64");
+
+    if (raw) {
+        return account_data;
+    }
+
+    
+    const data = deserialize(schema, map, account_data);
+
+
+    return data;
+}
+
+
 let keyIntervalId;
+let xpIntervalId;
+
 let current_key = null;
+let current_meta_key = null;
+let current_n_keys = -1;
+let check_xp = true;
 export function ShopScreen()
 {
     const wallet = useWallet();
     const [chest_state, setChestState] = useState(ChestStatus.closed);
-    //const [current_key, setCurrentKey]  = useState(null);
+    const [current_mint, setCurrentMint]  = useState(null);
     const [which_key, setWhichKey] = useState(null);
     const [key_description, setKeyDescription] = useState(null);
     const [key_image, setKeyImage] = useState(null);
+    const [xp_req, setXPReq] = useState(null);
+    const [countdown_string, setCountDownString] = useState(null);
+    const [countdown_value, setCountDown] = useState(null);
+
+
+    const [numXP] = useContext(StateContext);
+
+
+
+    const check_xp_reqs = useCallback(async() => 
+    {
+
+        var launch_date = new Date("Feb 9, 2023 00:30:00").getTime();
+
+        // just set the countdown here also
+        var now = new Date().getTime();
+
+        var distance = Math.max(0, launch_date - now);
+
+        // Time calculations for days, hours, minutes and seconds
+        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        let countdown_string = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+        setCountDownString(countdown_string);
+        setCountDown(distance);
+
+
+
+        if (!wallet.publicKey)
+            return;
+
+        if  (!check_xp)
+            return;
+
+        let program_data_key = (await PublicKey.findProgramAddress(["data_account"], SHOP_PROGRAM))[0];
+        let dungeon_key_data_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
+
+
+        let user_data = await get_account_data({pubkey: dungeon_key_data_account.toString(), schema: shop_user_data_schema, map: ShopUserData, raw: false});
+        
+
+        let user_keys_bought = 0;
+
+        if (user_data !== null ) {
+          
+            user_keys_bought = user_data["num_keys"].toNumber();
+        }
+
+        if (user_keys_bought <= current_n_keys) {
+            return;
+        }
+
+        current_n_keys = user_keys_bought
+        check_xp = false;
+
+        let shop_data = await get_account_data({pubkey: program_data_key.toString(), schema: shop_data_schema, map: ShopData, raw: false});
+        let total_keys_bought = shop_data["keys_bought"].toNumber();
+
+        //console.log("total keys bought: ", total_keys_bought);
+        //console.log("user keys bought: ", user_keys_bought);
+
+        let n_levels = 10.0;
+        let total_keys = 3000.0;
+        let keys_per_level = total_keys / n_levels;
+        let current_level = Math.floor(total_keys_bought / keys_per_level);
+
+
+        let base_xp = 100;
+        let xp_cap_per_key = 500;
+        var base_xp_req = base_xp + current_level * 50;
+
+        //console.log("xp calc: ", n_levels, keys_per_level, current_level, base_xp_req);
+
+        if (base_xp_req > xp_cap_per_key) {
+            base_xp_req = xp_cap_per_key;
+        }
+
+        var total_xp_req = base_xp_req;
+        var next_key_req = base_xp_req + 50;
+        if (next_key_req > xp_cap_per_key) {
+            next_key_req = xp_cap_per_key;
+        }
+
+        for (let i = 0; i < user_keys_bought; i++) {
+            total_xp_req += next_key_req;
+            next_key_req += 50;
+
+            if (next_key_req > xp_cap_per_key) {
+                next_key_req = xp_cap_per_key;
+            }
+        }
+        //console.log("total xp req ", total_xp_req);
+        setXPReq(total_xp_req);
+
+    }, [wallet]);
 
     const check_key = useCallback(async() =>
     {
         
-            if (current_key  === null)
-                return;
+        if (current_key  === null)
+            return;
 
-            const connection = new Connection(clusterApiUrl("devnet"));
-            const metaplex = new Metaplex(connection);
+        try {
 
-            const mintAddress = current_key;
+            let raw_meta_data = await get_account_data({pubkey: current_meta_key.toString(), schema: null, map: null, raw: true});
 
-            try {
-                const nft = await metaplex.nfts().findByMint({ mintAddress }, {commitment: "confirmed"});
-                
-
-                console.log(nft);
-
-                console.log(nft.name);
-                console.log(nft.json);
-
-                setWhichKey(nft.name);
-                setKeyDescription(nft.json["description"]);
-                setKeyImage(nft.json["image"]);
-
-                current_key = null;
-            
-            } catch(error) {
-                console.log(error);
+            if (raw_meta_data === null) {
                 return;
             }
+
+            let meta_data = Metadata.deserialize(raw_meta_data);
+
+            let uri_json = await fetch(meta_data[0].data.uri).then(res => res.json());
+
+            setWhichKey(uri_json["name"]);
+            setKeyDescription(uri_json["description"]);
+            setKeyImage(uri_json["image"]);
+            setCurrentMint(meta_data[0].mint.toString());
+            setChestState(ChestStatus.closed);
+
+            current_key = null;
+        
+        } catch(error) {
+            console.log(error);
+            return;
+        }
             
 
     }, []);
@@ -547,34 +712,36 @@ export function ShopScreen()
         }
     }, [check_key, wallet]);
 
+    useEffect(() => 
+    {
+        if (wallet.publicKey && !xpIntervalId) {
+            xpIntervalId = setInterval(check_xp_reqs, 1000);
+        }
+        else{
+            clearInterval(xpIntervalId);
+            xpIntervalId = null;
+        }
+    }, [check_xp_reqs, wallet]);
 
-    const DisplayChest = () => {
 
-         
- 
+    useEffect(() => 
+    {
+        current_n_keys = -1;
+        check_xp = true;
+        
+    }, [wallet]);
+
+
+    const DisplayChest = ({visibility}) => {
+
          if (chest_state === ChestStatus.closed) {
-             return ( <img style={{"imageRendering":"pixelated"}} src={closed_chest} width="10000" alt={""}/> );
+             return ( <img style={{"imageRendering":"pixelated", "visibility": visibility}} src={closed_chest} width="10000" alt={""}/> );
          }
          if (chest_state === ChestStatus.open) {
-             return ( <img style={{"imageRendering":"pixelated"}} src={open_chest} width="10000" alt={""}/> );
-         }
-         if (chest_state === ChestStatus.lead) {
-             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
-         }
-         if (chest_state === ChestStatus.bronze) {
-             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
-         }
-         if (chest_state === ChestStatus.silver) {
-             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
-         }
-         if (chest_state === ChestStatus.gold) {
-             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
-         }
-         if (chest_state === ChestStatus.obsidian) {
-             return ( <img style={{"imageRendering":"pixelated"}} src={key} width="10000" alt={""}/> );
-         }
-        
+             return ( <img style={{"imageRendering":"pixelated", "visibility": visibility}} src={open_chest} width="10000" alt={""}/> );
+         }        
      }
+
 
 
     const Mint = useCallback( async () => 
@@ -601,6 +768,12 @@ export function ShopScreen()
 
             let nft_account_key = await getAssociatedTokenAddress(
                 nft_mint_pubkey, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            let whitelist_account_key = await getAssociatedTokenAddress(
+                WHITELIST_TOKEN, // mint
                 wallet.publicKey, // owner
                 true // allow owner off curve
             );
@@ -641,6 +814,9 @@ export function ShopScreen()
                 account_vector.push({pubkey: PYTH_ETH_DEV, isSigner: false, isWritable: false});
                 account_vector.push({pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false});
             } 
+
+            account_vector.push({pubkey: WHITELIST_TOKEN, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: whitelist_account_key, isSigner: false, isWritable: true});
 
 
             
@@ -708,67 +884,203 @@ export function ShopScreen()
 
             
             current_key = nft_mint_pubkey;
+            current_meta_key = nft_meta_key;
+            check_xp = true;
             
             return;
         
 
     },[wallet]);
+/*
+    const Burn = useCallback( async () => 
+    {
 
+            
+            var nft_mint_pubkey = new PublicKey("AdWqAKwFusKTo2JavMNnUUVY7YoBHx9v58BPvRF3DNcW");
+            
+            let nft_meta_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
+
+            let nft_master_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
+
+            let nft_account_key = await getAssociatedTokenAddress(
+                nft_mint_pubkey, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            const burn_token_meta = new InstructionMeta({ instruction: ShopInstruction.burn_token});
+            const burn_token_data = serialize(instruction_schema, burn_token_meta);
+
+            var account_vector  = [
+                {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+
+                {pubkey: nft_mint_pubkey, isSigner: false, isWritable: true},
+                {pubkey: nft_account_key, isSigner: false, isWritable: true},
+                {pubkey: nft_meta_key, isSigner: false, isWritable: true},
+                {pubkey: nft_master_key, isSigner: false, isWritable: true},
+
+
+            ];
+
+            account_vector.push({pubkey: COLLECTION_META, isSigner: false, isWritable: true});            
+            account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: METAPLEX_META, isSigner: false, isWritable: false});
+
+
+
+            const burn_token_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: SHOP_PROGRAM,
+                data: burn_token_data
+            });
+
+            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
+            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+
+            transaction.add(burn_token_instruction);
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&p2=config&p3=skippreflight";
+                let transaction_response = await fetch(send_url).then((res) => res.json());
+
+                let valid_response = check_json({json_response: transaction_response})
+
+                if (!valid_response) {
+                    console.log(transaction_response)
+                    return;
+                }
+
+                console.log(transaction_response);
+                let signature = transaction_response["result"];
+                console.log("sig: ", signature);
+     
+            } catch(error) {
+                console.log(error);
+                return;
+            }
+
+            return;
+        
+
+    },[wallet]);
+   */
     return(
         <>
+        <Box width="100%">
+                    <HStack>
+                        <Box width="65%"></Box>  
+                        <Box width="10%">
+                            <div className="font-face-sfpb">
+                                    
+                                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {numXP}</Text>
+                                    
+                            </div>
+                        </Box>
+                        <Box width="25%"></Box>  
+                    </HStack>
+                </Box>
         <Box width="100%">       
             <Center>
-                <VStack alignItems="center">
+            
+                <VStack alignItems="center" spacing="2%">
 
-                    <HStack mb = "2%">
-                        <Box width="25%"></Box>            
-                        <Box width="50%"> <img style={{"imageRendering":"pixelated"}} src={shop} width="10000" alt={""}/></Box>  
-                        <Box width="25%"></Box> 
-                    </HStack>
-                    <Box width="80%" mb = "-10rem">
+                
+
+                <HStack>
+                    <Box width="10%"></Box>         
+                    <Box  style={{
+                        backgroundImage: `url(${shop})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        imageRendering: "pixelated"
+
+                    } } width="80%">
+                        <HStack>
+                
+                            <Box width="35%"></Box> 
+                            {countdown_value !== null && countdown_value === 0 &&           
+                                <Box width="15%"> <DisplayChest visibility = {"visible"}/></Box>  
+                            }
+                            {(countdown_value === null || countdown_value > 0) &&           
+                                <Box width="15%"> <DisplayChest visibility = {"hidden"}/></Box>  
+                            }
+                            <Box width="5%"></Box> 
+                            <Box width="15%" pb = "10%"><DisplayChest visibility = {"hidden"}/> </Box>  
+                            <Box width="30%"></Box> 
+
+                        </HStack>
+                    </Box>
+                    <Box width="10%"></Box> 
+                </HStack>
+
+                <Box width="80%" >
+                    <div className="font-face-sfpb">
+                        {countdown_value !== null && countdown_value === 0 &&
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!</Text>
+                        }
+                        {countdown_value !== null && countdown_value > 0 &&
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  We are just getting ready for your grand opening, if you come back in {countdown_string} we'll have some rare things on sale!</Text>
+                        }
+                        {countdown_value === null &&
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "hidden"}}>Welcome Adventurer!  We are just getting ready for your grand opening, if you come back in {countdown_string} we'll have some rare things on sale!</Text>
+                        }
+                    </div>
+                </Box>
+                <HStack alignItems="center">
+                    {countdown_value !== null && countdown_value === 0 &&
+                    <>
+                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                    <Button variant='link' size='lg' onClick={Mint}>
                         <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!</Text>
-                        </div>
-                    </Box>
-                    <HStack alignItems="center" mb="-10rem">
-                        <Box width="35%"></Box>
-                        <Box width="15%"> <DisplayChest/></Box>
-                        <Box width="15%">
-                        <Button pt="30%" variant='link' size='lg' onClick={Mint}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='25px'  color="white"> Buy Key (1 SOL) </Text>      
-                            </div> 
-                        </Button>
-                        </Box>
-                        <Box width="35%"></Box>
-                       
-                    </HStack>
-
-                    {which_key !== null &&
-
-                    <Box width="80%">
-                        <VStack alignItems="center">
-                            <HStack>
-                                <Box width="25%"></Box>
-                                <Box width="5%">
-                                <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
-                                </Box>
-                                <Box width="45%">
-                                <VStack>
-                                    <div className="font-face-sfpb">
-                                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key}!</Text>
-                                    </div>
-                                    <div className="font-face-sfpb">
-                                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}</Text>
-                                    </div>
-                                </VStack>
-                                </Box>
-                                <Box width="25%"></Box>
-                            </HStack>
-                            
-                        </VStack>
-                    </Box>
+                            <Text fontSize='25px'  color="white"> Buy Key (1 SOL, {xp_req} XP required) </Text>      
+                        </div> 
+                    </Button>              
+                    </>
                     }
+                    {(countdown_value === null || countdown_value > 0) &&
+                    <>
+                    <Box width="15%"> <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={key} width="100" alt={""}/></Box>
+                    <Button variant='link' size='lg' onClick={Mint}>
+                        <div className="font-face-sfpb">
+                            <Text fontSize='25px'  color="white" style={{"visibility": "hidden"}}> Buy Key (1 SOL, {xp_req} XP required) </Text>      
+                        </div> 
+                    </Button>              
+                    </>
+                    }
+                </HStack>
+
+                {which_key !== null &&
+                    <>
+                    <VStack spacing="3%">
+                    <HStack alignItems="center">
+                        <Box width="15%">
+                            <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
+                        </Box>
+                                    
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key}! </Text>
+                            </div>
+                    </HStack>
+                    <div className="font-face-sfpb">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a style={{textDecoration: "underline"}} href={"https://explorer.solana.com/address/"+current_mint+"?cluster=devnet"}>here</a></Text>
+                    </div>
+                    </VStack>
+                    </>            
+                }
 
 
                 </VStack>
@@ -2220,6 +2532,7 @@ export function DungeonApp()
     const InDungeon = () =>  {
         console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state, numXP);
         return (
+            
         <>
             <Box width="100%">
                     <HStack>
@@ -2432,6 +2745,7 @@ export function DungeonApp()
 
 
     return (
+        <StateContext.Provider value={[numXP]}>
         <>
         <Navigation/>
         
@@ -2497,6 +2811,7 @@ export function DungeonApp()
             </Center>
         </Box>
         </>
+        </StateContext.Provider>
     );
 }
 

@@ -13,6 +13,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.1.18",
     "@metaplex-foundation/js": "^0.18.0",
+    "@metaplex-foundation/mpl-token-metadata": "^2.8.3",
     "@project-serum/borsh": "^0.2.5",
     "@solana/spl-token": "^0.2.0",
     "@solana/wallet-adapter-base": "^0.6.0",
