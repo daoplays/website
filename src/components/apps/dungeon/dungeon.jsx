@@ -579,7 +579,6 @@ export function ShopScreen()
 
     const check_xp_reqs = useCallback(async() => 
     {
-
         var launch_date = new Date(Date.UTC(2023, 1, 9, 20, 0)).getTime();
 
         // just set the countdown here also
@@ -596,8 +595,6 @@ export function ShopScreen()
         let countdown_string = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
         setCountDownString(countdown_string);
         setCountDown(distance);
-
-
 
         if (!wallet.publicKey)
             return;
@@ -714,6 +711,7 @@ export function ShopScreen()
 
     useEffect(() => 
     {
+        console.log("in check xp use effect", xpIntervalId);
         if (wallet.publicKey && !xpIntervalId) {
             xpIntervalId = setInterval(check_xp_reqs, 1000);
         }
@@ -730,6 +728,12 @@ export function ShopScreen()
         check_xp = true;
         
     }, [wallet]);
+
+    useEffect(() => 
+    {
+        console.log("in basic use effect");
+        
+    }, []);
 
 
     const DisplayChest = ({visibility}) => {
@@ -1948,6 +1952,8 @@ export function DungeonApp()
 
     const ShowHome = useCallback( async () => 
     {
+            clearInterval(xpIntervalId);
+            xpIntervalId = null;
             setScreen(Screen.HOME_SCREEN);
             return;
         
@@ -1955,6 +1961,8 @@ export function DungeonApp()
 
     const ShowShop = useCallback( async () => 
     {
+            clearInterval(xpIntervalId);
+            xpIntervalId = null;
             setScreen(Screen.SHOP_SCREEN);
             return;
         
