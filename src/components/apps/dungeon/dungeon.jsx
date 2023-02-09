@@ -580,7 +580,7 @@ export function ShopScreen()
 
     const check_xp_reqs = useCallback(async() => 
     {
-        var launch_date = new Date(Date.UTC(2023, 1, 9, 20, 0)).getTime();
+        var launch_date = new Date(Date.UTC(2023, 1, 9, 15, 0)).getTime();
 
         // just set the countdown here also
         var now = new Date().getTime();
@@ -712,7 +712,6 @@ export function ShopScreen()
 
     useEffect(() => 
     {
-        console.log("in check xp use effect", xpIntervalId);
         if (wallet.publicKey && !xpIntervalId) {
             xpIntervalId = setInterval(check_xp_reqs, 1000);
         }
@@ -732,7 +731,6 @@ export function ShopScreen()
 
     useEffect(() => 
     {
-        console.log("in basic use effect");
         
     }, []);
 
@@ -1032,6 +1030,22 @@ export function ShopScreen()
                     <Box width="10%"></Box> 
                 </HStack>
 
+                {!wallet.publicKey &&
+                <>
+                    <div className="font-face-sfpb">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Stranger!  Connect your wallet below so we can do business.</Text>
+                    </div>
+
+                    <div className="font-face-sfpb">
+                                <WalletMultiButton  
+                                className="wallet-button"  
+                                >CONNECT WALLET</WalletMultiButton>
+                    </div>
+                </>
+                }
+
+                {wallet.publicKey && 
+                <>
                 <Box width="80%" >
                     <div className="font-face-sfpb">
                         {countdown_value !== null && countdown_value === 0 &&
@@ -1048,12 +1062,14 @@ export function ShopScreen()
                 <HStack alignItems="center">
                     {countdown_value !== null && countdown_value === 0 &&
                     <>
-                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
-                    <Button variant='link' size='lg' onClick={Mint}>
-                        <div className="font-face-sfpb">
-                            <Text fontSize='25px'  color="white"> Buy Key (1 SOL, {xp_req} XP required) </Text>      
-                        </div> 
-                    </Button>              
+
+                        <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                        <Button variant='link' size='lg' onClick={Mint}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='25px'  color="white"> Buy Key (1 SOL, {xp_req} XP required) </Text>      
+                            </div> 
+                        </Button>  
+   
                     </>
                     }
                     {(countdown_value === null || countdown_value > 0) &&
@@ -1067,6 +1083,8 @@ export function ShopScreen()
                     </>
                     }
                 </HStack>
+                </>
+                }
 
                 {which_key !== null &&
                     <>
