@@ -580,7 +580,7 @@ export function ShopScreen()
     const check_xp_reqs = useCallback(async() => 
     {
 
-        var launch_date = new Date("Feb 9, 2023 00:30:00").getTime();
+        var launch_date = new Date(Date.UTC(2023, 1, 9, 20, 0)).getTime();
 
         // just set the countdown here also
         var now = new Date().getTime();
