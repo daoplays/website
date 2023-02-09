@@ -95,8 +95,9 @@ import './fonts.css';
 import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
+
+const DEBUG = true;
 const PROD = false;
-//const DEBUG = true;
 
 var network_string = "devnet";
 if (PROD) {
@@ -153,7 +154,7 @@ const DungeonStatus = {
     dead : 2,
     exploring : 3
 }
-//const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
+const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
 const ChestStatus = {
     closed : 0,
@@ -1101,9 +1102,12 @@ var check_balance = true;
 var initial_status_is_set = false;
 var initial_num_plays = -1;
 var last_num_plays = -1;
+var last_sol_balance = -1;
+
 var transaction_failed = false;
 var global_randoms_address = null;
-var check_for_updates = true;
+var check_for_data_updates = true;
+var check_for_sol_updates = true;
 
 var have_created_randoms_account = false;
 export function DungeonApp() 
@@ -1367,10 +1371,13 @@ export function DungeonApp()
     
     const init = useCallback(async () => 
     {     
-        if (!check_for_updates)
+        if (DEBUG) {
+            console.log("in in it check_updates ", check_for_data_updates, " check balance: ", check_balance, "check sol", check_for_sol_updates);
+        }
+        if (!check_for_data_updates && !check_for_sol_updates)
             return;
 
-        if (wallet.publicKey) {
+        if (wallet.publicKey && check_for_sol_updates) {
 
             
             const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+wallet.publicKey.toString()+"&p2=config&p3=base64&p4=commitment";
@@ -1385,6 +1392,7 @@ export function DungeonApp()
             }
             let valid_response = check_json({json_response: account_info_result})
             if (!valid_response) {
+                console.log(account_info_result);
                 return;
             }
 
@@ -1394,6 +1402,11 @@ export function DungeonApp()
             }
 
             let lamports_amount = account_info_result["result"]["value"]["lamports"];
+
+            if (lamports_amount !== last_sol_balance) {
+                last_sol_balance = lamports_amount;
+                check_for_sol_updates = false;
+            }
 
             setSolBalance((lamports_amount  / LAMPORTS_PER_SOL).toFixed(3));
 
@@ -1439,6 +1452,9 @@ export function DungeonApp()
                 }
             }
 
+            if (!check_for_data_updates)
+                return;
+
             try {
 
                 const player_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+player_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
@@ -1454,6 +1470,7 @@ export function DungeonApp()
 
                 let valid_response = check_json({json_response: player_account_info_result})
                 if (!valid_response) {
+                    console.log("get data error ", player_account_info_result);
                     return;
                 }
 
@@ -1490,6 +1507,9 @@ export function DungeonApp()
 
 
                 if (num_plays <= last_num_plays) {
+                    if (DEBUG) {
+                        console.log("num plays not increased", num_plays);
+                    }
                     return;
                 }
 
@@ -1497,7 +1517,9 @@ export function DungeonApp()
 
                 setNumPlays(num_plays);
 
-                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", player_data["player_status"] + 1, "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
+                if (DEBUG) {
+                    console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", DungeonStatusString[player_data["player_status"] + 1], "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
+                }
 
                 if (initial_num_plays ===  -1)
                 {
@@ -1527,7 +1549,7 @@ export function DungeonApp()
                     global_randoms_address = randoms_key;
                 }
 
-                check_for_updates = false;
+                check_for_data_updates = false;
 
                 
             } catch(error) {
@@ -1554,12 +1576,15 @@ export function DungeonApp()
     // reset things when the wallet changes
     useEffect(() => 
     {
-        //console.log("wallet things changed")
+        if (DEBUG) {
+            console.log("wallet things changed")
+        }
 
         check_balance = true;
         initial_status_is_set = false;
         initial_num_plays = -1;
         last_num_plays = -1;
+        last_sol_balance = -1;
         transaction_failed = false;
         setSolBalance(null);
         setScreen(Screen.HOME_SCREEN);
@@ -1572,14 +1597,17 @@ export function DungeonApp()
         setPlayerState(DungeonStatus.unknown);
         setCurrentEnemy(DungeonEnemy.None);
         setEnemyState(DungeonStatus.unknown);
-        check_for_updates = true;
+        check_for_data_updates = true;
+        check_for_sol_updates = true;
     }, [wallet]);
 
 
     
     useEffect(() => 
         {
-            //console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", currentStatus, "num_plays", numPlays, "init num plays", initial_num_plays);
+            if (DEBUG) {
+                console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", numPlays, "init num plays", initial_num_plays);
+            }
       
             if (currentLevel === 0)
                 return;
@@ -1600,7 +1628,9 @@ export function DungeonApp()
             if (numPlays > 1 && numPlays === initial_num_plays && data_account_status === AccountStatus.created && currentStatus !== DungeonStatus.alive)
                 return;
 
-            //console.log("display enemy")
+            if (DEBUG) {
+                console.log("display enemy")
+            }
             // display the current enemy
             setEnemyState(DungeonStatus.alive);
             setPlayerState(DungeonStatus.alive);
@@ -1624,13 +1654,17 @@ export function DungeonApp()
 
                 // player killed enemy
                 if (animateLevel === 1) {
-                    //console.log("player killed enemy");
+                    if (DEBUG) {
+                        console.log("player killed enemy");
+                    }
                     setPlayerState(DungeonStatus.alive);
                     setEnemyState(DungeonStatus.dead);
                 }
                 // enemy killed player
                 else {
-                    //console.log("enemy killed player")
+                    if (DEBUG) {
+                        console.log("enemy killed player")
+                    }
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
                 }
@@ -1644,11 +1678,15 @@ export function DungeonApp()
 
     useEffect(() => 
     {
+        if (DEBUG) {
+            console.log("In initial use effect");
+        }
+
         setInitialStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
         setEnemyState(DungeonStatus.unknown);
         
-        //console.log("this is only called once");
+
 
     }, []);
 
@@ -1658,6 +1696,9 @@ export function DungeonApp()
     const Play = useCallback( async () => 
     {
 
+            if (DEBUG) {
+                console.log("In play");
+            }
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
@@ -1716,6 +1757,10 @@ export function DungeonApp()
 
                 let signature = transaction_response["result"];
 
+                if (DEBUG) {
+                    console.log("play signature: ", signature);
+                }
+
                 setCurrentSignature(signature);
 
             } catch(error) {
@@ -1723,11 +1768,14 @@ export function DungeonApp()
                 return;
             }
 
-            //console.log("setting screen to dungeon");
+            if (DEBUG) {
+                console.log("In Play - setting state");
+            }
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.alive);
-            check_for_updates = true;
+            check_for_data_updates = true;
+            check_for_sol_updates = true;
 
 
     },[wallet, which_character]);
@@ -1831,7 +1879,9 @@ export function DungeonApp()
                 return;
             }
 
-            //console.log("setting screen to dungeon");
+            if (DEBUG) {
+                console.log("in explore: setting state");
+            }
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.exploring);
@@ -1840,7 +1890,8 @@ export function DungeonApp()
             global_randoms_address  = null;
             //setCurrentRandomsKey(null);
             setRandomsFullfilled(false);
-            check_for_updates = true;
+            check_for_data_updates = true;
+            check_for_sol_updates = true;
 
     },[wallet, which_character]);  
 
@@ -1905,9 +1956,14 @@ export function DungeonApp()
                 return;
             }
 
+            if (DEBUG) {
+                console.log("In quit, setting state");
+            }
+
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
-            check_for_updates = true;
+            check_for_data_updates = true;
+            check_for_sol_updates = true;
             return;
         
 
@@ -1915,6 +1971,9 @@ export function DungeonApp()
 
     const Reset = useCallback( async () => 
     {
+            if (DEBUG) {
+                console.log("In reset - setting state");
+            }
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             return;
@@ -1923,6 +1982,9 @@ export function DungeonApp()
 
     const ShowDeath = useCallback( async () => 
     {
+            if (DEBUG) {
+                console.log("In show death - setting state");
+            }
             setScreen(Screen.DEATH_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             return;
@@ -2538,7 +2600,9 @@ export function DungeonApp()
     }
 
     const InDungeon = () =>  {
-        console.log("in dungeon: currentStatus ", currentStatus, "player status", player_state, "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", enemy_state, numXP);
+        if (DEBUG) {
+            console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", DungeonStatusString[enemy_state], numXP);
+        }
         return (
             
         <>
