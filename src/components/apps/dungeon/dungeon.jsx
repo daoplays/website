@@ -20,8 +20,17 @@ import {
   TableContainer,
 } from '@chakra-ui/react'
 
+import {
+    useDisclosure,
+    Drawer,
+    DrawerBody,
+    DrawerOverlay,
+    DrawerContent,
+    DrawerCloseButton,
+  } from '@chakra-ui/react'
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { brands } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
+import { brands, solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 
 
 import { isMobile } from "react-device-detect";
@@ -122,8 +131,7 @@ const COLLECTION_MINT = new PublicKey('6QWFyyfNfDgzhzhZ5Ry2rVvyBHRyMhD2xDymu7Bc9
 
 const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 
-const DEFAULT_FONT_SIZE = "30px"
-const DUNGEON_FONT_SIZE = "20px"
+
 const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
@@ -134,6 +142,14 @@ const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
 
 const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
 
+// set font size
+var DEFAULT_FONT_SIZE = "30px"
+var DUNGEON_FONT_SIZE = "20px"
+
+if (isMobile) {
+    DEFAULT_FONT_SIZE = "15px"
+    DUNGEON_FONT_SIZE = "10px"
+}
 
 // context for all the state
 const StateContext = createContext();
@@ -329,28 +345,49 @@ export function check_json({json_response})
 
 export function OddsScreen()
 {
+    let table_size = "md";
+    if (isMobile)
+        table_size = "sm"
+
     return(
         <>
         <Center>
         <Box width = "80%">
-        <div className="font-face-sfpb" style={{color: "white"}}>
+        <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 
-        <h2 className="mt-5" style={{fontSize: "22px"}}>Overview</h2><br />
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Overview</h2><br />
 
         Each Room in the DUNGEON spawns a Peril. Most Perils are Enemies you will need to fight, but some are Traps such as falling boulders, or spike pits.
 
         Each type of Peril has its own chance of death, with some Perils being more likely to kill  than others. However, each Room has an overall 50/50 chance of success.
 
-        <h2 className="mt-5" style={{fontSize: "22px"}}>Probability Table</h2><br />
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Probability Table</h2><br />
 
-        <TableContainer>
-        <Table variant='simple'>
+        
+        <TableContainer >
+            <Table variant='simple' size={table_size}>
             <Thead>
             <Tr>
                 <Th>Peril</Th>
-                <Th isNumeric>Spawn %</Th>
-                <Th isNumeric>Death %</Th>
-                <Th isNumeric>Weighted Probability</Th>
+                {!isMobile &&
+                    <Th isNumeric>Spawn %</Th>
+                }
+                {isMobile &&
+                    <Th isNumeric>S %</Th>
+                }
+                {!isMobile &&
+                    <Th isNumeric>Death %</Th>
+                }
+                {isMobile &&
+                    <Th isNumeric>D %</Th>
+                }
+                {!isMobile &&
+                    <Th isNumeric>Weighted Probability</Th>
+                }
+                {isMobile &&
+                    <Th isNumeric>W. Pb</Th>
+                }
+                
             </Tr>
             </Thead>
             <Tbody>
@@ -391,13 +428,23 @@ export function OddsScreen()
                 <Td isNumeric>6.5</Td>
             </Tr>
             <Tr>
-                <Td>Skeleton Knight</Td>
+                {!isMobile &&
+                    <Td>Skeleton Knight</Td>
+                }
+                {isMobile &&
+                    <Td>Sk. Knight</Td>
+                }
                 <Td isNumeric>8</Td>
                 <Td isNumeric>75</Td>
                 <Td isNumeric>6</Td>
             </Tr>
             <Tr>
-                <Td>Skeleton Wizard</Td>
+                {!isMobile &&
+                    <Td>Skeleton Wizard</Td>
+                }
+                {isMobile &&
+                    <Td>Sk. Wizard</Td>
+                }
                 <Td isNumeric>8</Td>
                 <Td isNumeric>90</Td>
                 <Td isNumeric>7.2</Td>
@@ -409,13 +456,23 @@ export function OddsScreen()
                 <Td isNumeric>6.5</Td>
             </Tr>
             <Tr>
-                <Td>Boulder Trap</Td>
+                {!isMobile &&
+                    <Td>Boulder Trap</Td>
+                }
+                {isMobile &&
+                    <Td>Boulder</Td>
+                }
                 <Td isNumeric>6</Td>
                 <Td isNumeric>35</Td>
                 <Td isNumeric>2.1</Td>
             </Tr>
             <Tr>
-                <Td>Spike Trap</Td>
+                {!isMobile &&
+                    <Td>Spike Trap</Td>
+                }
+                {isMobile &&
+                    <Td>Spike</Td>
+                }
                 <Td isNumeric>6</Td>
                 <Td isNumeric>35</Td>
                 <Td isNumeric>2.1</Td>
@@ -443,9 +500,9 @@ export function FAQScreen()
         <>
         <Center>
         <Box width = "80%">
-        <div className="font-face-sfpb" style={{color: "white"}}>
+        <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 
-        <h2 className="mt-5" style={{fontSize: "22px"}}>What is Dungeons & Degens</h2><br />
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>What is Dungeons & Degens</h2><br />
         
         
         DUNGEONS & DEGENS is a Web3 gaming site inspired by retro dungeon crawlers and RPGs. It combines elements of wagering and RPG progression to create an exciting and immersive entertainment experience.
@@ -457,7 +514,7 @@ export function FAQScreen()
         Our first game available, DUNGEON, puts a fresh spin on the tired coin-flip games while keeping the appealing 50/50 odds of doubling your wager.
 
         
-        <h2 className="mt-5" style={{fontSize: "22px"}}>Is there a cost to play</h2><br />
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Is there a cost to play</h2><br />
         
         
         There is a 3% Dungeon Fee applied to Player winnings when exiting the dungeon alive. No fee is taken on losses.
@@ -466,7 +523,7 @@ export function FAQScreen()
 
         To find out more about our NFT collections please visit our Discord channel.
         
-        <h2 className="mt-5" style={{fontSize: "22px"}}>How does Dungeon work</h2><br />
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>How does Dungeon work</h2><br />
 
         <ul>
             <li>Connect your Phantom Wallet. A dedicated burner wallet is recommended</li>
@@ -479,13 +536,13 @@ export function FAQScreen()
         </ul>
         
         
-        <h2 className="mt-5" style={{fontSize: "22px"}}>Who are the team</h2><br />
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Who are the team</h2><br />
         
         <i>Master Mason</i> is the sole creator of DUNGEONS & DEGENS. They are responsible for the art, design, and programming of the game.
 
         They are an active Solana NFT project founder but using a different alias for regulatory purposes.  You can find them hanging out on our discord channel!
         
-        <h2 className="mt-5" style={{fontSize: "22px"}}>Do you have a gambling license</h2><br />
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Do you have a gambling license</h2><br />
         
         No. At this point in time DUNGEONS & DEGENS is not a licensed gambling operation, hence the need for the <i>Master Mason</i> alias.
 
@@ -504,8 +561,8 @@ export function HelpScreen()
         <>
         <Center>
         <Box width = "80%">
-        <div className="font-face-sfpb" style={{color: "white"}}>
-        <h2 className="mt-5" style={{fontSize: "22px"}}>Help!</h2><br />
+        <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Help!</h2><br />
 
         If you have any questions that aren't covered in the FAQ, or find any technical issues with the site, please head over to our Discord channel and make a support ticket to let us know.
 
@@ -1036,11 +1093,20 @@ export function ShopScreen()
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Stranger!  Connect your wallet below so we can do business.</Text>
                     </div>
 
-                    <div className="font-face-sfpb">
-                                <WalletMultiButton  
-                                className="wallet-button"  
-                                >CONNECT WALLET</WalletMultiButton>
-                    </div>
+                    {!isMobile &&
+                        <div className="font-face-sfpb">
+                                    <WalletMultiButton  
+                                    className="wallet-button"  
+                                    >CONNECT WALLET</WalletMultiButton>
+                        </div>
+                    }
+                     {isMobile &&
+                        <div className="font-face-sfpb">
+                                    <WalletMultiButton  
+                                    className="mobile-wallet-button"  
+                                    >CONNECT WALLET</WalletMultiButton>
+                        </div>
+                    }
                 </>
                 }
 
@@ -1066,7 +1132,7 @@ export function ShopScreen()
                         <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
                         <Button variant='link' size='lg' onClick={Mint}>
                             <div className="font-face-sfpb">
-                                <Text fontSize='25px'  color="white"> Buy Key (1 SOL, {xp_req} XP required) </Text>      
+                                <Text fontSize={DEFAULT_FONT_SIZE} color="white"> Buy Key (1 SOL, {xp_req} XP required) </Text>      
                             </div> 
                         </Button>  
    
@@ -1077,7 +1143,7 @@ export function ShopScreen()
                     <Box width="15%"> <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={key} width="100" alt={""}/></Box>
                     <Button variant='link' size='lg' onClick={Mint}>
                         <div className="font-face-sfpb">
-                            <Text fontSize='25px'  color="white" style={{"visibility": "hidden"}}> Buy Key (1 SOL, {xp_req} XP required) </Text>      
+                            <Text fontSize={DEFAULT_FONT_SIZE}  color="white" style={{"visibility": "hidden"}}> Buy Key (1 SOL, {xp_req} XP required) </Text>      
                         </div> 
                     </Button>              
                     </>
@@ -1159,7 +1225,102 @@ export function DungeonApp()
     const [player_state, setPlayerState] = useState(DungeonStatus.unknown);
     const [animateLevel, setAnimateLevel] = useState(0);
 
+    function MobileNavigation()  {
+        const { isOpen, onOpen, onClose } = useDisclosure()
+        //const btnRef = React.useRef()
+
+        return (
+            <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
+              <HStack>
+                {wallet.publicKey &&
+                      <Box width="70%">
+                          <HStack>
+                              <WalletConnected />
+                              {!isMobile &&
+                                <div className="font-face-sfpb">
+                                    <Text fontSize='16px'  color="white">
+                                      {
+                                          sol_balance
+                                          ? "Balance: " + sol_balance + ' SOL'
+                                          : '                                 '
+                                      }
+                                    </Text>
+                                </div>
+                                }
+                          </HStack>
+                      </Box>
+                      
+                  }
+                  {!wallet.publicKey &&
+                      <Box width="75%"></Box>
+                  }
+                  <Box width="25%">
+                    <HStack spacing="10%">
+                        <a href="https://twitter.com/sol_dungeon">
+                            <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
+                        </a>
+
+                        <a href="https://discord.gg/HeKJZZEaPn">
+                            <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
+                        </a>
+
+                        <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
+
+                        
+                        <Drawer
+                            isOpen={isOpen}
+                            placement='right'
+                            onClose={onClose}
+                        >
+                            <DrawerOverlay />
+                            <DrawerContent>
+                            <DrawerCloseButton color="white"/>
+
+                            <DrawerBody bg='black'>
+                                <VStack spacing='24px'>
+                                    <Button variant='link' size='md' onClick={ShowHome}>
+                                    <div className="font-face-sfpb">
+                                        <Text fontSize='16px'  color="white"> Home </Text>      
+                                    </div> 
+                                    </Button>
+                                    <Button variant='link' size='md' onClick={ShowShop}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='16px'  color="white"> Shop </Text>      
+                                        </div> 
+                                    </Button>
+                                    <Button variant='link' size='md' onClick={ShowOdds}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='16px'  color="white"> Odds </Text>      
+                                        </div> 
+                                    </Button>
+                                    <Button variant='link' size='md' onClick={ShowFAQ}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='16px'  color="white"> FAQ </Text>      
+                                        </div> 
+                                    </Button>
+                                    
+                                    <Button variant='link' size='md' onClick={ShowHelp}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='16px'  color="white"> Help </Text>      
+                                        </div> 
+                                    </Button>
+                                </VStack>
+                            </DrawerBody>
+
+                            
+                            </DrawerContent>
+                        </Drawer>
+                    </HStack>
+                  </Box>
+                  </HStack>
+              </Box>
+          );
+    }
+
     function Navigation() {
+
+        
+
         return (
           <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
@@ -1392,10 +1553,15 @@ export function DungeonApp()
         if (DEBUG) {
             console.log("in in it check_updates ", check_for_data_updates, " check balance: ", check_balance, "check sol", check_for_sol_updates);
         }
-        if (!check_for_data_updates && !check_for_sol_updates)
+
+        if (!wallet.publicKey) {
+            return;
+        }
+
+        if (!check_for_data_updates && !check_for_sol_updates && !check_balance)
             return;
 
-        if (wallet.publicKey && check_for_sol_updates) {
+        if (check_for_sol_updates) {
 
             
             const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+wallet.publicKey.toString()+"&p2=config&p3=base64&p4=commitment";
@@ -1427,156 +1593,158 @@ export function DungeonApp()
             }
 
             setSolBalance((lamports_amount  / LAMPORTS_PER_SOL).toFixed(3));
+        }
 
-            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+        let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
-            if (check_balance) {
-                
-                // first check if the data account exists
-                try {
-
-                    const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+player_data_key.toString()+"&p2=config&p3=base64&p4=commitment";
-                    var balance_result;
-                    try {
-                        balance_result = await fetch(balance_url).then((res) => res.json());
-                    }
-                    catch(error) {
-                        console.log(error);
-                        return;
-                    }
-
-                    let valid_response = check_json({json_response: balance_result})
-                    if (!valid_response) {
-                        return;
-                    }
-
-                    if (balance_result["result"]["value"] == null) {
-                        return;
-                    }
-                    
-                    let balance = balance_result["result"]["value"];
-                    if (balance > 0) {
-                        setDataAccountStatus(AccountStatus.created);
-                        check_balance = false;
-                    }
-                    else {
-                        setDataAccountStatus(AccountStatus.not_created);
-                        return;
-                    }
-                }
-                catch(error) {
-                    console.log(error);
-                    return;
-                }
-            }
-
-            if (!check_for_data_updates)
-                return;
-
+        if (check_balance) {
+            
+            // first check if the data account exists
             try {
 
-                const player_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+player_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
-
-                var player_account_info_result;
+                const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+player_data_key.toString()+"&p2=config&p3=base64&p4=commitment";
+                var balance_result;
                 try {
-                    player_account_info_result = await fetch(player_account_info_url).then((res) => res.json());
+                    balance_result = await fetch(balance_url).then((res) => res.json());
                 }
                 catch(error) {
                     console.log(error);
                     return;
                 }
 
-                let valid_response = check_json({json_response: player_account_info_result})
+                let valid_response = check_json({json_response: balance_result})
                 if (!valid_response) {
-                    console.log("get data error ", player_account_info_result);
                     return;
                 }
 
-                if (player_account_info_result["result"]["value"] == null || player_account_info_result["result"]["value"]["data"] == null ) {
+                if (balance_result["result"]["value"] == null) {
                     return;
                 }
-
-                let player_account_encoded_data = player_account_info_result["result"]["value"]["data"];
-                let player_account_data = Buffer.from(player_account_encoded_data[0], "base64");
-                const player_data = deserialize(player_data_schema, PlayerData, player_account_data);
-
-
-                let current_status = player_data["player_status"] + 1;
-                if (!initial_status_is_set) {
-
-                    if (current_status === DungeonStatus.alive){
-                        setInitialStatus(DungeonStatus.alive);
-                    }
-
-                    if (current_status === DungeonStatus.dead){
-                        setInitialStatus(DungeonStatus.dead);
-                    }
-
-                    if (current_status === DungeonStatus.exploring){
-                        setInitialStatus(DungeonStatus.exploring);
-                    }
-
-                    initial_status_is_set = true;
-                    
-                }
-
-                let num_plays = player_data["num_plays"].toNumber();
-
-
-
-                if (num_plays <= last_num_plays) {
-                    if (DEBUG) {
-                        console.log("num plays not increased", num_plays);
-                    }
-                    return;
-                }
-
-                last_num_plays = num_plays;
-
-                setNumPlays(num_plays);
-
-                if (DEBUG) {
-                    console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", DungeonStatusString[player_data["player_status"] + 1], "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
-                }
-
-                if (initial_num_plays ===  -1)
-                {
-                    initial_num_plays =  num_plays;
-                }
-                if (num_plays === 0)  {
-                    return;
-                }  
-
-                const randoms_key = new PublicKey(player_data["randoms_key"]);
-
-                //console.log(randoms_key.toString());
-
-
-                setCurrentEnemy(player_data["dungeon_enemy"]);
                 
-                setCurrentLevel(player_data["in_progress"]);
-
-                setCurrentStatus(current_status);
-
-                setNumXP(player_data["num_wins"].toNumber());
-
-                // only update the randoms key here if we are exploring
-                if (current_status === DungeonStatus.exploring) {
-                    //console.log("set current randoms key", randoms_key)
-                    //setCurrentRandomsKey(randoms_key);
-                    global_randoms_address = randoms_key;
+                let balance = balance_result["result"]["value"];
+                if (balance > 0) {
+                    setDataAccountStatus(AccountStatus.created);
+                    check_balance = false;
                 }
-
-                check_for_data_updates = false;
-
-                
-            } catch(error) {
+                else {
+                    setDataAccountStatus(AccountStatus.not_created);
+                    return;
+                }
+            }
+            catch(error) {
                 console.log(error);
-                setCurrentLevel(0);
-                setCurrentStatus(DungeonStatus.unknown);
-                setCurrentEnemy(DungeonEnemy.None);
+                return;
             }
         }
+        
+
+        if (!check_for_data_updates)
+            return;
+
+        try {
+
+            const player_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+player_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+            var player_account_info_result;
+            try {
+                player_account_info_result = await fetch(player_account_info_url).then((res) => res.json());
+            }
+            catch(error) {
+                console.log(error);
+                return;
+            }
+
+            let valid_response = check_json({json_response: player_account_info_result})
+            if (!valid_response) {
+                console.log("get data error ", player_account_info_result);
+                return;
+            }
+
+            if (player_account_info_result["result"]["value"] == null || player_account_info_result["result"]["value"]["data"] == null ) {
+                return;
+            }
+
+            let player_account_encoded_data = player_account_info_result["result"]["value"]["data"];
+            let player_account_data = Buffer.from(player_account_encoded_data[0], "base64");
+            const player_data = deserialize(player_data_schema, PlayerData, player_account_data);
+
+
+            let current_status = player_data["player_status"] + 1;
+            if (!initial_status_is_set) {
+
+                if (current_status === DungeonStatus.alive){
+                    setInitialStatus(DungeonStatus.alive);
+                }
+
+                if (current_status === DungeonStatus.dead){
+                    setInitialStatus(DungeonStatus.dead);
+                }
+
+                if (current_status === DungeonStatus.exploring){
+                    setInitialStatus(DungeonStatus.exploring);
+                }
+
+                initial_status_is_set = true;
+                
+            }
+
+            let num_plays = player_data["num_plays"].toNumber();
+
+
+
+            if (num_plays <= last_num_plays) {
+                if (DEBUG) {
+                    console.log("num plays not increased", num_plays);
+                }
+                return;
+            }
+
+            last_num_plays = num_plays;
+
+            setNumPlays(num_plays);
+
+            if (DEBUG) {
+                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", DungeonStatusString[player_data["player_status"] + 1], "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
+            }
+
+            if (initial_num_plays ===  -1)
+            {
+                initial_num_plays =  num_plays;
+            }
+            if (num_plays === 0)  {
+                return;
+            }  
+
+            const randoms_key = new PublicKey(player_data["randoms_key"]);
+
+            //console.log(randoms_key.toString());
+
+
+            setCurrentEnemy(player_data["dungeon_enemy"]);
+            
+            setCurrentLevel(player_data["in_progress"]);
+
+            setCurrentStatus(current_status);
+
+            setNumXP(player_data["num_wins"].toNumber());
+
+            // only update the randoms key here if we are exploring
+            if (current_status === DungeonStatus.exploring) {
+                //console.log("set current randoms key", randoms_key)
+                //setCurrentRandomsKey(randoms_key);
+                global_randoms_address = randoms_key;
+            }
+
+            check_for_data_updates = false;
+
+            
+        } catch(error) {
+            console.log(error);
+            setCurrentLevel(0);
+            setCurrentStatus(DungeonStatus.unknown);
+            setCurrentEnemy(DungeonEnemy.None);
+        }
+        
 
     }, [wallet]);
 
@@ -2205,7 +2373,7 @@ export function DungeonApp()
 
         var font_size = DEFAULT_FONT_SIZE;
         if (isMobile) {
-            font_size = "20px";
+            font_size = "15px";
         }
 
         return (
@@ -2229,6 +2397,13 @@ export function DungeonApp()
                                         <div className="font-face-sfpb">
                                         <WalletMultiButton  
                                         className="wallet-button"  
+                                        >CONNECT<br/>WALLET</WalletMultiButton>
+                                        </div>
+                                    }
+                                    {isMobile &&
+                                        <div className="font-face-sfpb">
+                                        <WalletMultiButton  
+                                        className="mobile-wallet-button"  
                                         >CONNECT<br/>WALLET</WalletMultiButton>
                                         </div>
                                     }
@@ -2261,6 +2436,12 @@ export function DungeonApp()
     }
 
     const ConnectedPageNoCS = () =>  {
+
+        var font_size = DEFAULT_FONT_SIZE;
+        if (isMobile) {
+            font_size = "15px";
+        }
+
         return(
             <Box width="100%">
                 <Center>
@@ -2269,7 +2450,7 @@ export function DungeonApp()
                         <HStack alignItems="center" spacing="1%">
                             <Box width="27%">
                                 <div className="font-face-sfpb">
-                                    <Text  align="center" fontSize={DEFAULT_FONT_SIZE} color="black">DUNGEON MASTER'S<br/> FEE: 3%</Text>
+                                    <Text  align="center" fontSize={font_size} color="black">DUNGEON MASTER'S<br/> FEE: 3%</Text>
                                 </div>    
                             </Box>   
                             <Box width="46%">
@@ -2279,10 +2460,10 @@ export function DungeonApp()
                                 <VStack style={{"visibility": "hidden"}}>
                                     <div className="font-face-sfpb">
                                         <Button variant='link' size='md'>
-                                                <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">ENTER<br/>DUNGEON</Text>
+                                                <Text  textAlign="center" fontSize={font_size} color="black">ENTER<br/>DUNGEON</Text>
                                         </Button> 
                                     
-                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="black">{BET_SIZE} SOL</Text>
+                                        <Text textAlign="center" fontSize={font_size} color="black">{BET_SIZE} SOL</Text>
                                     </div> 
                                 </VStack>
 
@@ -2302,6 +2483,11 @@ export function DungeonApp()
     }
 
     const ConnectedPage = () =>  {
+
+        var font_size = DEFAULT_FONT_SIZE;
+        if (isMobile) {
+            font_size = "15px";
+        }
 
         //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", numPlays,  initial_num_plays, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status], initial_status === DungeonStatus.unknown);
 
@@ -2329,7 +2515,7 @@ export function DungeonApp()
                         <HStack alignItems="center" spacing="1%">
                             <Box width="27%">
                                 <div className="font-face-sfpb">
-                                    <Text  align="center"  fontSize={DEFAULT_FONT_SIZE} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
+                                    <Text  align="center"  fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
                                 </div>    
                             </Box>            
                             <Box width="46%">
@@ -2339,11 +2525,11 @@ export function DungeonApp()
                                 <VStack alignItems="center">
                                     <div className="font-face-sfpb">
                                         <Button variant='link' size='md' onClick={Play}>
-                                                <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">ENTER<br/>DUNGEON</Text>
+                                                <Text  textAlign="center" fontSize={font_size} color="white">ENTER<br/>DUNGEON</Text>
                                         </Button> 
                                     </div> 
                                     <div className="font-face-sfpb">
-                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">{BET_SIZE} SOL</Text>
+                                        <Text textAlign="center" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
                                     </div>
                                     
                                 </VStack>
@@ -2618,6 +2804,12 @@ export function DungeonApp()
     }
 
     const InDungeon = () =>  {
+
+        var font_size = DEFAULT_FONT_SIZE;
+        if (isMobile) {
+            font_size = "15px";
+        }
+
         if (DEBUG) {
             console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", DungeonStatusString[enemy_state], numXP);
         }
@@ -2664,7 +2856,7 @@ export function DungeonApp()
                 { transaction_failed &&
                     <div className="font-face-sfpb">
                         <Center>
-                                <Text  fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="red">Transaction Failed. <br/>Please Refresh.</Text>
+                                <Text  fontSize={font_size} textAlign="center" color="red">Transaction Failed. <br/>Please Refresh.</Text>
                         </Center>
                     </div>
                 }
@@ -2678,7 +2870,7 @@ export function DungeonApp()
                                 
                                 <Button variant='link' size='md' onClick={ShowDeath} mr="5rem">
                                     <div className="font-face-sfpb">
-                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Exit</Text>
+                                        <Text textAlign="center" fontSize={font_size} color="white">Exit</Text>
                                     </div> 
                                 </Button> 
                                 <Button variant='link' size='md' onClick={Play} ml="5rem">
@@ -2696,19 +2888,19 @@ export function DungeonApp()
                     
                     { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === false  &&
                         <div className="font-face-sfpb">
-                            <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You stumble through the darkened passage ways </Text>
+                            <Text fontSize={font_size} textAlign="center" color="white">You stumble through the darkened passage ways </Text>
                         </div>
                     }
                     { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === true  &&
                     <VStack  alignItems="center" spacing="3%">
                             <Box width = "80%">
                             <div className="font-face-sfpb">
-                                <Text fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">You come across an unlocked door, and cracking it ajar hear the chittering sounds of some ancient evil from within</Text>
+                                <Text fontSize={font_size} textAlign="center" color="white">You come across an unlocked door, and cracking it ajar hear the chittering sounds of some ancient evil from within</Text>
                             </div>
                             </Box>
                             <Button variant='link' size='md' onClick={Explore} ml="10rem">
                                 <div className="font-face-sfpb">
-                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Enter Room</Text>
+                                    <Text textAlign="center" fontSize={font_size} color="white">Enter Room</Text>
                                 </div> 
                             </Button> 
                         
@@ -2727,12 +2919,12 @@ export function DungeonApp()
                                 <HStack>
                                     <Button variant='link' size='md' onClick={Play} mr="3rem">
                                         <div className="font-face-sfpb">
-                                            <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Explore Further</Text>
+                                            <Text textAlign="center" fontSize={font_size} color="white">Explore Further</Text>
                                         </div> 
                                     </Button> 
                                     <Button variant='link' size='md' onClick={Quit} ml="10rem">
                                         <div className="font-face-sfpb">
-                                            <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Escape</Text>
+                                            <Text textAlign="center" fontSize={font_size} color="white">Escape</Text>
                                         </div> 
                                     </Button> 
                                 
@@ -2743,7 +2935,7 @@ export function DungeonApp()
                             <Center>
                                 <Button variant='link' size='md' onClick={Quit}>
                                     <div className="font-face-sfpb">
-                                        <Text  textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retire</Text>
+                                        <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
                                     </div> 
                                 </Button> 
                             </Center>
@@ -2837,7 +3029,12 @@ export function DungeonApp()
     return (
         <StateContext.Provider value={[numXP]}>
         <>
-        <Navigation/>
+        {!isMobile &&
+            <Navigation/>
+        }
+        {isMobile &&
+            <MobileNavigation/>
+        }
         
         <Box width="100%" mb = "2%">
             <Center>
