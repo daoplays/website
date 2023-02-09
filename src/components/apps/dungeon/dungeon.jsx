@@ -50,12 +50,6 @@ import {
     useWallet,
 } from '@solana/wallet-adapter-react';
 import {
-    getPhantomWallet,
-    getSolflareWallet,
-    getSolletWallet,
-    getSolletExtensionWallet,
-} from '@solana/wallet-adapter-wallets';
-import {
     WalletModalProvider,
     WalletMultiButton,
     WalletDisconnectButton,
@@ -3103,15 +3097,10 @@ export function DungeonApp()
 }
 
 function Dungeon() {
-    const network = 'devnet';
     const wallets = useMemo(() => 
     [
-        getPhantomWallet(),
-        getSolflareWallet(),
-        getSolletWallet({ network }),
-        getSolletExtensionWallet({ network }),
     ],
-    [network]
+    []
   );
   document.body.style = 'background: black;';
     return (

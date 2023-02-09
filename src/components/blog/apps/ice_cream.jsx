@@ -26,12 +26,6 @@ import {
     useWallet,
 } from '@solana/wallet-adapter-react';
 import {
-    getPhantomWallet,
-    getSolflareWallet,
-    getSolletWallet,
-    getSolletExtensionWallet,
-} from '@solana/wallet-adapter-wallets';
-import {
     WalletModalProvider,
     WalletMultiButton,
     WalletDisconnectButton,
@@ -951,12 +945,8 @@ export function IceCream() {
     const endpoint = clusterApiUrl(network);
     const wallets = useMemo(() => 
     [
-        getPhantomWallet(),
-        getSolflareWallet(),
-        getSolletWallet({ network }),
-        getSolletExtensionWallet({ network }),
     ],
-    [network]
+    []
   );
 
     return (
