@@ -100,7 +100,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 const DEBUG = true;
-const PROD = false;
+const PROD = true;
 
 var network_string = "devnet";
 if (PROD) {
@@ -621,7 +621,7 @@ export function ShopScreen()
     const [key_description, setKeyDescription] = useState(null);
     const [key_image, setKeyImage] = useState(null);
     const [xp_req, setXPReq] = useState(null);
-    const [countdown_string, setCountDownString] = useState(null);
+    //const [countdown_string, setCountDownString] = useState(null);
     const [countdown_value, setCountDown] = useState(null);
 
 
@@ -631,7 +631,7 @@ export function ShopScreen()
 
     const check_xp_reqs = useCallback(async() => 
     {
-        var launch_date = new Date(Date.UTC(2023, 1, 9, 15, 0)).getTime();
+        var launch_date = new Date(Date.UTC(2024, 1, 9, 15, 0)).getTime();
 
         // just set the countdown here also
         var now = new Date().getTime();
@@ -639,13 +639,13 @@ export function ShopScreen()
         var distance = Math.max(0, launch_date - now);
 
         // Time calculations for days, hours, minutes and seconds
-        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        //var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        //var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        //var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        //var seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        let countdown_string = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
-        setCountDownString(countdown_string);
+        //let countdown_string = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+        //setCountDownString(countdown_string);
         setCountDown(distance);
 
         if (!wallet.publicKey)
@@ -676,6 +676,11 @@ export function ShopScreen()
         check_xp = false;
 
         let shop_data = await get_account_data({pubkey: program_data_key.toString(), schema: shop_data_schema, map: ShopData, raw: false});
+
+        // if the shop hasn't been set up yet just return
+        if (shop_data === null)
+            return;
+        
         let total_keys_bought = shop_data["keys_bought"].toNumber();
 
         //console.log("total keys bought: ", total_keys_bought);
@@ -1112,10 +1117,10 @@ export function ShopScreen()
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!</Text>
                         }
                         {countdown_value !== null && countdown_value > 0 &&
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  We are just getting ready for your grand opening, if you come back in {countdown_string} we'll have some rare things on sale!</Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                         }
                         {countdown_value === null &&
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "hidden"}}>Welcome Adventurer!  We are just getting ready for your grand opening, if you come back in {countdown_string} we'll have some rare things on sale!</Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                         }
                     </div>
                 </Box>
