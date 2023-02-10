@@ -44,12 +44,6 @@ import {
     useWallet,
 } from '@solana/wallet-adapter-react';
 import {
-    getPhantomWallet,
-    getSolflareWallet,
-    getSolletWallet,
-    getSolletExtensionWallet,
-} from '@solana/wallet-adapter-wallets';
-import {
     WalletModalProvider,
     WalletMultiButton,
     WalletDisconnectButton,
@@ -2055,15 +2049,11 @@ function MainFunction()
 
 function Pokemon()
 {
-    const network = 'mainnet-beta';
     const wallets = useMemo(() => 
     [
-        getPhantomWallet(),
-        getSolflareWallet(),
-        getSolletWallet({ network }),
-        getSolletExtensionWallet({ network }),
+
     ],
-    [network]
+    []
     );
 
 
