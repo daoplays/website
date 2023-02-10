@@ -149,7 +149,7 @@ if (isMobile) {
 const StateContext = createContext();
 
 
-const BET_SIZE = 0.005;
+const BET_SIZE = 0.05;
 
 const AccountStatus = {
     unknown : 0,
@@ -258,7 +258,11 @@ const player_data_schema = new Map([
         ['player_status', 'u8'],
         ['dungeon_enemy', 'u8'],
         ['player_character', 'u8'],
-        ['randoms_key',  [32]]],
+        ['current_bet_size', 'u64'],
+        ['extra_data_one', 'u64'],
+        ['extra_data_two', 'u64'],
+        ['extra_data_two', 'u64'],
+    ],
     }]
 ]);
 
@@ -1642,32 +1646,15 @@ export function DungeonApp()
 
         try {
 
-            const player_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+player_data_key.toString()+`&p2=config&p3=base64&p4=commitment`;
+            const player_data = await get_account_data({pubkey: player_data_key.toString(), schema: player_data_schema, map: PlayerData, raw: false})
 
-            var player_account_info_result;
-            try {
-                player_account_info_result = await fetch(player_account_info_url).then((res) => res.json());
-            }
-            catch(error) {
-                console.log(error);
+            if (player_data === null) {
                 return;
             }
 
-            let valid_response = check_json({json_response: player_account_info_result})
-            if (!valid_response) {
-                console.log("get data error ", player_account_info_result);
-                return;
-            }
+            //console.log(player_data);
 
-            if (player_account_info_result["result"]["value"] == null || player_account_info_result["result"]["value"]["data"] == null ) {
-                return;
-            }
-
-            let player_account_encoded_data = player_account_info_result["result"]["value"]["data"];
-            let player_account_data = Buffer.from(player_account_encoded_data[0], "base64");
-            const player_data = deserialize(player_data_schema, PlayerData, player_account_data);
-
-
+            //console.log("bet size: ", player_data["current_bet_size"].toNumber());
             let current_status = player_data["player_status"] + 1;
             if (!initial_status_is_set) {
 
@@ -1714,7 +1701,7 @@ export function DungeonApp()
                 return;
             }  
 
-            const randoms_key = new PublicKey(player_data["randoms_key"]);
+            const randoms_key = null;
 
             //console.log(randoms_key.toString());
 
