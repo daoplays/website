@@ -7,7 +7,9 @@ import {
     theme,
     Center,
     Text,
-    VStack
+    VStack,
+    FormControl,
+    Input
 } from '@chakra-ui/react';
 
 import {
@@ -57,7 +59,6 @@ import {
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
-
 import bs58 from "bs58";
 
 import dungeon_title from "./Dungeon_Logo.png"
@@ -100,7 +101,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 const DEBUG = true;
-const PROD = true;
+const PROD = false;
 
 var network_string = "devnet";
 if (PROD) {
@@ -210,6 +211,13 @@ const DungeonEnemy = {
     None : 12
 }
 
+const KeyType = {
+    Bronze : 0,
+    Silver : 1,
+    Gold : 2,
+    Unknown : 3
+}
+
 const DungeonEnemyName = ["Mimic", "Slime", "Goblins", "Skeletons", "Skeletons", "Elves", "Orc", "Skeleton Knight", "Skeleton Wizard", "Reaper", "Boulder", "Floor Spikes"];
 
 
@@ -247,6 +255,8 @@ class ExploreMeta extends Assignable { }
 class my_pubkey extends Assignable { }
 class ShopData extends Assignable { }
 class ShopUserData extends Assignable { }
+class KeyMetaData extends Assignable { }
+class KeyMetaData2 extends Assignable { }
 
 
 const player_data_schema = new Map([
@@ -259,9 +269,8 @@ const player_data_schema = new Map([
         ['dungeon_enemy', 'u8'],
         ['player_character', 'u8'],
         ['current_bet_size', 'u64'],
-        ['extra_data_one', 'u64'],
-        ['extra_data_two', 'u64'],
-        ['extra_data_two', 'u64'],
+        ['current_key', 'u8'],
+        ['extra_data', [23]]
     ],
     }]
 ]);
@@ -315,7 +324,23 @@ const shop_user_data_schema = new Map([
       }]
   ]);
 
+  const key_meta_data_schema = new Map([
+    [KeyMetaData, { kind: 'struct', 
+    fields: [
+          ['key_type', 'u8'],
+          ['key_index', 'u16']
+        ],
+      }]
+  ]);
 
+  const key_meta_data2_schema = new Map([
+    [KeyMetaData2, { kind: 'struct', 
+    fields: [
+          ['key_type', 'u8'],
+          ['key_mint', [32]]
+        ],
+      }]
+  ]);
 
 export function WalletConnected() 
 {
@@ -608,6 +633,12 @@ async function get_account_data({pubkey, schema, map, raw})
     return data;
 }
 
+const uIntToBytes = (num, size, method) => {
+    const arr = new ArrayBuffer(size)
+    const view = new DataView(arr)
+    view[method + (size * 8)](0, num)
+    return arr
+ }
 
 let keyIntervalId;
 let xpIntervalId;
@@ -635,7 +666,7 @@ export function ShopScreen()
 
     const check_xp_reqs = useCallback(async() => 
     {
-        var launch_date = new Date(Date.UTC(2024, 1, 9, 15, 0)).getTime();
+        var launch_date = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
 
         // just set the countdown here also
         var now = new Date().getTime();
@@ -819,14 +850,15 @@ export function ShopScreen()
             const nft_mint_keypair = Keypair.generate();
             var nft_mint_pubkey = nft_mint_keypair.publicKey;
             
-            let program_data_key = (await PublicKey.findProgramAddress(["data_account"], SHOP_PROGRAM))[0];
-            let dungeon_key_data_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
+            let program_data_key = (PublicKey.findProgramAddressSync(["data_account"], SHOP_PROGRAM))[0];
+            let dungeon_key_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
+            let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", nft_mint_pubkey.toBuffer()], SHOP_PROGRAM))[0];
 
 
-            let nft_meta_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
             METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
 
-            let nft_master_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            let nft_master_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
             METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
 
             let nft_account_key = await getAssociatedTokenAddress(
@@ -841,7 +873,7 @@ export function ShopScreen()
                 true // allow owner off curve
             );
 
-            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
             const create_token_meta = new InstructionMeta({ instruction: ShopInstruction.create_token});
             const create_token_data = serialize(instruction_schema, create_token_meta);
@@ -859,7 +891,9 @@ export function ShopScreen()
 
                 {pubkey: player_data_key, isSigner: false, isWritable: true},
                 {pubkey: dungeon_key_data_account, isSigner: false, isWritable: true},
-                {pubkey: program_data_key, isSigner: false, isWritable: true}
+                {pubkey: program_data_key, isSigner: false, isWritable: true},
+                {pubkey: dungeon_key_meta_account, isSigner: false, isWritable: true}
+
             ];
 
             account_vector.push({pubkey: COLLECTION_MINT, isSigner: false, isWritable: true});
@@ -1218,6 +1252,13 @@ export function DungeonApp()
     // the key, whether the account has been created, and whether the randoms have been fulfilled
     //const [current_randoms_key, setCurrentRandomsKey] = useState(null);
     const [randoms_fulfilled, setRandomsFullfilled] = useState(false);
+
+    // if we have a key then discounts can be applied
+    const [existing_mint, setExistingMint] = React.useState("")
+    const handleMintChange = (e) => setExistingMint(e.target.value)
+    const [current_key_type, setCurrentKeyType] = useState(KeyType.Unknown);
+    const [current_key_mint, setCurrentKeyMint] = useState(null);
+    const [current_key_index, setCurrentKeyIndex] = useState(null);
 
 
 
@@ -1874,6 +1915,9 @@ export function DungeonApp()
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
+            
+
+
             const play_meta = new PlayMeta({ instruction: DungeonInstruction.play, character: which_character});
             const instruction_data = serialize(play_scheme, play_meta);
 
@@ -1895,6 +1939,40 @@ export function DungeonApp()
 
             account_vector.push({pubkey: program_data_key, isSigner: false, isWritable: true});
             account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: false});
+
+            if (current_key_mint) {
+
+                console.log("mint ", current_key_mint);
+                let key_mint_account = new PublicKey(current_key_mint);
+                let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_mint_account.toBuffer()], SHOP_PROGRAM))[0];
+
+                let index_array_buffer = uIntToBytes(current_key_index, 2, "setUint");
+                let index_buffer = new Buffer.from(index_array_buffer);
+                let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], PROGRAM_KEY))[0];
+
+                let key_token_account = await getAssociatedTokenAddress(
+                    key_mint_account, // mint
+                    wallet.publicKey, // owner
+                    true // allow owner off curve
+                );
+
+                console.log("key token account", key_token_account.toString());
+                console.log("key lookup ", dungeon_key_lookup_account.toString(), Buffer.from("key_meta"), index_buffer);
+
+                let dungeon_key_metaplex_account = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
+                 METAPLEX_META.toBuffer(), key_mint_account.toBuffer()], METAPLEX_META))[0];
+
+
+                
+                // accounts for discount key
+                account_vector.push({pubkey: key_mint_account, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: key_token_account, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: dungeon_key_meta_account, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: dungeon_key_metaplex_account, isSigner: false, isWritable: false});
+                account_vector.push({pubkey: dungeon_key_lookup_account, isSigner: false, isWritable: true});
+
+            }
+
 
             const play_instruction = new TransactionInstruction({
                 keys: account_vector,
@@ -1950,7 +2028,7 @@ export function DungeonApp()
             check_for_sol_updates = true;
 
 
-    },[wallet, which_character]);
+    },[wallet, which_character, current_key_index, current_key_mint]);
 
     const Explore = useCallback( async () => 
     {
@@ -2074,21 +2152,24 @@ export function DungeonApp()
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
+            
+
             const instruction_meta = new InstructionMeta({ instruction: DungeonInstruction.quit});
             const instruction_data = serialize(instruction_schema, instruction_meta);
 
+            var account_vector  = [
+                {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                {pubkey: player_data_key, isSigner: false, isWritable: true},
+                {pubkey: program_data_key, isSigner: false, isWritable: true},
+
+                {pubkey: DAOPLAYS_KEY, isSigner: false, isWritable: true},
+                {pubkey: KAYAK_KEY, isSigner: false, isWritable: true},
+
+                {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+            ];
+
             const quit_instruction = new TransactionInstruction({
-                keys: [
-                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-                    {pubkey: player_data_key, isSigner: false, isWritable: true},
-                    {pubkey: program_data_key, isSigner: false, isWritable: true},
-
-                    {pubkey: DAOPLAYS_KEY, isSigner: false, isWritable: true},
-                    {pubkey: KAYAK_KEY, isSigner: false, isWritable: true},
-
-                    {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
-
-                ],
+                keys: account_vector,
                 programId: PROGRAM_KEY,
                 data: instruction_data
             });
@@ -2140,6 +2221,65 @@ export function DungeonApp()
         
 
     },[wallet]);
+
+    const ApplyKey = useCallback( async () => 
+    {
+
+
+        if (existing_mint === "")
+            return;
+
+        var key_meta_data;
+        var key_mint;
+        var key_index;
+
+        console.log("length", existing_mint.length);
+        // if the string is more than 4 digits this should be a mint address
+        if (existing_mint.length > 4) {
+
+            key_mint = existing_mint;
+            let key_meta_account = new PublicKey(existing_mint);
+            let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_meta_account.toBuffer()], SHOP_PROGRAM))[0];
+
+            key_meta_data = await get_account_data({pubkey: dungeon_key_meta_account.toString(), schema : key_meta_data_schema, map  : KeyMetaData, raw : false})
+
+            if (key_meta_data === null)
+                return;
+
+            console.log("meta from mint", key_meta_data);
+
+            setCurrentKeyType(key_meta_data["key_type"]);
+            setCurrentKeyMint(key_mint);
+            setCurrentKeyIndex(key_meta_data["key_index"]);
+
+        }
+        // otherwise it should be an integer
+        else {
+            key_index = parseInt(existing_mint);
+            let index_array_buffer = uIntToBytes(key_index, 2, "setUint");
+            let index_buffer = new Buffer.from(index_array_buffer);
+            let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], PROGRAM_KEY))[0];
+
+            console.log(Buffer.from("key_meta"), index_buffer.reverse());
+            console.log("key from int: ", dungeon_key_lookup_account.toString());
+            key_meta_data = await get_account_data({pubkey: dungeon_key_lookup_account.toString(), schema : key_meta_data2_schema, map  : KeyMetaData2, raw : false})
+
+            if (key_meta_data === null)
+                return;
+
+            key_mint = new PublicKey(key_meta_data["key_mint"]);
+
+            console.log("meta from index", key_meta_data, key_mint.toString());
+
+            setCurrentKeyType(key_meta_data["key_type"]);
+            setCurrentKeyMint(key_mint.toString());
+            setCurrentKeyIndex(key_index);
+
+        }
+
+
+
+    },[existing_mint]);
 
     const Reset = useCallback( async () => 
     {
@@ -2501,7 +2641,18 @@ export function DungeonApp()
                         <HStack alignItems="center" spacing="1%">
                             <Box width="27%">
                                 <div className="font-face-sfpb">
-                                    <Text  align="center"  fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
+                                    {current_key_type  === KeyType.Unknown &&
+                                        <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
+                                    }
+                                    {current_key_type  === KeyType.Bronze &&
+                                        <Text  align="center" fontSize={font_size} color="#CD7F32">DUNGEON MASTER'S<br/> FEE: 2.25%</Text>
+                                    }
+                                    {current_key_type  === KeyType.Silver &&
+                                        <Text  align="center" fontSize={font_size} color="silver">DUNGEON MASTER'S<br/> FEE: 1.5%</Text>
+                                    }
+                                    {current_key_type  === KeyType.Gold &&
+                                        <Text  align="center" fontSize={font_size} color="gold">DUNGEON MASTER'S<br/> FEE: 0.75%</Text>
+                                    }
                                 </div>    
                             </Box>            
                             <Box width="46%">
@@ -2517,6 +2668,26 @@ export function DungeonApp()
                                     <div className="font-face-sfpb">
                                         <Text textAlign="center" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
                                     </div>
+
+                                    <Box height="40px" width='350px'>  
+                                    <HStack>
+                                    <div className="font-face-sfpb">
+                                        <FormControl id="existing_mint" maxWidth={"350px"} color="white">
+                                            <Input
+                                                placeholder='Key Mint'
+                                                type="text"
+                                                value={existing_mint}
+                                                onChange={handleMintChange}
+                                            />
+                                        </FormControl>
+                                    </div>
+                                    <div className="font-face-sfpb">
+                                        <Button variant='link' size='md' onClick={ApplyKey}>
+                                                <Text  textAlign="center" fontSize={font_size} color="white">Apply</Text>
+                                        </Button> 
+                                    </div>        
+                                    </HStack>
+                                </Box>
                                     
                                 </VStack>
                             </Box>  
