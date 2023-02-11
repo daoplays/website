@@ -1259,7 +1259,7 @@ export function DungeonApp()
     const [current_key_type, setCurrentKeyType] = useState(KeyType.Unknown);
     const [current_key_mint, setCurrentKeyMint] = useState(null);
     const [current_key_index, setCurrentKeyIndex] = useState(null);
-
+    const [discount_error, setDiscountError] = useState(null);
 
 
     const [screen, setScreen] = useState(Screen.HOME_SCREEN);
@@ -2225,11 +2225,11 @@ export function DungeonApp()
     const ApplyKey = useCallback( async () => 
     {
 
-
+        setDiscountError(null);
         if (existing_mint === "")
             return;
 
-        var key_meta_data;
+        var key_type;
         var key_mint;
         var key_index;
 
@@ -2237,24 +2237,32 @@ export function DungeonApp()
         // if the string is more than 4 digits this should be a mint address
         if (existing_mint.length > 4) {
 
-            key_mint = existing_mint;
-            let key_meta_account = new PublicKey(existing_mint);
-            let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_meta_account.toBuffer()], SHOP_PROGRAM))[0];
-
-            key_meta_data = await get_account_data({pubkey: dungeon_key_meta_account.toString(), schema : key_meta_data_schema, map  : KeyMetaData, raw : false})
-
-            if (key_meta_data === null)
+            try {
+                key_mint = new PublicKey(existing_mint);
+            }
+            catch{
+                setDiscountError("Invalid public key");
                 return;
+            }
+
+            let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_mint.toBuffer()], SHOP_PROGRAM))[0];
+
+            const key_meta_data = await get_account_data({pubkey: dungeon_key_meta_account.toString(), schema : key_meta_data_schema, map  : KeyMetaData, raw : false})
+
+            if (key_meta_data === null) {                
+                setDiscountError("Key account not found. Please check mint address is valid");
+                return;
+            }
 
             console.log("meta from mint", key_meta_data);
 
-            setCurrentKeyType(key_meta_data["key_type"]);
-            setCurrentKeyMint(key_mint);
-            setCurrentKeyIndex(key_meta_data["key_index"]);
+            key_type = key_meta_data["key_type"];
+            key_index = key_meta_data["key_index"];
 
         }
         // otherwise it should be an integer
         else {
+
             key_index = parseInt(existing_mint);
             let index_array_buffer = uIntToBytes(key_index, 2, "setUint");
             let index_buffer = new Buffer.from(index_array_buffer);
@@ -2262,24 +2270,60 @@ export function DungeonApp()
 
             console.log(Buffer.from("key_meta"), index_buffer.reverse());
             console.log("key from int: ", dungeon_key_lookup_account.toString());
-            key_meta_data = await get_account_data({pubkey: dungeon_key_lookup_account.toString(), schema : key_meta_data2_schema, map  : KeyMetaData2, raw : false})
+            const key_meta_data = await get_account_data({pubkey: dungeon_key_lookup_account.toString(), schema : key_meta_data2_schema, map  : KeyMetaData2, raw : false})
 
-            if (key_meta_data === null)
+            // if we have been passed a number check the lookup account exists
+            if (key_meta_data === null) {
+                setDiscountError("Key account not found. Please pass key mint on first use");
                 return;
+            }
 
             key_mint = new PublicKey(key_meta_data["key_mint"]);
 
             console.log("meta from index", key_meta_data, key_mint.toString());
 
-            setCurrentKeyType(key_meta_data["key_type"]);
-            setCurrentKeyMint(key_mint.toString());
-            setCurrentKeyIndex(key_index);
+            key_type = key_meta_data["key_type"];
 
         }
 
+        // before we go on lets check they actually own the nft
+        let key_token_account = await getAssociatedTokenAddress(
+            key_mint, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        const token_balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+key_token_account.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+        var token_balance_result;
+        try {
+            token_balance_result = await fetch(token_balance_url).then((res) => res.json());
+        }
+        catch {
+            setDiscountError("Error retrieving nft account data");
+            return;
+        }
+
+        let valid_response = check_json({json_response: token_balance_result})
+        if (!valid_response || token_balance_result["result"]["value"] === null) {
+            setDiscountError("Error retrieving nft account data.  Please try again.");
+            return;
+        }
+
+        let token_balance = parseInt(token_balance_result["result"]["value"]["amount"]);
+        console.log("token_balance", token_balance);
+
+        if (token_balance !== 1) {
+            setDiscountError("User does not own dungeon key " + key_index.toString());
+            return;
+        }
 
 
-    },[existing_mint]);
+        setCurrentKeyType(key_type);
+        setCurrentKeyMint(key_mint.toString());
+        setCurrentKeyIndex(key_index);
+
+    },[wallet, existing_mint]);
 
     const Reset = useCallback( async () => 
     {
@@ -2632,7 +2676,6 @@ export function DungeonApp()
             );
         }
         //console.log("have made it here in CS");
-
         return (
             <>
             <Box width="100%">
@@ -2689,6 +2732,11 @@ export function DungeonApp()
                                         </Button> 
                                     </div>        
                                     </HStack>
+                                    {discount_error &&
+                                    <div className="font-face-sfpb">
+                                        <Text  textAlign="center" fontSize={font_size} color="red">{discount_error}</Text>
+                                    </div>     
+                                    }
                                 </Box>
                                     
                                 </VStack>
