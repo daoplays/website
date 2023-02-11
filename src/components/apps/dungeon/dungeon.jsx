@@ -51,6 +51,8 @@ import {
     WalletProvider,
     useWallet,
 } from '@solana/wallet-adapter-react';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+
 import {
     WalletModalProvider,
     WalletMultiButton,
@@ -2714,23 +2716,24 @@ export function DungeonApp()
 
                                     <Box height="40px" width='350px'>  
                                     <HStack>
-                                    <div className="font-face-sfpb">
-                                        <FormControl key="discount_form" id="existing_mint" maxWidth={"350px"} color="white">
-                                            <Input
-                                                autoFocus="autoFocus"
-                                                key="discount_input" 
-                                                placeholder='Key Mint'
-                                                type="text"
-                                                value={existing_mint}
-                                                onChange={handleMintChange}
-                                            />
-                                        </FormControl>
+                                    <div className="font-face-sfpb">                                           
+                                            <FormControl key="discount_form" id="existing_mint" maxWidth={"350px"} color="white">
+                                                <Input
+                                                    autoFocus="autoFocus"
+                                                    key="discount_input" 
+                                                    placeholder='Dungeon Key'
+                                                    type="text"
+                                                    value={existing_mint}
+                                                    onChange={handleMintChange}
+                                                />
+                                            </FormControl>
                                     </div>
                                     <div className="font-face-sfpb">
                                         <Button variant='link' size='md' onClick={ApplyKey}>
                                                 <Text  textAlign="center" fontSize={font_size} color="white">Apply</Text>
                                         </Button> 
-                                    </div>        
+                                    </div>    
+                                        
                                     </HStack>
                                     {discount_error &&
                                     <div className="font-face-sfpb">
@@ -3312,6 +3315,7 @@ export function DungeonApp()
 function Dungeon() {
     const wallets = useMemo(() => 
     [
+        new PhantomWalletAdapter(),
     ],
     []
   );
