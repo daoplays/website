@@ -54,6 +54,8 @@ import {
     WalletMultiButton,
     WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
@@ -3091,6 +3093,7 @@ export function DungeonApp()
 function Dungeon() {
     const wallets = useMemo(() => 
     [
+        new PhantomWalletAdapter(),
     ],
     []
   );
