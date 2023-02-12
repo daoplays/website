@@ -717,6 +717,11 @@ export function ShopScreen()
             return;
         }
 
+        if (user_keys_bought >= 3) {
+            setXPReq(-1);
+            return;
+        }
+
         current_n_keys = user_keys_bought
         check_xp = false;
 
@@ -747,20 +752,11 @@ export function ShopScreen()
             base_xp_req = xp_cap_per_key;
         }
 
-        var total_xp_req = base_xp_req;
-        var next_key_req = base_xp_req + 50;
-        if (next_key_req > xp_cap_per_key) {
-            next_key_req = xp_cap_per_key;
+        var total_xp_req = base_xp_req + user_keys_bought * 50;
+        if (total_xp_req > xp_cap_per_key) {
+            total_xp_req = xp_cap_per_key;
         }
-
-        for (let i = 0; i < user_keys_bought; i++) {
-            total_xp_req += next_key_req;
-            next_key_req += 50;
-
-            if (next_key_req > xp_cap_per_key) {
-                next_key_req = xp_cap_per_key;
-            }
-        }
+        
         //console.log("total xp req ", total_xp_req);
         setXPReq(total_xp_req);
 
@@ -2640,7 +2636,8 @@ export function DungeonApp()
                                     <div className="font-face-sfpb">
                                         <Text textAlign="center" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
                                     </div>
-
+                                    {!isMobile &&
+                                    <>
                                         <HStack align="center">
                                             <Box width="20%"></Box>
                                             <div className="font-face-sfpb">                                           
@@ -2670,8 +2667,10 @@ export function DungeonApp()
                                             </div>     
                                         }
                                         </Box>
+                                    </>  
+                                    }
                                 
-                                    
+                                 
                                 </VStack>
                             </Box>  
                         </HStack>
