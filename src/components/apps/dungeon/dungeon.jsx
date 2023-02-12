@@ -19,7 +19,7 @@ import {
   Tr,
   Th,
   Td,
-  TableContainer,
+  TableContainer
 } from '@chakra-ui/react'
 
 import {
@@ -30,6 +30,7 @@ import {
     DrawerContent,
     DrawerCloseButton,
   } from '@chakra-ui/react'
+
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { brands, solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
@@ -78,6 +79,9 @@ import wizard from "./Wizard.gif"
 import corpse from "./Corpse.png"
 import selector from "./Selector.gif"
 
+// buttons
+import enter_button from "./Enter_Button.png"
+
 //enemies
 import closed_chest from "./chest_closed.png"
 import open_chest from "./chest_open.png"
@@ -97,6 +101,7 @@ import floor_spikes from "./Spikes.png"
 //sounds
 import click_sound from './sounds/click.mp3';
 
+import './style.css';
 import './fonts.css';
 import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
@@ -559,7 +564,10 @@ export function FAQScreen()
             <li>After earning 100XP, visit the Merchant to redeem a Whitelist Token to our Dungeon Key Mint (Coming Soon) </li>
             <li>If you need any further help please submit a support ticket in our Discord channel  </li>
         </ul>
-        
+
+        <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>What are Dungeon Keys</h2><br />
+
+        Dungeon Keys grant holders between 25% and 75% fee discounts depending on the quality of the key.  The first time a key is used you will need to enter the mint address into the 'Key Mint/No.' box on the home page, and click the key button on the right to apply the discount.  From that point on you will only need to enter the key number, e.g. for Dungeon Key #0035 you would enter 35 and click the key.
         
         <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Who are the team</h2><br />
         
@@ -1204,7 +1212,7 @@ export function ShopScreen()
                             </div>
                     </HStack>
                     <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a style={{textDecoration: "underline"}} href={"https://explorer.solana.com/address/"+current_mint+"?cluster=devnet"}>here</a></Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a class="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint+"?cluster=devnet"}>here</a></Text>
                     </div>
                     </VStack>
                     </>            
@@ -2252,7 +2260,7 @@ export function DungeonApp()
             const key_meta_data = await get_account_data({pubkey: dungeon_key_meta_account.toString(), schema : key_meta_data_schema, map  : KeyMetaData, raw : false})
 
             if (key_meta_data === null) {                
-                setDiscountError("Key account not found. Please check mint address is valid");
+                setDiscountError("Key account not found.<br/>Please check mint address is valid");
                 return;
             }
 
@@ -2276,7 +2284,7 @@ export function DungeonApp()
 
             // if we have been passed a number check the lookup account exists
             if (key_meta_data === null) {
-                setDiscountError("Key account not found. Please pass key mint on first use");
+                setDiscountError("Key account not found.  Please pass key mint on first use");
                 return;
             }
 
@@ -2391,9 +2399,9 @@ export function DungeonApp()
     const LargeDoor = () => {
         return (
             <>
-            
+            <Center>
             <img style={{"imageRendering":"pixelated"}} src={large_door} width={500} alt={"generic"}/>
-            
+            </Center>
             </>
         )
     }
@@ -2418,42 +2426,6 @@ export function DungeonApp()
     const [SelectWizard] = useSound(click_sound, {
         onplay: () => setWhichCharacter(DungeonCharacter.wizard)
     });
-
-     const HiddenCharacterSelect = () => {
-
-        return (
-            <HStack>
-                    
-                    <Box  width="100%">
-                        <Box>
-                            <Button variant='link' size='md'>
-                                <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={knight} width="10000" alt={""}/>
-                            </Button>
-                        </Box>
-                    </Box>
-                
-                
-                
-                    <Box  width="100%">
-                        <Box>
-                            <Button variant='link' size='md'>
-                                <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={ranger} width="10000" alt={""}/>
-                            </Button>
-                        </Box>
-                    </Box>
-                
-                
-                    <Box  width="100%">
-                        <Box>
-                            <Button variant='link' size='md'>
-                                <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={wizard} width="10000" alt={""}/>
-                            </Button>
-                        </Box>
-                    </Box>
-                
-            </HStack>
-        );  
-    }
 
     const CharacterSelect = () => {
 
@@ -2553,18 +2525,24 @@ export function DungeonApp()
             <Box width="100%">
                 <Center>
                 
-                    <VStack alignItems="center" spacing="3%" mt="2%">                
-                        <HStack alignItems="center" spacing="1%">
-                            <Box width="27%">
-                                <div className="font-face-sfpb">
-                                    <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
-                                </div>    
-                            </Box>  
-                            <Box width="46%">
-                                <LargeDoor/>
-                            </Box>
-                            <Box width="27%">
-                                
+                    <VStack alignItems="center" spacing="3%" mt="2%">    
+                        <Box width="100%">           
+                            <HStack alignItems="center">
+                                <Box width="20%"></Box>
+                                <Box width="10%">
+                                    <Center>
+                                        <div className="font-face-sfpb">
+                                            <Text  align="center" fontSize={font_size} color="white">DUNGEON<br/>MASTER'S<br/>FEE: 3%</Text>
+                                        </div>   
+                                    </Center> 
+                                </Box>  
+
+                                <Box ml="2.5%" mr="2.5% "width="35%">
+                                    <LargeDoor/>
+                                </Box>
+
+                                <Box width="5%">
+                                <Center>
                                     {!isMobile &&
                                         <div className="font-face-sfpb">
                                         <WalletMultiButton  
@@ -2579,22 +2557,27 @@ export function DungeonApp()
                                         >CONNECT<br/>WALLET</WalletMultiButton>
                                         </div>
                                     }
-                                
-                            </Box>  
-                        </HStack>
-                        
-                        <HStack>
-                            <Box width="33%"/>
-                                <div className="font-face-sfpb">
-                                    <Text align="center" fontSize={font_size} color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
-                                </div>   
-                            <Box width="33%"/>
-                        </HStack>
+                                </Center>    
+                                </Box>
+                                <Box width="25%"></Box>  
+                            </HStack>
+                        </Box> 
+                        <Box width="100%">
+                            <HStack>
+                                <Box width="33%"/>
+                                <Box width="33%">
+                                    <div className="font-face-sfpb">
+                                        <Text align="center" fontSize={font_size} color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
+                                    </div>   
+                                </Box>
+                                <Box width="33%"/>
+                            </HStack>
+                        </Box>
 
                         {!isMobile &&
-                        <HStack>
+                        <HStack visibility={"hidden"}>
                             <Box width="33%" mt="2rem"/>
-                            <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
+                            <Box width="33%" mt="2rem"><CharacterSelect/></Box>
                             <Box width="33%" mt="2rem"/>
                         </HStack>
                         }
@@ -2607,53 +2590,6 @@ export function DungeonApp()
         )
     }
 
-    const ConnectedPageNoCS = () =>  {
-
-        var font_size = DEFAULT_FONT_SIZE;
-        if (isMobile) {
-            font_size = "15px";
-        }
-
-        return(
-            <Box width="100%">
-                <Center>
-                
-                    <VStack alignItems="center" spacing="3%" mt="2%">  
-                        <HStack alignItems="center" spacing="1%">
-                            <Box width="27%">
-                                <div className="font-face-sfpb">
-                                    <Text  align="center" fontSize={font_size} color="black">DUNGEON MASTER'S<br/> FEE: 3%</Text>
-                                </div>    
-                            </Box>   
-                            <Box width="46%">
-                                <LargeDoor/>
-                            </Box>
-                            <Box width="27%">
-                                <VStack style={{"visibility": "hidden"}}>
-                                    <div className="font-face-sfpb">
-                                        <Button variant='link' size='md'>
-                                                <Text  textAlign="center" fontSize={font_size} color="black">ENTER<br/>DUNGEON</Text>
-                                        </Button> 
-                                    
-                                        <Text textAlign="center" fontSize={font_size} color="black">{BET_SIZE} SOL</Text>
-                                    </div> 
-                                </VStack>
-
-                            </Box>  
-                        </HStack>
-                        <HStack>
-                            <Box width="33%" mt="2rem"/>
-                            <Box width="33%" mt="2rem"><HiddenCharacterSelect/></Box>
-                            <Box width="33%" mt="2rem"/>
-                        </HStack>
-                    </VStack>
-                </Center>
-                
-            </Box>
-        
-        );
-    }
-
     const ConnectedPage = () =>  {
 
         var font_size = DEFAULT_FONT_SIZE;
@@ -2661,91 +2597,104 @@ export function DungeonApp()
             font_size = "15px";
         }
 
+        var error_font_size = "15px";
+        var visibility = "visible";
+
         //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", numPlays,  initial_num_plays, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status], initial_status === DungeonStatus.unknown);
 
         // if i don't need to make an account but player status is unknown return nothing
         if (data_account_status === AccountStatus.created  && (initial_status === DungeonStatus.unknown || (numPlays === initial_num_plays && (DungeonStatus === DungeonStatus.alive || DungeonStatus === DungeonStatus.exploring)))) {
-            return(
-                <ConnectedPageNoCS/>
-            );
+                visibility = "hidden";
+            
         }
 
         //console.log("have made it here in CS 2");
         // if i am alive or e xploring and  the level is > 0 never show this
         if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring))) {
-            return(
-                <ConnectedPageNoCS/>
-            );
+                visibility = "hidden";
+            
         }
         //console.log("have made it here in CS");
         return (
             <>
             <Box width="100%">
                 <Center>
-                    <VStack alignItems="center" spacing="3%" mt="2%">  
-                        <HStack alignItems="center" spacing="1%">
-                            <Box width="27%">
-                                <div className="font-face-sfpb">
-                                    {current_key_type  === KeyType.Unknown &&
-                                        <Text  align="center" fontSize={font_size} color="white">DUNGEON MASTER'S<br/> FEE: 3%</Text>
-                                    }
-                                    {current_key_type  === KeyType.Bronze &&
-                                        <Text  align="center" fontSize={font_size} color="#CD7F32">DUNGEON MASTER'S<br/> FEE: 2.25%</Text>
-                                    }
-                                    {current_key_type  === KeyType.Silver &&
-                                        <Text  align="center" fontSize={font_size} color="silver">DUNGEON MASTER'S<br/> FEE: 1.5%</Text>
-                                    }
-                                    {current_key_type  === KeyType.Gold &&
-                                        <Text  align="center" fontSize={font_size} color="gold">DUNGEON MASTER'S<br/> FEE: 0.75%</Text>
-                                    }
-                                </div>    
-                            </Box>            
-                            <Box width="46%">
-                                <LargeDoor/>
-                            </Box>
-                            <Box width="27%">
-                                <VStack alignItems="center">
+                    <VStack alignItems="center" spacing="3%" mt="2%"> 
+                        <Box width="100%">  
+                            <HStack alignItems="center">
+                                <Box width="20%"></Box>
+                                <Box width="10%" visibility={visibility}>
+                                <Center>
                                     <div className="font-face-sfpb">
-                                        <Button variant='link' size='md' onClick={Play}>
-                                                <Text  textAlign="center" fontSize={font_size} color="white">ENTER<br/>DUNGEON</Text>
-                                        </Button> 
-                                    </div> 
-                                    <div className="font-face-sfpb">
-                                        <Text textAlign="center" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
-                                    </div>
-
-                                    <Box height="40px" width='350px'>  
+                                        {current_key_type  === KeyType.Unknown &&
+                                            <Text  align="center" fontSize={font_size} color="white">DUNGEON<br/>MASTER'S<br/>FEE: 3%</Text>
+                                        }
+                                        {current_key_type  === KeyType.Bronze &&
+                                            <Text  align="center" fontSize={font_size} color="#CD7F32">DUNGEON<br/>MASTER'S<br/>FEE: 2.25%</Text>
+                                        }
+                                        {current_key_type  === KeyType.Silver &&
+                                            <Text  align="center" fontSize={font_size} color="silver">DUNGEON<br/>MASTER'S<br/>FEE: 1.5%</Text>
+                                        }
+                                        {current_key_type  === KeyType.Gold &&
+                                            <Text  align="center" fontSize={font_size} color="gold">DUNGEON<br/>MASTER'S<br/>FEE: 0.75%</Text>
+                                        }
+                                    </div>  
+                                </Center>  
+                                </Box>    
+                                <Box ml="2.5%" mr="2.5% "width="35%">   
+                                    <LargeDoor/>
+                                </Box>
+                                <Box width="15%" visibility={visibility}>
+                                <Center>
                                     <HStack>
-                                    <div className="font-face-sfpb">                                           
-                                            <FormControl key="discount_form" id="existing_mint" maxWidth={"350px"} color="white">
+                                    <VStack align="center">
+                                        <div className="font-face-sfpb">
+                                            <Button variant='link' size='md' onClick={Play}>
+                                            <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"90%"} alt={""}/>
+                                            </Button> 
+                                        </div> 
+                                        <div className="font-face-sfpb">
+                                            <Text textAlign="left" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
+                                        </div>  
+                                        
+                                        <div className="font-face-sfpb">                                           
+                                            <FormControl key="discount_form" id="existing_mint" maxWidth={"100%"} color="white">
                                                 <Input
                                                     autoFocus="autoFocus"
                                                     key="discount_input" 
-                                                    placeholder='Dungeon Key'
+                                                    placeholder='Key Number'
                                                     type="text"
                                                     value={existing_mint}
                                                     onChange={handleMintChange}
                                                 />
                                             </FormControl>
-                                    </div>
-                                    <div className="font-face-sfpb">
-                                        <Button variant='link' size='md' onClick={ApplyKey}>
-                                                <Text  textAlign="center" fontSize={font_size} color="white">Apply</Text>
-                                        </Button> 
-                                    </div>    
+                                        </div>
                                         
+                                                
+                                           
+                                        <Box width="100%">
+                                            {discount_error &&
+                                                <div className="font-face-sfpb">
+                                                    <Text  textAlign="center" fontSize={error_font_size} color="red">{discount_error}</Text>
+                                                </div>     
+                                            }
+                                        </Box>
+                                    </VStack>
+                                        <Box pt="50%">
+                                        <div className="font-face-sfpb">
+                                            
+                                            <Button variant='link' size='md' onClick={ApplyKey}>
+                                            <img style={{"imageRendering":"pixelated"}} src={key} width={"100%"} alt={""}/>
+                                            </Button> 
+                                        </div>  
+                                        </Box>  
                                     </HStack>
-                                    {discount_error &&
-                                    <div className="font-face-sfpb">
-                                        <Text  textAlign="center" fontSize={font_size} color="red">{discount_error}</Text>
-                                    </div>     
-                                    }
-                                </Box>
-                                    
-                                </VStack>
-                            </Box>  
-                        </HStack>
-                        <HStack>
+                                </Center>
+                                </Box>  
+                                <Box width="15%"></Box>
+                            </HStack>
+                            </Box>
+                        <HStack visibility={visibility}>
                             <Box width="33%" mt="2rem"/>
                             <Box width="33%" mt="2rem"><CharacterSelect/></Box>
                             <Box width="33%" mt="2rem"/>
@@ -3127,16 +3076,18 @@ export function DungeonApp()
                                 <Center>
 
                                 <HStack>
-                                    <Button variant='link' size='md' onClick={Play} mr="3rem">
-                                        <div className="font-face-sfpb">
-                                            <Text textAlign="center" fontSize={font_size} color="white">Explore Further</Text>
-                                        </div> 
-                                    </Button> 
-                                    <Button variant='link' size='md' onClick={Quit} ml="10rem">
+                                    <Button variant='link' size='md' onClick={Quit} mr="3rem" >
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={font_size} color="white">Escape</Text>
                                         </div> 
                                     </Button> 
+
+                                    <Button variant='link' size='md' onClick={Play} ml="10rem">
+                                        <div className="font-face-sfpb">
+                                            <Text textAlign="center" fontSize={font_size} color="white">Explore Further</Text>
+                                        </div> 
+                                    </Button> 
+                                    
                                 
                                 </HStack>
                                 </Center>

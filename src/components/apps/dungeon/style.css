@@ -1,0 +1,30 @@
+a.one {
+    outline: none;
+    text-decoration: none;
+    padding: 2px 1px 0;
+}
+
+a.one:link {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:visited {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:focus {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:hover {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:active {
+    color: white;
+    border-bottom: 1px solid;
+}
