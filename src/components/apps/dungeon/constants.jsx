@@ -8,3 +8,10 @@ if (isMobile) {
     DEFAULT_FONT_SIZE = "15px"
     DUNGEON_FONT_SIZE = "10px"
 }
+
+export const PROD = false;
+
+export var network_string = "devnet";
+if (PROD) {
+    network_string = "mainnet"
+}
