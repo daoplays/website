@@ -2303,7 +2303,7 @@ export function DungeonApp()
     );
 }
 
-function Dungeon() {
+function Home() {
     const wallets = useMemo(() => 
     [
         new PhantomWalletAdapter(),
@@ -2324,4 +2324,4 @@ function Dungeon() {
     );
 }
 
-export default Dungeon;
+export default Home;
