@@ -8,34 +8,31 @@ import {
     VStack
 } from '@chakra-ui/react';
 import { isMobile } from "react-device-detect";
-import { serialize, deserialize } from 'borsh';
+import { serialize } from 'borsh';
 
-import { PublicKey, Keypair, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, Keypair, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
     getAssociatedTokenAddress,
     TOKEN_PROGRAM_ID,
     ASSOCIATED_TOKEN_PROGRAM_ID
   } from "@solana/spl-token";
 
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD, Assignable ,
+import { DUNGEON_FONT_SIZE, network_string, PROD, Assignable ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
     METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY, get_account_data,
     instruction_schema, InstructionMeta, StateContext} from './constants';
 
 import bs58 from "bs58";
   
-import { check_json, request_account_data, PlayerData} from './utils';
+import { check_json} from './utils';
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
 import {
-    WalletProvider,
     useWallet,
 } from '@solana/wallet-adapter-react';
 import {
-    WalletModalProvider,
     WalletMultiButton,
-    WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
 
 // shop items
@@ -115,7 +112,6 @@ export function ShopScreen()
 
     const check_xp_reqs = useCallback(async() => 
     {
-        console.log("in check xp", numXP, check_xp);
         var launch_date = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
 
         // just set the countdown here also
@@ -140,8 +136,6 @@ export function ShopScreen()
             return;
 
 
-        setXPReq(1);
-            return;
 
         let program_data_key = (await PublicKey.findProgramAddress(["data_account"], SHOP_PROGRAM))[0];
         let dungeon_key_data_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];

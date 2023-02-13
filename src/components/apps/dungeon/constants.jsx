@@ -1,9 +1,9 @@
 import {createContext} from 'react';
-import { serialize, deserialize } from 'borsh';
+import { deserialize } from 'borsh';
 
 import { isMobile } from "react-device-detect";
-import { PublicKey, Keypair, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { check_json, request_account_data, PlayerData} from './utils';
+import { PublicKey} from '@solana/web3.js';
+import { check_json} from './utils';
 
 // set font size
 export var DEFAULT_FONT_SIZE = "30px"
@@ -15,6 +15,7 @@ if (isMobile) {
 }
 
 export const PROD = false;
+export const DEBUG = true;
 
 export var network_string = "devnet";
 if (PROD) {

@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { BeetStruct, uniformFixedSizeArray, fixedSizeArray, i32, u16, u8, u64, bignum } from '@metaplex-foundation/beet'
+import { BeetStruct, uniformFixedSizeArray,  u8, u64, bignum } from '@metaplex-foundation/beet'
 
 import { network_string } from './constants';
 
@@ -98,11 +98,11 @@ export async function request_account_data(pubkey : PublicKey) : Promise<PlayerD
         return  null;
     }
 
-    //let parsed_account_data : AccountData = response;
+    let parsed_account_data : AccountData = response;
 
     //console.log("parsed", parsed_account_data);
 
-    let account_encoded_data = response["result"]["value"]["data"];
+    let account_encoded_data = parsed_account_data.result.value.data;
     let account_data = Buffer.from(account_encoded_data[0], "base64");
 
     const [data] = PlayerData.struct.deserialize(account_data);

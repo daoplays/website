@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, createContext, useContext } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     ChakraProvider,
     Box,
@@ -19,7 +19,7 @@ import {
     DrawerOverlay,
     DrawerContent,
     DrawerCloseButton,
-  } from '@chakra-ui/react'
+} from '@chakra-ui/react'
 
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -32,11 +32,9 @@ import { serialize, deserialize } from 'borsh';
 
 import useSound from 'use-sound';
 
-import { PublicKey, Keypair, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
-    getAssociatedTokenAddress,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    getAssociatedTokenAddress
   } from "@solana/spl-token";
 import {
     WalletProvider,
@@ -93,29 +91,22 @@ import click_sound from './sounds/click.mp3';
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD, Assignable ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
     METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY, get_account_data,
-    instruction_schema, InstructionMeta, StateContext} from './constants';
+    instruction_schema, InstructionMeta, StateContext, DEBUG} from './constants';
 
 // dungeon utils
-import { check_json, request_account_data, PlayerData} from './utils';
+import { check_json, request_account_data} from './utils';
 
 // dungeon pages
 import {FAQScreen} from './faq';
 import {OddsScreen} from './odds';
 import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
-
+//import {DungeonScreen} from './dungeon';
 
 import './style.css';
 import './fonts.css';
 import './wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
-
-
-
-const DEBUG = true;
-
-
-
 
 
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
@@ -336,6 +327,11 @@ export function DungeonApp()
     const [enemy_state, setEnemyState] = useState(DungeonStatus.unknown);
     const [player_state, setPlayerState] = useState(DungeonStatus.unknown);
     const [animateLevel, setAnimateLevel] = useState(0);
+
+    //button processing
+    const [processing_quit, setProcessingQuit] = useState(false);
+    const [processing_play, setProcessingPlay] = useState(false);
+
 
     function MobileNavigation()  {
         const { isOpen, onOpen, onClose } = useDisclosure()
@@ -979,7 +975,7 @@ export function DungeonApp()
 
     const Play = useCallback( async () => 
     {
-
+            setProcessingPlay(true);
             if (DEBUG) {
                 console.log("In play");
             }
@@ -1073,6 +1069,7 @@ export function DungeonApp()
                 let valid_response = check_json(transaction_response)
                 if (!valid_response) {
                     console.log(transaction_response)
+                    setProcessingPlay(false);
                     return;
                 }
 
@@ -1085,6 +1082,7 @@ export function DungeonApp()
                 setCurrentSignature(signature);
 
             } catch(error) {
+                setProcessingPlay(false);
                 console.log(error);
                 return;
             }
@@ -1095,6 +1093,7 @@ export function DungeonApp()
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.alive);
+            setProcessingPlay(false);
             check_for_data_updates = true;
             check_for_sol_updates = true;
 
@@ -1219,7 +1218,7 @@ export function DungeonApp()
 
     const Quit = useCallback( async () => 
     {
-
+            setProcessingQuit(true);
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
@@ -1268,6 +1267,7 @@ export function DungeonApp()
 
                 if (!valid_response) {
                     console.log(transaction_response)
+                    setProcessingQuit(false);
                     return;
                 }
 
@@ -1277,6 +1277,7 @@ export function DungeonApp()
 
             } catch(error) {
                 console.log(error);
+                setProcessingQuit(false);
                 return;
             }
 
@@ -1286,6 +1287,7 @@ export function DungeonApp()
 
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
+            setProcessingQuit(false);
             check_for_data_updates = true;
             check_for_sol_updates = true;
             return;
@@ -2061,7 +2063,7 @@ export function DungeonApp()
                     </div>
                 }
                                         
-                {currentStatus === DungeonStatus.dead && player_state === DungeonStatus.dead &&
+                {player_state === DungeonStatus.dead &&
                 <>
                 <VStack alignItems="center" spacing="2%">
                         <DisplayFailureEnemyResultText/>
@@ -2073,11 +2075,20 @@ export function DungeonApp()
                                         <Text textAlign="center" fontSize={font_size} color="white">Exit</Text>
                                     </div> 
                                 </Button> 
-                                <Button variant='link' size='md' onClick={Play} ml="5rem">
-                                    <div className="font-face-sfpb">
-                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retry</Text>
-                                    </div> 
-                                </Button> 
+                                {!processing_play &&
+                                    <Button variant='link' size='md' onClick={Play} ml="5rem">
+                                        <div className="font-face-sfpb">
+                                            <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retry</Text>
+                                        </div> 
+                                    </Button> 
+                                }
+                                {processing_play &&
+                                    <Button variant='link' size='md' ml="5rem">
+                                        <div className="font-face-sfpb">
+                                            <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retry</Text>
+                                        </div> 
+                                    </Button> 
+                                }
                             </HStack>
                         </Center>
                 </VStack>
@@ -2117,16 +2128,34 @@ export function DungeonApp()
                                 <Center>
 
                                 <HStack>
-                                <Button variant='link' size='md' onClick={Quit} mr="3rem">
+                                    {!processing_quit &&
+                                    <Button variant='link' size='md' onClick={Quit} mr="3rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={font_size} color="white">Escape</Text>
                                         </div> 
                                     </Button> 
+                                    }
+                                    {processing_quit &&
+                                        <Button variant='link' size='md' mr="3rem">
+                                            <div className="font-face-sfpb">
+                                                <Text textAlign="center" fontSize={font_size} color="white">Escape</Text>
+                                            </div> 
+                                        </Button> 
+                                    }
+                                    {!processing_play &&
                                     <Button variant='link' size='md' onClick={Play} ml="10rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={font_size} color="white">Explore Further</Text>
                                         </div> 
                                     </Button> 
+                                    }
+                                    {processing_play &&
+                                    <Button variant='link' size='md' ml="10rem">
+                                        <div className="font-face-sfpb">
+                                            <Text textAlign="center" fontSize={font_size} color="white">Explore Further</Text>
+                                        </div> 
+                                    </Button> 
+                                    }
                                     
                                 
                                 </HStack>
@@ -2134,11 +2163,20 @@ export function DungeonApp()
                             }
                             {currentLevel >= 7  &&
                             <Center>
-                                <Button variant='link' size='md' onClick={Quit}>
-                                    <div className="font-face-sfpb">
-                                        <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
-                                    </div> 
-                                </Button> 
+                                {!processing_quit &&
+                                    <Button variant='link' size='md' onClick={Quit}>
+                                        <div className="font-face-sfpb">
+                                            <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
+                                        </div> 
+                                    </Button> 
+                                }
+                                {processing_quit &&
+                                    <Button variant='link' size='md'>
+                                        <div className="font-face-sfpb">
+                                            <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
+                                        </div> 
+                                    </Button> 
+                                }
                             </Center>
                         }
                         </VStack>
