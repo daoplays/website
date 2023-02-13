@@ -95,7 +95,8 @@ import click_sound from './sounds/click.mp3';
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD } from './constants';
 
 // dungeon utils
-import { check_json, get_account_data } from './utils';
+import { check_json, request_account_data, PlayerData} from './utils';
+
 // dungeon pages
 import {FAQScreen} from './faq';
 import {OddsScreen} from './odds';
@@ -245,7 +246,6 @@ class Assignable {
     }
   }
 
-class PlayerData extends Assignable { }
 class InstructionMeta extends Assignable { }
 class PlayMeta extends Assignable { }
 class ExploreMeta extends Assignable { }
@@ -256,21 +256,6 @@ class KeyMetaData extends Assignable { }
 class KeyMetaData2 extends Assignable { }
 
 
-const player_data_schema = new Map([
-  [PlayerData, { kind: 'struct', 
-  fields: [
-        ['num_plays', 'u64'],
-        ['num_wins', 'u64'],
-        ['in_progress', 'u8'],
-        ['player_status', 'u8'],
-        ['dungeon_enemy', 'u8'],
-        ['player_character', 'u8'],
-        ['current_bet_size', 'u64'],
-        ['current_key', 'u8'],
-        ['extra_data', [23]]
-    ],
-    }]
-]);
 
 const instruction_schema = new Map([
     [InstructionMeta, { kind: 'struct', 
@@ -351,6 +336,43 @@ export function WalletConnected()
 }
 
 
+export async function get_account_data({pubkey, schema, map, raw})
+{
+
+
+    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+    var account_info_result;
+    try {
+        account_info_result = await fetch(account_info_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return null;
+    }
+
+    let valid_response = check_json(account_info_result)
+    if (!valid_response) {
+        return  null;
+    }
+
+    if (account_info_result["result"]["value"] == null || account_info_result["result"]["value"]["data"] == null ) {
+        return null;
+    }
+
+    let account_encoded_data = account_info_result["result"]["value"]["data"];
+    let account_data = Buffer.from(account_encoded_data[0], "base64");
+
+    if (raw) {
+        return account_data;
+    }
+
+    
+    const data = deserialize(schema, map, account_data);
+
+
+    return data;
+}
 
 
 
@@ -684,7 +706,7 @@ export function ShopScreen()
                 const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&p2=config&p3=skippreflight";
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
-                let valid_response = check_json({json_response: transaction_response})
+                let valid_response = check_json(transaction_response)
 
                 if (!valid_response) {
                     console.log(transaction_response)
@@ -774,7 +796,7 @@ export function ShopScreen()
                 const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&p2=config&p3=skippreflight";
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
-                let valid_response = check_json({json_response: transaction_response})
+                let valid_response = check_json(transaction_response)
 
                 if (!valid_response) {
                     console.log(transaction_response)
@@ -1201,7 +1223,7 @@ export function DungeonApp()
             const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature;
             var signature_response = await fetch(confirm_url).then((res) => res.json());
 
-            let valid_response = check_json({json_response: signature_response})
+            let valid_response = check_json(signature_response)
             if (!valid_response) {
                 return;
             }
@@ -1270,7 +1292,7 @@ export function DungeonApp()
                         return;
                     }
 
-                    let valid_response = check_json({json_response: balance_result})
+                    let valid_response = check_json(balance_result)
                     if (!valid_response) {
                         return;
                     }
@@ -1304,7 +1326,7 @@ export function DungeonApp()
                 return;
             }
 
-            let valid_response = check_json({json_response: randoms_account_info_result})
+            let valid_response = check_json(randoms_account_info_result)
             if (!valid_response) {
                 return;
             }
@@ -1379,7 +1401,7 @@ export function DungeonApp()
                 console.log(error);
                 return;
             }
-            let valid_response = check_json({json_response: account_info_result})
+            let valid_response = check_json(account_info_result)
             if (!valid_response) {
                 console.log(account_info_result);
                 return;
@@ -1417,7 +1439,7 @@ export function DungeonApp()
                     return;
                 }
 
-                let valid_response = check_json({json_response: balance_result})
+                let valid_response = check_json(balance_result)
                 if (!valid_response) {
                     return;
                 }
@@ -1448,7 +1470,10 @@ export function DungeonApp()
 
         try {
 
-            const player_data = await get_account_data({pubkey: player_data_key.toString(), schema: player_data_schema, map: PlayerData, raw: false})
+            //const player_data = await get_account_data({pubkey: player_data_key.toString(), schema: player_data_schema, map: PlayerData, raw: false})
+
+            let player_data = await request_account_data(player_data_key);
+            //console.log("compare :", player_data);
 
             if (player_data === null) {
                 return;
@@ -1457,7 +1482,7 @@ export function DungeonApp()
             //console.log(player_data);
 
             //console.log("bet size: ", player_data["current_bet_size"].toNumber());
-            let current_status = player_data["player_status"] + 1;
+            let current_status = player_data.player_status + 1;
             if (!initial_status_is_set) {
 
                 if (current_status === DungeonStatus.alive){
@@ -1476,7 +1501,7 @@ export function DungeonApp()
                 
             }
 
-            let num_plays = player_data["num_plays"].toNumber();
+            let num_plays = player_data.num_plays.toNumber();
 
 
 
@@ -1492,7 +1517,7 @@ export function DungeonApp()
             setNumPlays(num_plays);
 
             if (DEBUG) {
-                console.log("in init, progress: ", player_data["in_progress"], "enemy", player_data["dungeon_enemy"], "alive", DungeonStatusString[player_data["player_status"] + 1], "num_plays", num_plays, "num_wins", player_data["num_wins"].toNumber());
+                console.log("in init, progress: ", player_data.in_progress, "enemy", player_data.dungeon_enemy, "alive", DungeonStatusString[player_data.player_status + 1], "num_plays", num_plays, "num_wins", player_data.num_wins.toNumber());
             }
 
             if (initial_num_plays ===  -1)
@@ -1508,13 +1533,13 @@ export function DungeonApp()
             //console.log(randoms_key.toString());
 
 
-            setCurrentEnemy(player_data["dungeon_enemy"]);
+            setCurrentEnemy(player_data.dungeon_enemy);
             
-            setCurrentLevel(player_data["in_progress"]);
+            setCurrentLevel(player_data.in_progress);
 
             setCurrentStatus(current_status);
 
-            setNumXP(player_data["num_wins"].toNumber());
+            setNumXP(player_data.num_wins.toNumber());
 
             // only update the randoms key here if we are exploring
             if (current_status === DungeonStatus.exploring) {
@@ -1760,7 +1785,7 @@ export function DungeonApp()
                 const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
                 var transaction_response = await fetch(send_url).then((res) => res.json());
 
-                let valid_response = check_json({json_response: transaction_response})
+                let valid_response = check_json(transaction_response)
                 if (!valid_response) {
                     console.log(transaction_response)
                     return;
@@ -1810,7 +1835,7 @@ export function DungeonApp()
                 return;
             }
 
-            let valid_response = check_json({json_response: network_account_info_result})
+            let valid_response = check_json(network_account_info_result)
             if (!valid_response) {
                 return;
             }
@@ -1876,7 +1901,7 @@ export function DungeonApp()
                 const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
                 var transaction_response = await fetch(send_url).then((res) => res.json());
 
-                let valid_response = check_json({json_response: network_account_info_result})
+                let valid_response = check_json(network_account_info_result)
                 if (!valid_response) {
                     console.log(transaction_response)
                     return;
@@ -1954,7 +1979,7 @@ export function DungeonApp()
                 const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
-                let valid_response = check_json({json_response: transaction_response})
+                let valid_response = check_json(transaction_response)
 
                 if (!valid_response) {
                     console.log(transaction_response)
@@ -2065,7 +2090,7 @@ export function DungeonApp()
             return;
         }
 
-        let valid_response = check_json({json_response: token_balance_result})
+        let valid_response = check_json(token_balance_result)
         if (!valid_response || token_balance_result["result"]["value"] === null) {
             setDiscountError("Error retrieving nft account data.  Please try again.");
             return;
