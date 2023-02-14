@@ -9,7 +9,8 @@ import {
     Text,
     VStack,
     FormControl,
-    Input
+    Input,
+    Divider
 } from '@chakra-ui/react';
 
 import {
@@ -20,6 +21,18 @@ import {
     DrawerContent,
     DrawerCloseButton,
 } from '@chakra-ui/react'
+
+import {
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    PopoverHeader,
+    PopoverBody,
+    PopoverArrow,
+    PopoverCloseButton,
+  } from '@chakra-ui/react'
+
+import FocusLock from 'react-focus-lock';
 
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -269,6 +282,8 @@ export function WalletConnected()
 
 
 
+
+
 const uIntToBytes = (num, size, method) => {
     const arr = new ArrayBuffer(size)
     const view = new DataView(arr)
@@ -318,7 +333,11 @@ export function DungeonApp()
     const [current_key_type, setCurrentKeyType] = useState(KeyType.Unknown);
     const [current_key_mint, setCurrentKeyMint] = useState(null);
     const [current_key_index, setCurrentKeyIndex] = useState(null);
+
+    // error handling on applying the discount
     const [discount_error, setDiscountError] = useState(null);
+    const [show_discount_error, setShowDiscountError] = useState(false);
+
 
 
     const [screen, setScreen] = useState(Screen.HOME_SCREEN);
@@ -331,6 +350,140 @@ export function DungeonApp()
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState(false);
 
+
+    useEffect(() => 
+    {
+        if (discount_error === null)
+            return;
+
+        setShowDiscountError(true);
+
+    }, [discount_error, setDiscountError]);
+
+    const CloseDiscountError = useCallback( async () => 
+    {
+        setShowDiscountError(false);
+    },[]);
+
+    const OpenDiscountError = useCallback( async () => 
+    {
+        setShowDiscountError(true);
+    },[]);
+
+    function DiscountKeyInput() {
+
+        return (
+        <div style={{ margin: 0 }}>
+        <Popover
+            returnFocusOnClose={false}
+            isOpen={show_discount_error}
+            onClose={CloseDiscountError}
+            placement='right'
+            closeOnBlur={false}
+        >
+            <PopoverTrigger>
+                <HStack align="center">
+                    <Box width="20%"></Box>
+                    <div className="font-face-sfpb">                                           
+                        <FormControl key="discount_form" id="existing_mint" maxWidth={"100%"} color="white">
+                            <Input
+                                autoFocus="autoFocus"
+                                key="discount_input" 
+                                placeholder='Key Mint/No.'
+                                type="text"
+                                value={existing_mint}
+                                onChange={handleMintChange}
+                            />
+                        </FormControl>
+                    </div>
+                    <div className="font-face-sfpb" >
+
+                        <Button variant='link' size='md' onClick={ApplyKey}>
+                            <img style={{"imageRendering":"pixelated"}} src={key} width={"100%"} alt={""}/>
+                        </Button> 
+                        
+                    </div>    
+                        
+                </HStack>
+            </PopoverTrigger>
+            <PopoverContent>
+                <div className="font-face-sfpb">
+                    <PopoverHeader fontWeight='semibold'>Dungeon Key Error</PopoverHeader>
+                </div>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverBody>
+                    <div className="font-face-sfpb">
+                        {discount_error}
+                    </div>
+                </PopoverBody>
+            </PopoverContent>
+        </Popover>
+        </div>
+        )
+      }
+
+      function MobileDiscountKeyInput() {
+
+        return (
+        <div style={{ margin: 0 }}>
+        <Popover
+            returnFocusOnClose={false}
+            isOpen={show_discount_error}
+            onClose={CloseDiscountError}
+            placement='right'
+            closeOnBlur={false}
+        >
+            <PopoverTrigger>
+                <Button variant='link' size='md' onClick={OpenDiscountError}>
+                    <img style={{"imageRendering":"pixelated"}} src={key} width={"100%"} alt={""}/>
+                </Button> 
+            </PopoverTrigger>
+            <PopoverContent>
+                <div className="font-face-sfpb">
+                    <PopoverHeader fontWeight='semibold'>Apply Dungeon Key</PopoverHeader>
+                </div>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverBody>
+                    <FocusLock returnFocus persistentFocus={false}>
+                    <HStack align="center">
+                        <div className="font-face-sfpb">                                           
+                            <FormControl key="discount_form" id="existing_mint" maxWidth={"100%"} color="black">
+                                <Input
+                                    autoFocus="autoFocus"
+                                    key="discount_input" 
+                                    placeholder='Key Mint/No.'
+                                    type="text"
+                                    value={existing_mint}
+                                    onChange={handleMintChange}
+                                />
+                            </FormControl>
+                        </div>
+                        <div className="font-face-sfpb">
+
+                            <Button variant='link' size='md' onClick={ApplyKey}>
+                                Apply
+                            </Button> 
+                            
+                        </div>    
+                        
+                    </HStack>
+                    {discount_error &&
+                    <>
+                        <Divider mt = "1rem" mb = "1rem"/>
+                        <div className="font-face-sfpb">
+                            {discount_error}
+                        </div>
+                    </>
+                    }
+                    </FocusLock>
+                </PopoverBody>
+            </PopoverContent>
+        </Popover>
+        </div>
+        )
+      }
 
     function MobileNavigation()  {
         const { isOpen, onOpen, onClose } = useDisclosure()
@@ -1645,7 +1798,6 @@ export function DungeonApp()
             font_size = "15px";
         }
 
-        var error_font_size = "15px";
         var visibility = "visible";
 
         //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", numPlays,  initial_num_plays, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status], initial_status === DungeonStatus.unknown);
@@ -1700,35 +1852,12 @@ export function DungeonApp()
                                     </div>
                                     {!isMobile &&
                                     <>
-                                        <HStack align="center">
-                                            <Box width="20%"></Box>
-                                            <div className="font-face-sfpb">                                           
-                                                    <FormControl key="discount_form" id="existing_mint" maxWidth={"100%"} color="white">
-                                                        <Input
-                                                            autoFocus="autoFocus"
-                                                            key="discount_input" 
-                                                            placeholder='Key Mint/No.'
-                                                            type="text"
-                                                            value={existing_mint}
-                                                            onChange={handleMintChange}
-                                                        />
-                                                    </FormControl>
-                                            </div>
-                                            <div className="font-face-sfpb">
-                                                
-                                                <Button variant='link' size='md' onClick={ApplyKey}>
-                                                    <img style={{"imageRendering":"pixelated"}} src={key} width={"100%"} alt={""}/>
-                                                </Button> 
-                                            </div>    
-                                                
-                                        </HStack>
-                                        <Box>
-                                        {discount_error &&
-                                            <div className="font-face-sfpb">
-                                                <Text  textAlign="center" fontSize={error_font_size} color="red">{discount_error}</Text>
-                                            </div>     
-                                        }
-                                        </Box>
+                                        <DiscountKeyInput/>
+                                    </>  
+                                    }
+                                    {isMobile &&
+                                    <>
+                                        <MobileDiscountKeyInput/>
                                     </>  
                                     }
                                 
