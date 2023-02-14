@@ -17,14 +17,15 @@ import {
     ASSOCIATED_TOKEN_PROGRAM_ID
   } from "@solana/spl-token";
 
-import { DUNGEON_FONT_SIZE, network_string, PROD, Assignable ,
+import { DUNGEON_FONT_SIZE, network_string, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY, get_account_data,
+    METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY,
     instruction_schema, InstructionMeta, StateContext} from './constants';
 
 import bs58 from "bs58";
   
-import { check_json} from './utils';
+import { check_json, request_raw_account_data, request_shop_data, request_shop_user_data} from './utils';
+
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
@@ -51,25 +52,6 @@ const COLLECTION_MASTER = new PublicKey('DoQvfRLYGS2bgjc63cGCFpB4P9WVr325Qxm4QHc
 const COLLECTION_META = new PublicKey('CZptrCQokZCuou1B6HPoEXoT6hg4LcsRZczsoJQRKhEw');
 const COLLECTION_MINT = new PublicKey('6QWFyyfNfDgzhzhZ5Ry2rVvyBHRyMhD2xDymu7Bc9KiK');
 const LAUNCH_DATE = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
-
-class ShopData extends Assignable { }
-class ShopUserData extends Assignable { }
-
-const shop_data_schema = new Map([
-    [ShopData, { kind: 'struct', 
-    fields: [
-          ['keys_bought', 'u64'],
-          ['key_types_bought',  [40]]],
-      }]
-  ]);
-
-const shop_user_data_schema = new Map([
-    [ShopUserData, { kind: 'struct', 
-    fields: [
-          ['num_keys', 'u64'],
-          ['last_xp',   'u64']],
-      }]
-  ]);
 
 const ChestStatus = {
     closed : 0,
@@ -103,12 +85,15 @@ export function ShopScreen()
     const [key_description, setKeyDescription] = useState(null);
     const [key_image, setKeyImage] = useState(null);
     const [xp_req, setXPReq] = useState(null);
+    const [num_keys_bought, setNumKeysBought] = useState(0);
+
     //const [countdown_string, setCountDownString] = useState(null);
     const [countdown_value, setCountDown] = useState(null);
 
 
     const [numXP] = useContext(StateContext);
 
+    const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", "Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
 
 
 
@@ -142,20 +127,21 @@ export function ShopScreen()
         let dungeon_key_data_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
 
 
-        let user_data = await get_account_data({pubkey: dungeon_key_data_account.toString(), schema: shop_user_data_schema, map: ShopUserData, raw: false});
+        let user_data = await request_shop_user_data(dungeon_key_data_account);
         
 
         let user_keys_bought = 0;
 
         if (user_data !== null ) {
           
-            user_keys_bought = user_data["num_keys"].toNumber();
+            user_keys_bought = user_data.num_keys.toNumber();
         }
 
         if (user_keys_bought <= current_n_keys) {
             return;
         }
 
+        setNumKeysBought(user_keys_bought);
         
         if (user_keys_bought >= 3) {
             setXPReq(-1);
@@ -166,7 +152,7 @@ export function ShopScreen()
         current_n_keys = user_keys_bought
         
 
-        let shop_data = await get_account_data({pubkey: program_data_key.toString(), schema: shop_data_schema, map: ShopData, raw: false});
+        let shop_data = await request_shop_data(program_data_key);
 
         // if the shop hasn't been set up yet just return
         if (shop_data === null){
@@ -174,7 +160,7 @@ export function ShopScreen()
             return;
         }
         
-        let total_keys_bought = shop_data["keys_bought"].toNumber();
+        let total_keys_bought = shop_data.keys_bought.toNumber();
 
         // if we have sold out there is nothing to sell
         if (total_keys_bought >= 3500) {
@@ -217,14 +203,17 @@ export function ShopScreen()
 
         try {
 
-            let raw_meta_data = await get_account_data({pubkey: current_meta_key.toString(), schema: null, map: null, raw: true});
+            //console.log("request meta data");
+            let raw_meta_data = await request_raw_account_data(current_meta_key);
 
             if (raw_meta_data === null) {
                 return;
             }
 
+            //console.log("deserialize meta data");
             let meta_data = Metadata.deserialize(raw_meta_data);
 
+            //console.log(meta_data);
             let uri_json = await fetch(meta_data[0].data.uri).then(res => res.json());
 
             setWhichKey(uri_json["name"]);
@@ -424,7 +413,7 @@ export function ShopScreen()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&p2=config&p3=skippreflight";
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json(transaction_response)
@@ -642,7 +631,7 @@ export function ShopScreen()
                         {xp_req > 0 && numXP >= xp_req &&
                             <Center>
                             <Box width = "100%">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[num_keys_bought]}</Text>
                             </Box>
                             </Center>
                         }
@@ -693,7 +682,7 @@ export function ShopScreen()
                     <Center>
                     <Box width = "100%">
                     <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a class="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint+"?cluster=devnet"}>here</a></Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint+"?cluster=devnet"}>here</a></Text>
                     </div>
                     </Box>
                     </Center>

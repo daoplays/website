@@ -103,11 +103,11 @@ import click_sound from './sounds/click.mp3';
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD, Assignable ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY, get_account_data,
+    METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY,
     instruction_schema, InstructionMeta, StateContext, DEBUG} from './constants';
 
 // dungeon utils
-import { check_json, request_account_data} from './utils';
+import { check_json, request_player_account_data, request_key_data_from_mint, request_key_data_from_index} from './utils';
 
 // dungeon pages
 import {FAQScreen} from './faq';
@@ -215,12 +215,6 @@ class PlayMeta extends Assignable { }
 class ExploreMeta extends Assignable { }
 class my_pubkey extends Assignable { }
 
-class KeyMetaData extends Assignable { }
-class KeyMetaData2 extends Assignable { }
-
-
-
-
 
 const play_scheme = new Map([
     [PlayMeta, { kind: 'struct', 
@@ -248,25 +242,6 @@ const pubkey_scheme = new Map([
     ['value', [32]]] }]
 ]);
 
-
-
-  const key_meta_data_schema = new Map([
-    [KeyMetaData, { kind: 'struct', 
-    fields: [
-          ['key_type', 'u8'],
-          ['key_index', 'u16']
-        ],
-      }]
-  ]);
-
-  const key_meta_data2_schema = new Map([
-    [KeyMetaData2, { kind: 'struct', 
-    fields: [
-          ['key_type', 'u8'],
-          ['key_mint', [32]]
-        ],
-      }]
-  ]);
 
 export function WalletConnected() 
 {
@@ -441,7 +416,7 @@ export function DungeonApp()
             </PopoverTrigger>
             <PopoverContent>
                 <div className="font-face-sfpb">
-                    <PopoverHeader fontWeight='semibold'>Apply Dungeon Key</PopoverHeader>
+                    <PopoverHeader fontWeight='semibold'>Dungeon Key</PopoverHeader>
                 </div>
                 <PopoverArrow />
                 <PopoverCloseButton />
@@ -449,7 +424,7 @@ export function DungeonApp()
                     <FocusLock returnFocus persistentFocus={false}>
                     <HStack align="center">
                         <div className="font-face-sfpb">                                           
-                            <FormControl key="discount_form" id="existing_mint" maxWidth={"100%"} color="black">
+                            <FormControl key="discount_form" id="existing_mint" maxWidth={"75%"} color="black">
                                 <Input
                                     autoFocus="autoFocus"
                                     key="discount_input" 
@@ -652,7 +627,6 @@ export function DungeonApp()
             if (current_signature === null)
                 return;
 
-            //console.log("in check signature");
             const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature;
             var signature_response = await fetch(confirm_url).then((res) => res.json());
 
@@ -663,7 +637,6 @@ export function DungeonApp()
 
             let confirmation = signature_response["result"]["value"][0];
             
-            //console.log(confirmation);
             if (confirmation !== null) {
 
                 if (confirmation["err"] !== null) {
@@ -685,7 +658,6 @@ export function DungeonApp()
         if (current_signature === null)
             return;
 
-        //console.log("in use effect of check signature");
         check_signature();
 
         if (current_signature === null)
@@ -702,14 +674,10 @@ export function DungeonApp()
     {
 
             if (global_randoms_address === null) {
-                //console.log("in check randoms: null")
 
                 return
             }
 
-            //console.log("in check randoms: ", global_randoms_address.toString())
-
-            //console.log("check account created")
             if (!have_created_randoms_account) {
             
                 // first check if the data account exists
@@ -777,15 +745,11 @@ export function DungeonApp()
             // 64 bytes randomness
             // vector of responses, each 32 (key) + 64 (randomness) = 96 bytes
             let randoms = randoms_account_data.slice(8 + 32, 8 + 32 + 64)
-            //console.log(randoms_account_data);
-            //console.log(randoms);
-    
+            
             if (Buffer.alloc(64).equals(randoms)) {
-                //console.log("randoms still zero");
                 return;
             }
 
-            //console.log("randoms ha ve been fulfilled");
             setRandomsFullfilled(true);
             global_randoms_address = null;
             
@@ -795,7 +759,6 @@ export function DungeonApp()
     
     useEffect(() => 
     {
-        //console.log("in randoms use effect", randomsIntervalId);
 
         if (wallet.publicKey && !randomsIntervalId) {
             randomsIntervalId = setInterval(check_randoms, 1000);
@@ -905,16 +868,12 @@ export function DungeonApp()
 
             //const player_data = await get_account_data({pubkey: player_data_key.toString(), schema: player_data_schema, map: PlayerData, raw: false})
 
-            let player_data = await request_account_data(player_data_key);
-            //console.log("compare :", player_data);
+            let player_data = await request_player_account_data(player_data_key);
 
             if (player_data === null) {
                 return;
             }
 
-            //console.log(player_data);
-
-            //console.log("bet size: ", player_data["current_bet_size"].toNumber());
             let current_status = player_data.player_status + 1;
             if (!initial_status_is_set) {
 
@@ -963,9 +922,6 @@ export function DungeonApp()
 
             const randoms_key = null;
 
-            //console.log(randoms_key.toString());
-
-
             setCurrentEnemy(player_data.dungeon_enemy);
             
             setCurrentLevel(player_data.in_progress);
@@ -976,7 +932,6 @@ export function DungeonApp()
 
             // only update the randoms key here if we are exploring
             if (current_status === DungeonStatus.exploring) {
-                //console.log("set current randoms key", randoms_key)
                 //setCurrentRandomsKey(randoms_key);
                 global_randoms_address = randoms_key;
             }
@@ -1044,9 +999,7 @@ export function DungeonApp()
             if (currentLevel === 0)
                 return;
 
-            //console.log(currentStatus === DungeonStatus.alive , currentStatus === DungeonStatus.exploring)
             if (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring) {
-                //console.log("set dungeon screen")
                 setScreen(Screen.DUNGEON_SCREEN);
             }
 
@@ -1080,9 +1033,7 @@ export function DungeonApp()
             if (animateLevel === 0) {
                 return;
             }
-            //console.log('This will run after 5 seconds!');
             const timer = setTimeout(() => {
-                //console.log('5 seconds has passed!');
 
                 // player killed enemy
                 if (animateLevel === 1) {
@@ -1134,16 +1085,6 @@ export function DungeonApp()
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
-            
-            // do a sanity check on the block chain
-            let player_data = await request_account_data(player_data_key);
-            console.log(player_data.num_wins.toNumber(), numXP);
-            console.log(player_data.num_plays.toNumber(), numPlays);
-            console.log(player_data.player_status + 1, currentStatus);
-            if (player_data.num_wins.toNumber() !== numXP || player_data.num_plays.toNumber() !== numPlays || player_data.player_status + 1 !== currentStatus){
-                console.log("ROLLBACK DETECTED!")
-            }
-
             const play_meta = new PlayMeta({ instruction: DungeonInstruction.play, character: which_character});
             const instruction_data = serialize(play_scheme, play_meta);
 
@@ -1168,7 +1109,6 @@ export function DungeonApp()
 
             if (current_key_mint) {
 
-                console.log("mint ", current_key_mint);
                 let key_mint_account = new PublicKey(current_key_mint);
                 let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_mint_account.toBuffer()], SHOP_PROGRAM))[0];
 
@@ -1181,9 +1121,6 @@ export function DungeonApp()
                     wallet.publicKey, // owner
                     true // allow owner off curve
                 );
-
-                console.log("key token account", key_token_account.toString());
-                console.log("key lookup ", dungeon_key_lookup_account.toString(), Buffer.from("key_meta"), index_buffer);
 
                 let dungeon_key_metaplex_account = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
                  METAPLEX_META.toBuffer(), key_mint_account.toBuffer()], METAPLEX_META))[0];
@@ -1249,6 +1186,7 @@ export function DungeonApp()
             if (DEBUG) {
                 console.log("In Play - setting state");
             }
+
             setScreen(Screen.DUNGEON_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.alive);
@@ -1257,7 +1195,7 @@ export function DungeonApp()
             check_for_sol_updates = true;
 
 
-    },[wallet, which_character, current_key_index, current_key_mint, numXP, numPlays, currentStatus]);
+    },[wallet, which_character, current_key_index, current_key_mint]);
 
     const Explore = useCallback( async () => 
     {
@@ -1290,22 +1228,14 @@ export function DungeonApp()
             let network_account_encoded_data = network_account_info_result["result"]["value"]["data"];
             let network_account_data = Buffer.from(network_account_encoded_data[0], "base64");
 
-            //console.log(network_account_data)
             const treasuryAddress = new PublicKey(deserialize(pubkey_scheme, my_pubkey, network_account_data.slice(8+32, 8+32 + 32)).value);
 
-            //console.log(treasuryAddress.toString())
             const seed = randomBytes(32)
 
             let randomAddress = (await PublicKey.findProgramAddress([ORAO_RANDOMNESS_ACCOUNT_SEED, seed], ORAO_KEY))[0];
 
             const explore_meta = new ExploreMeta({ instruction: DungeonInstruction.explore, seed : seed, character: which_character});
             const instruction_data = serialize(explore_scheme, explore_meta);
-
-            //console.log("orao ", ORAO_KEY.toString())
-            //console.log("network ", networkStateAddress.toString())
-            //console.log("seed: ", seed);
-            //console.log("random ", randomAddress.toString())
-
 
             const play_instruction = new TransactionInstruction({
                 keys: [
@@ -1341,7 +1271,7 @@ export function DungeonApp()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
                 var transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json(network_account_info_result)
@@ -1382,17 +1312,6 @@ export function DungeonApp()
             setProcessingTransaction(true);
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
-
-            // do a sanity check on the block chain
-            let player_data = await request_account_data(player_data_key);
-            console.log(player_data.num_wins.toNumber(), numXP);
-            console.log(player_data.num_plays.toNumber(), numPlays);
-            console.log(player_data.player_status + 1, currentStatus);
-            if (player_data.num_wins.toNumber() !== numXP || player_data.num_plays.toNumber() !== numPlays || player_data.player_status + 1 !== currentStatus){
-                console.log("ROLLBACK DETECTED!")
-            }
-
-            
 
             const instruction_meta = new InstructionMeta({ instruction: DungeonInstruction.quit});
             const instruction_data = serialize(instruction_schema, instruction_meta);
@@ -1463,7 +1382,7 @@ export function DungeonApp()
             return;
         
 
-    },[wallet, numXP, numPlays, currentStatus]);
+    },[wallet]);
 
     const ApplyKey = useCallback( async () => 
     {
@@ -1476,7 +1395,6 @@ export function DungeonApp()
         var key_mint;
         var key_index;
 
-        console.log("length", existing_mint.length);
         // if the string is more than 4 digits this should be a mint address
         if (existing_mint.length > 4) {
 
@@ -1490,17 +1408,15 @@ export function DungeonApp()
 
             let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_mint.toBuffer()], SHOP_PROGRAM))[0];
 
-            const key_meta_data = await get_account_data({pubkey: dungeon_key_meta_account.toString(), schema : key_meta_data_schema, map  : KeyMetaData, raw : false})
-
+            const key_meta_data = await request_key_data_from_mint(dungeon_key_meta_account);
+            
             if (key_meta_data === null) {                
                 setDiscountError("Key account not found.<br/>Please check mint address is valid");
                 return;
             }
 
-            console.log("meta from mint", key_meta_data);
-
-            key_type = key_meta_data["key_type"];
-            key_index = key_meta_data["key_index"];
+            key_type = key_meta_data.key_type;
+            key_index = key_meta_data.key_index;
 
         }
         // otherwise it should be an integer
@@ -1511,21 +1427,16 @@ export function DungeonApp()
             let index_buffer = new Buffer.from(index_array_buffer);
             let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], PROGRAM_KEY))[0];
 
-            console.log(Buffer.from("key_meta"), index_buffer.reverse());
-            console.log("key from int: ", dungeon_key_lookup_account.toString());
-            const key_meta_data = await get_account_data({pubkey: dungeon_key_lookup_account.toString(), schema : key_meta_data2_schema, map  : KeyMetaData2, raw : false})
-
+            const key_meta_data = await request_key_data_from_index(dungeon_key_lookup_account);
+            
             // if we have been passed a number check the lookup account exists
             if (key_meta_data === null) {
                 setDiscountError("Key account not found.  Please pass key mint on first use");
                 return;
             }
 
-            key_mint = new PublicKey(key_meta_data["key_mint"]);
-
-            console.log("meta from index", key_meta_data, key_mint.toString());
-
-            key_type = key_meta_data["key_type"];
+            key_mint = key_meta_data.key_mint;
+            key_type = key_meta_data.key_type;
 
         }
 
@@ -1554,7 +1465,6 @@ export function DungeonApp()
         }
 
         let token_balance = parseInt(token_balance_result["result"]["value"]["amount"]);
-        console.log("token_balance", token_balance);
 
         if (token_balance !== 1) {
             setDiscountError("User does not own dungeon key " + key_index.toString());
@@ -1827,7 +1737,7 @@ export function DungeonApp()
         }
 
         //console.log("have made it here in CS 2");
-        // if i am alive or e xploring and  the level is > 0 never show this
+        // if i am alive or exploring and  the level is > 0 never show this
         if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring))) {
                 visibility = "hidden";
             
@@ -1898,7 +1808,6 @@ export function DungeonApp()
 
     const DisplayPlayer = () => {
 
-       // console.log("player state ", player_state);
         if (player_state === DungeonStatus.unknown) {
             return(<></>);
         }
@@ -2051,7 +1960,6 @@ export function DungeonApp()
 
     const DisplayEnemy = () => {
 
-       // console.log("enemy state ", enemy_state);
         if (enemy_state === DungeonStatus.unknown) {
             return(<></>);
         }
