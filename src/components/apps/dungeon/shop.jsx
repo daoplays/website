@@ -93,9 +93,13 @@ export function ShopScreen()
 
     const [numXP] = useContext(StateContext);
 
-    const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", "Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
+    const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
+    "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
+    "Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
 
-
+    const invalid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers.", 
+    "Welcome back Adventurer!  It looks like the dungeon's been putting you through your paces, but if you want to buy more keys you're going to have to stay ahead of the competition.", 
+    "Back for more eh Adventurer? I'm sure these keys are proving their worth to you, but if you want to buy a third one you're going to have to do the same for me!"];
 
     const check_xp_reqs = useCallback(async() => 
     {
@@ -610,7 +614,7 @@ export function ShopScreen()
                         {xp_req !== null && xp_req > 0 && numXP < xp_req &&
                             <Center>
                             <Box width = "100%">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers. Come back when you have {xp_req} XP</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {invalid_shop_text[num_keys_bought]} Come back when you have {xp_req} XP</Text>
                             </Box>
                             </Center>
                         }

@@ -406,7 +406,7 @@ export function DungeonApp()
             returnFocusOnClose={false}
             isOpen={show_discount_error}
             onClose={CloseDiscountError}
-            placement='left'
+            placement='bottom'
             closeOnBlur={false}
         >
             <PopoverTrigger>
@@ -416,26 +416,26 @@ export function DungeonApp()
             </PopoverTrigger>
             <PopoverContent>
                 <div className="font-face-sfpb">
-                    <PopoverHeader fontWeight='semibold'>Dungeon Key</PopoverHeader>
+                    <PopoverHeader fontSize={DEFAULT_FONT_SIZE} fontWeight='semibold'>Dungeon Key</PopoverHeader>
                 </div>
                 <PopoverArrow />
                 <PopoverCloseButton />
                 <PopoverBody>
                     <FocusLock returnFocus persistentFocus={false}>
-                    <HStack align="center">
+                    <VStack align="center">
                         <div className="font-face-sfpb">                                           
-                            <FormControl key="discount_form" id="existing_mint" maxWidth={"75%"} color="black">
+                            <FormControl  key="discount_form" id="existing_mint" maxWidth={"100%"} color="black">
                                 <Input
                                     autoFocus="autoFocus"
                                     key="discount_input" 
-                                    placeholder='Key Mint/No.'
+                                    placeholder='Key Mint/Number'
                                     type="text"
                                     value={existing_mint}
                                     onChange={handleMintChange}
                                 />
                             </FormControl>
                         </div>
-                        <div className="font-face-sfpb">
+                        <div className="font-face-sfpb" color="black">
 
                             <Button variant='link' size='md' onClick={ApplyKey}>
                                 Apply
@@ -443,7 +443,7 @@ export function DungeonApp()
                             
                         </div>    
                         
-                    </HStack>
+                    </VStack>
                     {discount_error &&
                     <>
                         <Divider mt = "1rem" mb = "1rem"/>
