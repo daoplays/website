@@ -50,6 +50,7 @@ const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdw
 const COLLECTION_MASTER = new PublicKey('DoQvfRLYGS2bgjc63cGCFpB4P9WVr325Qxm4QHcwdZ8P');
 const COLLECTION_META = new PublicKey('CZptrCQokZCuou1B6HPoEXoT6hg4LcsRZczsoJQRKhEw');
 const COLLECTION_MINT = new PublicKey('6QWFyyfNfDgzhzhZ5Ry2rVvyBHRyMhD2xDymu7Bc9KiK');
+const LAUNCH_DATE = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
 
 class ShopData extends Assignable { }
 class ShopUserData extends Assignable { }
@@ -110,14 +111,15 @@ export function ShopScreen()
 
 
 
+
     const check_xp_reqs = useCallback(async() => 
     {
-        var launch_date = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
+        
 
         // just set the countdown here also
         var now = new Date().getTime();
-
-        var distance = Math.max(0, launch_date - now);
+        var distance = Math.max(0, LAUNCH_DATE - now);
+        setCountDown(distance);
 
         // Time calculations for days, hours, minutes and seconds
         //var days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -127,7 +129,6 @@ export function ShopScreen()
 
         //let countdown_string = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
         //setCountDownString(countdown_string);
-        setCountDown(distance);
 
         if (!wallet.publicKey)
             return;
@@ -158,23 +159,27 @@ export function ShopScreen()
         
         if (user_keys_bought >= 3) {
             setXPReq(-1);
+            check_xp = false;
             return;
         }
 
         current_n_keys = user_keys_bought
-        check_xp = false;
+        
 
         let shop_data = await get_account_data({pubkey: program_data_key.toString(), schema: shop_data_schema, map: ShopData, raw: false});
 
         // if the shop hasn't been set up yet just return
-        if (shop_data === null)
+        if (shop_data === null){
+            check_xp = false;
             return;
+        }
         
         let total_keys_bought = shop_data["keys_bought"].toNumber();
 
         // if we have sold out there is nothing to sell
         if (total_keys_bought >= 3500) {
             setXPReq(-2);
+            check_xp = false;
             return;
         }
 
@@ -197,9 +202,10 @@ export function ShopScreen()
         if (total_xp_req > xp_cap_per_key) {
             total_xp_req = xp_cap_per_key;
         }
-        total_xp_req = 1;
+
         //console.log("total xp req ", total_xp_req);
         setXPReq(total_xp_req);
+        check_xp = false;
 
     }, [wallet]);
 
@@ -251,7 +257,7 @@ export function ShopScreen()
 
     useEffect(() => 
     {
-        console.log("in use effect ", xpIntervalId);
+        //console.log("in use effect ", xpIntervalId);
         if (wallet.publicKey && !xpIntervalId) {
             xpIntervalId = setInterval(check_xp_reqs, 1000);
         }
@@ -273,8 +279,13 @@ export function ShopScreen()
 
     useEffect(() => 
     {
-        console.log("set check xp");
+        //console.log("set check xp");
         check_xp = true;
+
+        // just set the countdown here also
+        var now = new Date().getTime();
+        var distance = Math.max(0, LAUNCH_DATE - now);
+        setCountDown(distance);
         
     }, []);
 
@@ -423,9 +434,9 @@ export function ShopScreen()
                     return;
                 }
 
-                console.log(transaction_response);
-                let signature = transaction_response["result"];
-                console.log("sig: ", signature);
+                //console.log(transaction_response);
+                //let signature = transaction_response["result"];
+                //console.log("sig: ", signature);
      
             } catch(error) {
                 console.log(error);
@@ -610,7 +621,7 @@ export function ShopScreen()
                         {xp_req !== null && xp_req > 0 && numXP < xp_req &&
                             <Center>
                             <Box width = "100%">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you i only trade with more seasoned adventurers, come back when you have {xp_req} XP</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers. Come back when you have {xp_req} XP</Text>
                             </Box>
                             </Center>
                         }
@@ -624,7 +635,7 @@ export function ShopScreen()
                         {xp_req === -1 &&
                             <Center>
                             <Box width = "100%">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome back Adventurer! I'm afraid you've had your fair share of keys from me, you'll need to find someone else to trade with if you want more.</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome back Adventurer! I'm afraid you've had your fair share of keys from me.  You'll need to find someone else to trade with if you want more.</Text>
                             </Box>
                             </Center>
                         }
@@ -642,7 +653,7 @@ export function ShopScreen()
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                         }
                         {countdown_value === null &&
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "hidden"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                         }
                     </div>
                 </Box>
@@ -651,9 +662,9 @@ export function ShopScreen()
  
                     {xp_req !== null && xp_req > 0 && numXP >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
                     <>
-                        {!isMobile &&
-                            <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
-                        }
+                        
+                        <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                        
                         <Button variant='link' size='lg' onClick={Mint}>
                             <div className="font-face-sfpb">
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
@@ -662,18 +673,7 @@ export function ShopScreen()
    
                     </>
                     }
-                    {(countdown_value === null || countdown_value > 0) &&
-                    <>
-                    {!isMobile &&
-                        <Box width="15%"> <img style={{"imageRendering":"pixelated", "visibility": "hidden"}} src={key} width="100" alt={""}/></Box>
-                    }
-                    <Button variant='link' size='lg' onClick={Mint}>
-                        <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "hidden"}}> Buy Key (1.5 SOL) </Text>      
-                        </div> 
-                    </Button>              
-                    </>
-                    }
+                    
                 </HStack>
                 </>
                 }

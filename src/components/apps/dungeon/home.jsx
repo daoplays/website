@@ -1135,7 +1135,14 @@ export function DungeonApp()
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
 
             
-
+            // do a sanity check on the block chain
+            let player_data = await request_account_data(player_data_key);
+            console.log(player_data.num_wins.toNumber(), numXP);
+            console.log(player_data.num_plays.toNumber(), numPlays);
+            console.log(player_data.player_status + 1, currentStatus);
+            if (player_data.num_wins.toNumber() !== numXP || player_data.num_plays.toNumber() !== numPlays || player_data.player_status + 1 !== currentStatus){
+                console.log("ROLLBACK DETECTED!")
+            }
 
             const play_meta = new PlayMeta({ instruction: DungeonInstruction.play, character: which_character});
             const instruction_data = serialize(play_scheme, play_meta);
@@ -1250,7 +1257,7 @@ export function DungeonApp()
             check_for_sol_updates = true;
 
 
-    },[wallet, which_character, current_key_index, current_key_mint]);
+    },[wallet, which_character, current_key_index, current_key_mint, numXP, numPlays, currentStatus]);
 
     const Explore = useCallback( async () => 
     {
@@ -1370,9 +1377,20 @@ export function DungeonApp()
 
     const Quit = useCallback( async () => 
     {
+
+            
             setProcessingTransaction(true);
             let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
             let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+
+            // do a sanity check on the block chain
+            let player_data = await request_account_data(player_data_key);
+            console.log(player_data.num_wins.toNumber(), numXP);
+            console.log(player_data.num_plays.toNumber(), numPlays);
+            console.log(player_data.player_status + 1, currentStatus);
+            if (player_data.num_wins.toNumber() !== numXP || player_data.num_plays.toNumber() !== numPlays || player_data.player_status + 1 !== currentStatus){
+                console.log("ROLLBACK DETECTED!")
+            }
 
             
 
@@ -1445,7 +1463,7 @@ export function DungeonApp()
             return;
         
 
-    },[wallet]);
+    },[wallet, numXP, numPlays, currentStatus]);
 
     const ApplyKey = useCallback( async () => 
     {

@@ -107,7 +107,7 @@ export async function request_account_data(pubkey : PublicKey) : Promise<PlayerD
 
     const [data] = PlayerData.struct.deserialize(account_data);
 
-    console.log("deserialised in TS: ", data);
+    //console.log("deserialised in TS: ", data);
 
     return data;
 }
