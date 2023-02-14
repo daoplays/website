@@ -1741,7 +1741,7 @@ export function DungeonApp()
                         <HStack alignItems="center" spacing="1%">
                             <Box width="27%">
                                 <div className="font-face-sfpb">
-                                    <Text  align="center" fontSize={font_size} color="white">DUNGEON<br/>MASTER'S<br/>FEE: 3%</Text>
+                                    <Text  align="center" fontSize={font_size} color="white">DUNGEON<br/>MASTER'S<br/>FEE: 3.00%</Text>
                                 </div>    
                             </Box>  
                             <Box width="46%">
@@ -1824,13 +1824,13 @@ export function DungeonApp()
                             <Box width="27%" visibility={visibility}>
                                 <div className="font-face-sfpb">
                                     {current_key_type  === KeyType.Unknown &&
-                                        <Text  align="center" fontSize={font_size} color="white">DUNGEON<br/>MASTER'S<br/>FEE: 3%</Text>
+                                        <Text  align="center" fontSize={font_size} color="white">DUNGEON<br/>MASTER'S<br/>FEE: 3.00%</Text>
                                     }
                                     {current_key_type  === KeyType.Bronze &&
                                         <Text  align="center" fontSize={font_size} color="#CD7F32">DUNGEON<br/>MASTER'S<br/>FEE: 2.25%</Text>
                                     }
                                     {current_key_type  === KeyType.Silver &&
-                                        <Text  align="center" fontSize={font_size} color="silver">DUNGEON<br/>MASTER'S<br/>FEE: 1.5%</Text>
+                                        <Text  align="center" fontSize={font_size} color="silver">DUNGEON<br/>MASTER'S<br/>FEE: 1.50%</Text>
                                     }
                                     {current_key_type  === KeyType.Gold &&
                                         <Text  align="center" fontSize={font_size} color="gold">DUNGEON<br/>MASTER'S<br/>FEE: 0.75%</Text>
