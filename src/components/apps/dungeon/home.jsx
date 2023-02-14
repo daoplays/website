@@ -378,7 +378,7 @@ export function DungeonApp()
             returnFocusOnClose={false}
             isOpen={show_discount_error}
             onClose={CloseDiscountError}
-            placement='right'
+            placement='left'
             closeOnBlur={false}
         >
             <PopoverTrigger>
@@ -431,7 +431,7 @@ export function DungeonApp()
             returnFocusOnClose={false}
             isOpen={show_discount_error}
             onClose={CloseDiscountError}
-            placement='right'
+            placement='left'
             closeOnBlur={false}
         >
             <PopoverTrigger>
