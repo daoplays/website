@@ -367,7 +367,7 @@ export function DungeonApp()
             </PopoverTrigger>
             <PopoverContent>
                 <div className="font-face-sfpb">
-                    <PopoverHeader fontSize={DEFAULT_FONT_SIZE} fontWeight='semibold'>Dungeon Key</PopoverHeader>
+                    <PopoverHeader fontSize={DUNGEON_FONT_SIZE} fontWeight='semibold'>Enter Key Number</PopoverHeader>
                 </div>
                 <PopoverArrow />
                 <PopoverCloseButton />
