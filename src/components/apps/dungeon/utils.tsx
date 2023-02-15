@@ -44,6 +44,24 @@ interface AccountData {
     error: string;
 }
 
+interface TokenBalanceData {
+    id : number;
+    jsonrpc : string;
+    result: {
+        context: {
+            apiVersion : string;
+            slot : number;
+        };
+        value : {
+            amount : string;
+            decimals : number;
+            uiAmount : number;
+            uiAmountString : string;
+        };
+    };
+    error: string;
+}
+
 class PlayerData {
     constructor(
       readonly num_plays: bignum,
@@ -79,20 +97,22 @@ class PlayerData {
 }
 
 
-class KeyDataFromMint {
+export class KeyDataFromMint {
     constructor(
+      readonly key_mint: PublicKey,   
       readonly key_type: number,
-      readonly key_index: number,
+      readonly key_index: number
     ) {}
   
     //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
 
     static readonly struct = new BeetStruct<KeyDataFromMint>(
       [
+        ['key_mint', publicKey],
         ['key_type', u8],
-        ['key_index', u16],
+        ['key_index', u16]
       ],
-      (args) => new KeyDataFromMint(args.key_type!, args.key_index!),
+      (args) => new KeyDataFromMint(args.key_mint!, args.key_type!, args.key_index!),
       'KeyDataFromMint'
     )
 }
@@ -117,16 +137,16 @@ class KeyDataFromIndex {
 
 class ShopData {
     constructor(
-      readonly keys_bought: bignum,
-      readonly key_types_bought: bignum[],
+      readonly keys_bought: number,
+      readonly key_types_bought: number[],
     ) {}
   
     //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
 
     static readonly struct = new BeetStruct<ShopData>(
       [
-        ['keys_bought', u64],
-        ['key_types_bought', uniformFixedSizeArray(u64, 5)],
+        ['keys_bought', u16],
+        ['key_types_bought', uniformFixedSizeArray(u16, 3)],
       ],
       (args) => new ShopData(args.keys_bought!, args.key_types_bought!),
       'ShopData'
@@ -136,20 +156,55 @@ class ShopData {
 
 class ShopUserData {
     constructor(
-      readonly num_keys: bignum,
-      readonly last_xp: bignum,
+      readonly num_keys: number
     ) {}
   
     //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
 
     static readonly struct = new BeetStruct<ShopUserData>(
       [
-        ['num_keys', u64],
-        ['last_xp', u64],
+        ['num_keys', u16]
       ],
-      (args) => new ShopUserData(args.num_keys!, args.last_xp!),
+      (args) => new ShopUserData(args.num_keys!),
       'ShopUserData'
     )
+}
+
+export async function request_token_amount(pubkey : PublicKey) : Promise<number>
+{
+    const url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+pubkey.toString()+`&p2=config&p3=base64&p4=commitment`;
+
+    var response;
+    try {
+        response  = await fetch(url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return 0;
+    }
+    //console.log("TS result: ", response)
+
+    let valid_response = check_json(response)
+
+    //console.log("valid ", valid_response);
+    if (!valid_response) {
+        return  0;
+    }
+
+    let token_amount;
+    try {
+        let parsed_response : TokenBalanceData = response;
+
+        //console.log("parsed", parsed_account_data);
+
+        token_amount = parseInt(parsed_response.result.value.amount);
+    }
+    catch (error) {
+        console.log(error);
+        return 0;
+    }
+
+    return token_amount;
 }
 
 export async function request_raw_account_data(pubkey : PublicKey) : Promise<Buffer | null>

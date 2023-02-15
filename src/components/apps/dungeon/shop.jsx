@@ -48,9 +48,9 @@ import './wallet.css';
 
 const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
 
-const COLLECTION_MASTER = new PublicKey('DoQvfRLYGS2bgjc63cGCFpB4P9WVr325Qxm4QHcwdZ8P');
-const COLLECTION_META = new PublicKey('CZptrCQokZCuou1B6HPoEXoT6hg4LcsRZczsoJQRKhEw');
-const COLLECTION_MINT = new PublicKey('6QWFyyfNfDgzhzhZ5Ry2rVvyBHRyMhD2xDymu7Bc9KiK');
+const COLLECTION_MASTER = new PublicKey('4UV8u1C3VbXZ4JFHPRnBzbQvA44b9P3JnGfe3U8HpeDJ');
+const COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
+const COLLECTION_MINT = new PublicKey('8gD8vXEzs3FaPbTdySsSBr5nGLtqCiTCvaA8DNjWZVdJ');
 const LAUNCH_DATE = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
 
 const ChestStatus = {
@@ -138,7 +138,7 @@ export function ShopScreen()
 
         if (user_data !== null ) {
           
-            user_keys_bought = user_data.num_keys.toNumber();
+            user_keys_bought = user_data.num_keys;
         }
 
         if (user_keys_bought <= current_n_keys) {
@@ -164,7 +164,7 @@ export function ShopScreen()
             return;
         }
         
-        let total_keys_bought = shop_data.keys_bought.toNumber();
+        let total_keys_bought = shop_data.keys_bought;
 
         // if we have sold out there is nothing to sell
         if (total_keys_bought >= 3500) {

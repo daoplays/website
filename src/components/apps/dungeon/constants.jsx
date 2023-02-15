@@ -42,7 +42,7 @@ export const PYTH_ETH_PROD = new PublicKey('JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLF
 export const PYTH_SOL_PROD = new PublicKey('H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG');
 
 export const METAPLEX_META = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
-export const SHOP_PROGRAM = new PublicKey("7furJTvAgYYEjFkCbhiYsmEXMtzbUyMj1Q6gwspioCpk");
+export const SHOP_PROGRAM = new PublicKey("61Lmx2t4g2JDf8n1xmjF94H6Q9Vm2bqYj39ELKMjaST5");
 export const PROGRAM_KEY = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 export const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 

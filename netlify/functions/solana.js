@@ -72,6 +72,15 @@ exports.handler = async function (event, context) {
                     }
                     
                 }
+
+                if (event.queryStringParameters.data_size_filter) {
+                    let data_size_filter = event.queryStringParameters.data_size_filter;
+                    
+                    extra_config["filters"] = [];
+                    extra_config["filters"].push({"dataSize" : parseInt(data_size_filter)});
+                    
+                    
+                }
                 
 
                 params.push(extra_config);

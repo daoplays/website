@@ -8,9 +8,9 @@ import {
     Center,
     Text,
     VStack,
-    FormControl,
-    Input,
-    Divider
+    Divider,
+    NumberInput,
+    NumberInputField
 } from '@chakra-ui/react';
 
 import {
@@ -107,7 +107,7 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD, Assignable 
     instruction_schema, InstructionMeta, StateContext, DEBUG} from './constants';
 
 // dungeon utils
-import { check_json, request_player_account_data, request_key_data_from_mint, request_key_data_from_index} from './utils';
+import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount} from './utils';
 
 // dungeon pages
 import {FAQScreen} from './faq';
@@ -278,6 +278,7 @@ var transaction_failed = false;
 var global_randoms_address = null;
 var check_for_data_updates = true;
 var check_for_sol_updates = true;
+var perform_check_signature = false;
 
 var have_created_randoms_account = false;
 export function DungeonApp() 
@@ -303,8 +304,7 @@ export function DungeonApp()
     const [randoms_fulfilled, setRandomsFullfilled] = useState(false);
 
     // if we have a key then discounts can be applied
-    const [existing_mint, setExistingMint] = React.useState("")
-    const handleMintChange = (e) => setExistingMint(e.target.value)
+    const [discount_key_index, setDiscountKeyIndex] = useState("")
     const [current_key_type, setCurrentKeyType] = useState(KeyType.Unknown);
     const [current_key_mint, setCurrentKeyMint] = useState(null);
     const [current_key_index, setCurrentKeyIndex] = useState(null);
@@ -345,62 +345,13 @@ export function DungeonApp()
         setShowDiscountError(true);
     },[]);
 
-    function DiscountKeyInput() {
+    
+
+      function DiscountKeyInput() {
 
         return (
-        <div style={{ margin: 0 }}>
-        <Popover
-            returnFocusOnClose={false}
-            isOpen={show_discount_error}
-            onClose={CloseDiscountError}
-            placement='left'
-            closeOnBlur={false}
-        >
-            <PopoverTrigger>
-                <HStack align="center">
-                    <Box width="20%"></Box>
-                    <div className="font-face-sfpb">                                           
-                        <FormControl key="discount_form" id="existing_mint" maxWidth={"100%"} color="white">
-                            <Input
-                                autoFocus="autoFocus"
-                                key="discount_input" 
-                                placeholder='Key Mint/No.'
-                                type="text"
-                                value={existing_mint}
-                                onChange={handleMintChange}
-                            />
-                        </FormControl>
-                    </div>
-                    <div className="font-face-sfpb" >
-
-                        <Button variant='link' size='md' onClick={ApplyKey}>
-                            <img style={{"imageRendering":"pixelated"}} src={key} width={"100%"} alt={""}/>
-                        </Button> 
-                        
-                    </div>    
-                        
-                </HStack>
-            </PopoverTrigger>
-            <PopoverContent>
-                <div className="font-face-sfpb">
-                    <PopoverHeader fontWeight='semibold'>Dungeon Key Error</PopoverHeader>
-                </div>
-                <PopoverArrow />
-                <PopoverCloseButton />
-                <PopoverBody>
-                    <div className="font-face-sfpb">
-                        {discount_error}
-                    </div>
-                </PopoverBody>
-            </PopoverContent>
-        </Popover>
-        </div>
-        )
-      }
-
-      function MobileDiscountKeyInput() {
-
-        return (
+            <>
+        <div mt = "2rem"></div>
         <div style={{ margin: 0 }}>
         <Popover
             returnFocusOnClose={false}
@@ -411,7 +362,7 @@ export function DungeonApp()
         >
             <PopoverTrigger>
                 <Button variant='link' size='md' onClick={OpenDiscountError}>
-                    <img style={{"imageRendering":"pixelated"}} src={key} width={"100%"} alt={""}/>
+                    <img style={{"imageRendering":"pixelated"}} src={key} width={"50"} alt={""}/>
                 </Button> 
             </PopoverTrigger>
             <PopoverContent>
@@ -424,20 +375,17 @@ export function DungeonApp()
                     <FocusLock returnFocus persistentFocus={false}>
                     <VStack align="center">
                         <div className="font-face-sfpb">                                           
-                            <FormControl  key="discount_form" id="existing_mint" maxWidth={"100%"} color="black">
-                                <Input
-                                    autoFocus="autoFocus"
-                                    key="discount_input" 
-                                    placeholder='Key Mint/Number'
-                                    type="text"
-                                    value={existing_mint}
-                                    onChange={handleMintChange}
-                                />
-                            </FormControl>
+                        <NumberInput 
+                            onChange={(valueString) => setDiscountKeyIndex(valueString)}
+                            value={discount_key_index}
+                            precision={0}
+                            min={1} max={3500}>
+                            <NumberInputField/>
+                        </NumberInput>
                         </div>
-                        <div className="font-face-sfpb" color="black">
+                        <div className="font-face-sfpb">
 
-                            <Button variant='link' size='md' onClick={ApplyKey}>
+                            <Button variant='link' size='md'  onClick={ApplyKey}> 
                                 Apply
                             </Button> 
                             
@@ -457,6 +405,7 @@ export function DungeonApp()
             </PopoverContent>
         </Popover>
         </div>
+        </>
         )
       }
 
@@ -624,12 +573,13 @@ export function DungeonApp()
     const check_signature = useCallback(async() =>
     {
         
-            if (current_signature === null)
+            if (!perform_check_signature)
                 return;
 
             const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature;
             var signature_response = await fetch(confirm_url).then((res) => res.json());
 
+            console.log("sig response:", signature_response);
             let valid_response = check_json(signature_response)
             if (!valid_response) {
                 return;
@@ -649,6 +599,7 @@ export function DungeonApp()
                 }
 
                 setCurrentSignature(null)
+                perform_check_signature = false;
             }
 
     }, [current_signature]);
@@ -1176,6 +1127,7 @@ export function DungeonApp()
                 }
 
                 setCurrentSignature(signature);
+                perform_check_signature = true;
 
             } catch(error) {
                 setProcessingTransaction(false);
@@ -1363,6 +1315,7 @@ export function DungeonApp()
                 let signature = transaction_response["result"];
 
                 setCurrentSignature(signature);
+                perform_check_signature = true;
 
             } catch(error) {
                 console.log(error);
@@ -1388,58 +1341,67 @@ export function DungeonApp()
     {
 
         setDiscountError(null);
-        if (existing_mint === "")
-            return;
+ 
 
-        var key_type;
-        var key_mint;
-        var key_index;
+        let parsed_key_index = parseInt(discount_key_index);
+        console.log("key index", discount_key_index, parsed_key_index, isNaN(parsed_key_index));
+
+        if (isNaN(parsed_key_index))
+            return;
+        
 
         // if the string is more than 4 digits this should be a mint address
-        if (existing_mint.length > 4) {
+        let index_array_buffer = uIntToBytes(parsed_key_index, 2, "setUint");
+        let index_buffer = new Buffer.from(index_array_buffer);
+        let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], PROGRAM_KEY))[0];
 
+        console.log("lookup: ", Buffer.from("key_meta"), index_buffer.reverse());
+        let key_meta_data = await request_key_data_from_index(dungeon_key_lookup_account);
+        
+        // if we have been passed a number check the lookup account exists
+        if (key_meta_data === null) {
+
+            
+            const program_accounts_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&p2=config&p3=base64&p4=commitment&data_size_filter=35`;
+
+            var program_accounts_result;
             try {
-                key_mint = new PublicKey(existing_mint);
+                program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
             }
-            catch{
-                setDiscountError("Invalid public key");
+            catch(error) {
+                console.log(error);
+            }
+
+            console.log(program_accounts_result["result"]);
+
+            let account_found = false;
+            for (let i = 0; i < program_accounts_result["result"].length; i++) {
+
+                let encoded_data = program_accounts_result["result"][i]["account"]["data"][0];
+                let decoded_data = Buffer.from(encoded_data, "base64");
+                const [data] = KeyDataFromMint.struct.deserialize(decoded_data);
+
+                console.log("data ", data);
+
+                if (data.key_index !== parsed_key_index)
+                    continue;
+
+                account_found = true;
+
+                key_meta_data = data;
+            }
+
+            if (!account_found) {
+                setDiscountError("Key " + discount_key_index + " has not been minted");
                 return;
             }
-
-            let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_mint.toBuffer()], SHOP_PROGRAM))[0];
-
-            const key_meta_data = await request_key_data_from_mint(dungeon_key_meta_account);
-            
-            if (key_meta_data === null) {                
-                setDiscountError("Key account not found.<br/>Please check mint address is valid");
-                return;
-            }
-
-            key_type = key_meta_data.key_type;
-            key_index = key_meta_data.key_index;
-
-        }
-        // otherwise it should be an integer
-        else {
-
-            key_index = parseInt(existing_mint);
-            let index_array_buffer = uIntToBytes(key_index, 2, "setUint");
-            let index_buffer = new Buffer.from(index_array_buffer);
-            let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], PROGRAM_KEY))[0];
-
-            const key_meta_data = await request_key_data_from_index(dungeon_key_lookup_account);
-            
-            // if we have been passed a number check the lookup account exists
-            if (key_meta_data === null) {
-                setDiscountError("Key account not found.  Please pass key mint on first use");
-                return;
-            }
-
-            key_mint = key_meta_data.key_mint;
-            key_type = key_meta_data.key_type;
-
+        
         }
 
+        let key_mint = key_meta_data.key_mint;
+        let key_type = key_meta_data.key_type;
+        let key_index = parsed_key_index;
+    
         // before we go on lets check they actually own the nft
         let key_token_account = await getAssociatedTokenAddress(
             key_mint, // mint
@@ -1447,26 +1409,9 @@ export function DungeonApp()
             true // allow owner off curve
         );
 
-        const token_balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+key_token_account.toString()+`&p2=config&p3=base64&p4=commitment`;
+        let token_amount = await request_token_amount(key_token_account);
 
-        var token_balance_result;
-        try {
-            token_balance_result = await fetch(token_balance_url).then((res) => res.json());
-        }
-        catch {
-            setDiscountError("Error retrieving nft account data");
-            return;
-        }
-
-        let valid_response = check_json(token_balance_result)
-        if (!valid_response || token_balance_result["result"]["value"] === null) {
-            setDiscountError("Error retrieving nft account data.  Please try again.");
-            return;
-        }
-
-        let token_balance = parseInt(token_balance_result["result"]["value"]["amount"]);
-
-        if (token_balance !== 1) {
+        if (token_amount !== 1) {
             setDiscountError("User does not own dungeon key " + key_index.toString());
             return;
         }
@@ -1476,7 +1421,7 @@ export function DungeonApp()
         setCurrentKeyMint(key_mint.toString());
         setCurrentKeyIndex(key_index);
 
-    },[wallet, existing_mint]);
+    },[wallet, discount_key_index]);
 
     const Reset = useCallback( async () => 
     {
@@ -1778,18 +1723,9 @@ export function DungeonApp()
                                     <div className="font-face-sfpb">
                                         <Text textAlign="center" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
                                     </div>
-                                    {!isMobile &&
-                                    <>
-                                        <DiscountKeyInput/>
-                                    </>  
-                                    }
-                                    {isMobile &&
-                                    <>
-                                        <MobileDiscountKeyInput/>
-                                    </>  
-                                    }
-                                
-                                 
+                                    
+                                    <DiscountKeyInput/>
+                                    
                                 </VStack>
                             </Box>  
                         </HStack>
