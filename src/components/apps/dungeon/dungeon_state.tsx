@@ -30,13 +30,13 @@ import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 
 
-const enum DungeonCharacter {
+export const enum DungeonCharacter {
     knight = 0,
     ranger = 1,
     wizard = 2
 }
 
-const enum DungeonEnemy {
+export const enum DungeonEnemy {
     
     Chest = 0,
     Slime = 1,
@@ -53,7 +53,7 @@ const enum DungeonEnemy {
     None = 12
 }
 
-const enum DungeonStatus {
+export const enum DungeonStatus {
     unknown = 0,
     alive = 1,
     dead = 2,
@@ -254,6 +254,8 @@ export const DisplayEnemy = ({player_state, enemy_state, current_enemy} : {playe
     if (current_enemy === DungeonEnemy.FloorSpikes) {
         return(<></>);
     }
+
+    return(<></>);
 }
 
 export const DisplayPlayer = ({player_state, player_character, current_enemy} : {player_state : DungeonStatus, player_character : DungeonCharacter, current_enemy : DungeonEnemy}) => {
@@ -287,7 +289,10 @@ export const DisplayPlayer = ({player_state, player_character, current_enemy} : 
     if (player_character === DungeonCharacter.wizard){
         return ( <img style={{"imageRendering":"pixelated"}} src={wizard} width="10000" alt={""}/> );
     }
-    
+
+    return(
+        <></>
+    );
 }
 
 

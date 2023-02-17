@@ -1,5 +1,3 @@
-import {createContext} from 'react';
-
 import { isMobile } from "react-device-detect";
 import { PublicKey} from '@solana/web3.js';
 
@@ -27,7 +25,7 @@ if (isMobile) {
     DUNGEON_FONT_SIZE = "10px"
 }
 
-export const PROD = false;
+export const PROD = true;
 export const DEBUG = true;
 
 export var network_string = "devnet";
@@ -35,18 +33,15 @@ if (PROD) {
     network_string = "mainnet"
 }
 
-export const Screen = {
-    HOME_SCREEN : 0,
-    DUNGEON_SCREEN : 1,
-    DEATH_SCREEN : 2,
-    FAQ_SCREEN : 3,
-    ODDS_SCREEN : 4,
-    HELP_SCREEN : 5,
-    SHOP_SCREEN : 6
+export const enum Screen {
+    HOME_SCREEN = 0,
+    DUNGEON_SCREEN = 1,
+    DEATH_SCREEN = 2,
+    FAQ_SCREEN = 3,
+    ODDS_SCREEN = 4,
+    HELP_SCREEN = 5,
+    SHOP_SCREEN = 6
 }
-
-// context for all the state
-export const StateContext = createContext(null);
 
 export const BET_SIZE = 0.05;
 

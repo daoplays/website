@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useContext, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import {
     Box,
     Button,
@@ -18,8 +18,7 @@ import {
 
 import { DUNGEON_FONT_SIZE, network_string, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY,
-    StateContext} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY} from './constants';
 
 import bs58 from "bs58";
   
@@ -50,7 +49,7 @@ const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdw
 const COLLECTION_MASTER = new PublicKey('4UV8u1C3VbXZ4JFHPRnBzbQvA44b9P3JnGfe3U8HpeDJ');
 const COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
 const COLLECTION_MINT = new PublicKey('8gD8vXEzs3FaPbTdySsSBr5nGLtqCiTCvaA8DNjWZVdJ');
-const LAUNCH_DATE = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
+const LAUNCH_DATE = new Date(Date.UTC(2024, 1, 9, 15, 0)).getTime();
 
 const enum ChestStatus {
     closed = 0,
@@ -69,7 +68,7 @@ const enum ShopInstruction {
     burn_token = 3
 }
 
-export function ShopScreen()
+export function ShopScreen({num_xp} : {num_xp : number})
 {
     const wallet = useWallet();
     const [chest_state, setChestState] = useState<ChestStatus>(ChestStatus.closed);
@@ -94,10 +93,6 @@ export function ShopScreen()
     // interval for updating shop state
     const xp_interval = useRef<number | null>(null);
     const check_xp = useRef<boolean>(true);
-
-
-
-    const numXP = useContext(StateContext);
 
     const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
     "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
@@ -550,7 +545,7 @@ export function ShopScreen()
                         <Box width="10%">
                             <div className="font-face-sfpb">
                                     
-                                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {numXP}</Text>
+                                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {num_xp}</Text>
                                     
                             </div>
                         </Box>
@@ -622,7 +617,7 @@ export function ShopScreen()
                         {/* If they don't have the xp reqs */}
                         {countdown_value !== null && countdown_value === 0 &&
                         <>
-                        {xp_req !== null && numXP !== null && xp_req > 0 && numXP < xp_req &&
+                        {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp < xp_req &&
                             <Center>
                             <Box width = "100%">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP</Text>
@@ -643,7 +638,7 @@ export function ShopScreen()
                             </Box>
                             </Center>
                         }
-                        {xp_req !== null && numXP !== null && xp_req > 0 && numXP >= xp_req &&
+                        {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req &&
                             <Center>
                             <Box width = "100%">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[user_num_keys.current]}</Text>
@@ -657,14 +652,14 @@ export function ShopScreen()
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                         }
                         {countdown_value === null &&
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "hidden"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                         }
                     </div>
                 </Box>
 
                 <HStack alignItems="center">
  
-                    {xp_req !== null&& numXP !== null  && xp_req > 0 && numXP >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
+                    {xp_req !== null&& num_xp !== null  && xp_req > 0 && num_xp >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
                     <>
                         
                         <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
