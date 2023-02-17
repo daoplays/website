@@ -74,7 +74,7 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
 
 // dungeon utils
 import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction} from './utils';
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes} from './utils';
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL} from './dungeon_state';
 
@@ -156,22 +156,6 @@ const DungeonInstruction = {
 
 
 
-const uIntToBytes = (num, size, method) => {
-    const arr = new ArrayBuffer(size)
-    const view = new DataView(arr)
-    view[method + (size * 8)](0, num)
-    return arr
- }
-
-let intervalId;
-var initial_status_is_set = false;
-var initial_num_plays = -1;
-var last_num_plays = -1;
-
-var transaction_failed = false;
-var check_for_data_updates = true;
-var check_balance = true;
-var perform_check_signature = false;
 
 export function DungeonApp() 
 {
@@ -179,15 +163,14 @@ export function DungeonApp()
 
     // properties used to set what to display
     const [data_account_status, setDataAccountStatus] = useState(AccountStatus.unknown);
-    const [initial_status, setInitialStatus] = useState(DungeonStatus.unknown);
+    const initial_status = useRef(DungeonStatus.unknown);
 
     // these come from the blockchain
-    const [numPlays, setNumPlays] = useState(0);
+    const [num_plays, setNumPlays] = useState(-1);
     const [numXP, setNumXP] = useState(0);
     const [current_level, setCurrentLevel] = useState(0);
     const [currentStatus, setCurrentStatus] = useState(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
-    const [current_signature, setCurrentSignature] = useState(null);
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState("")
@@ -208,8 +191,22 @@ export function DungeonApp()
     const [player_state, setPlayerState] = useState(DungeonStatus.unknown);
     const [animateLevel, setAnimateLevel] = useState(0);
 
+    // refs to hold initial status
+    const initial_num_plays = useRef(-1);
+
+    // refs for checking signatures
+    const signature_interval = useRef(null);
+    const current_signature = useRef(null);
+    const signature_check_count = useRef(0);
+    const [transaction_failed, setTransactionFailed] = useState(false);
+
+
     // refs for setting whether we continue to check state
+    const check_data_account = useRef(true);
     const check_sol_balance = useRef(true);
+    const check_user_state = useRef(true);
+    const state_interval = useRef(null);
+
 
 
     //button processing
@@ -237,141 +234,149 @@ export function DungeonApp()
 
     
 
-      function DiscountKeyInput() {
+    function DiscountKeyInput() {
 
-        let key_size = "50";
-        if(isMobile) {
-            key_size = "40";
+    let key_size = "50";
+    if(isMobile) {
+        key_size = "40";
+    }
+
+    return (
+        <>
+    <div mt = "2rem"></div>
+    <div style={{ margin: 0 }}>
+    <Popover
+        returnFocusOnClose={false}
+        isOpen={show_discount_error}
+        onClose={CloseDiscountError}
+        placement='bottom'
+        closeOnBlur={false}
+    >
+        <PopoverTrigger>
+            <Button variant='link' size='md' onClick={OpenDiscountError}>
+                <img style={{"imageRendering":"pixelated"}} src={key} width={key_size} alt={""}/>
+            </Button> 
+        </PopoverTrigger>
+        <PopoverContent>
+            <div className="font-face-sfpb">
+                <PopoverHeader fontSize={DUNGEON_FONT_SIZE} fontWeight='semibold'>Enter Key Number</PopoverHeader>
+            </div>
+            <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverBody>
+                <FocusLock returnFocus persistentFocus={false}>
+                <VStack align="center">
+                    <div className="font-face-sfpb">                                           
+                    <NumberInput 
+                        onChange={(valueString) => setDiscountKeyIndex(valueString)}
+                        value={discount_key_index}
+                        precision={0}
+                        min={1} max={3500}>
+                        <NumberInputField/>
+                    </NumberInput>
+                    </div>
+                    <div className="font-face-sfpb">
+
+                        <Button variant='link' size='md'  onClick={ApplyKey}> 
+                            Apply
+                        </Button> 
+                        
+                    </div>    
+                    
+                </VStack>
+                {discount_error &&
+                <>
+                    <Divider mt = "1rem" mb = "1rem"/>
+                    <div className="font-face-sfpb">
+                        {discount_error}
+                    </div>
+                </>
+                }
+                </FocusLock>
+            </PopoverBody>
+        </PopoverContent>
+    </Popover>
+    </div>
+    </>
+    )
+    }
+
+    const CheckSignature = useCallback(async() =>
+    {
+        
+        if (current_signature.current === null)
+            return;
+
+        const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature.current;
+        var signature_response = await fetch(confirm_url).then((res) => res.json());
+
+        console.log("sig response:", signature_response);
+        let valid_response = check_json(signature_response)
+        if (!valid_response) {
+            return;
         }
 
-        return (
-            <>
-        <div mt = "2rem"></div>
-        <div style={{ margin: 0 }}>
-        <Popover
-            returnFocusOnClose={false}
-            isOpen={show_discount_error}
-            onClose={CloseDiscountError}
-            placement='bottom'
-            closeOnBlur={false}
-        >
-            <PopoverTrigger>
-                <Button variant='link' size='md' onClick={OpenDiscountError}>
-                    <img style={{"imageRendering":"pixelated"}} src={key} width={key_size} alt={""}/>
-                </Button> 
-            </PopoverTrigger>
-            <PopoverContent>
-                <div className="font-face-sfpb">
-                    <PopoverHeader fontSize={DUNGEON_FONT_SIZE} fontWeight='semibold'>Enter Key Number</PopoverHeader>
-                </div>
-                <PopoverArrow />
-                <PopoverCloseButton />
-                <PopoverBody>
-                    <FocusLock returnFocus persistentFocus={false}>
-                    <VStack align="center">
-                        <div className="font-face-sfpb">                                           
-                        <NumberInput 
-                            onChange={(valueString) => setDiscountKeyIndex(valueString)}
-                            value={discount_key_index}
-                            precision={0}
-                            min={1} max={3500}>
-                            <NumberInputField/>
-                        </NumberInput>
-                        </div>
-                        <div className="font-face-sfpb">
-
-                            <Button variant='link' size='md'  onClick={ApplyKey}> 
-                                Apply
-                            </Button> 
-                            
-                        </div>    
-                        
-                    </VStack>
-                    {discount_error &&
-                    <>
-                        <Divider mt = "1rem" mb = "1rem"/>
-                        <div className="font-face-sfpb">
-                            {discount_error}
-                        </div>
-                    </>
-                    }
-                    </FocusLock>
-                </PopoverBody>
-            </PopoverContent>
-        </Popover>
-        </div>
-        </>
-        )
-      }
-
-    const check_signature = useCallback(async() =>
-    {
+        let confirmation = signature_response["result"]["value"][0];
         
-            if (!perform_check_signature)
-                return;
+        if (confirmation !== null) {
 
-            const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature;
-            var signature_response = await fetch(confirm_url).then((res) => res.json());
-
-            console.log("sig response:", signature_response);
-            let valid_response = check_json(signature_response)
-            if (!valid_response) {
-                return;
+            if (confirmation["err"] !== null) {
+                console.log("error: ", confirmation["err"]);
+                setTransactionFailed(true);
+            }
+            else {
+                setTransactionFailed(false);
             }
 
-            let confirmation = signature_response["result"]["value"][0];
+            current_signature.current = null;
+            signature_check_count.current = 0;
+        }
+
+        if (signature_check_count.current >= 10) {
+            setTransactionFailed(true);
+            current_signature.current = null;
+            signature_check_count.current = 0;
+        }
+
+    }, []);
+
+    // interval for checking signatures
+    useEffect(() => {
+
+        if (signature_interval.current === null) {
+            signature_interval.current = window.setInterval(CheckSignature, 1000);
+        }
+        else{
+            window.clearInterval(signature_interval.current);
+            signature_interval.current = null;
             
-            if (confirmation !== null) {
-
-                if (confirmation["err"] !== null) {
-                    console.log("error: ", confirmation["err"]);
-                    transaction_failed = true;
-                }
-                else {
-                    transaction_failed = false;
-                    
-                }
-
-                setCurrentSignature(null)
-                perform_check_signature = false;
+        }
+        // here's the cleanup function
+        return () => {
+            if (signature_interval.current !== null) {
+            window.clearInterval(signature_interval.current);
+            signature_interval.current = null;
             }
-
-    }, [current_signature]);
-
-    useEffect(() => 
-    {
-        if (current_signature === null)
-            return;
-
-        check_signature();
-
-        if (current_signature === null)
-            return;
-        
-        const timer = setTimeout(() => {
-            check_signature();
-            }, 1000);
-            return () => clearTimeout(timer);
-
-    }, [current_signature, check_signature]);
+        };
+    }, [CheckSignature]);
 
      
-    const init = useCallback(async () => 
+    const check_state = useCallback(async () => 
     {     
         if (DEBUG) {
-            console.log("in in it check_updates ", check_for_data_updates, " check balance: ", check_balance);
+            console.log("in in it check_updates ", check_user_state.current, " check balance: ", check_data_account.current);
         }
 
         if (!wallet.publicKey) {
             return;
         }
 
-        if (!check_for_data_updates && !check_balance)
+        if (!check_user_state.current && !check_data_account.current)
             return;
 
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-        if (check_balance) {
+        if (check_data_account.current) {
             
             // first check if the data account exists
             try {
@@ -398,7 +403,7 @@ export function DungeonApp()
                 let balance = balance_result["result"]["value"];
                 if (balance > 0) {
                     setDataAccountStatus(AccountStatus.created);
-                    check_balance = false;
+                    check_data_account.current = false;
                 }
                 else {
                     setDataAccountStatus(AccountStatus.not_created);
@@ -412,7 +417,7 @@ export function DungeonApp()
         }
         
 
-        if (!check_for_data_updates)
+        if (!check_user_state.current)
             return;
 
         try {
@@ -424,48 +429,30 @@ export function DungeonApp()
             }
 
             let current_status = player_data.player_status + 1;
-            if (!initial_status_is_set) {
-
-                if (current_status === DungeonStatus.alive){
-                    setInitialStatus(DungeonStatus.alive);
-                }
-
-                if (current_status === DungeonStatus.dead){
-                    setInitialStatus(DungeonStatus.dead);
-                }
-
-                if (current_status === DungeonStatus.exploring){
-                    setInitialStatus(DungeonStatus.exploring);
-                }
-
-                initial_status_is_set = true;
-                
+            if (initial_status.current === DungeonStatus.unknown) {
+                initial_status.current = current_status;
             }
 
-            let num_plays = player_data.num_plays.toNumber();
+            let current_num_plays = player_data.num_plays.toNumber();
 
-
-
-            if (num_plays <= last_num_plays) {
+            if (current_num_plays <= num_plays) {
                 if (DEBUG) {
-                    console.log("num plays not increased", num_plays);
+                    console.log("num plays not increased", current_num_plays);
                 }
                 return;
             }
 
-            last_num_plays = num_plays;
-
-            setNumPlays(num_plays);
+            setNumPlays(current_num_plays);
 
             if (DEBUG) {
-                console.log("in init, progress: ", player_data.in_progress, "enemy", player_data.dungeon_enemy, "alive", DungeonStatusString[player_data.player_status + 1], "num_plays", num_plays, "num_wins", player_data.num_wins.toNumber());
+                console.log("in init, progress: ", player_data.in_progress, "enemy", player_data.dungeon_enemy, "alive", DungeonStatusString[player_data.player_status + 1], "num_plays", current_num_plays, "num_wins", player_data.num_wins.toNumber());
             }
 
-            if (initial_num_plays ===  -1)
-            {
-                initial_num_plays =  num_plays;
+            if (initial_num_plays.current ===  -1) {
+                initial_num_plays.current =  current_num_plays;
             }
-            if (num_plays === 0)  {
+
+            if (current_num_plays === 0)  {
                 return;
             }  
 
@@ -477,7 +464,7 @@ export function DungeonApp()
 
             setNumXP(player_data.num_wins.toNumber());
 
-            check_for_data_updates = false;
+            check_user_state.current = false;
 
             
         } catch(error) {
@@ -488,18 +475,27 @@ export function DungeonApp()
         }
         
 
-    }, [wallet]);
+    }, [wallet, num_plays]);
 
-    useEffect(() => 
-    {
-        if (wallet.publicKey && !intervalId) {
-            intervalId = setInterval(init, 1000);
+    // interval for checking state
+    useEffect(() => {
+
+        if (state_interval.current === null) {
+            state_interval.current = window.setInterval(check_state, 1000);
         }
         else{
-            clearInterval(intervalId);
-            intervalId = null;
+            window.clearInterval(state_interval.current);
+            state_interval.current = null;
+            
         }
-    }, [init, wallet]);
+        // here's the cleanup function
+        return () => {
+            if (state_interval.current !== null) {
+            window.clearInterval(state_interval.current);
+            state_interval.current = null;
+            }
+        };
+    }, [check_state]);
 
     // reset things when the wallet changes
     useEffect(() => 
@@ -508,23 +504,24 @@ export function DungeonApp()
             console.log("wallet things changed")
         }
 
-        check_balance = true;
-        initial_status_is_set = false;
-        initial_num_plays = -1;
-        last_num_plays = -1;
-        transaction_failed = false;
+        initial_num_plays.current = -1;
+        initial_status.current = DungeonStatus.unknown;
+        setTransactionFailed(false);
         setScreen(Screen.HOME_SCREEN);
         setCurrentLevel(0);
-        setNumPlays(0);
+        setNumPlays(-1);
         setNumXP(0);
         setDataAccountStatus(AccountStatus.unknown);
-        setInitialStatus(DungeonStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
         setCurrentEnemy(DungeonEnemy.None);
         setEnemyState(DungeonStatus.unknown);
-        check_for_data_updates = true;
+
+        check_data_account.current = true;
+        check_user_state.current = true;
         check_sol_balance.current = true;
+        signature_check_count.current = 0;
+
     }, [wallet]);
 
 
@@ -532,7 +529,7 @@ export function DungeonApp()
     useEffect(() => 
         {
             if (DEBUG) {
-                console.log("in use effect, progress: ", current_level, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", numPlays, "init num plays", initial_num_plays);
+                console.log("in use effect, progress: ", current_level, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", num_plays, "init num plays", initial_num_plays.current);
             }
       
             if (current_level === 0)
@@ -549,7 +546,7 @@ export function DungeonApp()
             }
 
             // if we aren't alive and numplays is still initial num plays we shouldn't display the enemy
-            if (numPlays > 1 && numPlays === initial_num_plays && data_account_status === AccountStatus.created && currentStatus !== DungeonStatus.alive)
+            if (num_plays > 1 && num_plays === initial_num_plays.current && data_account_status === AccountStatus.created && currentStatus !== DungeonStatus.alive)
                 return;
 
             if (DEBUG) {
@@ -565,7 +562,7 @@ export function DungeonApp()
                 setAnimateLevel(2);
             }
 
-        }, [numPlays, current_level, current_enemy, currentStatus, data_account_status]);
+        }, [num_plays, current_level, current_enemy, currentStatus, data_account_status]);
 
     useEffect(() => 
     {
@@ -604,7 +601,6 @@ export function DungeonApp()
             console.log("In initial use effect");
         }
 
-        setInitialStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
         setEnemyState(DungeonStatus.unknown);
         
@@ -648,9 +644,9 @@ export function DungeonApp()
                 let key_mint_account = new PublicKey(current_key_mint);
                 let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", key_mint_account.toBuffer()], SHOP_PROGRAM))[0];
 
-                let index_array_buffer = uIntToBytes(current_key_index, 2, "setUint");
-                let index_buffer = new Buffer.from(index_array_buffer);
-                let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], DUNGEON_PROGRAM))[0];
+                
+                let index_buffer = uInt16ToLEBytes(current_key_index);
+                let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer], DUNGEON_PROGRAM))[0];
 
                 let key_token_account = await getAssociatedTokenAddress(
                     key_mint_account, // mint
@@ -711,8 +707,8 @@ export function DungeonApp()
                     console.log("play signature: ", signature);
                 }
 
-                setCurrentSignature(signature);
-                perform_check_signature = true;
+                current_signature.current = signature;
+                signature_check_count.current = 0;
 
             } catch(error) {
                 setProcessingTransaction(false);
@@ -728,7 +724,7 @@ export function DungeonApp()
             setEnemyState(DungeonStatus.unknown);
             setPlayerState(DungeonStatus.alive);
             setProcessingTransaction(false);
-            check_for_data_updates = true;
+            check_user_state.current = true;
             check_sol_balance.current = true;
 
 
@@ -790,8 +786,8 @@ export function DungeonApp()
 
                 let signature = transaction_response["result"];
 
-                setCurrentSignature(signature);
-                perform_check_signature = true;
+                current_signature.current = signature;
+                signature_check_count.current = 0;
 
             } catch(error) {
                 console.log(error);
@@ -806,7 +802,7 @@ export function DungeonApp()
             setScreen(Screen.HOME_SCREEN);
             setEnemyState(DungeonStatus.unknown);
             setProcessingTransaction(false);
-            check_for_data_updates = true;
+            check_user_state.current = true;
             check_sol_balance.current = true;
             return;
         
@@ -827,10 +823,9 @@ export function DungeonApp()
         
 
         // if the string is more than 4 digits this should be a mint address
-        let index_array_buffer = uIntToBytes(parsed_key_index, 2, "setUint");
-        let index_buffer = new Buffer.from(index_array_buffer);
-        let reversed_buffer = index_buffer.reverse();
-        let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), reversed_buffer], DUNGEON_PROGRAM))[0];
+        let index_buffer = uInt16ToLEBytes(parsed_key_index);
+
+        let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer], DUNGEON_PROGRAM))[0];
 
         //console.log("lookup: ", Buffer.from("key_meta"), reversed_buffer);
         let key_meta_data = await request_key_data_from_index(dungeon_key_lookup_account);
@@ -957,7 +952,7 @@ export function DungeonApp()
 
     const CharacterSelect = () => {
 
-        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "initial status", initial_status, initial_status === DungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", num_plays,initial_num_plays.current, "dataaccount:", data_account_status, "initial status", initial_status.current, initial_status.current === DungeonStatus.unknown);
             return (
                 
                 <HStack>
@@ -1116,17 +1111,17 @@ export function DungeonApp()
 
         var visibility = "visible";
 
-        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", numPlays,  initial_num_plays, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status], initial_status === DungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", num_plays,  initial_num_plays.current, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status.current], initial_status.current === DungeonStatus.unknown);
 
         // if i don't need to make an account but player status is unknown return nothing
-        if (data_account_status === AccountStatus.created  && (initial_status === DungeonStatus.unknown || (numPlays === initial_num_plays && (DungeonStatus === DungeonStatus.alive || DungeonStatus === DungeonStatus.exploring)))) {
+        if (data_account_status === AccountStatus.created  && (initial_status.current === DungeonStatus.unknown || (num_plays === initial_num_plays.current && currentStatus === DungeonStatus.alive))) {
                 visibility = "hidden";
             
         }
 
         //console.log("have made it here in CS 2");
         // if i am alive or exploring and  the level is > 0 never show this
-        if (data_account_status === AccountStatus.unknown ||  (current_level > 0 && (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring))) {
+        if (data_account_status === AccountStatus.unknown ||  (current_level > 0 && currentStatus === DungeonStatus.alive)) {
                 visibility = "hidden";
             
         }

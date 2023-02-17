@@ -23,6 +23,16 @@ export function WalletConnected()
     );
 }
 
+
+export function uInt16ToLEBytes(num : number) : Buffer {
+
+    const bytes = Buffer.alloc(2);
+    bytes.writeUInt16LE(num);
+   
+    return bytes
+ }
+
+
 interface BasicReply {
     id : number;
     jsonrpc : string;
@@ -252,7 +262,7 @@ export async function request_current_balance(pubkey : PublicKey) : Promise<numb
     let current_balance : number = account_info_result["result"]["value"]["lamports"] / LAMPORTS_PER_SOL;
 
     return current_balance;
-    
+
 }
 export async function request_token_amount(pubkey : PublicKey) : Promise<number>
 {
