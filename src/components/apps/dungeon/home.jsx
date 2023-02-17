@@ -26,7 +26,6 @@ import {
 import FocusLock from 'react-focus-lock';
 
 import { isMobile } from "react-device-detect";
-import { randomBytes } from 'crypto'
 
 import useSound from 'use-sound';
 
@@ -75,9 +74,9 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
 
 // dungeon utils
 import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, serialise_explore_instruction} from './utils';
+    serialise_play_instruction, serialise_basic_instruction} from './utils';
 
-import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer} from './dungeon_state';
+import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL} from './dungeon_state';
 
 // navigation
 import {Navigation} from './navigation';
@@ -97,12 +96,6 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
-
-const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
-const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
-const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
-
-
 
 const AccountStatus = {
     unknown : 0,
@@ -171,18 +164,15 @@ const uIntToBytes = (num, size, method) => {
  }
 
 let intervalId;
-let randomsIntervalId;
 var initial_status_is_set = false;
 var initial_num_plays = -1;
 var last_num_plays = -1;
 
 var transaction_failed = false;
-var global_randoms_address = null;
 var check_for_data_updates = true;
 var check_balance = true;
 var perform_check_signature = false;
 
-var have_created_randoms_account = false;
 export function DungeonApp() 
 {
     const wallet = useWallet();
@@ -198,11 +188,6 @@ export function DungeonApp()
     const [currentStatus, setCurrentStatus] = useState(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
     const [current_signature, setCurrentSignature] = useState(null);
-
-    // there are three bits of information to store about the randoms account
-    // the key, whether the account has been created, and whether the randoms have been fulfilled
-    //const [current_randoms_key, setCurrentRandomsKey] = useState(null);
-    const [randoms_fulfilled, setRandomsFullfilled] = useState(false);
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState("")
@@ -370,107 +355,7 @@ export function DungeonApp()
 
     }, [current_signature, check_signature]);
 
-    const check_randoms = useCallback(async() =>
-    {
-
-            if (global_randoms_address === null) {
-
-                return
-            }
-
-            if (!have_created_randoms_account) {
-            
-                // first check if the data account exists
-                try {
-
-                    const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+global_randoms_address.toString();
-                    var balance_result;
-                    try {
-                        balance_result = await fetch(balance_url).then((res) => res.json());
-                    }
-                    catch(error) {
-                        console.log(error);
-                        return;
-                    }
-
-                    let valid_response = check_json(balance_result)
-                    if (!valid_response) {
-                        return;
-                    }
-
-                    if (balance_result["result"]["value"] == null)
-                        return;
-                    
-                    let balance = balance_result["result"]["value"];
-                    if (balance > 0) {
-                        have_created_randoms_account = true;
-                    }
-                    else {
-                        have_created_randoms_account = false;
-                        return;
-                    }
-                }
-                catch(error) {
-                    console.log(error);
-                    return;
-                }
-            }
-
-            const randoms_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+global_randoms_address.toString()+`&config=true&encoding=base64&commitment=confirmed`;
-
-            var randoms_account_info_result;
-            try {
-                randoms_account_info_result = await fetch(randoms_account_info_url).then((res) => res.json());
-            }
-            catch(error) {
-                console.log(error);
-                return;
-            }
-
-            let valid_response = check_json(randoms_account_info_result)
-            if (!valid_response) {
-                return;
-            }
-
-            if (randoms_account_info_result["result"]["value"]["data"]  === null) {
-                return;
-            }
-
-            let randoms_account_encoded_data = randoms_account_info_result["result"]["value"]["data"];
-            let randoms_account_data = Buffer.from(randoms_account_encoded_data[0], "base64");
-
-            // data structure of randomness:
-            // 8 bytes anchor stuff
-            // 32 bytes seed
-            // 64 bytes randomness
-            // vector of responses, each 32 (key) + 64 (randomness) = 96 bytes
-            let randoms = randoms_account_data.slice(8 + 32, 8 + 32 + 64)
-            
-            if (Buffer.alloc(64).equals(randoms)) {
-                return;
-            }
-
-            setRandomsFullfilled(true);
-            global_randoms_address = null;
-            
-
-    }, []);
-
-    
-    useEffect(() => 
-    {
-
-        if (wallet.publicKey && !randomsIntervalId) {
-            randomsIntervalId = setInterval(check_randoms, 1000);
-        }
-        else{
-            clearInterval(randomsIntervalId);
-            randomsIntervalId = null;
-        }
-        
-
-    }, [wallet, check_randoms]);
-    
+     
     const init = useCallback(async () => 
     {     
         if (DEBUG) {
@@ -584,8 +469,6 @@ export function DungeonApp()
                 return;
             }  
 
-            const randoms_key = null;
-
             setCurrentEnemy(player_data.dungeon_enemy);
             
             setCurrentLevel(player_data.in_progress);
@@ -593,12 +476,6 @@ export function DungeonApp()
             setCurrentStatus(current_status);
 
             setNumXP(player_data.num_wins.toNumber());
-
-            // only update the randoms key here if we are exploring
-            if (current_status === DungeonStatus.exploring) {
-                //setCurrentRandomsKey(randoms_key);
-                global_randoms_address = randoms_key;
-            }
 
             check_for_data_updates = false;
 
@@ -858,113 +735,6 @@ export function DungeonApp()
 
 
     },[wallet, player_character, current_key_index, current_key_mint]);
-
-    const Explore = useCallback( async () => 
-    {
-
-            let program_data_key = (PublicKey.findProgramAddressSync(["main_data_account"], DUNGEON_PROGRAM))[0];
-            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
-
-            let networkStateAddress = (PublicKey.findProgramAddressSync([ORAO_CONFIG_ACCOUNT_SEED], ORAO_KEY))[0];
-
-            const network_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+networkStateAddress.toString()+`&config=true&encoding=base64&commitment=confirmed`;
-
-            var network_account_info_result;
-            try {
-                network_account_info_result = await fetch(network_account_info_url).then((res) => res.json());
-            }
-            catch(error) {
-                console.log(error);
-                return;
-            }
-
-            let valid_response = check_json(network_account_info_result)
-            if (!valid_response) {
-                return;
-            }
-
-            if (network_account_info_result["result"]["value"] == null || network_account_info_result["result"]["value"]["data"] == null ) {
-                return;
-            }
-
-            let network_account_encoded_data = network_account_info_result["result"]["value"]["data"];
-            let network_account_data = Buffer.from(network_account_encoded_data[0], "base64");
-
-            const treasuryAddress = new PublicKey(network_account_data.slice(8+32, 8+32 + 32));
-
-            const seed = randomBytes(32)
-
-            let randomAddress = (PublicKey.findProgramAddressSync([ORAO_RANDOMNESS_ACCOUNT_SEED, seed], ORAO_KEY))[0];
-
-            const instruction_data = serialise_explore_instruction(DungeonInstruction.explore, seed, player_character);
-
-            const play_instruction = new TransactionInstruction({
-                keys: [
-                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-                    {pubkey: player_data_key, isSigner: false, isWritable: true},
-                    {pubkey: program_data_key, isSigner: false, isWritable: true},
-
-                    {pubkey: networkStateAddress, isSigner: false, isWritable: true},
-                    {pubkey: treasuryAddress, isSigner: false, isWritable: true},
-                    {pubkey: randomAddress, isSigner: false, isWritable: true},
-
-                    {pubkey: ORAO_KEY, isSigner: false, isWritable: false},
-                    {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
-
-                ],
-                programId: DUNGEON_PROGRAM,
-                data: instruction_data
-            });
-
-            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
-
-            let transaction = new Transaction(txArgs);
-            transaction.feePayer = wallet.publicKey;
-
-
-            transaction.add(play_instruction);
-
-            try {
-                let signed_transaction = await wallet.signTransaction(transaction);
-                const encoded_transaction = bs58.encode(signed_transaction.serialize());
-
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
-                var transaction_response = await fetch(send_url).then((res) => res.json());
-
-                let valid_response = check_json(network_account_info_result)
-                if (!valid_response) {
-                    console.log(transaction_response)
-                    return;
-                }
-                let signature = transaction_response["result"];
-
-                setCurrentSignature(signature);
-
-            } catch(error) {
-                console.log(error);
-                return;
-            }
-
-            if (DEBUG) {
-                console.log("in explore: setting state");
-            }
-            setScreen(Screen.DUNGEON_SCREEN);
-            setEnemyState(DungeonStatus.unknown);
-            setPlayerState(DungeonStatus.exploring);
-            setCurrentStatus(DungeonStatus.exploring);
-
-            global_randoms_address  = null;
-            //setCurrentRandomsKey(null);
-            setRandomsFullfilled(false);
-            check_for_data_updates = true;
-            check_sol_balance.current = true;
-
-    },[wallet, player_character]);  
-
 
     const Quit = useCallback( async () => 
     {
@@ -1417,34 +1187,6 @@ export function DungeonApp()
         )
     }
 
-    const DisplayXP = () =>  {
-
-        
-        return(
-                <Box width="10%">
-                    <div className="font-face-sfpb">
-                            
-                            <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {numXP}</Text>
-                            
-                    </div>
-                </Box>
-        );
-    }
-
-
-    const DisplayLVL = () =>  {
-
-        
-        return(
-                <Box width="10%">
-                    <div className="font-face-sfpb">
-                            
-                            <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Lvl. {current_level}</Text>
-                            
-                    </div>
-                </Box>
-        );
-    }
 
     const InDungeon = () =>  {
 
@@ -1454,7 +1196,7 @@ export function DungeonApp()
         }
 
         if (DEBUG) {
-            console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", randoms_fulfilled, "current level", current_level, "enemy state", DungeonStatusString[enemy_state], numXP);
+            console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", current_level, "enemy state", DungeonStatusString[enemy_state], numXP);
         }
         return (
             
@@ -1462,9 +1204,9 @@ export function DungeonApp()
             <Box width="100%">
                     <HStack>
                         <Box width="25%"></Box>  
-                        <DisplayLVL/>
+                        <DisplayLVL current_level={current_level}/>
                         <Box width="30%"></Box>     
-                        <DisplayXP/>
+                        <DisplayXP current_xp={numXP}/>
                         <Box width="25%"></Box>  
                 </HStack>
             </Box>
@@ -1535,36 +1277,17 @@ export function DungeonApp()
                 </VStack>
                 </>
                 }
-                {current_level > 0  && 
+                {player_state === DungeonStatus.alive && current_level > 0  && 
                     <>
-                    
-                    { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === false  &&
-                        <div className="font-face-sfpb">
-                            <Text fontSize={font_size} textAlign="center" color="white">You stumble through the darkened passage ways </Text>
-                        </div>
-                    }
-                    { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === true  &&
-                    <VStack  alignItems="center" spacing="3%">
-                            <Box width = "80%">
-                            <div className="font-face-sfpb">
-                                <Text fontSize={font_size} textAlign="center" color="white">You come across an unlocked door, and cracking it ajar hear the chittering sounds of some ancient evil from within</Text>
-                            </div>
-                            </Box>
-                            <Button variant='link' size='md' onClick={Explore} ml="10rem">
-                                <div className="font-face-sfpb">
-                                    <Text textAlign="center" fontSize={font_size} color="white">Enter Room</Text>
-                                </div> 
-                            </Button> 
-                        
-                    </VStack>
-                    }
-                    { player_state === DungeonStatus.alive && enemy_state  === DungeonStatus.alive  && 
+                                      
+                    {enemy_state  === DungeonStatus.alive  && 
                         <DisplayEnemyAppearsText current_enemy={current_enemy} current_level={current_level}/>
                     }
-                    {player_state === DungeonStatus.alive && enemy_state === DungeonStatus.dead &&
+                    {enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
                             <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy}/>
+
                             {current_level < 7 &&
                                 <Center>
 
@@ -1603,23 +1326,23 @@ export function DungeonApp()
                                 </Center>
                             }
                             {current_level >= 7  &&
-                            <Center>
-                                {!processing_transaction &&
-                                    <Button variant='link' size='md' onClick={Quit}>
-                                        <div className="font-face-sfpb">
-                                            <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
-                                        </div> 
-                                    </Button> 
-                                }
-                                {processing_transaction &&
-                                    <Button variant='link' size='md'>
-                                        <div className="font-face-sfpb">
-                                            <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
-                                        </div> 
-                                    </Button> 
-                                }
-                            </Center>
-                        }
+                                <Center>
+                                    {!processing_transaction &&
+                                        <Button variant='link' size='md' onClick={Quit}>
+                                            <div className="font-face-sfpb">
+                                                <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
+                                            </div> 
+                                        </Button> 
+                                    }
+                                    {processing_transaction &&
+                                        <Button variant='link' size='md'>
+                                            <div className="font-face-sfpb">
+                                                <Text  textAlign="center" fontSize={font_size} color="white">Retire</Text>
+                                            </div> 
+                                        </Button> 
+                                    }
+                                </Center>
+                            }
                         </VStack>
 
                     }
