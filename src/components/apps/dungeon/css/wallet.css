@@ -7,6 +7,7 @@
     line-height: 40px !important;
     padding: 0 0px !important;
     border-radius: 0px !important;
+    text-decoration: underline !important;
  }
   
  .wallet-button:hover {

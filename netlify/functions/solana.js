@@ -45,41 +45,49 @@ exports.handler = async function (event, context) {
 
             if (function_name == "requestAirdrop") {
                 p2 = parseInt(p2);
-            }
+            }              
+            params.push(p2);
+        }
 
-            if (p2 == "config") {
-                var extra_config = {};
-
-                if (event.queryStringParameters.p3) {
-                    let p3 = event.queryStringParameters.p3;
-
-                    if (p3 == "base64") {
-                        extra_config["encoding"] = "base64";
-                    }
-                    else if (p3 == "jsonParsed") {
-                        extra_config["encoding"] = "jsonParsed";
-                    }
-                    else if (p3 == "skippreflight") {
-                        extra_config["skipPreflight"] = true;
-                    }
-                }
-
-                if (event.queryStringParameters.p4) {
-                    let p4 = event.queryStringParameters.p4;
-                    
-                    if (p4 == "commitment") {
-                        extra_config["commitment"] = "confirmed";
-                    }
-                    
-                }
+        if (event.queryStringParameters.config) {
                 
+            var extra_config = {};
 
-                params.push(extra_config);
-            }
-            else {
-                params.push(p2);
+            if (event.queryStringParameters.encoding) {
+                extra_config["encoding"] = event.queryStringParameters.encoding;
             }
 
+            if (event.queryStringParameters.commitment) {
+                extra_config["commitment"] = event.queryStringParameters.commitment;
+            }
+
+            if (event.queryStringParameters.p3) {
+                let p3 = event.queryStringParameters.p3;
+
+               
+                if (p3 == "skippreflight") {
+                    extra_config["skipPreflight"] = true;
+                }
+            }
+
+            if (event.queryStringParameters.filters) {
+
+                extra_config["filters"] = [];
+                if (event.queryStringParameters.data_size_filter) {
+                    let data_size_filter = event.queryStringParameters.data_size_filter;
+                    extra_config["filters"].push({"dataSize" : parseInt(data_size_filter)});
+                }
+                if (event.queryStringParameters.memcmp) {
+                    let offset = event.queryStringParameters.offset;
+                    let bytes = event.queryStringParameters.bytes;
+
+                    extra_config["filters"].push({"memcmp" : {"offset" : parseInt(offset), "bytes" : bytes}});
+                }
+
+            }
+            
+
+            params.push(extra_config);
         }
 
         console.log("have param names ", function_name, params);

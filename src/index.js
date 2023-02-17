@@ -9,7 +9,7 @@ import "./index.css";
 import * as serviceWorker from "./serviceWorker";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import {
-    Dungeon
+    Home
 
 } from "./components";
 
@@ -17,7 +17,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <Router>
     <Routes>
-        <Route path="/" element={<Dungeon />} />
+        <Route path="/" element={<Home />} />
     </Routes>
   </Router>
 );
