@@ -48,3 +48,5 @@ export const Screen = {
 // context for all the state
 export const StateContext = createContext(null);
 
+export const BET_SIZE = 0.05;
+

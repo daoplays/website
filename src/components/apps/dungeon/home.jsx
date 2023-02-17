@@ -65,33 +65,19 @@ import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 import selector from "./images/Selector.gif"
 
-//enemies
-import closed_chest from "./images/chest_closed.png"
-import open_chest from "./images/chest_open.png"
-import mimic from "./images/Mimic.gif"
-import slime from "./images/Slime.gif"
-import goblins from "./images/Goblins.gif"
-import skeletons_hallway from "./images/Skellies.gif"
-import skeletons_graveyard from "./images/Skellies.gif"
-import elves from "./images/Elves.gif"
-import orc from "./images/Orc.gif"
-import skeleton_knight from "./images/Skelly_Knight.gif"
-import skeleton_wizard from "./images/Skelly_Wiz.gif"
-import reaper from "./images/Reaper.gif"
-import boulder from "./images/Boulder.png"
-import floor_spikes from "./images/Spikes.png"
-
 //sounds
 import click_sound from './sounds/click.mp3';
 
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, StateContext, DEBUG, Screen} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, StateContext, DEBUG, Screen, BET_SIZE} from './constants';
 
 // dungeon utils
 import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
     serialise_play_instruction, serialise_basic_instruction, serialise_explore_instruction} from './utils';
+
+import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer} from './dungeon_state';
 
 // navigation
 import {Navigation} from './navigation';
@@ -116,7 +102,7 @@ const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
 const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
 
-const BET_SIZE = 0.05;
+
 
 const AccountStatus = {
     unknown : 0,
@@ -167,13 +153,6 @@ const KeyType = {
     Unknown : 3
 }
 
-const DungeonEnemyName = ["Mimic", "Slime", "Goblins", "Skeletons", "Skeletons", "Elves", "Orc", "Skeleton Knight", "Skeleton Wizard", "Reaper", "Boulder", "Floor Spikes"];
-
-
-const DungeonEnemyInitialText = ["mimic", "an oozing green slime", "a pair of goblins", "a horde of skeletons", "a horde of skeletons", "a group of elven archers", "a huge orc", "a skeleton knight", "a skeleton wizard", "the Grim Reaper", "Boulder", "Floor Spikes"];
-
-const DungeonEnemyDefeatText = ["The mimic's transformation stuns you for just a moment, but that is all it needed", "The slime oozes past your defenses and envelopes you, suffocating you where you stand", "The goblins are too fast, you lose sight of them for just a second and the next thing you see is a knife to your throat", "The skeletons manage to surround you, and strike from all sides", "There were just.. too many skeletons", "You take an arrow to the knee, and while stumbling are unable to dodge the next volley to the heart", "With one swing from it's axe the orc cracks your head open like an egg", "Your attacks are simply deflected off the knight's armour until it gets bored and strikes you down", "Hoarsely croaking some ancient incantation the wizard turns you inside out before you even have a chance to attack", "The Reaper's scythe passes through you as though you were no more than air as it claims another soul", "Boulder", "Floor Spikes"];
-
 const DungeonInstruction = {
     add_funds : 0,
     distribute : 1,
@@ -215,7 +194,7 @@ export function DungeonApp()
     // these come from the blockchain
     const [numPlays, setNumPlays] = useState(0);
     const [numXP, setNumXP] = useState(0);
-    const [currentLevel, setCurrentLevel] = useState(0);
+    const [current_level, setCurrentLevel] = useState(0);
     const [currentStatus, setCurrentStatus] = useState(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState(DungeonEnemy.None);
     const [current_signature, setCurrentSignature] = useState(null);
@@ -239,7 +218,7 @@ export function DungeonApp()
 
     const [screen, setScreen] = useState(Screen.HOME_SCREEN);
 
-    const [which_character, setWhichCharacter] = useState(DungeonCharacter.knight);
+    const [player_character, setWhichCharacter] = useState(DungeonCharacter.knight);
     const [enemy_state, setEnemyState] = useState(DungeonStatus.unknown);
     const [player_state, setPlayerState] = useState(DungeonStatus.unknown);
     const [animateLevel, setAnimateLevel] = useState(0);
@@ -676,10 +655,10 @@ export function DungeonApp()
     useEffect(() => 
         {
             if (DEBUG) {
-                console.log("in use effect, progress: ", currentLevel, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", numPlays, "init num plays", initial_num_plays);
+                console.log("in use effect, progress: ", current_level, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", numPlays, "init num plays", initial_num_plays);
             }
       
-            if (currentLevel === 0)
+            if (current_level === 0)
                 return;
 
             if (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring) {
@@ -709,7 +688,7 @@ export function DungeonApp()
                 setAnimateLevel(2);
             }
 
-        }, [numPlays, currentLevel, current_enemy, currentStatus, data_account_status]);
+        }, [numPlays, current_level, current_enemy, currentStatus, data_account_status]);
 
     useEffect(() => 
     {
@@ -768,7 +747,7 @@ export function DungeonApp()
             let program_data_key = (PublicKey.findProgramAddressSync(["main_data_account"], DUNGEON_PROGRAM))[0];
             let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-            const instruction_data = serialise_play_instruction(DungeonInstruction.play, which_character);
+            const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character);
 
             var account_vector  = [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -878,7 +857,7 @@ export function DungeonApp()
             check_sol_balance.current = true;
 
 
-    },[wallet, which_character, current_key_index, current_key_mint]);
+    },[wallet, player_character, current_key_index, current_key_mint]);
 
     const Explore = useCallback( async () => 
     {
@@ -917,7 +896,7 @@ export function DungeonApp()
 
             let randomAddress = (PublicKey.findProgramAddressSync([ORAO_RANDOMNESS_ACCOUNT_SEED, seed], ORAO_KEY))[0];
 
-            const instruction_data = serialise_explore_instruction(DungeonInstruction.explore, seed, which_character);
+            const instruction_data = serialise_explore_instruction(DungeonInstruction.explore, seed, player_character);
 
             const play_instruction = new TransactionInstruction({
                 keys: [
@@ -984,7 +963,7 @@ export function DungeonApp()
             check_for_data_updates = true;
             check_sol_balance.current = true;
 
-    },[wallet, which_character]);  
+    },[wallet, player_character]);  
 
 
     const Quit = useCallback( async () => 
@@ -1210,11 +1189,11 @@ export function DungeonApp()
 
     const CharacterSelect = () => {
 
-        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "initial status", initial_status, initial_status === DungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", numPlays,initial_num_plays, "dataaccount:", data_account_status, "initial status", initial_status, initial_status === DungeonStatus.unknown);
             return (
                 
                 <HStack>
-                    {which_character === DungeonCharacter.knight &&
+                    {player_character === DungeonCharacter.knight &&
                         <Box  style={{
                             backgroundImage: `url(${selector})`,
                             backgroundPosition: 'center',
@@ -1230,7 +1209,7 @@ export function DungeonApp()
                             </Box>
                         </Box>
                     }
-                    {which_character !== DungeonCharacter.knight &&
+                    {player_character !== DungeonCharacter.knight &&
                         <Box  width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectKnight}>
@@ -1240,7 +1219,7 @@ export function DungeonApp()
                         </Box>
                     }
                     
-                    {which_character === DungeonCharacter.ranger &&
+                    {player_character === DungeonCharacter.ranger &&
                         <Box  style={{
                             backgroundImage: `url(${selector})`,
                             backgroundPosition: 'center',
@@ -1256,7 +1235,7 @@ export function DungeonApp()
                             </Box>
                         </Box>
                     }
-                    {which_character !== DungeonCharacter.ranger &&
+                    {player_character !== DungeonCharacter.ranger &&
                         <Box  width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectRanger}>
@@ -1265,7 +1244,7 @@ export function DungeonApp()
                             </Box>
                         </Box>
                     }
-                    {which_character === DungeonCharacter.wizard &&
+                    {player_character === DungeonCharacter.wizard &&
                         <Box  style={{
                             backgroundImage: `url(${selector})`,
                             backgroundPosition: 'center',
@@ -1281,7 +1260,7 @@ export function DungeonApp()
                             </Box>
                         </Box>
                     }
-                    {which_character !== DungeonCharacter.wizard &&
+                    {player_character !== DungeonCharacter.wizard &&
                         <Box  width="100%">
                             <Box>
                                 <Button variant='link' size='md' onClick={SelectWizard}>
@@ -1369,7 +1348,7 @@ export function DungeonApp()
 
         var visibility = "visible";
 
-        //console.log("in characterSelect, progress: ", currentLevel, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", numPlays,  initial_num_plays, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status], initial_status === DungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", numPlays,  initial_num_plays, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status], initial_status === DungeonStatus.unknown);
 
         // if i don't need to make an account but player status is unknown return nothing
         if (data_account_status === AccountStatus.created  && (initial_status === DungeonStatus.unknown || (numPlays === initial_num_plays && (DungeonStatus === DungeonStatus.alive || DungeonStatus === DungeonStatus.exploring)))) {
@@ -1379,7 +1358,7 @@ export function DungeonApp()
 
         //console.log("have made it here in CS 2");
         // if i am alive or exploring and  the level is > 0 never show this
-        if (data_account_status === AccountStatus.unknown ||  (currentLevel > 0 && (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring))) {
+        if (data_account_status === AccountStatus.unknown ||  (current_level > 0 && (currentStatus === DungeonStatus.alive || currentStatus === DungeonStatus.exploring))) {
                 visibility = "hidden";
             
         }
@@ -1438,230 +1417,6 @@ export function DungeonApp()
         )
     }
 
-    const DisplayPlayer = () => {
-
-        if (player_state === DungeonStatus.unknown) {
-            return(<></>);
-        }
-
-        if (player_state === DungeonStatus.dead)  {
-            // if the current enemy is a trap we should return that here
-            if (current_enemy === DungeonEnemy.Boulder) {
-                return ( <img style={{"imageRendering":"pixelated"}} src={boulder} width="10000" alt={""}/> );
-            }
-            if (current_enemy === DungeonEnemy.FloorSpikes) {
-                return ( <img style={{"imageRendering":"pixelated"}} src={floor_spikes} width="10000" alt={""}/> );
-            }
-
-            // otherwise return the corpse
-            return ( <img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/> );
-        }
-        
-        // otherwise just return the player
-        if (which_character === DungeonCharacter.knight){
-            return ( <img style={{"imageRendering":"pixelated"}} src={knight} width="10000" alt={""}/> );
-        }
-
-        if (which_character === DungeonCharacter.ranger){
-            return ( <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/> );
-        }
-
-        if (which_character === DungeonCharacter.wizard){
-            return ( <img style={{"imageRendering":"pixelated"}} src={wizard} width="10000" alt={""}/> );
-        }
-        
-    }
-
-    const DisplayEnemyInitialText = () => {
-
-         
-         // for the traps we report an empty room
-         if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
-             return(
-             <div className="font-face-sfpb">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You enter a suspiciously empty room...</Text>
-            </div>
-            );
-         };
-
-         if (current_enemy === DungeonEnemy.Chest) {
-            return(
-            <div className="font-face-sfpb">
-               <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found a treasure chest in room {currentLevel}!</Text>
-           </div>
-           );
-        };
-         
-
-         // otherwise say the enemy type
-         return(
-            <div className="font-face-sfpb">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have encountered {DungeonEnemyInitialText[current_enemy]} in room {currentLevel}</Text>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Prepare yourself!</Text>
-            </div>
-         );
-     }
-
-    const SuccessEnemyResultText = () => {
-
-        // for the traps we have special text for survival
-        if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
-            return(
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">...but pass through without incident.</Text>
-             );
-        };
-
-        if (current_enemy === DungeonEnemy.Chest) {
-            return(
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You approach with great suspicion, but open it to find it full of gold!</Text>
-             );
-        };
-
-        // otherwise say the enemy type
-        return(
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>  
-        );
-        
-
-    }
-
-    const DisplaySuccessEnemyResultText = () => {
-
-        if (currentLevel <  7) {
-            return(
-            <div className="font-face-sfpb">
-                <SuccessEnemyResultText/>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,currentLevel) *  BET_SIZE} SOL</Text>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,currentLevel+1) *  BET_SIZE} SOL</Text>
-           </div>
-           );
-        }
-
-        // otherwise  we retire
-        return(
-            <div className="font-face-sfpb">
-                <SuccessEnemyResultText/>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {Math.pow(2,currentLevel) *  BET_SIZE} SOL</Text>
-                
-           </div>
-           );
-
-    }
-
-    const DisplayFailureEnemyResultText = () => {
-
-         
-        // for the traps we have special text for failure
-        if (current_enemy === DungeonEnemy.Boulder) {
-            return(
-                <Center>
-                <Box width="80%">
-                <div className="font-face-sfpb">
-                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
-                </div>
-                </Box>
-                </Center>
-            );
-        }
-
-        if (current_enemy === DungeonEnemy.FloorSpikes) {
-            return(
-                <Center>
-                <Box width="80%">
-                <div className="font-face-sfpb">
-                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
-                </div>
-                </Box>
-                </Center>
-            );
-        }
-        
-
-        // otherwise say the enemy type
-        return(
-            <Center>
-                <Box width="80%">
-                    <div className="font-face-sfpb">
-                        <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
-                    </div>
-                </Box>
-            </Center>
-        );
-    }
-
-    const DisplayEnemy = () => {
-
-        if (enemy_state === DungeonStatus.unknown) {
-            return(<></>);
-        }
-
-        if (enemy_state === DungeonStatus.dead)  {
-
-            // for the traps we don't return anything
-            if (current_enemy === DungeonEnemy.Boulder) {
-                return(<></>);
-            }
-            if (current_enemy === DungeonEnemy.FloorSpikes) {
-                return(<></>);
-            }
-
-            if (current_enemy === DungeonEnemy.Chest) {
-                return ( <img style={{"imageRendering":"pixelated"}} src={open_chest} width="10000" alt={""}/> );
-            }
-
-
-            return ( <img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/> );
-        }
-
-        if (player_state === DungeonStatus.dead) {
-            if (current_enemy === DungeonEnemy.Chest) {
-                return ( <img style={{"imageRendering":"pixelated"}} src={mimic} width="10000" alt={""}/> );
-            }
-        }
-
-        
-
-        if (current_enemy === DungeonEnemy.Chest) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={closed_chest} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.Slime) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={slime} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.Goblins) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={goblins} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.SkeletonsHallway) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={skeletons_hallway} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.SkeletonsGraveyard) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={skeletons_graveyard} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.Elves) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={elves} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.Orc) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={orc} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.SkellyKnight) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_knight} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.SkellyWizard) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_wizard} width="10000" alt={""}/> );
-        }
-        if (current_enemy === DungeonEnemy.Reaper) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={reaper} width="10000" alt={""}/> );
-        }
-
-        // for the traps we don't return anything
-        if (current_enemy === DungeonEnemy.Boulder) {
-            return(<></>);
-        }
-        if (current_enemy === DungeonEnemy.FloorSpikes) {
-            return(<></>);
-        }
-    }
-
     const DisplayXP = () =>  {
 
         
@@ -1684,7 +1439,7 @@ export function DungeonApp()
                 <Box width="10%">
                     <div className="font-face-sfpb">
                             
-                            <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Lvl. {currentLevel}</Text>
+                            <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Lvl. {current_level}</Text>
                             
                     </div>
                 </Box>
@@ -1699,7 +1454,7 @@ export function DungeonApp()
         }
 
         if (DEBUG) {
-            console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", randoms_fulfilled, "current level", currentLevel, "enemy state", DungeonStatusString[enemy_state], numXP);
+            console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", randoms_fulfilled, "current level", current_level, "enemy state", DungeonStatusString[enemy_state], numXP);
         }
         return (
             
@@ -1727,9 +1482,9 @@ export function DungeonApp()
                 <HStack>
         
                     <Box width="30%"></Box>            
-                    <Box width="15%"> <DisplayPlayer/></Box>  
+                    <Box width="15%"> <DisplayPlayer player_state={player_state} player_character={player_character} current_enemy={current_enemy}/></Box>  
                     <Box width="10%"></Box> 
-                    <Box width="15%"> <DisplayEnemy/> </Box>  
+                    <Box width="15%"> <DisplayEnemy player_state={player_state} enemy_state={enemy_state} current_enemy={current_enemy}/> </Box>  
                     <Box width="30%"></Box> 
 
                 </HStack>
@@ -1752,7 +1507,7 @@ export function DungeonApp()
                 {player_state === DungeonStatus.dead &&
                 <>
                 <VStack alignItems="center" spacing="2%">
-                        <DisplayFailureEnemyResultText/>
+                        <DisplayPlayerFailedText current_enemy={current_enemy}/>
                         <Center>
                             <HStack alignItems="center">
                                 
@@ -1780,7 +1535,7 @@ export function DungeonApp()
                 </VStack>
                 </>
                 }
-                {currentLevel > 0  && 
+                {current_level > 0  && 
                     <>
                     
                     { currentStatus === DungeonStatus.exploring  && randoms_fulfilled === false  &&
@@ -1804,13 +1559,13 @@ export function DungeonApp()
                     </VStack>
                     }
                     { player_state === DungeonStatus.alive && enemy_state  === DungeonStatus.alive  && 
-                        <DisplayEnemyInitialText/>
+                        <DisplayEnemyAppearsText current_enemy={current_enemy} current_level={current_level}/>
                     }
                     {player_state === DungeonStatus.alive && enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
-                            <DisplaySuccessEnemyResultText/>
-                            {currentLevel < 7 &&
+                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy}/>
+                            {current_level < 7 &&
                                 <Center>
 
                                 <HStack>
@@ -1847,7 +1602,7 @@ export function DungeonApp()
                                 </HStack>
                                 </Center>
                             }
-                            {currentLevel >= 7  &&
+                            {current_level >= 7  &&
                             <Center>
                                 {!processing_transaction &&
                                     <Button variant='link' size='md' onClick={Quit}>
@@ -1890,7 +1645,7 @@ export function DungeonApp()
                 <Box width="100%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,currentLevel - 1) *  BET_SIZE} SOL</del></Text>
+                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,current_level - 1) *  BET_SIZE} SOL</del></Text>
                             </div> 
                     </Center>
                 </Box>
