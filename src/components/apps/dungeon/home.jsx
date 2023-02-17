@@ -48,38 +48,38 @@ import {
 
 import bs58 from "bs58";
 
-import dungeon_title from "./Dungeon_Logo.png"
-import large_door from "./Large_Door.gif"
-import hallway from "./Hallway.gif"
+import dungeon_title from "./images/Dungeon_Logo.png"
+import large_door from "./images/Large_Door.gif"
+import hallway from "./images/Hallway.gif"
 
 //buttons
-import enter_button from "./Enter_Button.png"
+import enter_button from "./images/Enter_Button.png"
 
 // shop items
-import key from "./Key.png"
+import key from "./images/Key.png"
 
 //characters
-import knight from "./Knight.gif"
-import ranger from "./Ranger.gif"
-import wizard from "./Wizard.gif"
-import corpse from "./Corpse.png"
-import selector from "./Selector.gif"
+import knight from "./images/Knight.gif"
+import ranger from "./images/Ranger.gif"
+import wizard from "./images/Wizard.gif"
+import corpse from "./images/Corpse.png"
+import selector from "./images/Selector.gif"
 
 //enemies
-import closed_chest from "./chest_closed.png"
-import open_chest from "./chest_open.png"
-import mimic from "./Mimic.gif"
-import slime from "./Slime.gif"
-import goblins from "./Goblins.gif"
-import skeletons_hallway from "./Skellies.gif"
-import skeletons_graveyard from "./Skellies.gif"
-import elves from "./Elves.gif"
-import orc from "./Orc.gif"
-import skeleton_knight from "./Skelly_Knight.gif"
-import skeleton_wizard from "./Skelly_Wiz.gif"
-import reaper from "./Reaper.gif"
-import boulder from "./Boulder.png"
-import floor_spikes from "./Spikes.png"
+import closed_chest from "./images/chest_closed.png"
+import open_chest from "./images/chest_open.png"
+import mimic from "./images/Mimic.gif"
+import slime from "./images/Slime.gif"
+import goblins from "./images/Goblins.gif"
+import skeletons_hallway from "./images/Skellies.gif"
+import skeletons_graveyard from "./images/Skellies.gif"
+import elves from "./images/Elves.gif"
+import orc from "./images/Orc.gif"
+import skeleton_knight from "./images/Skelly_Knight.gif"
+import skeleton_wizard from "./images/Skelly_Wiz.gif"
+import reaper from "./images/Reaper.gif"
+import boulder from "./images/Boulder.png"
+import floor_spikes from "./images/Spikes.png"
 
 //sounds
 import click_sound from './sounds/click.mp3';
@@ -1911,45 +1911,6 @@ export function DungeonApp()
 
         )
     }
-
-    /*const VictoryScreen = () =>  {
-
-
-        return (
-            <>            
-            <VStack>
-                <HStack>
-                    <Box width="40%"></Box>    
-                    <Box width="20%"><DisplayPlayer/></Box>    
-                    <Box width="40%"></Box> 
-                </HStack>
-
-                <Box width="100%">
-                    <Center>
-                            <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="Green">You Have Survived Level {currentLevel}<br/>Loot: {Math.pow(2,currentLevel - 1) *  BET_SIZE} SOL</Text>
-                                <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="Red">DM Fee: {Math.pow(2,currentLevel - 1) *  BET_SIZE * 0.02} SOL</Text>
-                            </div> 
-                    </Center>
-                </Box>
-                   
-                <HStack>
-                    <Box width="33%"/>
-                        <Center>
-                            <Button variant='link' size='md' onClick={Reset}>
-                                <div className="font-face-sfpb">
-                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Exit</Text>
-                                </div> 
-                            </Button> 
-                        </Center>
-                    <Box width="33%"/>
-                </HStack>
-            </VStack>
-        </>
-
-        )
-    }*/
-
 
     return (
         <StateContext.Provider value={[numXP]}>

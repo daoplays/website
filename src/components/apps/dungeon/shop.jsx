@@ -36,10 +36,10 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 
 // shop items
-import key from "./Key.png"
-import closed_chest from "./chest_closed.png"
-import open_chest from "./chest_open.png"
-import shop from "./ShopBuild.gif"
+import key from "./images/Key.png"
+import closed_chest from "./images/chest_closed.png"
+import open_chest from "./images/chest_open.png"
+import shop from "./images/ShopBuild.gif"
 
 import './style.css';
 import './fonts.css';
@@ -257,7 +257,7 @@ export function ShopScreen()
             clearInterval(xpIntervalId);
             xpIntervalId = null;
         }
-        return () => {clearInterval(xpIntervalId);xpIntervalId = null;}
+        return () => {clearInterval(xpIntervalId); xpIntervalId = null;}
 
     }, [check_xp_reqs, wallet]);
 
