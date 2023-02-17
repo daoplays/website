@@ -8,7 +8,6 @@ import {
     VStack
 } from '@chakra-ui/react';
 import { isMobile } from "react-device-detect";
-import { serialize } from 'borsh';
 
 import { PublicKey, Keypair, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
@@ -19,12 +18,12 @@ import {
 
 import { DUNGEON_FONT_SIZE, network_string, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY,
-    instruction_schema, InstructionMeta, StateContext} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY,
+    StateContext} from './constants';
 
 import bs58 from "bs58";
   
-import { check_json, request_raw_account_data, request_shop_data, request_shop_user_data} from './utils';
+import { check_json, request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction} from './utils';
 
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -127,8 +126,8 @@ export function ShopScreen()
 
 
 
-        let program_data_key = (await PublicKey.findProgramAddress(["data_account"], SHOP_PROGRAM))[0];
-        let dungeon_key_data_account = (await PublicKey.findProgramAddress([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync(["data_account"], SHOP_PROGRAM))[0];
+        let dungeon_key_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
 
 
         let user_data = await request_shop_user_data(dungeon_key_data_account);
@@ -330,13 +329,10 @@ export function ShopScreen()
                 true // allow owner off curve
             );
 
-            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-            const create_token_meta = new InstructionMeta({ instruction: ShopInstruction.create_token});
-            const create_token_data = serialize(instruction_schema, create_token_meta);
-
-            const init_meta = new InstructionMeta({ instruction: ShopInstruction.init});
-            const init_data = serialize(instruction_schema, init_meta);
+            const create_token_data = serialise_basic_instruction(ShopInstruction.create_token);
+            const init_data = serialise_basic_instruction(ShopInstruction.init);
 
             var account_vector  = [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -452,10 +448,10 @@ export function ShopScreen()
             
             var nft_mint_pubkey = new PublicKey("AdWqAKwFusKTo2JavMNnUUVY7YoBHx9v58BPvRF3DNcW");
             
-            let nft_meta_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
             METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
 
-            let nft_master_key = (await PublicKey.findProgramAddress([Buffer.from("metadata"),
+            let nft_master_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
             METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
 
             let nft_account_key = await getAssociatedTokenAddress(
@@ -464,8 +460,7 @@ export function ShopScreen()
                 true // allow owner off curve
             );
 
-            const burn_token_meta = new InstructionMeta({ instruction: ShopInstruction.burn_token});
-            const burn_token_data = serialize(instruction_schema, burn_token_meta);
+            const burn_token_data = serialise_basic_instruction(ShopInstruction.burn_token);
 
             var account_vector  = [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -507,7 +502,7 @@ export function ShopScreen()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&p2=config&p3=skippreflight";
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&config=true&p3=skippreflight";
                 let transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json(transaction_response)

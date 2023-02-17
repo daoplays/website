@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
     ChakraProvider,
     Box,
@@ -14,15 +14,6 @@ import {
 } from '@chakra-ui/react';
 
 import {
-    useDisclosure,
-    Drawer,
-    DrawerBody,
-    DrawerOverlay,
-    DrawerContent,
-    DrawerCloseButton,
-} from '@chakra-ui/react'
-
-import {
     Popover,
     PopoverTrigger,
     PopoverContent,
@@ -34,18 +25,12 @@ import {
 
 import FocusLock from 'react-focus-lock';
 
-
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { brands, solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
-
-
 import { isMobile } from "react-device-detect";
 import { randomBytes } from 'crypto'
-import { serialize, deserialize } from 'borsh';
 
 import useSound from 'use-sound';
 
-import { PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
     getAssociatedTokenAddress
   } from "@solana/spl-token";
@@ -57,8 +42,7 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 import {
     WalletModalProvider,
-    WalletMultiButton,
-    WalletDisconnectButton,
+    WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
 
 
@@ -101,13 +85,16 @@ import floor_spikes from "./Spikes.png"
 import click_sound from './sounds/click.mp3';
 
 //  dungeon constants
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD, Assignable ,
+import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, PROGRAM_KEY, SYSTEM_KEY,
-    instruction_schema, InstructionMeta, StateContext, DEBUG} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, StateContext, DEBUG, Screen} from './constants';
 
 // dungeon utils
-import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount} from './utils';
+import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
+    serialise_play_instruction, serialise_basic_instruction, serialise_explore_instruction} from './utils';
+
+// navigation
+import {Navigation} from './navigation';
 
 // dungeon pages
 import {FAQScreen} from './faq';
@@ -124,15 +111,10 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 const KAYAK_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
-const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 
+const ORAO_KEY = new PublicKey("VRFzZoJdhFWL8rkvu87LpKM3RbcVezpMEc6X5GVDr7y");
 const ORAO_RANDOMNESS_ACCOUNT_SEED = Buffer.from("orao-vrf-randomness-request");
 const ORAO_CONFIG_ACCOUNT_SEED = Buffer.from("orao-vrf-network-configuration");
-
-
-
-
-
 
 const BET_SIZE = 0.05;
 
@@ -159,15 +141,7 @@ const DungeonCharacter = {
 }
 
 
-const Screen = {
-    HOME_SCREEN : 0,
-    DUNGEON_SCREEN : 1,
-    DEATH_SCREEN : 2,
-    FAQ_SCREEN : 3,
-    ODDS_SCREEN : 4,
-    HELP_SCREEN : 5,
-    SHOP_SCREEN : 6
-}
+
 
 const DungeonEnemy = {
     
@@ -210,55 +184,6 @@ const DungeonInstruction = {
 
 
 
-
-class PlayMeta extends Assignable { }
-class ExploreMeta extends Assignable { }
-class my_pubkey extends Assignable { }
-
-
-const play_scheme = new Map([
-    [PlayMeta, { kind: 'struct', 
-    fields: [
-          ['instruction', 'u8'],
-          ['character', 'u8']
-        ],
-      }]
-]);
-
-const explore_scheme = new Map([
-    [ExploreMeta, { kind: 'struct', 
-    fields: [
-          ['instruction', 'u8'],
-          ['seed', [32]],
-          ['character', 'u8']
-        ],
-      }]
-]);
-
-
-const pubkey_scheme = new Map([
-    [my_pubkey, { kind: 'struct', 
-    fields: [
-    ['value', [32]]] }]
-]);
-
-
-export function WalletConnected() 
-{
-    return (
-        <Box>
-            <WalletDisconnectButton  
-                className="wallet-disconnect-button"  
-            />
-        </Box>
-    );
-}
-
-
-
-
-
-
 const uIntToBytes = (num, size, method) => {
     const arr = new ArrayBuffer(size)
     const view = new DataView(arr)
@@ -268,16 +193,14 @@ const uIntToBytes = (num, size, method) => {
 
 let intervalId;
 let randomsIntervalId;
-var check_balance = true;
 var initial_status_is_set = false;
 var initial_num_plays = -1;
 var last_num_plays = -1;
-var last_sol_balance = -1;
 
 var transaction_failed = false;
 var global_randoms_address = null;
 var check_for_data_updates = true;
-var check_for_sol_updates = true;
+var check_balance = true;
 var perform_check_signature = false;
 
 var have_created_randoms_account = false;
@@ -290,7 +213,6 @@ export function DungeonApp()
     const [initial_status, setInitialStatus] = useState(DungeonStatus.unknown);
 
     // these come from the blockchain
-    const [sol_balance, setSolBalance] = useState(null);
     const [numPlays, setNumPlays] = useState(0);
     const [numXP, setNumXP] = useState(0);
     const [currentLevel, setCurrentLevel] = useState(0);
@@ -322,6 +244,10 @@ export function DungeonApp()
     const [player_state, setPlayerState] = useState(DungeonStatus.unknown);
     const [animateLevel, setAnimateLevel] = useState(0);
 
+    // refs for setting whether we continue to check state
+    const check_sol_balance = useRef(true);
+
+
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState(false);
 
@@ -349,6 +275,11 @@ export function DungeonApp()
 
       function DiscountKeyInput() {
 
+        let key_size = "50";
+        if(isMobile) {
+            key_size = "40";
+        }
+
         return (
             <>
         <div mt = "2rem"></div>
@@ -362,7 +293,7 @@ export function DungeonApp()
         >
             <PopoverTrigger>
                 <Button variant='link' size='md' onClick={OpenDiscountError}>
-                    <img style={{"imageRendering":"pixelated"}} src={key} width={"50"} alt={""}/>
+                    <img style={{"imageRendering":"pixelated"}} src={key} width={key_size} alt={""}/>
                 </Button> 
             </PopoverTrigger>
             <PopoverContent>
@@ -407,167 +338,6 @@ export function DungeonApp()
         </div>
         </>
         )
-      }
-
-    function MobileNavigation()  {
-        const { isOpen, onOpen, onClose } = useDisclosure()
-        //const btnRef = React.useRef()
-
-        return (
-            <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
-              <HStack>
-                {wallet.publicKey &&
-                      <Box width="70%">
-                          <HStack>
-                              <WalletConnected />
-                              {!isMobile &&
-                                <div className="font-face-sfpb">
-                                    <Text fontSize='16px'  color="white">
-                                      {
-                                          sol_balance
-                                          ? "Balance: " + sol_balance + ' SOL'
-                                          : '                                 '
-                                      }
-                                    </Text>
-                                </div>
-                                }
-                          </HStack>
-                      </Box>
-                      
-                  }
-                  {!wallet.publicKey &&
-                      <Box width="75%"></Box>
-                  }
-                  <Box width="25%">
-                    <HStack spacing="10%">
-                        <a href="https://twitter.com/sol_dungeon">
-                            <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
-                        </a>
-
-                        <a href="https://discord.gg/HeKJZZEaPn">
-                            <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
-                        </a>
-
-                        <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
-
-                        
-                        <Drawer
-                            isOpen={isOpen}
-                            placement='right'
-                            onClose={onClose}
-                        >
-                            <DrawerOverlay />
-                            <DrawerContent>
-                            <DrawerCloseButton color="white"/>
-
-                            <DrawerBody bg='black'>
-                                <VStack spacing='24px'>
-                                    <Button variant='link' size='md' onClick={ShowHome}>
-                                    <div className="font-face-sfpb">
-                                        <Text fontSize='16px'  color="white"> Home </Text>      
-                                    </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowShop}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Shop </Text>      
-                                        </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowOdds}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Odds </Text>      
-                                        </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowFAQ}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> FAQ </Text>      
-                                        </div> 
-                                    </Button>
-                                    
-                                    <Button variant='link' size='md' onClick={ShowHelp}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Help </Text>      
-                                        </div> 
-                                    </Button>
-                                </VStack>
-                            </DrawerBody>
-
-                            
-                            </DrawerContent>
-                        </Drawer>
-                    </HStack>
-                  </Box>
-                  </HStack>
-              </Box>
-          );
-    }
-
-    function Navigation() {
-
-        
-
-        return (
-          <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
-            <HStack>
-              {wallet.publicKey &&
-                    <Box width="70%">
-                        <HStack>
-                            <WalletConnected />
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white">
-                                    {
-                                        sol_balance
-                                        ? "Balance: " + sol_balance + ' SOL'
-                                        : '                                 '
-                                    }
-                                </Text>
-                            </div>
-                        </HStack>
-                    </Box>
-                    
-                }
-                {!wallet.publicKey &&
-                    <Box width="70%"></Box>
-                }
-                <Box width="30%">
-                    <HStack spacing="5%">
-                        <Button variant='link' size='md' onClick={ShowHome}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Home </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowShop}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Shop </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowOdds}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Odds </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowFAQ}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> FAQ </Text>      
-                            </div> 
-                        </Button>
-                        
-                        <Button variant='link' size='md' onClick={ShowHelp}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Help </Text>      
-                            </div> 
-                        </Button>
-                        <a href="https://twitter.com/sol_dungeon">
-                            <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
-                        </a>
-
-                        <a href="https://discord.gg/HeKJZZEaPn">
-                            <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
-                        </a>
-                    </HStack>
-                </Box>
-                </HStack>
-            </Box>
-        );
       }
 
     const check_signature = useCallback(async() =>
@@ -667,7 +437,7 @@ export function DungeonApp()
                 }
             }
 
-            const randoms_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+global_randoms_address.toString()+`&p2=config&p3=base64&p4=commitment`;
+            const randoms_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+global_randoms_address.toString()+`&config=true&encoding=base64&commitment=confirmed`;
 
             var randoms_account_info_result;
             try {
@@ -725,58 +495,24 @@ export function DungeonApp()
     const init = useCallback(async () => 
     {     
         if (DEBUG) {
-            console.log("in in it check_updates ", check_for_data_updates, " check balance: ", check_balance, "check sol", check_for_sol_updates);
+            console.log("in in it check_updates ", check_for_data_updates, " check balance: ", check_balance);
         }
 
         if (!wallet.publicKey) {
             return;
         }
 
-        if (!check_for_data_updates && !check_for_sol_updates && !check_balance)
+        if (!check_for_data_updates && !check_balance)
             return;
 
-        if (check_for_sol_updates) {
-
-            
-            const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+wallet.publicKey.toString()+"&p2=config&p3=base64&p4=commitment";
-
-            var account_info_result;
-            try {
-                account_info_result = await fetch(account_info_url).then((res) => res.json());
-            }
-            catch(error) {
-                console.log(error);
-                return;
-            }
-            let valid_response = check_json(account_info_result)
-            if (!valid_response) {
-                console.log(account_info_result);
-                return;
-            }
-
-            if (account_info_result["result"]["value"] == null || account_info_result["result"]["value"]["lamports"] == null) {
-                console.log("Error getting lamports for ", wallet.publicKey.toString());
-                return;
-            }
-
-            let lamports_amount = account_info_result["result"]["value"]["lamports"];
-
-            if (lamports_amount !== last_sol_balance) {
-                last_sol_balance = lamports_amount;
-                check_for_sol_updates = false;
-            }
-
-            setSolBalance((lamports_amount  / LAMPORTS_PER_SOL).toFixed(3));
-        }
-
-        let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+        let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
         if (check_balance) {
             
             // first check if the data account exists
             try {
 
-                const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+player_data_key.toString()+"&p2=config&p3=base64&p4=commitment";
+                const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+player_data_key.toString()+"&config=true&encoding=base64&commitment=confirmed";
                 var balance_result;
                 try {
                     balance_result = await fetch(balance_url).then((res) => res.json());
@@ -816,8 +552,6 @@ export function DungeonApp()
             return;
 
         try {
-
-            //const player_data = await get_account_data({pubkey: player_data_key.toString(), schema: player_data_schema, map: PlayerData, raw: false})
 
             let player_data = await request_player_account_data(player_data_key);
 
@@ -922,9 +656,7 @@ export function DungeonApp()
         initial_status_is_set = false;
         initial_num_plays = -1;
         last_num_plays = -1;
-        last_sol_balance = -1;
         transaction_failed = false;
-        setSolBalance(null);
         setScreen(Screen.HOME_SCREEN);
         setCurrentLevel(0);
         setNumPlays(0);
@@ -936,7 +668,7 @@ export function DungeonApp()
         setCurrentEnemy(DungeonEnemy.None);
         setEnemyState(DungeonStatus.unknown);
         check_for_data_updates = true;
-        check_for_sol_updates = true;
+        check_sol_balance.current = true;
     }, [wallet]);
 
 
@@ -1033,11 +765,10 @@ export function DungeonApp()
             if (DEBUG) {
                 console.log("In play");
             }
-            let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
-            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+            let program_data_key = (PublicKey.findProgramAddressSync(["main_data_account"], DUNGEON_PROGRAM))[0];
+            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-            const play_meta = new PlayMeta({ instruction: DungeonInstruction.play, character: which_character});
-            const instruction_data = serialize(play_scheme, play_meta);
+            const instruction_data = serialise_play_instruction(DungeonInstruction.play, which_character);
 
             var account_vector  = [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -1065,7 +796,7 @@ export function DungeonApp()
 
                 let index_array_buffer = uIntToBytes(current_key_index, 2, "setUint");
                 let index_buffer = new Buffer.from(index_array_buffer);
-                let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], PROGRAM_KEY))[0];
+                let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], DUNGEON_PROGRAM))[0];
 
                 let key_token_account = await getAssociatedTokenAddress(
                     key_mint_account, // mint
@@ -1090,7 +821,7 @@ export function DungeonApp()
 
             const play_instruction = new TransactionInstruction({
                 keys: account_vector,
-                programId: PROGRAM_KEY,
+                programId: DUNGEON_PROGRAM,
                 data: instruction_data
             });
 
@@ -1110,7 +841,7 @@ export function DungeonApp()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&p2=config&p3=skippreflight";
+                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&config=true&p3=skippreflight";
                 var transaction_response = await fetch(send_url).then((res) => res.json());
 
                 let valid_response = check_json(transaction_response)
@@ -1144,7 +875,7 @@ export function DungeonApp()
             setPlayerState(DungeonStatus.alive);
             setProcessingTransaction(false);
             check_for_data_updates = true;
-            check_for_sol_updates = true;
+            check_sol_balance.current = true;
 
 
     },[wallet, which_character, current_key_index, current_key_mint]);
@@ -1152,12 +883,12 @@ export function DungeonApp()
     const Explore = useCallback( async () => 
     {
 
-            let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
-            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+            let program_data_key = (PublicKey.findProgramAddressSync(["main_data_account"], DUNGEON_PROGRAM))[0];
+            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-            let networkStateAddress = (await PublicKey.findProgramAddress([ORAO_CONFIG_ACCOUNT_SEED], ORAO_KEY))[0];
+            let networkStateAddress = (PublicKey.findProgramAddressSync([ORAO_CONFIG_ACCOUNT_SEED], ORAO_KEY))[0];
 
-            const network_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+networkStateAddress.toString()+`&p2=config&p3=base64&p4=commitment`;
+            const network_account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+networkStateAddress.toString()+`&config=true&encoding=base64&commitment=confirmed`;
 
             var network_account_info_result;
             try {
@@ -1180,14 +911,13 @@ export function DungeonApp()
             let network_account_encoded_data = network_account_info_result["result"]["value"]["data"];
             let network_account_data = Buffer.from(network_account_encoded_data[0], "base64");
 
-            const treasuryAddress = new PublicKey(deserialize(pubkey_scheme, my_pubkey, network_account_data.slice(8+32, 8+32 + 32)).value);
+            const treasuryAddress = new PublicKey(network_account_data.slice(8+32, 8+32 + 32));
 
             const seed = randomBytes(32)
 
-            let randomAddress = (await PublicKey.findProgramAddress([ORAO_RANDOMNESS_ACCOUNT_SEED, seed], ORAO_KEY))[0];
+            let randomAddress = (PublicKey.findProgramAddressSync([ORAO_RANDOMNESS_ACCOUNT_SEED, seed], ORAO_KEY))[0];
 
-            const explore_meta = new ExploreMeta({ instruction: DungeonInstruction.explore, seed : seed, character: which_character});
-            const instruction_data = serialize(explore_scheme, explore_meta);
+            const instruction_data = serialise_explore_instruction(DungeonInstruction.explore, seed, which_character);
 
             const play_instruction = new TransactionInstruction({
                 keys: [
@@ -1203,7 +933,7 @@ export function DungeonApp()
                     {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
 
                 ],
-                programId: PROGRAM_KEY,
+                programId: DUNGEON_PROGRAM,
                 data: instruction_data
             });
 
@@ -1252,7 +982,7 @@ export function DungeonApp()
             //setCurrentRandomsKey(null);
             setRandomsFullfilled(false);
             check_for_data_updates = true;
-            check_for_sol_updates = true;
+            check_sol_balance.current = true;
 
     },[wallet, which_character]);  
 
@@ -1262,11 +992,10 @@ export function DungeonApp()
 
             
             setProcessingTransaction(true);
-            let program_data_key = (await PublicKey.findProgramAddress(["main_data_account"], PROGRAM_KEY))[0];
-            let player_data_key = (await PublicKey.findProgramAddress([wallet.publicKey.toBytes()], PROGRAM_KEY))[0];
+            let program_data_key = (PublicKey.findProgramAddressSync(["main_data_account"], DUNGEON_PROGRAM))[0];
+            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-            const instruction_meta = new InstructionMeta({ instruction: DungeonInstruction.quit});
-            const instruction_data = serialize(instruction_schema, instruction_meta);
+            const instruction_data = serialise_basic_instruction(DungeonInstruction.quit);
 
             var account_vector  = [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -1281,7 +1010,7 @@ export function DungeonApp()
 
             const quit_instruction = new TransactionInstruction({
                 keys: account_vector,
-                programId: PROGRAM_KEY,
+                programId: DUNGEON_PROGRAM,
                 data: instruction_data
             });
 
@@ -1331,7 +1060,7 @@ export function DungeonApp()
             setEnemyState(DungeonStatus.unknown);
             setProcessingTransaction(false);
             check_for_data_updates = true;
-            check_for_sol_updates = true;
+            check_sol_balance.current = true;
             return;
         
 
@@ -1344,7 +1073,7 @@ export function DungeonApp()
  
 
         let parsed_key_index = parseInt(discount_key_index);
-        console.log("key index", discount_key_index, parsed_key_index, isNaN(parsed_key_index));
+        //console.log("key index", discount_key_index, parsed_key_index, isNaN(parsed_key_index));
 
         if (isNaN(parsed_key_index))
             return;
@@ -1353,16 +1082,17 @@ export function DungeonApp()
         // if the string is more than 4 digits this should be a mint address
         let index_array_buffer = uIntToBytes(parsed_key_index, 2, "setUint");
         let index_buffer = new Buffer.from(index_array_buffer);
-        let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer.reverse()], PROGRAM_KEY))[0];
+        let reversed_buffer = index_buffer.reverse();
+        let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), reversed_buffer], DUNGEON_PROGRAM))[0];
 
-        console.log("lookup: ", Buffer.from("key_meta"), index_buffer.reverse());
+        //console.log("lookup: ", Buffer.from("key_meta"), reversed_buffer);
         let key_meta_data = await request_key_data_from_index(dungeon_key_lookup_account);
         
         // if we have been passed a number check the lookup account exists
         if (key_meta_data === null) {
 
-            
-            const program_accounts_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&p2=config&p3=base64&p4=commitment&data_size_filter=35`;
+            let encoded_key_index = bs58.encode(index_buffer);
+            const program_accounts_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
             var program_accounts_result;
             try {
@@ -1379,9 +1109,9 @@ export function DungeonApp()
 
                 let encoded_data = program_accounts_result["result"][i]["account"]["data"][0];
                 let decoded_data = Buffer.from(encoded_data, "base64");
+
                 const [data] = KeyDataFromMint.struct.deserialize(decoded_data);
 
-                console.log("data ", data);
 
                 if (data.key_index !== parsed_key_index)
                     continue;
@@ -1445,41 +1175,7 @@ export function DungeonApp()
         
     },[]);
 
-    const ShowFAQ = useCallback( async () => 
-    {
-            setScreen(Screen.FAQ_SCREEN);
-            return;
-        
-    },[]);
-
-    const ShowOdds = useCallback( async () => 
-    {
-            setScreen(Screen.ODDS_SCREEN);
-            return;
-        
-    },[]);
-
-    const ShowHelp = useCallback( async () => 
-    {
-            setScreen(Screen.HELP_SCREEN);
-            return;
-        
-    },[]);
-
-    const ShowHome = useCallback( async () => 
-    {     
-            setScreen(Screen.HOME_SCREEN);
-            return;
-        
-    },[]);
-
-    const ShowShop = useCallback( async () => 
-    {
-            setScreen(Screen.SHOP_SCREEN);
-            return;
-        
-    },[]);
-
+    
     const LargeDoor = () => {
         return (
             <>
@@ -2258,12 +1954,10 @@ export function DungeonApp()
     return (
         <StateContext.Provider value={[numXP]}>
         <>
-        {!isMobile &&
-            <Navigation/>
-        }
-        {isMobile &&
-            <MobileNavigation/>
-        }
+            
+        <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance}/>
+          
+        
         
         <Box width="100%" mb = "2%">
             <Center>

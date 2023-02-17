@@ -1,9 +1,27 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { BeetStruct, uniformFixedSizeArray,  u8, u16, u64, bignum } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
 import { network_string } from './constants';
+import {
+    Box,
+} from '@chakra-ui/react';
 
+
+import {
+    WalletDisconnectButton,
+} from '@solana/wallet-adapter-react-ui';
+
+export function WalletConnected() 
+{
+    return (
+        <Box>
+            <WalletDisconnectButton  
+                className="wallet-disconnect-button"  
+            />
+        </Box>
+    );
+}
 
 interface BasicReply {
     id : number;
@@ -76,8 +94,6 @@ class PlayerData {
 
     ) {}
   
-    //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
-
     static readonly struct = new BeetStruct<PlayerData>(
       [
         ['num_plays', u64],
@@ -104,8 +120,6 @@ export class KeyDataFromMint {
       readonly key_index: number
     ) {}
   
-    //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
-
     static readonly struct = new BeetStruct<KeyDataFromMint>(
       [
         ['key_mint', publicKey],
@@ -123,8 +137,6 @@ class KeyDataFromIndex {
       readonly key_mint: PublicKey,
     ) {}
   
-    //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
-
     static readonly struct = new BeetStruct<KeyDataFromIndex>(
       [
         ['key_type', u8],
@@ -141,8 +153,6 @@ class ShopData {
       readonly key_types_bought: number[],
     ) {}
   
-    //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
-
     static readonly struct = new BeetStruct<ShopData>(
       [
         ['keys_bought', u16],
@@ -159,8 +169,6 @@ class ShopUserData {
       readonly num_keys: number
     ) {}
   
-    //resultArray: Array<number> = uniformFixedSizeArray(u8, 3)
-
     static readonly struct = new BeetStruct<ShopUserData>(
       [
         ['num_keys', u16]
@@ -170,9 +178,85 @@ class ShopUserData {
     )
 }
 
+class InstructionNoArgs {
+    constructor(
+      readonly instruction: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<InstructionNoArgs>(
+      [
+        ['instruction', u8]
+      ],
+      (args) => new InstructionNoArgs(args.instruction!),
+      'InstructionNoArgs'
+    )
+}
+
+class DungeonPlayInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly character: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonPlayInstruction>(
+      [
+        ['instruction', u8],
+        ['character', u8]
+      ],
+      (args) => new DungeonPlayInstruction(args.instruction!, args.character!),
+      'DungeonPlayInstruction'
+    )
+}
+
+class DungeonExploreInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly seed: number[],
+      readonly character: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonExploreInstruction>(
+      [
+        ['instruction', u8],
+        ['seed', uniformFixedSizeArray(u8, 32)],
+        ['character', u8]
+      ],
+      (args) => new DungeonExploreInstruction(args.instruction!, args.seed!, args.character!),
+      'DungeonExploreInstruction'
+    )
+}
+
+export async function request_current_balance(pubkey : PublicKey) : Promise<number>
+{
+    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+"&config=true&encoding=base64&commitment=confirmed";
+
+    var account_info_result;
+    try {
+        account_info_result = await fetch(account_info_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return 0;
+    }
+    let valid_response = check_json(account_info_result)
+    if (!valid_response) {
+        console.log(account_info_result);
+        return 0;
+    }
+
+    if (account_info_result["result"]["value"] == null || account_info_result["result"]["value"]["lamports"] == null) {
+        console.log("Error getting lamports for ", pubkey.toString());
+        return 0;
+    }
+
+    let current_balance : number = account_info_result["result"]["value"]["lamports"] / LAMPORTS_PER_SOL;
+
+    return current_balance;
+    
+}
 export async function request_token_amount(pubkey : PublicKey) : Promise<number>
 {
-    const url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+pubkey.toString()+`&p2=config&p3=base64&p4=commitment`;
+    const url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
 
     var response;
     try {
@@ -209,7 +293,7 @@ export async function request_token_amount(pubkey : PublicKey) : Promise<number>
 
 export async function request_raw_account_data(pubkey : PublicKey) : Promise<Buffer | null>
 {
-    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+`&p2=config&p3=base64&p4=commitment`;
+    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
 
     var response;
     try {
@@ -316,4 +400,31 @@ export async function request_shop_user_data(pubkey : PublicKey) : Promise<ShopU
     const [data] = ShopUserData.struct.deserialize(account_data);
 
     return data;
+}
+
+export function serialise_play_instruction(instruction : number, which_character : number) : Buffer
+{
+
+    const data = new DungeonPlayInstruction(instruction, which_character);
+    const [buf] = DungeonPlayInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_explore_instruction(instruction : number, seed : number[], which_character : number) : Buffer
+{
+
+    const data = new DungeonExploreInstruction(instruction, seed, which_character);
+    const [buf] = DungeonExploreInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_basic_instruction(instruction : number) : Buffer
+{
+
+    const data = new InstructionNoArgs(instruction);
+    const [buf] = InstructionNoArgs.struct.serialize(data);
+
+    return buf;
 }
