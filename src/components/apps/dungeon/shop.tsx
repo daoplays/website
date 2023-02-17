@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useContext } from 'react';
+import { useCallback, useEffect, useState, useContext, useRef } from 'react';
 import {
     Box,
     Button,
@@ -41,9 +41,9 @@ import closed_chest from "./images/chest_closed.png"
 import open_chest from "./images/chest_open.png"
 import shop from "./images/ShopBuild.gif"
 
-import './style.css';
-import './fonts.css';
-import './wallet.css';
+import './css/style.css';
+import './css/fonts.css';
+import './css/wallet.css';
 
 const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
 
@@ -52,45 +52,52 @@ const COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf
 const COLLECTION_MINT = new PublicKey('8gD8vXEzs3FaPbTdySsSBr5nGLtqCiTCvaA8DNjWZVdJ');
 const LAUNCH_DATE = new Date(Date.UTC(2021, 1, 9, 15, 0)).getTime();
 
-const ChestStatus = {
-    closed : 0,
-    open : 1,
-    lead : 2,
-    bronze : 3,
-    silver : 4,
-    gold : 5,
-    obsidian  : 6
+const enum ChestStatus {
+    closed = 0,
+    open = 1,
+    lead = 2,
+    bronze = 3,
+    silver = 4,
+    gold = 5,
+    obsidian  = 6
 }
 
-const ShopInstruction = {
-    init : 0,
-    create_token : 1,
-    create_collection : 2,
-    burn_token : 3
+const enum ShopInstruction {
+    init = 0,
+    create_token = 1,
+    create_collection = 2,
+    burn_token = 3
 }
 
-let xpIntervalId;
-let keyIntervalId;
-let current_key = null;
-let current_meta_key = null;
-let current_n_keys = -1;
-let check_xp = true;
 export function ShopScreen()
 {
     const wallet = useWallet();
-    const [chest_state, setChestState] = useState(ChestStatus.closed);
-    const [current_mint, setCurrentMint]  = useState(null);
-    const [which_key, setWhichKey] = useState(null);
-    const [key_description, setKeyDescription] = useState(null);
-    const [key_image, setKeyImage] = useState(null);
-    const [xp_req, setXPReq] = useState(null);
-    const [num_keys_bought, setNumKeysBought] = useState(0);
+    const [chest_state, setChestState] = useState<ChestStatus>(ChestStatus.closed);
+    const [current_mint, setCurrentMint]  = useState<PublicKey | null>(null);
+    const [which_key, setWhichKey] = useState<string | null>(null);
+    const [key_description, setKeyDescription] = useState<string | null>(null);
+    const [key_image, setKeyImage] = useState<string | null>(null);
+    const [xp_req, setXPReq] = useState<number | null>(null);
+
+    //number of keys this user has bought
+    const user_num_keys = useRef<number>(-1);
+
+    // the most recent key bought
+    const current_key = useRef<PublicKey | null>(null);
+    // interval for checking the key
+    const key_interval = useRef<number | null>(null);
+
 
     //const [countdown_string, setCountDownString] = useState(null);
-    const [countdown_value, setCountDown] = useState(null);
+    const [countdown_value, setCountDown] = useState<number | null>(null);
+
+    // interval for updating shop state
+    const xp_interval = useRef<number | null>(null);
+    const check_xp = useRef<boolean>(true);
 
 
-    const [numXP] = useContext(StateContext);
+
+    const numXP = useContext(StateContext);
 
     const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
     "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
@@ -103,7 +110,6 @@ export function ShopScreen()
     const check_xp_reqs = useCallback(async() => 
     {
         
-
         // just set the countdown here also
         var now = new Date().getTime();
         var distance = Math.max(0, LAUNCH_DATE - now);
@@ -121,18 +127,14 @@ export function ShopScreen()
         if (!wallet.publicKey)
             return;
 
-        if  (!check_xp)
+        if  (!check_xp.current)
             return;
 
-
-
-        let program_data_key = (PublicKey.findProgramAddressSync(["data_account"], SHOP_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM))[0];
         let dungeon_key_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
-
 
         let user_data = await request_shop_user_data(dungeon_key_data_account);
         
-
         let user_keys_bought = 0;
 
         if (user_data !== null ) {
@@ -140,26 +142,24 @@ export function ShopScreen()
             user_keys_bought = user_data.num_keys;
         }
 
-        if (user_keys_bought <= current_n_keys) {
+        if (user_keys_bought <= user_num_keys.current) {
             return;
         }
 
-        setNumKeysBought(user_keys_bought);
+        user_num_keys.current = user_keys_bought;
         
         if (user_keys_bought >= 3) {
             setXPReq(-1);
-            check_xp = false;
+            check_xp.current = false;
             return;
         }
-
-        current_n_keys = user_keys_bought
-        
+      
 
         let shop_data = await request_shop_data(program_data_key);
 
         // if the shop hasn't been set up yet just return
         if (shop_data === null){
-            check_xp = false;
+            check_xp.current = false;
             return;
         }
         
@@ -168,7 +168,7 @@ export function ShopScreen()
         // if we have sold out there is nothing to sell
         if (total_keys_bought >= 3500) {
             setXPReq(-2);
-            check_xp = false;
+            check_xp.current = false;
             return;
         }
 
@@ -194,20 +194,20 @@ export function ShopScreen()
 
         //console.log("total xp req ", total_xp_req);
         setXPReq(total_xp_req);
-        check_xp = false;
+        check_xp.current = false;
 
-    }, [wallet]);
+    }, [wallet, user_num_keys]);
 
     const check_key = useCallback(async() =>
     {
         
-        if (current_key  === null)
+        if (current_key.current  === null)
             return;
 
         try {
 
             //console.log("request meta data");
-            let raw_meta_data = await request_raw_account_data(current_meta_key);
+            let raw_meta_data = await request_raw_account_data(current_key.current);
 
             if (raw_meta_data === null) {
                 return;
@@ -222,10 +222,10 @@ export function ShopScreen()
             setWhichKey(uri_json["name"]);
             setKeyDescription(uri_json["description"]);
             setKeyImage(uri_json["image"]);
-            setCurrentMint(meta_data[0].mint.toString());
+            setCurrentMint(meta_data[0].mint);
             setChestState(ChestStatus.closed);
 
-            current_key = null;
+            current_key.current = null;
         
         } catch(error) {
             console.log(error);
@@ -235,44 +235,58 @@ export function ShopScreen()
 
     }, []);
 
-    useEffect(() => 
-    {
-        if (wallet.publicKey && !keyIntervalId) {
-            keyIntervalId = setInterval(check_key, 1000);
+    // interval for checking key
+    useEffect(() => {
+
+        if (key_interval.current === null) {
+            key_interval.current = window.setInterval(check_key, 1000);
         }
         else{
-            clearInterval(keyIntervalId);
-            keyIntervalId = null;
+            window.clearInterval(key_interval.current);
+            key_interval.current = null;
+            
         }
+        // here's the cleanup function
+        return () => {
+          if (key_interval.current !== null) {
+            window.clearInterval(key_interval.current);
+            key_interval.current = null;
+          }
+        };
+    }, [check_key]);
 
-    }, [check_key, wallet]);
+    // interval for checking xp
+    useEffect(() => {
+
+    if (xp_interval.current === null) {
+        xp_interval.current = window.setInterval(check_xp_reqs, 1000);
+    }
+    else{
+        window.clearInterval(xp_interval.current);
+        xp_interval.current = null;
+        
+    }
+    // here's the cleanup function
+    return () => {
+      if (xp_interval.current !== null) {
+        window.clearInterval(xp_interval.current);
+        xp_interval.current = null;
+      }
+    };
+  }, [check_xp_reqs]);
+
 
     useEffect(() => 
     {
-        //console.log("in use effect ", xpIntervalId);
-        if (wallet.publicKey && !xpIntervalId) {
-            xpIntervalId = setInterval(check_xp_reqs, 1000);
-        }
-        else{
-            clearInterval(xpIntervalId);
-            xpIntervalId = null;
-        }
-        return () => {clearInterval(xpIntervalId); xpIntervalId = null;}
-
-    }, [check_xp_reqs, wallet]);
-
-
-    useEffect(() => 
-    {
-        current_n_keys = -1;
-        check_xp = true;
+        user_num_keys.current = -1;
+        check_xp.current = true;
+        setXPReq(null);
         
     }, [wallet]);
 
     useEffect(() => 
     {
-        //console.log("set check xp");
-        check_xp = true;
+        check_xp.current = true;
 
         // just set the countdown here also
         var now = new Date().getTime();
@@ -282,20 +296,23 @@ export function ShopScreen()
     }, []);
 
 
-    const DisplayChest = ({visibility}) => {
+    const DisplayChest = ({visible} : {visible : boolean}) => {
 
-         if (chest_state === ChestStatus.closed) {
-             return ( <img style={{"imageRendering":"pixelated", "visibility": visibility}} src={closed_chest} width="10000" alt={""}/> );
-         }
-         if (chest_state === ChestStatus.open) {
-             return ( <img style={{"imageRendering":"pixelated", "visibility": visibility}} src={open_chest} width="10000" alt={""}/> );
-         }        
-     }
+        if (chest_state === ChestStatus.closed) {
+            return ( <img style={{"imageRendering":"pixelated", "visibility": visible ? "visible" : "hidden"}} src={closed_chest} width="10000" alt={""}/> );
+        }
+
+        return ( <img style={{"imageRendering":"pixelated", "visibility":  visible ? "visible" : "hidden"}} src={open_chest} width="10000" alt={""}/> );
+               
+    }
 
 
 
     const Mint = useCallback( async () => 
     {
+
+            if (wallet.publicKey === null || wallet.signTransaction === undefined)
+                return;
 
             setWhichKey(null);
             setKeyDescription(null);
@@ -306,9 +323,9 @@ export function ShopScreen()
             const nft_mint_keypair = Keypair.generate();
             var nft_mint_pubkey = nft_mint_keypair.publicKey;
             
-            let program_data_key = (PublicKey.findProgramAddressSync(["data_account"], SHOP_PROGRAM))[0];
+            let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM))[0];
             let dungeon_key_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
-            let dungeon_key_meta_account = (PublicKey.findProgramAddressSync(["key_meta", nft_mint_pubkey.toBuffer()], SHOP_PROGRAM))[0];
+            let dungeon_key_meta_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), nft_mint_pubkey.toBuffer()], SHOP_PROGRAM))[0];
 
 
             let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
@@ -433,9 +450,8 @@ export function ShopScreen()
             }
 
             
-            current_key = nft_mint_pubkey;
-            current_meta_key = nft_meta_key;
-            check_xp = true;
+            current_key.current = nft_meta_key;
+            check_xp.current = true;
             
             return;
         
@@ -562,13 +578,13 @@ export function ShopScreen()
                 
                             <Box width="35%"></Box> 
                             {countdown_value !== null && countdown_value === 0 &&           
-                                <Box width="15%"> <DisplayChest visibility = {"visible"}/></Box>  
+                                <Box width="15%"> <DisplayChest visible = {true}/></Box>  
                             }
                             {(countdown_value === null || countdown_value > 0) &&           
-                                <Box width="15%"> <DisplayChest visibility = {"hidden"}/></Box>  
+                                <Box width="15%"> <DisplayChest visible = {false}/></Box>  
                             }
                             <Box width="5%"></Box> 
-                            <Box width="15%" pb = "10%"><DisplayChest visibility = {"hidden"}/> </Box>  
+                            <Box width="15%" pb = "10%"><DisplayChest visible = {false}/> </Box>  
                             <Box width="30%"></Box> 
 
                         </HStack>
@@ -606,10 +622,10 @@ export function ShopScreen()
                         {/* If they don't have the xp reqs */}
                         {countdown_value !== null && countdown_value === 0 &&
                         <>
-                        {xp_req !== null && xp_req > 0 && numXP < xp_req &&
+                        {xp_req !== null && numXP !== null && xp_req > 0 && numXP < xp_req &&
                             <Center>
                             <Box width = "100%">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {invalid_shop_text[num_keys_bought]} Come back when you have {xp_req} XP</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP</Text>
                             </Box>
                             </Center>
                         }
@@ -627,10 +643,10 @@ export function ShopScreen()
                             </Box>
                             </Center>
                         }
-                        {xp_req > 0 && numXP >= xp_req &&
+                        {xp_req !== null && numXP !== null && xp_req > 0 && numXP >= xp_req &&
                             <Center>
                             <Box width = "100%">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[num_keys_bought]}</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[user_num_keys.current]}</Text>
                             </Box>
                             </Center>
                         }
@@ -648,7 +664,7 @@ export function ShopScreen()
 
                 <HStack alignItems="center">
  
-                    {xp_req !== null && xp_req > 0 && numXP >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
+                    {xp_req !== null&& numXP !== null  && xp_req > 0 && numXP >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
                     <>
                         
                         <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
@@ -666,7 +682,7 @@ export function ShopScreen()
                 </>
                 }
 
-                {which_key !== null &&
+                {which_key !== null && key_image !== null && current_mint !== null &&
                     <>
                     <VStack spacing="3%">
                     <HStack alignItems="center">
@@ -681,7 +697,7 @@ export function ShopScreen()
                     <Center>
                     <Box width = "100%">
                     <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint+"?cluster=devnet"}>here</a></Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()+"?cluster=devnet"}>here</a></Text>
                     </div>
                     </Box>
                     </Center>

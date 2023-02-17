@@ -88,9 +88,9 @@ import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
 //import {DungeonScreen} from './dungeon';
 
-import './style.css';
-import './fonts.css';
-import './wallet.css';
+import './css/style.css';
+import './css/fonts.css';
+import './css/wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 
@@ -611,8 +611,6 @@ export function DungeonApp()
 
 
     }, []);
-
-
 
 
     const Play = useCallback( async () => 
@@ -1395,9 +1393,7 @@ export function DungeonApp()
         <>
             
         <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance}/>
-          
-        
-        
+
         <Box width="100%" mb = "2%">
             <Center>
                 <Title/>
@@ -1407,9 +1403,7 @@ export function DungeonApp()
         <Box width="100%">       
             <Center>
                 <VStack alignItems="center">
-                 
-                
-                
+
                     
                     {!wallet.publicKey && 
                     <>

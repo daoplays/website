@@ -33,9 +33,9 @@ import {Screen} from './constants';
 // dungeon utils
 import { WalletConnected, request_current_balance} from './utils';
 
-import './style.css';
-import './fonts.css';
-import './wallet.css';
+import './css/style.css';
+import './css/fonts.css';
+import './css/wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 
@@ -47,7 +47,6 @@ export function Navigation(
 
     const [balance, setBalance] = useState(0);
 
-    // Ref
   // This will be used to store the interval
   const intervalref = useRef<number | null>(null);
 
@@ -94,6 +93,12 @@ export function Navigation(
       }
     };
   }, [checkBalance]);
+
+    useEffect(() => {
+
+        setBalance(0);
+        
+    }, [wallet]);
 
     const ShowFAQ = useCallback( async () => 
     {
