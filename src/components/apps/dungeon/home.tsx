@@ -10,7 +10,8 @@ import {
     VStack,
     Divider,
     NumberInput,
-    NumberInputField
+    NumberInputField,
+    Select
 } from '@chakra-ui/react';
 
 import {
@@ -31,8 +32,10 @@ import { isMobile } from "react-device-detect";
 
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
-    getAssociatedTokenAddress
-  } from "@solana/spl-token";
+        getAssociatedTokenAddress,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+} from "@solana/spl-token";
 import {
     WalletProvider,
     useWallet,
@@ -111,6 +114,11 @@ const enum KeyType {
     Unknown = 3
 }
 
+const enum TokenTypes {
+    Solana = 0,
+    DPP = 1
+}
+
 const enum DungeonInstruction {
     add_funds = 0,
     distribute = 1,
@@ -126,6 +134,10 @@ export function DungeonApp()
     // properties used to set what to display
     const [data_account_status, setDataAccountStatus] = useState<AccountStatus>(AccountStatus.unknown);
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
+
+    // settings for this game
+    const [which_token, setWhichToken] = useState<number>(0);
+    const handleWhichToken = (event : React.ChangeEvent<HTMLSelectElement>) => {console.log("event: ", event.target.value); setWhichToken(parseInt(event.target.value));};
 
     // these come from the blockchain
     const [num_plays, setNumPlays] = useState<number>(-1);
@@ -272,7 +284,9 @@ export function DungeonApp()
         const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature.current;
         var signature_response = await fetch(confirm_url).then((res) => res.json());
 
-        console.log("sig response:", signature_response);
+        if (DEBUG) 
+            console.log("sig response:", signature_response);
+
         let valid_response = check_json(signature_response)
         if (!valid_response) {
             return;
@@ -394,9 +408,6 @@ export function DungeonApp()
             if (initial_status.current === DungeonStatus.unknown) {
                 initial_status.current = current_status;
             }
-
-            let test = new BN(player_data.num_plays);
-            console.log(test.toNumber());
 
             let current_num_plays = (new BN(player_data.num_plays)).toNumber();
 
@@ -578,12 +589,12 @@ export function DungeonApp()
 
         setProcessingTransaction(true);
         if (DEBUG) {
-            console.log("In play");
+            console.log("In play", which_token);
         }
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character);
+        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, which_token);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -603,6 +614,29 @@ export function DungeonApp()
 
         account_vector.push({pubkey: program_data_key, isSigner: false, isWritable: true});
         account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: false});
+
+        if (which_token !== TokenTypes.Solana) {
+
+            let token_mint = new PublicKey('CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h');
+
+            let user_token_account_key = await getAssociatedTokenAddress(
+                token_mint, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            let program_token_account_key = await getAssociatedTokenAddress(
+                token_mint, // mint
+                program_data_key, // owner
+                true // allow owner off curve
+            );
+
+            account_vector.push({pubkey: token_mint, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: user_token_account_key, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: program_token_account_key, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+            
+        }
 
         if (current_key_mint && current_key_index) {
 
@@ -692,7 +726,7 @@ export function DungeonApp()
         check_sol_balance.current = true;
 
 
-    },[wallet, player_character, current_key_index, current_key_mint]);
+    },[wallet, player_character, current_key_index, current_key_mint, which_token]);
 
     const Quit = useCallback( async () => 
     {
@@ -1127,7 +1161,12 @@ export function DungeonApp()
                                         </Button> 
                                     </div> 
                                     <div className="font-face-sfpb">
-                                        <Text textAlign="center" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
+                                        <Select bg='black' onChange={handleWhichToken} fontSize={font_size} color="white">
+
+                                            <option style={{ color: 'white', background: "black", fontSize: "20px"}} value={TokenTypes.Solana}>{BET_SIZE} SOL</option>
+                                            <option style={{ color: 'white', background: "black", fontSize: "20px" }} value={TokenTypes.DPP}>1 DPP</option>
+
+                                        </Select>
                                     </div>
                                     
                                     <DiscountKeyInput/>

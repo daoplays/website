@@ -205,15 +205,18 @@ class InstructionNoArgs {
 class DungeonPlayInstruction {
     constructor(
       readonly instruction: number,
-      readonly character: number
+      readonly character: number,
+      readonly which_token: number
+
     ) {}
   
     static readonly struct = new BeetStruct<DungeonPlayInstruction>(
       [
         ['instruction', u8],
-        ['character', u8]
+        ['character', u8],
+        ['which_token', u8]
       ],
-      (args) => new DungeonPlayInstruction(args.instruction!, args.character!),
+      (args) => new DungeonPlayInstruction(args.instruction!, args.character!, args.which_token!),
       'DungeonPlayInstruction'
     )
 }
@@ -412,10 +415,10 @@ export async function request_shop_user_data(pubkey : PublicKey) : Promise<ShopU
     return data;
 }
 
-export function serialise_play_instruction(instruction : number, which_character : number) : Buffer
+export function serialise_play_instruction(instruction : number, which_character : number, which_token : number) : Buffer
 {
 
-    const data = new DungeonPlayInstruction(instruction, which_character);
+    const data = new DungeonPlayInstruction(instruction, which_character, which_token);
     const [buf] = DungeonPlayInstruction.struct.serialize(data);
 
     return buf;
