@@ -157,20 +157,6 @@ export function UnityExample() {
 
 
     // unity -> react
-    const handleGameOver = useCallback((score : number) => {
-        //console.log("game over detected", score);
-        setIsGameOver(true);
-        setScore(score);
-    }, []);
-
-    useEffect(() => {
-
-        addEventListener("SetGameOver", handleGameOver);
-        return () => {
-          removeEventListener("SetGameOver", handleGameOver);
-        };
-    }, [addEventListener, removeEventListener, handleGameOver]);
-
 
     // connect wallet listener
     const handleConnectWallet = useCallback(async () => {
@@ -218,9 +204,9 @@ export function UnityExample() {
     }, [addEventListener, removeEventListener, handleSendScore]);
 
       // react -> unity
-    function setHighScore(new_score : number) {
+    const setHighScore = useCallback((new_score : number) => {
         sendMessage("GameManager", "SetHighScore", new_score);
-    };
+    }, [sendMessage]);
 
 
     const check_state = useCallback(async () => 
@@ -251,7 +237,7 @@ export function UnityExample() {
         setHighScore(high_score_bn.toNumber());
         
 
-    }, [wallet]);
+    }, [wallet, setHighScore, connection]);
 
     
     useEffect(() => {
