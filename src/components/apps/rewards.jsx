@@ -22,12 +22,8 @@ import {
     useConnection,
     useWallet,
 } from '@solana/wallet-adapter-react';
-import {
-    getPhantomWallet,
-    getSolflareWallet,
-    getSolletWallet,
-    getSolletExtensionWallet,
-} from '@solana/wallet-adapter-wallets';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+
 import {
     WalletModalProvider,
     WalletMultiButton,
@@ -1012,13 +1008,10 @@ function Rewards()
     const endpoint = web3.clusterApiUrl(network);
     const wallets = useMemo(() => 
     [
-        getPhantomWallet(),
-        getSolflareWallet(),
-        getSolletWallet({ network }),
-        getSolletExtensionWallet({ network }),
+        new PhantomWalletAdapter(),
     ],
-    [network]
-    );
+    []
+  );
 
 
     return(
