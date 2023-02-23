@@ -5,7 +5,7 @@ import {
 } from '@chakra-ui/react';
 
 //  dungeon constants
-import {DUNGEON_FONT_SIZE, BET_SIZE} from './constants';
+import {DUNGEON_FONT_SIZE} from './constants';
 
 //enemies
 import closed_chest from "./images/chest_closed.png"
@@ -22,6 +22,8 @@ import skeleton_wizard from "./images/Skelly_Wiz.gif"
 import reaper from "./images/Reaper.gif"
 import boulder from "./images/Boulder.png"
 import floor_spikes from "./images/Spikes.png"
+import bones from "./images/Bones.png"
+import slime_corpse from "./images/slime_corpse.png"
 
 //characters
 import knight from "./images/Knight.gif"
@@ -64,7 +66,19 @@ const DungeonEnemyName = ["Mimic", "Slime", "Goblins", "Skeletons", "Skeletons",
 
 const DungeonEnemyInitialText = ["mimic", "an oozing green slime", "a pair of goblins", "a horde of skeletons", "a horde of skeletons", "a group of elven archers", "a huge orc", "a skeleton knight", "a skeleton wizard", "the Grim Reaper", "Boulder", "Floor Spikes"];
 
-const DungeonEnemyDefeatText = ["The mimic's transformation stuns you for just a moment, but that is all it needed", "The slime oozes past your defenses and envelopes you, suffocating you where you stand", "The goblins are too fast, you lose sight of them for just a second and the next thing you see is a knife to your throat", "The skeletons manage to surround you, and strike from all sides", "There were just.. too many skeletons", "You take an arrow to the knee, and while stumbling are unable to dodge the next volley to the heart", "With one swing from it's axe the orc cracks your head open like an egg", "Your attacks are simply deflected off the knight's armour until it gets bored and strikes you down", "Hoarsely croaking some ancient incantation the wizard turns you inside out before you even have a chance to attack", "The Reaper's scythe passes through you as though you were no more than air as it claims another soul", "Boulder", "Floor Spikes"];
+const DungeonEnemyDefeatText = [
+    "The mimic's transformation stuns you for just a moment, but that is all it needed", 
+    "The slime oozes past your defenses and envelopes you, suffocating you where you stand", 
+    "The goblins are too fast, you lose sight of them for just a second and the next thing you see is a knife to your throat", 
+    "The skeletons manage to surround you, and strike from all sides", 
+    "There were just.. too many skeletons", 
+    "You take an arrow to the knee, and while stumbling are unable to dodge the next volley to the heart", 
+    "With one swing from it's axe the orc cracks your head open like an egg", 
+    "Your attacks are simply deflected off the knight's armour until it gets bored and strikes you down", 
+    "Hoarsely croaking some ancient incantation the wizard turns you inside out before you even have a chance to attack", 
+    "The Reaper's scythe passes through you as though you were no more than air as it claims another soul", 
+    "A boulder suddenly falls from the ceiling, crushing you instantly.", 
+    "A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes."];
 
 export const DisplayEnemyAppearsText = ({current_enemy, current_level} : {current_enemy : DungeonEnemy, current_level : number}) => {
 
@@ -98,34 +112,6 @@ export const DisplayEnemyAppearsText = ({current_enemy, current_level} : {curren
 
 export const DisplayPlayerFailedText = ({current_enemy} : {current_enemy : DungeonEnemy}) => {
 
-         
-    // for the traps we have special text for failure
-    if (current_enemy === DungeonEnemy.Boulder) {
-        return(
-            <Center>
-            <Box width="80%">
-            <div className="font-face-sfpb">
-                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
-            </div>
-            </Box>
-            </Center>
-        );
-    }
-
-    if (current_enemy === DungeonEnemy.FloorSpikes) {
-        return(
-            <Center>
-            <Box width="80%">
-            <div className="font-face-sfpb">
-                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
-            </div>
-            </Box>
-            </Center>
-        );
-    }
-    
-
-    // otherwise say the enemy type
     return(
         <Center>
             <Box width="80%">
@@ -160,14 +146,14 @@ const EnemyDefeatedText = ({current_enemy} : {current_enemy : DungeonEnemy}) => 
 
 }
 
-export const DisplayPlayerSuccessText = ({current_level, current_enemy} : {current_level : number, current_enemy : DungeonEnemy}) => {
+export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number}) => {
 
     if (current_level <  7) {
         return(
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy}/>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,current_level) *  BET_SIZE} SOL</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,current_level+1) *  BET_SIZE} SOL</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,current_level) *  bet_size} SOL</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,current_level+1) *  bet_size} SOL</Text>
        </div>
        );
     }
@@ -177,7 +163,7 @@ export const DisplayPlayerSuccessText = ({current_level, current_enemy} : {curre
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy}/>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {Math.pow(2,current_level) *  BET_SIZE} SOL</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {Math.pow(2,current_level) *  bet_size} SOL</Text>
             
        </div>
        );
@@ -204,6 +190,13 @@ export const DisplayEnemy = ({player_state, enemy_state, current_enemy} : {playe
             return ( <img style={{"imageRendering":"pixelated"}} src={open_chest} width="10000" alt={""}/> );
         }
 
+        if (current_enemy === DungeonEnemy.Slime) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={slime_corpse} width="10000" alt={""}/> );
+        }
+
+        if (current_enemy === DungeonEnemy.SkeletonsHallway || current_enemy === DungeonEnemy.SkeletonsGraveyard) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={bones} width="10000" alt={""}/> );
+        }
 
         return ( <img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/> );
     }

@@ -42,6 +42,3 @@ export const enum Screen {
     HELP_SCREEN = 5,
     SHOP_SCREEN = 6
 }
-
-export const BET_SIZE = 0.05;
-

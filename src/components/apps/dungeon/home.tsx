@@ -4,14 +4,12 @@ import {
     Box,
     Button,
     HStack,
-    theme,
     Center,
     Text,
     VStack,
     Divider,
     NumberInput,
     NumberInputField,
-    Select
 } from '@chakra-ui/react';
 
 import {
@@ -24,6 +22,7 @@ import {
     PopoverCloseButton,
   } from '@chakra-ui/react'
 
+import Select, { StylesConfig }  from 'react-select';
 import FocusLock from 'react-focus-lock';
 
 import { isMobile } from "react-device-detect";
@@ -32,9 +31,7 @@ import { isMobile } from "react-device-detect";
 
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
-        getAssociatedTokenAddress,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
+        getAssociatedTokenAddress
 } from "@solana/spl-token";
 import {
     WalletProvider,
@@ -71,7 +68,7 @@ import selector from "./images/Selector.gif"
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, BET_SIZE} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen} from './constants';
 
 // dungeon utils
 import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
@@ -114,10 +111,13 @@ const enum KeyType {
     Unknown = 3
 }
 
-const enum TokenTypes {
-    Solana = 0,
-    DPP = 1
+const enum BetSize {
+    Solana01 = 0,
+    Solana05 = 1,
+    Solana1 = 2,
 }
+
+const BetSizeValues : number[] = [0.1, 0.5, 1.0];
 
 const enum DungeonInstruction {
     add_funds = 0,
@@ -126,6 +126,46 @@ const enum DungeonInstruction {
     quit = 3,
     explore = 4
 }
+
+type BetValueObject = Object & {
+    value: BetSize,
+    label: string
+}
+
+type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
+
+const colourStyles: StylesConfig<BetValueObject, false> = {
+    menu: (base) => ({
+        ...base,
+        width: "max-content",
+        minWidth: "100%"
+   }),
+    control: (provided) => ({ 
+        ...provided,
+        backgroundColor: 'black',
+        color: 'white'
+    }),
+    singleValue: (provided) => ({ 
+        ...provided,
+        fontSize: DEFAULT_FONT_SIZE,
+        backgroundColor: 'black',
+        color: 'white'
+    }),
+    placeholder: (provided) => ({ 
+        ...provided,
+        fontSize: DEFAULT_FONT_SIZE,
+        backgroundColor: 'black',
+        color: 'white'
+    }),
+    option: (provided, {isFocused}) => {
+      return {
+        ...provided,
+
+        backgroundColor: isFocused ? 'grey' : 'black',
+        color: 'white'
+      };
+    },
+  };
 
 export function DungeonApp() 
 {
@@ -136,8 +176,14 @@ export function DungeonApp()
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
 
     // settings for this game
-    const [which_token, setWhichToken] = useState<number>(0);
-    const handleWhichToken = (event : React.ChangeEvent<HTMLSelectElement>) => {console.log("event: ", event.target.value); setWhichToken(parseInt(event.target.value));};
+    const [bet_size, setBetSize] = useState<BetSize>(BetSize.Solana01);
+    const [select_value, setSelectValue] = useState<BetValueObject | null>(null);
+
+    const handleSelectChange = (selected: SelectValue) => {
+        let selected_bet = selected as BetValueObject;
+        setSelectValue(selected_bet);
+        setBetSize(selected_bet.value);
+    };
 
     // these come from the blockchain
     const [num_plays, setNumPlays] = useState<number>(-1);
@@ -217,7 +263,7 @@ export function DungeonApp()
 
     return (
         <>
-    <div style={{marginTop : "2rem"}}></div>
+    <div style={{marginTop : "1rem"}}></div>
     <div style={{ margin: 0 }}>
     <Popover
         returnFocusOnClose={false}
@@ -307,7 +353,9 @@ export function DungeonApp()
             current_signature.current = null;
             signature_check_count.current = 0;
         }
-
+        else {
+            signature_check_count.current += 1;
+        }
         if (signature_check_count.current >= 10) {
             setTransactionFailed(true);
             current_signature.current = null;
@@ -589,12 +637,12 @@ export function DungeonApp()
 
         setProcessingTransaction(true);
         if (DEBUG) {
-            console.log("In play", which_token);
+            console.log("In play", bet_size, BetSizeValues[bet_size]);
         }
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, which_token);
+        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, bet_size);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -614,29 +662,6 @@ export function DungeonApp()
 
         account_vector.push({pubkey: program_data_key, isSigner: false, isWritable: true});
         account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: false});
-
-        if (which_token !== TokenTypes.Solana) {
-
-            let token_mint = new PublicKey('CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h');
-
-            let user_token_account_key = await getAssociatedTokenAddress(
-                token_mint, // mint
-                wallet.publicKey, // owner
-                true // allow owner off curve
-            );
-
-            let program_token_account_key = await getAssociatedTokenAddress(
-                token_mint, // mint
-                program_data_key, // owner
-                true // allow owner off curve
-            );
-
-            account_vector.push({pubkey: token_mint, isSigner: false, isWritable: false});
-            account_vector.push({pubkey: user_token_account_key, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: program_token_account_key, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
-            
-        }
 
         if (current_key_mint && current_key_index) {
 
@@ -726,7 +751,7 @@ export function DungeonApp()
         check_sol_balance.current = true;
 
 
-    },[wallet, player_character, current_key_index, current_key_mint, which_token]);
+    },[wallet, player_character, current_key_index, current_key_mint, bet_size]);
 
     const Quit = useCallback( async () => 
     {
@@ -1104,6 +1129,8 @@ export function DungeonApp()
         )
     }
 
+
+
     const ConnectedPage = () =>  {
 
         var font_size = DEFAULT_FONT_SIZE;
@@ -1161,14 +1188,21 @@ export function DungeonApp()
                                         </Button> 
                                     </div> 
                                     <div className="font-face-sfpb">
-                                        <Select bg='black' onChange={handleWhichToken} fontSize={font_size} color="white">
-
-                                            <option style={{ color: 'white', background: "black", fontSize: "20px"}} value={TokenTypes.Solana}>{BET_SIZE} SOL</option>
-                                            <option style={{ color: 'white', background: "black", fontSize: "20px" }} value={TokenTypes.DPP}>1 DPP</option>
-
-                                        </Select>
+                                        <Select 
+                                        placeholder={'Bet Size'}
+                                        styles={colourStyles}
+                                        isSearchable={false}
+                                        onChange={(choice: SelectValue) => {handleSelectChange(choice)}}
+                                        value={select_value}
+                                        options = {[
+                                            { value: BetSize.Solana01, label: '0.1 SOL' },
+                                            { value: BetSize.Solana05, label: '0.5 SOL' },
+                                            { value: BetSize.Solana1, label: '1.0 SOL' }
+                                        ]}      
+                                        />     
                                     </div>
-                                    
+
+
                                     <DiscountKeyInput/>
                                     
                                 </VStack>
@@ -1286,7 +1320,7 @@ export function DungeonApp()
                     {enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
-                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy}/>
+                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={BetSizeValues[bet_size]}/>
 
                             {current_level < 7 &&
                                 <Center>
@@ -1368,7 +1402,7 @@ export function DungeonApp()
                 <Box width="100%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,current_level - 1) *  BET_SIZE} SOL</del></Text>
+                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,current_level - 1) *  BetSizeValues[bet_size]} SOL</del></Text>
                             </div> 
                     </Center>
                 </Box>
@@ -1468,7 +1502,7 @@ function Home() {
   document.body.setAttribute('style', 'background: black;');
     return (
 
-        <ChakraProvider theme={theme}>
+        <ChakraProvider>
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
                         <DungeonApp />

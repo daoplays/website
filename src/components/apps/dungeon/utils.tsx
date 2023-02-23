@@ -206,7 +206,7 @@ class DungeonPlayInstruction {
     constructor(
       readonly instruction: number,
       readonly character: number,
-      readonly which_token: number
+      readonly bet_size: number
 
     ) {}
   
@@ -214,9 +214,9 @@ class DungeonPlayInstruction {
       [
         ['instruction', u8],
         ['character', u8],
-        ['which_token', u8]
+        ['bet_size', u8]
       ],
-      (args) => new DungeonPlayInstruction(args.instruction!, args.character!, args.which_token!),
+      (args) => new DungeonPlayInstruction(args.instruction!, args.character!, args.bet_size!),
       'DungeonPlayInstruction'
     )
 }
@@ -415,10 +415,10 @@ export async function request_shop_user_data(pubkey : PublicKey) : Promise<ShopU
     return data;
 }
 
-export function serialise_play_instruction(instruction : number, which_character : number, which_token : number) : Buffer
+export function serialise_play_instruction(instruction : number, which_character : number, bet_size : number) : Buffer
 {
 
-    const data = new DungeonPlayInstruction(instruction, which_character, which_token);
+    const data = new DungeonPlayInstruction(instruction, which_character, bet_size);
     const [buf] = DungeonPlayInstruction.struct.serialize(data);
 
     return buf;
