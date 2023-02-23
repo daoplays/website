@@ -192,7 +192,7 @@ export function Navigation(
                             <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
                         </a>
 
-                        <a href="https://discord.gg/HeKJZZEaPn">
+                        <a href="https://discord.gg/soldungeon">
                             <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
                     </HStack>

@@ -29,7 +29,7 @@ import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
         getAssociatedTokenAddress
 } from "@solana/spl-token";
@@ -119,6 +119,12 @@ const enum BetSize {
 
 const BetSizeValues : number[] = [0.1, 0.5, 1.0];
 
+type BetValueObject = Object & {
+    value: BetSize,
+    label: string
+}
+
+
 const enum DungeonInstruction {
     add_funds = 0,
     distribute = 1,
@@ -126,46 +132,6 @@ const enum DungeonInstruction {
     quit = 3,
     explore = 4
 }
-
-type BetValueObject = Object & {
-    value: BetSize,
-    label: string
-}
-
-type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
-
-const colourStyles: StylesConfig<BetValueObject, false> = {
-    menu: (base) => ({
-        ...base,
-        width: "max-content",
-        minWidth: "100%"
-   }),
-    control: (provided) => ({ 
-        ...provided,
-        backgroundColor: 'black',
-        color: 'white'
-    }),
-    singleValue: (provided) => ({ 
-        ...provided,
-        fontSize: DEFAULT_FONT_SIZE,
-        backgroundColor: 'black',
-        color: 'white'
-    }),
-    placeholder: (provided) => ({ 
-        ...provided,
-        fontSize: DEFAULT_FONT_SIZE,
-        backgroundColor: 'black',
-        color: 'white'
-    }),
-    option: (provided, {isFocused}) => {
-      return {
-        ...provided,
-
-        backgroundColor: isFocused ? 'grey' : 'black',
-        color: 'white'
-      };
-    },
-  };
 
 export function DungeonApp() 
 {
@@ -177,13 +143,14 @@ export function DungeonApp()
 
     // settings for this game
     const [bet_size, setBetSize] = useState<BetSize>(BetSize.Solana01);
+    const [bet_value, setBetValue] = useState<number>(0.1);
     const [select_value, setSelectValue] = useState<BetValueObject | null>(null);
 
-    const handleSelectChange = (selected: SelectValue) => {
-        let selected_bet = selected as BetValueObject;
-        setSelectValue(selected_bet);
-        setBetSize(selected_bet.value);
-    };
+
+    const handleBetChange = (selected : BetSize) => {
+        setBetSize(selected);
+        setBetValue(BetSizeValues[selected])
+    }
 
     // these come from the blockchain
     const [num_plays, setNumPlays] = useState<number>(-1);
@@ -252,6 +219,89 @@ export function DungeonApp()
         setShowDiscountError(true);
     },[]);
 
+    function BetSizeInput() {
+
+
+        const handleSelectChange = (selected: SelectValue) => {
+            let selected_bet = selected as BetValueObject;
+            setSelectValue(selected_bet);
+            setBetSize(selected_bet.value);
+            setBetValue(BetSizeValues[selected_bet.value])
+        };
+
+
+        type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
+        
+        const colourStyles: StylesConfig<BetValueObject, false> = {
+            menu: (base) => ({
+                ...base,
+                width: "max-content",
+                minWidth: "100%"
+           }),
+            control: (provided) => ({ 
+                ...provided,
+                backgroundColor: 'black',
+                color: 'white'
+            }),
+            singleValue: (provided) => ({ 
+                ...provided,
+                fontSize: DUNGEON_FONT_SIZE,
+                backgroundColor: 'black',
+                color: 'white'
+            }),
+            placeholder: (provided) => ({ 
+                ...provided,
+                fontSize: DUNGEON_FONT_SIZE,
+                backgroundColor: 'black',
+                color: 'white'
+            }),
+            option: (provided, {isFocused}) => {
+              return {
+                ...provided,
+        
+                backgroundColor: isFocused ? 'grey' : 'black',
+                color: 'white'
+              };
+            },
+          };
+          
+          return(
+            <div className="font-face-sfpb">
+
+            {!isMobile &&
+                <HStack alignItems="center" spacing="1px">
+                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana01)} borderWidth='2px' height={"30px"}  borderColor={bet_size === BetSize.Solana01 ? "white" : "black"}  width={"50px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.1</Text>
+                    </Box>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana05)} height={"30px"}  borderWidth='2px'borderColor={bet_size === BetSize.Solana05 ? "white" : "black"}  width={"50px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.5</Text>
+                    </Box>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana1)} height={"30px"}  borderWidth='2px' borderColor={bet_size === BetSize.Solana1 ? "white" : "black"}  width={"50px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">1.0</Text>
+                    </Box>
+                    <Box borderWidth='2px'  borderColor="black" height={"30px"} width={"60px"}>
+                        <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">SOL</Text>
+                    </Box>
+                </HStack>
+            }
+            {isMobile &&
+                    <Select 
+                    placeholder={'0.1 SOL'}
+                    styles={colourStyles}
+                    isSearchable={false}
+                    onChange={(choice: SelectValue) => {handleSelectChange(choice)}}
+                    value={select_value}
+                    options = {[
+                        { value: BetSize.Solana01, label: '0.1 SOL' },
+                        { value: BetSize.Solana05, label: '0.5 SOL' },
+                        { value: BetSize.Solana1, label: '1.0 SOL' }
+                    ]}      
+                /> 
+            }
+            </div>
+
+          );
+    }
     
 
     function DiscountKeyInput() {
@@ -278,26 +328,35 @@ export function DungeonApp()
             </Button> 
         </PopoverTrigger>
         <PopoverContent>
-            <div className="font-face-sfpb">
-                <PopoverHeader fontSize={DUNGEON_FONT_SIZE} fontWeight='semibold'>Enter Key Number</PopoverHeader>
+            <div className="font-face-sfpb" color="white">
+                <PopoverHeader fontSize={DUNGEON_FONT_SIZE} color="white" fontWeight='semibold' ml="2rem" mr="2rem">Enter Key Number</PopoverHeader>
             </div>
             <PopoverArrow />
-            <PopoverCloseButton />
+            <PopoverCloseButton ml="1rem" color="white"/>
             <PopoverBody>
                 <FocusLock returnFocus persistentFocus={false}>
                 <VStack align="center">
                     <div className="font-face-sfpb">                                           
                     <NumberInput 
+                        fontSize={DUNGEON_FONT_SIZE} 
+                        color="white"
+                        size="lg"
                         onChange={(valueString) => setDiscountKeyIndex(valueString)}
                         value={discount_key_index}
                         precision={0}
                         min={1} max={3500}>
-                        <NumberInputField/>
+                        
+                        <NumberInputField
+                        height={DUNGEON_FONT_SIZE} 
+                        paddingTop="1rem"
+                        paddingBottom="1rem"
+
+                        />
                     </NumberInput>
                     </div>
                     <div className="font-face-sfpb">
 
-                        <Button variant='link' size='md'  onClick={ApplyKey}> 
+                        <Button variant='link' size='md'  color="white" onClick={ApplyKey}> 
                             Apply
                         </Button> 
                         
@@ -308,7 +367,9 @@ export function DungeonApp()
                 <>
                     <Divider mt = "1rem" mb = "1rem"/>
                     <div className="font-face-sfpb">
+                        <Text color="white" >
                         {discount_error}
+                        </Text>
                     </div>
                 </>
                 }
@@ -455,6 +516,12 @@ export function DungeonApp()
             let current_status = player_data.player_status + 1;
             if (initial_status.current === DungeonStatus.unknown) {
                 initial_status.current = current_status;
+                if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
+                    let current_bet_value_bn = new BN(player_data.current_bet_size);
+                    let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
+                    setBetValue(current_bet_value);
+                    console.log("setting current status to alive", current_bet_value);
+                }
             }
 
             let current_num_plays = (new BN(player_data.num_plays)).toNumber();
@@ -1187,20 +1254,7 @@ export function DungeonApp()
                                         <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 
                                     </div> 
-                                    <div className="font-face-sfpb">
-                                        <Select 
-                                        placeholder={'Bet Size'}
-                                        styles={colourStyles}
-                                        isSearchable={false}
-                                        onChange={(choice: SelectValue) => {handleSelectChange(choice)}}
-                                        value={select_value}
-                                        options = {[
-                                            { value: BetSize.Solana01, label: '0.1 SOL' },
-                                            { value: BetSize.Solana05, label: '0.5 SOL' },
-                                            { value: BetSize.Solana1, label: '1.0 SOL' }
-                                        ]}      
-                                        />     
-                                    </div>
+                                    <BetSizeInput/>
 
 
                                     <DiscountKeyInput/>
@@ -1320,7 +1374,7 @@ export function DungeonApp()
                     {enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
-                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={BetSizeValues[bet_size]}/>
+                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={bet_value}/>
 
                             {current_level < 7 &&
                                 <Center>
@@ -1402,7 +1456,7 @@ export function DungeonApp()
                 <Box width="100%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,current_level - 1) *  BetSizeValues[bet_size]} SOL</del></Text>
+                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,current_level - 1) *  bet_value} SOL</del></Text>
                             </div> 
                     </Center>
                 </Box>
