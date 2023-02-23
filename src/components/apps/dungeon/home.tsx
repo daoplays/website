@@ -255,6 +255,14 @@ export function DungeonApp()
                 backgroundColor: 'black',
                 color: 'white'
             }),
+            clearIndicator: (provided) => ({
+                ...provided,
+                padding: "0px"
+            }),
+            dropdownIndicator: (provided) => ({
+                ...provided,
+                padding: "0px"
+            }),
             option: (provided, {isFocused}) => {
               return {
                 ...provided,
@@ -262,6 +270,7 @@ export function DungeonApp()
                 backgroundColor: isFocused ? 'grey' : 'black',
                 color: 'white'
               };
+              
             },
           };
           
@@ -321,15 +330,16 @@ export function DungeonApp()
         onClose={CloseDiscountError}
         placement='bottom'
         closeOnBlur={false}
+        
     >
         <PopoverTrigger>
             <Button variant='link' size='md' onClick={OpenDiscountError}>
                 <img style={{"imageRendering":"pixelated"}} src={key} width={key_size} alt={""}/>
             </Button> 
         </PopoverTrigger>
-        <PopoverContent>
+        <PopoverContent backgroundColor={"black"} >
             <div className="font-face-sfpb" color="white">
-                <PopoverHeader fontSize={DUNGEON_FONT_SIZE} color="white" fontWeight='semibold' ml="2rem" mr="2rem">Enter Key Number</PopoverHeader>
+                <PopoverHeader  style={{borderBottomWidth:0}} fontSize={DUNGEON_FONT_SIZE} color="white" fontWeight='semibold' ml="2rem" mr="2rem">Enter Key Number</PopoverHeader>
             </div>
             <PopoverArrow />
             <PopoverCloseButton ml="1rem" color="white"/>
@@ -344,13 +354,15 @@ export function DungeonApp()
                         onChange={(valueString) => setDiscountKeyIndex(valueString)}
                         value={discount_key_index}
                         precision={0}
+                        borderColor="white"
                         min={1} max={3500}>
+                        
                         
                         <NumberInputField
                         height={DUNGEON_FONT_SIZE} 
                         paddingTop="1rem"
                         paddingBottom="1rem"
-
+                        borderColor="white"
                         />
                     </NumberInput>
                     </div>
