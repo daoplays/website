@@ -49,7 +49,7 @@ export function FAQScreen()
 
         <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>What are Dungeon Keys</h2><br />
 
-        Dungeon Keys grant holders between 25% and 75% fee discounts depending on the quality of the key.  The first time a key is used you will need to enter the mint address into the 'Key Mint/No.' box on the home page, and click the key button on the right to apply the discount.  From that point on you will only need to enter the key number, e.g. for Dungeon Key #0035 you would enter 35 and click the key.
+        Dungeon Keys grant holders between 25% and 75% fee discounts depending on the quality of the key.  Simply click the key icon and enter the key number, e.g. for Dungeon Key #0035 you would enter 35 and click Apply.  The first time a key is used it will create a small lookup account to make using the key faster in the future.  
         
         <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Who are the team</h2><br />
         

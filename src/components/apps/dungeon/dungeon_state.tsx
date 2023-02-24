@@ -4,6 +4,7 @@ import {
     Text,
 } from '@chakra-ui/react';
 
+
 //  dungeon constants
 import {DUNGEON_FONT_SIZE} from './constants';
 
@@ -31,6 +32,7 @@ import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 
+var seedrandom = require('seedrandom');
 
 export const enum DungeonCharacter {
     knight = 0,
@@ -108,7 +110,7 @@ const DungeonEnemyDefeatedText : string[][] = [
     "You open the chest with care, and find it contains some useful supplies"],
     // slime 
     ["You have defeated the oozing green slime",
-    "A mere slime is no match for you"],
+    "A mere slime is no match for you!"],
     // goblins 
     ["You have defeated the pair of goblins",
     "The goblins were intoxicated from mushroom brew. They barely put up a fight."],
@@ -179,11 +181,12 @@ const DungeonPlayerDefeatedText : string[][] = [
     ["A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.",
     "Spikes suddenly burst from holes in the ground beneath your feet and impale you before you can react"]];
 
-export const DisplayEnemyAppearsText = ({current_enemy, current_level} : {current_enemy : DungeonEnemy, current_level : number}) => {
+export const DisplayEnemyAppearsText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
 
+    let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
+    var random = seedrandom(seed_string);
     let enemy_text : string[] = DungeonEnemyAppearsText[current_enemy];
-    let idx : number = Math.floor(Math.random() * enemy_text.length);
-    console.log("number of text entries: ", idx, enemy_text.length);
+    let idx : number = Math.floor(random() * enemy_text.length);
     let chosen_text : string = enemy_text[idx];
 
     // otherwise say the enemy type
@@ -194,11 +197,13 @@ export const DisplayEnemyAppearsText = ({current_enemy, current_level} : {curren
     );
 }
 
-export const DisplayPlayerFailedText = ({current_enemy} : {current_enemy : DungeonEnemy}) => {
+export const DisplayPlayerFailedText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
+
+    let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
+    var random = seedrandom(seed_string);
 
     let enemy_text : string[] = DungeonPlayerDefeatedText[current_enemy];
-    let idx : number = Math.floor(Math.random() * enemy_text.length);
-    console.log("number of text entries: ", idx, enemy_text.length);
+    let idx : number = Math.floor(random() * enemy_text.length);
     let chosen_text : string = enemy_text[idx];
 
     return(
@@ -212,11 +217,13 @@ export const DisplayPlayerFailedText = ({current_enemy} : {current_enemy : Dunge
     );
 }
 
-const EnemyDefeatedText = ({current_enemy} : {current_enemy : DungeonEnemy}) => {
+const EnemyDefeatedText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
+
+    let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
+    var random = seedrandom(seed_string);
 
     let enemy_text : string[] = DungeonEnemyDefeatedText[current_enemy];
-    let idx : number = Math.floor(Math.random() * enemy_text.length);
-    console.log("number of text entries: ", idx, enemy_text.length);
+    let idx : number = Math.floor(random() * enemy_text.length);
     let chosen_text : string = enemy_text[idx];
 
     return(
@@ -226,12 +233,12 @@ const EnemyDefeatedText = ({current_enemy} : {current_enemy : DungeonEnemy}) => 
 
 }
 
-export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number}) => {
+export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size, num_plays} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number, num_plays : number}) => {
 
     if (current_level <  7) {
         return(
         <div className="font-face-sfpb">
-            <EnemyDefeatedText current_enemy={current_enemy}/>
+            <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,current_level) *  bet_size} SOL</Text>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,current_level+1) *  bet_size} SOL</Text>
        </div>
@@ -241,7 +248,7 @@ export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size
     // otherwise  we retire
     return(
         <div className="font-face-sfpb">
-            <EnemyDefeatedText current_enemy={current_enemy}/>
+            <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {Math.pow(2,current_level) *  bet_size} SOL</Text>
             

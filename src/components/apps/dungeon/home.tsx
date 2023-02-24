@@ -112,12 +112,12 @@ const enum KeyType {
 }
 
 const enum BetSize {
-    Solana01 = 0,
-    Solana05 = 1,
-    Solana1 = 2,
+    Solana005 = 0,
+    Solana025 = 1,
+    Solana050 = 2,
 }
 
-const BetSizeValues : number[] = [0.1, 0.5, 1.0];
+const BetSizeValues : number[] = [0.05, 0.25, 0.50];
 
 type BetValueObject = Object & {
     value: BetSize,
@@ -142,8 +142,8 @@ export function DungeonApp()
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
 
     // settings for this game
-    const [bet_size, setBetSize] = useState<BetSize>(BetSize.Solana01);
-    const [bet_value, setBetValue] = useState<number>(0.1);
+    const [bet_size, setBetSize] = useState<BetSize>(BetSize.Solana005);
+    const [bet_value, setBetValue] = useState<number>(BetSizeValues[0]);
     const [select_value, setSelectValue] = useState<BetValueObject | null>(null);
 
 
@@ -279,14 +279,14 @@ export function DungeonApp()
 
             {!isMobile &&
                 <HStack alignItems="center" spacing="1px">
-                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana01)} borderWidth='2px' height={"30px"}  borderColor={bet_size === BetSize.Solana01 ? "white" : "black"}  width={"50px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.1</Text>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana005)} borderWidth='2px' height={"30px"}  borderColor={bet_size === BetSize.Solana005 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.05</Text>
                     </Box>
-                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana05)} height={"30px"}  borderWidth='2px'borderColor={bet_size === BetSize.Solana05 ? "white" : "black"}  width={"50px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.5</Text>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana025)} height={"30px"}  borderWidth='2px'borderColor={bet_size === BetSize.Solana025 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.25</Text>
                     </Box>
-                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana1)} height={"30px"}  borderWidth='2px' borderColor={bet_size === BetSize.Solana1 ? "white" : "black"}  width={"50px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">1.0</Text>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana050)} height={"30px"}  borderWidth='2px' borderColor={bet_size === BetSize.Solana050 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.50</Text>
                     </Box>
                     <Box borderWidth='2px'  borderColor="black" height={"30px"} width={"60px"}>
                         <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">SOL</Text>
@@ -295,15 +295,15 @@ export function DungeonApp()
             }
             {isMobile &&
                     <Select 
-                    placeholder={'0.1 SOL'}
+                    placeholder={'0.05 SOL'}
                     styles={colourStyles}
                     isSearchable={false}
                     onChange={(choice: SelectValue) => {handleSelectChange(choice)}}
                     value={select_value}
                     options = {[
-                        { value: BetSize.Solana01, label: '0.1 SOL' },
-                        { value: BetSize.Solana05, label: '0.5 SOL' },
-                        { value: BetSize.Solana1, label: '1.0 SOL' }
+                        { value: BetSize.Solana005, label: '0.05 SOL' },
+                        { value: BetSize.Solana025, label: '0.25 SOL' },
+                        { value: BetSize.Solana050, label: '0.50 SOL' }
                     ]}      
                 /> 
             }
@@ -1349,7 +1349,7 @@ export function DungeonApp()
                 {player_state === DungeonStatus.dead &&
                 <>
                 <VStack alignItems="center" spacing="2%">
-                        <DisplayPlayerFailedText current_enemy={current_enemy}/>
+                        <DisplayPlayerFailedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
                         <Center>
                             <HStack alignItems="center">
                                 
@@ -1381,12 +1381,12 @@ export function DungeonApp()
                     <>
                                       
                     {enemy_state  === DungeonStatus.alive  && 
-                        <DisplayEnemyAppearsText current_enemy={current_enemy} current_level={current_level}/>
+                        <DisplayEnemyAppearsText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
                     }
                     {enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
-                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={bet_value}/>
+                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={bet_value} num_plays={num_plays}/>
 
                             {current_level < 7 &&
                                 <Center>
