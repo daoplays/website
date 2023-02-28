@@ -15,6 +15,11 @@ export const SHOP_PROGRAM = new PublicKey("61Lmx2t4g2JDf8n1xmjF94H6Q9Vm2bqYj39EL
 export const DUNGEON_PROGRAM = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 export const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 
+export const FOUNDER_1_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
+export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
+
+export const DM_PROGRAM = new PublicKey('5aEBSMbw4aND82XaM8NNg6j2yJnTAakLRrNLGQb7coSe');
+
 
 // set font size
 export var DEFAULT_FONT_SIZE = "30px"
@@ -40,5 +45,6 @@ export const enum Screen {
     FAQ_SCREEN = 3,
     ODDS_SCREEN = 4,
     HELP_SCREEN = 5,
-    SHOP_SCREEN = 6
+    SHOP_SCREEN = 6,
+    DM_SCREEN = 7,
 }

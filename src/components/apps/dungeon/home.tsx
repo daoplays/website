@@ -68,7 +68,7 @@ import selector from "./images/Selector.gif"
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM} from './constants';
 
 // dungeon utils
 import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
@@ -84,16 +84,13 @@ import {FAQScreen} from './faq';
 import {OddsScreen} from './odds';
 import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
+import {DMScreen} from './dm';
 //import {DungeonScreen} from './dungeon';
 
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
-
-
-const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
-const KAYAK_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
 
 const enum AccountStatus {
     unknown = 0,
@@ -841,6 +838,7 @@ export function DungeonApp()
         setProcessingTransaction(true);
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
+        let dm_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
 
         const instruction_data = serialise_basic_instruction(DungeonInstruction.quit);
 
@@ -849,10 +847,10 @@ export function DungeonApp()
             {pubkey: player_data_key, isSigner: false, isWritable: true},
             {pubkey: program_data_key, isSigner: false, isWritable: true},
 
-            {pubkey: DAOPLAYS_KEY, isSigner: false, isWritable: true},
-            {pubkey: KAYAK_KEY, isSigner: false, isWritable: true},
+            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false},
 
-            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+            {pubkey: DM_PROGRAM, isSigner: false, isWritable: false},
+            {pubkey: dm_data_key, isSigner: false, isWritable: true}
         ];
 
         const quit_instruction = new TransactionInstruction({
@@ -877,7 +875,7 @@ export function DungeonApp()
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
+            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&config=true&p3=skippreflight";
             let transaction_response = await fetch(send_url).then((res) => res.json());
 
             let valid_response = check_json(transaction_response)
@@ -1520,6 +1518,9 @@ export function DungeonApp()
                         {screen === Screen.SHOP_SCREEN &&
                             <ShopScreen num_xp={numXP}/>
                         }
+                        {screen === Screen.DM_SCREEN &&
+                            <DMScreen/>
+                        }
                         {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) &&
                             <UnconnectedPage/>
                         }
@@ -1547,6 +1548,9 @@ export function DungeonApp()
                         }
                         {screen === Screen.HELP_SCREEN &&
                             <HelpScreen/>
+                        }
+                        {screen === Screen.DM_SCREEN &&
+                            <DMScreen/>
                         }
                         </>
                     }                    

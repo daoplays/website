@@ -135,13 +135,20 @@ export function Navigation(
         
     },[setScreen]);
 
+    const ShowDM = useCallback( async () => 
+    {
+            setScreen(Screen.DM_SCREEN);
+            return;
+        
+    },[setScreen]);
+
     function DesktopNavigation() {
 
         return (
         <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
                 {wallet.publicKey !== null &&
-                        <Box width="70%">
+                        <Box width="60%">
                             <HStack>
                                 <WalletConnected />
                                 <div className="font-face-sfpb">
@@ -158,13 +165,18 @@ export function Navigation(
                         
                     }
                 {wallet.publicKey === null &&
-                    <Box width="70%"></Box>
+                    <Box width="60%"></Box>
                 }
-                <Box width="30%">
+                <Box width="40%">
                     <HStack spacing="5%">
                         <Button variant='link' size='md' onClick={ShowHome}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Home </Text>      
+                            </div> 
+                        </Button>
+                        <Button variant='link' size='md' onClick={ShowDM}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> DM </Text>      
                             </div> 
                         </Button>
                         <Button variant='link' size='md' onClick={ShowShop}>

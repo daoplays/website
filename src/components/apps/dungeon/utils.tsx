@@ -1,5 +1,5 @@
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { BeetStruct, uniformFixedSizeArray,  u8, u16, u64, bignum } from '@metaplex-foundation/beet'
+import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
 import { network_string } from './constants';
@@ -7,6 +7,7 @@ import {
     Box,
 } from '@chakra-ui/react';
 
+import BN from 'bn.js'
 
 import {
     WalletDisconnectButton,
@@ -440,4 +441,145 @@ export function serialise_basic_instruction(instruction : number) : Buffer
     const [buf] = InstructionNoArgs.struct.serialize(data);
 
     return buf;
+}
+
+
+
+
+
+////////////////////// Dungeon Master Instructions and MetaData /////////////////////////////////////
+
+class DMManagerData {
+    constructor(
+      readonly total_dms: number,
+      readonly dms_minted: boolean[],
+      readonly total_fees: bignum,
+      readonly last_fees: bignum,
+
+      readonly dm_fees: bignum[],
+      readonly founders_fees: bignum[],
+      
+
+    ) {}
+  
+    static readonly struct = new BeetStruct<DMManagerData>(
+      [
+        ['total_dms', u16],
+        ['dms_minted', uniformFixedSizeArray(bool, 256)],
+        ['total_fees', u64],
+        ['last_fees', u64],
+        ['dm_fees', uniformFixedSizeArray(u64, 256)],
+        ['founders_fees', uniformFixedSizeArray(u64, 2)],
+
+      ],
+      (args) => new DMManagerData(args.total_dms!, args.dms_minted!, args.total_fees!, args.last_fees!, args.dm_fees!, args.founders_fees!),
+      'DMManagerData'
+    )
+}
+
+class DMData {
+    constructor(
+      readonly dm_index: number,
+      readonly dm_mint: PublicKey
+    ) {}
+  
+    static readonly struct = new BeetStruct<DMData>(
+      [
+        ['dm_index', u16],
+        ['dm_mint', publicKey]
+      ],
+      (args) => new DMData(args.dm_index!, args.dm_mint!),
+      'DMData'
+    )
+}
+
+class DMUserData {
+    constructor(
+      readonly keys_burnt: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<DMUserData>(
+      [
+        ['keys_burnt', u16]
+      ],
+      (args) => new DMUserData(args.keys_burnt!),
+      'DMUserData'
+    )
+}
+
+
+class DM_Mint_Instruction {
+    constructor(
+      readonly instruction: number,
+      readonly name: string
+
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<DM_Mint_Instruction>(
+      [
+        ['instruction', u8],
+        ['name', utf8String]
+      ],
+      (args) => new DM_Mint_Instruction(args.instruction!, args.name!),
+      'DM_Mint_Instruction'
+    )
+}
+
+
+export function serialise_DM_Mint_instruction(instruction : number, name : string) : Buffer
+{
+
+    const data = new DM_Mint_Instruction(instruction, name);
+    const [buf] = DM_Mint_Instruction.struct.serialize(data);
+
+    return buf;
+}
+
+export async function request_DM_Manager_data(pubkey : PublicKey) : Promise<DMManagerData | null>
+{
+ 
+    let account_data = await request_raw_account_data(pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = DMManagerData.struct.deserialize(account_data);
+
+    return data;
+}
+
+export async function request_DM_data(pubkey : PublicKey) : Promise<DMData | null>
+{
+ 
+    let account_data = await request_raw_account_data(pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = DMData.struct.deserialize(account_data);
+
+    return data;
+}
+
+export async function request_DM_User_data(pubkey : PublicKey) : Promise<DMUserData | null>
+{
+ 
+    let account_data = await request_raw_account_data(pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = DMUserData.struct.deserialize(account_data);
+
+    return data;
+}
+
+export function bignum_to_num(bn : bignum) : number
+{
+    let value = (new BN(bn)).toNumber();
+
+    return value;
 }
