@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import {
     Box,
-    Button,
     HStack,
     Center,
     Text,
@@ -9,7 +8,8 @@ import {
     FormControl,
     NumberInput,
     NumberInputField,
-    VStack
+    VStack,
+    Divider
 } from '@chakra-ui/react';
 
 import { PublicKey, Keypair, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -182,7 +182,14 @@ export function DMScreen()
             console.log(this_current_fees);
             console.log(this_last_fees);
 
-            if (last_fees === null || this_last_fees > last_fees) {
+            // if we don't have a dm index, or this is the first time we are here then just set check_state to false
+            if (dm_index === null || current_fees === null) 
+                check_state.current = false;
+
+           if (dm_index !== null)
+            console.log("dm index", dm_index, bignum_to_num(dm_data.dm_fees[dm_index]));
+            // otherwise we check if their fees have been updated
+            if (dm_index !== null && bignum_to_num(dm_data.dm_fees[dm_index]) === 0) {
                 check_state.current = false;
             }
 
@@ -229,7 +236,7 @@ export function DMScreen()
             }           
         }
 
-    }, [wallet, dm_fees_raised, last_fees, dm_name]);
+    }, [wallet, dm_fees_raised, dm_name, dm_index, current_fees]);
 
     // interval for checking state
     useEffect(() => {
@@ -563,7 +570,7 @@ export function DMScreen()
 
             account_vector.push({pubkey: dm_mint, isSigner: false, isWritable: false});
             account_vector.push({pubkey: dm_token_account_key, isSigner: false, isWritable: false});
-            account_vector.push({pubkey: dm_data_account, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: dm_data_account, isSigner: false, isWritable: true});
         }
 
         const fees_instruction = new TransactionInstruction({
@@ -610,6 +617,7 @@ export function DMScreen()
         }
         
         check_state.current = true;
+        check_dm_data.current = true;
         return;
         
 
@@ -715,6 +723,7 @@ export function DMScreen()
                 <Center>
                     <div className="font-face-sfpb">
                         <Text mb="2rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Welcome Founder!  Please help yourself to our records and your share of the guilds proceeds</Text>
+                        <Divider/>
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Total Fees: {current_fees}</Text>
                         <Text mb = "2rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> To Claim: {founder_excess}</Text>
                         <Center>
@@ -916,18 +925,23 @@ export function DMScreen()
             let this_member_fees = bignum_to_num(dm_fees[dm_index]) / LAMPORTS_PER_SOL;
             let this_member_excess = this_member_fees + excess_fee_per_dm;
             return(
-                <Box width = "80%">
+                <Box width = "100%">
                     <Center>
                         <div className="font-face-sfpb">
                             <VStack>
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Welcome DM {dm_name}. </Text>
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Please help yourself to our records and your share of the guilds proceeds</Text>
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Total Fees Raised: {current_fees}</Text>
+                                <Divider/>
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Total Guild Fees Raised: {current_fees}</Text>
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Your Total Fees Raised: {dm_fees_raised}</Text>
+
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Your Outstanding Share: {this_member_excess}</Text>
 
-                                <Button variant='link' size='lg' onClick={GetFees}>
-                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Get Fees </Text>      
-                                </Button>  
+                                <Box as='button' onClick={GetFees} borderColor="white" borderWidth='2px' height={"30px"}>
+                                    <div className="font-face-sfpb">
+                                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Claim Fees</Text>      
+                                    </div> 
+                                </Box>   
                             </VStack>
                         </div>
                     </Center>
