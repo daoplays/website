@@ -46,9 +46,9 @@ import './css/wallet.css';
 
 const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
 
-const COLLECTION_MASTER = new PublicKey('4UV8u1C3VbXZ4JFHPRnBzbQvA44b9P3JnGfe3U8HpeDJ');
-const COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
-const COLLECTION_MINT = new PublicKey('8gD8vXEzs3FaPbTdySsSBr5nGLtqCiTCvaA8DNjWZVdJ');
+const KEY_COLLECTION_MASTER = new PublicKey('4UV8u1C3VbXZ4JFHPRnBzbQvA44b9P3JnGfe3U8HpeDJ');
+const KEY_COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
+const KEY_COLLECTION_MINT = new PublicKey('8gD8vXEzs3FaPbTdySsSBr5nGLtqCiTCvaA8DNjWZVdJ');
 const LAUNCH_DATE = new Date(Date.UTC(2024, 1, 9, 15, 0)).getTime();
 
 const enum ChestStatus {
@@ -361,9 +361,9 @@ export function ShopScreen({num_xp} : {num_xp : number})
 
             ];
 
-            account_vector.push({pubkey: COLLECTION_MINT, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: COLLECTION_META, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: COLLECTION_MASTER, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: KEY_COLLECTION_MINT, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: KEY_COLLECTION_META, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: KEY_COLLECTION_MASTER, isSigner: false, isWritable: true});
 
 
             if (PROD) {
@@ -452,91 +452,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
         
 
     },[wallet]);
-/*
-    const Burn = useCallback( async () => 
-    {
 
-            
-            var nft_mint_pubkey = new PublicKey("AdWqAKwFusKTo2JavMNnUUVY7YoBHx9v58BPvRF3DNcW");
-            
-            let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
-            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
-
-            let nft_master_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
-            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
-
-            let nft_account_key = await getAssociatedTokenAddress(
-                nft_mint_pubkey, // mint
-                wallet.publicKey, // owner
-                true // allow owner off curve
-            );
-
-            const burn_token_data = serialise_basic_instruction(ShopInstruction.burn_token);
-
-            var account_vector  = [
-                {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-
-                {pubkey: nft_mint_pubkey, isSigner: false, isWritable: true},
-                {pubkey: nft_account_key, isSigner: false, isWritable: true},
-                {pubkey: nft_meta_key, isSigner: false, isWritable: true},
-                {pubkey: nft_master_key, isSigner: false, isWritable: true},
-
-
-            ];
-
-            account_vector.push({pubkey: COLLECTION_META, isSigner: false, isWritable: true});            
-            account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
-            account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: METAPLEX_META, isSigner: false, isWritable: false});
-
-
-
-            const burn_token_instruction = new TransactionInstruction({
-                keys: account_vector,
-                programId: SHOP_PROGRAM,
-                data: burn_token_data
-            });
-
-            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
-
-            let transaction = new Transaction(txArgs);
-            transaction.feePayer = wallet.publicKey;
-
-
-            transaction.add(burn_token_instruction);
-
-            try {
-                let signed_transaction = await wallet.signTransaction(transaction);
-                const encoded_transaction = bs58.encode(signed_transaction.serialize());
-
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&config=true&p3=skippreflight";
-                let transaction_response = await fetch(send_url).then((res) => res.json());
-
-                let valid_response = check_json(transaction_response)
-
-                if (!valid_response) {
-                    console.log(transaction_response)
-                    return;
-                }
-
-                console.log(transaction_response);
-                let signature = transaction_response["result"];
-                console.log("sig: ", signature);
-     
-            } catch(error) {
-                console.log(error);
-                return;
-            }
-
-            return;
-        
-
-    },[wallet]);
-   */
     return(
         <>
         <Box width="100%">

@@ -68,11 +68,11 @@ import selector from "./images/Selector.gif"
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType} from './constants';
 
 // dungeon utils
-import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes} from './utils';
+import { check_json, request_player_account_data, request_key_data_from_index, request_token_amount,
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA} from './utils';
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus} from './dungeon_state';
 
@@ -101,20 +101,15 @@ const enum AccountStatus {
 
 const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
-const enum KeyType {
-    Bronze = 0,
-    Silver = 1,
-    Gold = 2,
-    Unknown = 3
-}
+
 
 const enum BetSize {
-    Solana005 = 0,
-    Solana025 = 1,
-    Solana050 = 2,
+    SolanaBet1 = 0,
+    SolanaBet2 = 1,
+    SolanaBet3 = 2,
 }
 
-const BetSizeValues : number[] = [0.05, 0.25, 0.50];
+const BetSizeValues : number[] = [0.05, 0.1, 0.25];
 
 type BetValueObject = Object & {
     value: BetSize,
@@ -139,7 +134,7 @@ export function DungeonApp()
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
 
     // settings for this game
-    const [bet_size, setBetSize] = useState<BetSize>(BetSize.Solana005);
+    const [bet_size, setBetSize] = useState<BetSize>(BetSize.SolanaBet1);
     const [bet_value, setBetValue] = useState<number>(BetSizeValues[0]);
     const [select_value, setSelectValue] = useState<BetValueObject | null>(null);
 
@@ -276,14 +271,14 @@ export function DungeonApp()
 
             {!isMobile &&
                 <HStack alignItems="center" spacing="1px">
-                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana005)} borderWidth='2px' height={"30px"}  borderColor={bet_size === BetSize.Solana005 ? "white" : "black"}  width={"60px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.05</Text>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet1)} borderWidth='2px' height={"30px"}  borderColor={bet_size === BetSize.SolanaBet1 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[0]}</Text>
                     </Box>
-                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana025)} height={"30px"}  borderWidth='2px'borderColor={bet_size === BetSize.Solana025 ? "white" : "black"}  width={"60px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.25</Text>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet2)} height={"30px"}  borderWidth='2px'borderColor={bet_size === BetSize.SolanaBet2 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[1]}</Text>
                     </Box>
-                    <Box as='button' onClick={() => handleBetChange(BetSize.Solana050)} height={"30px"}  borderWidth='2px' borderColor={bet_size === BetSize.Solana050 ? "white" : "black"}  width={"60px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">0.50</Text>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet3)} height={"30px"}  borderWidth='2px' borderColor={bet_size === BetSize.SolanaBet3 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[2]}</Text>
                     </Box>
                     <Box borderWidth='2px'  borderColor="black" height={"30px"} width={"60px"}>
                         <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">SOL</Text>
@@ -292,15 +287,15 @@ export function DungeonApp()
             }
             {isMobile &&
                     <Select 
-                    placeholder={'0.05 SOL'}
+                    placeholder={BetSizeValues[0] + ' SOL'}
                     styles={colourStyles}
                     isSearchable={false}
                     onChange={(choice: SelectValue) => {handleSelectChange(choice)}}
                     value={select_value}
                     options = {[
-                        { value: BetSize.Solana005, label: '0.05 SOL' },
-                        { value: BetSize.Solana025, label: '0.25 SOL' },
-                        { value: BetSize.Solana050, label: '0.50 SOL' }
+                        { value: BetSize.SolanaBet1, label: BetSizeValues[0] + ' SOL' },
+                        { value: BetSize.SolanaBet2, label: BetSizeValues[1] + ' SOL' },
+                        { value: BetSize.SolanaBet3, label: BetSizeValues[2] + ' SOL' }
                     ]}      
                 /> 
             }
@@ -938,32 +933,7 @@ export function DungeonApp()
         // if we have been passed a number check the lookup account exists
         if (key_meta_data === null) {
 
-            let encoded_key_index = bs58.encode(index_buffer);
-            const program_accounts_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
-
-            var program_accounts_result;
-            try {
-                program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
-            }
-            catch(error) {
-                console.log(error);
-            }
-
-            console.log(program_accounts_result["result"]);
-
-            for (let i = 0; i < program_accounts_result["result"].length; i++) {
-
-                let encoded_data = program_accounts_result["result"][i]["account"]["data"][0];
-                let decoded_data = Buffer.from(encoded_data, "base64");
-
-                const [data] = KeyDataFromMint.struct.deserialize(decoded_data);
-
-
-                if (data.key_index !== parsed_key_index)
-                    continue;
-
-                key_meta_data = data;
-            }
+            key_meta_data = await run_keyData_GPA(parsed_key_index);
 
             if (key_meta_data === null) {
                 setDiscountError("Key " + discount_key_index + " has not been minted");

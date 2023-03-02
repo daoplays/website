@@ -18,7 +18,7 @@ export const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 export const FOUNDER_1_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
 export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
 
-export const DM_PROGRAM = new PublicKey('5aEBSMbw4aND82XaM8NNg6j2yJnTAakLRrNLGQb7coSe');
+export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHyWXxPJ');
 
 
 // set font size
@@ -47,4 +47,11 @@ export const enum Screen {
     HELP_SCREEN = 5,
     SHOP_SCREEN = 6,
     DM_SCREEN = 7,
+}
+
+export const enum KeyType {
+    Bronze = 0,
+    Silver = 1,
+    Gold = 2,
+    Unknown = 3
 }
