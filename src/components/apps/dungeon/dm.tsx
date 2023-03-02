@@ -19,13 +19,15 @@ import {
     ASSOCIATED_TOKEN_PROGRAM_ID
   } from "@solana/spl-token";
 
+import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
+
 import { DUNGEON_FONT_SIZE, network_string, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
     METAPLEX_META, SYSTEM_KEY, FOUNDER_1_KEY, FOUNDER_2_KEY, DM_PROGRAM, SHOP_PROGRAM, KeyType} from './constants';
 
 import bs58 from "bs58";
 
-import { bignum_to_num, request_token_amount, check_json, request_DM_Manager_data, request_DM_data, serialise_DM_Mint_instruction, serialise_basic_instruction, request_DM_User_data, run_keyData_GPA} from './utils';
+import { request_raw_account_data, bignum_to_num, request_token_amount, check_json, request_DM_Manager_data, request_DM_data, serialise_DM_Mint_instruction, serialise_basic_instruction, request_DM_User_data, run_keyData_GPA} from './utils';
 
 
 import {
@@ -58,7 +60,8 @@ const enum DMInstruction {
 const enum MemberStatus {
     unknown = 0,
     member = 1,
-    applicant = 2
+    applicant = 2,
+    whitelisted = 3
     
 }
 
@@ -92,7 +95,66 @@ export function DMScreen()
     const [burn_key_type, setBurnKeyType] = useState<KeyType>(KeyType.Unknown)
     const [burn_error, setBurnError] = useState<string | null>(null);
 
+    // displaying new DM token
+    const dm_interval = useRef<number | null>(null);
+    const [current_dm_image, setCurrentDMImage] = useState<string | null>(null);
+    const [current_dm_mint, setCurrentDMMint] = useState<PublicKey | null>(null);
+    const current_dm_nft_meta = useRef<PublicKey | null>(null);
 
+
+    const check_dm_nft = useCallback(async() =>
+    {
+        
+        if (current_dm_nft_meta.current  === null)
+            return;
+
+        try {
+
+            //console.log("request meta data");
+            let raw_meta_data = await request_raw_account_data(current_dm_nft_meta.current);
+
+            if (raw_meta_data === null) {
+                return;
+            }
+
+            //console.log("deserialize meta data");
+            let meta_data = Metadata.deserialize(raw_meta_data);
+
+            //console.log(meta_data);
+            let uri_json = await fetch(meta_data[0].data.uri).then(res => res.json());
+
+            setCurrentDMImage(uri_json["image"]);
+            setCurrentDMMint(meta_data[0].mint);
+
+            current_dm_nft_meta.current = null;
+        
+        } catch(error) {
+            console.log(error);
+            return;
+        }
+            
+
+    }, []);
+
+    // interval for checking new DM NFT
+    useEffect(() => {
+
+        if (dm_interval.current === null) {
+            dm_interval.current = window.setInterval(check_dm_nft, 1000);
+        }
+        else{
+            window.clearInterval(dm_interval.current);
+            dm_interval.current = null;
+            
+        }
+        // here's the cleanup function
+        return () => {
+            if (dm_interval.current !== null) {
+            window.clearInterval(dm_interval.current);
+            dm_interval.current = null;
+            }
+        };
+    }, [check_dm_nft]);
 
     const check_dm_state = useCallback(async() => 
     {
@@ -453,6 +515,8 @@ export function DMScreen()
                 console.log(error);
                 return;
             }
+
+            current_dm_nft_meta.current = nft_meta_key;
             
             return;
         
@@ -598,6 +662,31 @@ export function DMScreen()
 
 
     },[wallet, dm_name]);
+
+    const CheckApplicantStatus = useCallback( async () => 
+    {
+
+        if (wallet.publicKey === null)
+            return;
+
+       
+        let whitelist_account_key = await getAssociatedTokenAddress(
+            WHITELIST_TOKEN, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        let token_amount = await request_token_amount(whitelist_account_key);
+
+        if (token_amount > 0) {
+            setMemberStatus(MemberStatus.whitelisted);
+            return;
+        }
+
+        setMemberStatus(MemberStatus.applicant);
+
+
+    },[wallet]);
 
     function FoundersDialogue()
     {
@@ -800,7 +889,7 @@ export function DMScreen()
                                 </Box>  
                             }
                             {dm_name === "" &&
-                               <Box as='button' onClick={() => setMemberStatus(MemberStatus.applicant)} borderColor="white" borderWidth='2px' height={"30px"}>
+                               <Box as='button' onClick={CheckApplicantStatus} borderColor="white" borderWidth='2px' height={"30px"}>
                                     <div className="font-face-sfpb">
                                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Stay Silent </Text>      
                                     </div> 
@@ -847,55 +936,99 @@ export function DMScreen()
         }
 
         console.log("Applicant: ", keys_burnt);
-        if (member_status === MemberStatus.applicant && keys_burnt !== null) {
+        if (member_status === MemberStatus.applicant && keys_burnt !== null && keys_burnt < 10) {
 
-            if (keys_burnt < 10) {
-                return(
-                    <ApplicantsJourneyDialogue/>
-                );
-            }
-            else {
-                return(
-                    <HStack>
-                        <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Desired Name: DM </Text> 
-                        <FormControl id="check_dm_name" maxWidth={"300px"} >
-                            <Input
-                                height={DUNGEON_FONT_SIZE} 
-                                color="white"
-                                paddingTop="1rem"
-                                paddingBottom="1rem"
-                                borderColor="white"
-                                type="text"
-                                value={dm_name}
-                                onChange={(event : React.ChangeEvent<HTMLInputElement>) => setDMName(event.target.value)}
-                                autoFocus
-                            />
-                        </FormControl>
-                        </div>
-                    
-                        {dm_name !== "" &&
-                            <Box as='button' onClick={Mint} borderColor="white" borderWidth='2px' height={"30px"}>
-                                <div className="font-face-sfpb">
-                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Mint DM </Text>      
-                                </div> 
-                            </Box>  
-                        }
-                        {dm_name === "" &&
-                            <Box height={"30px"} borderColor="black" borderWidth='2px'>
-                                <div className="font-face-sfpb">
-                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Mint DM </Text>      
-                                </div> 
-                            </Box>  
-                        }
-                    </HStack>
-                );
-            }
+            return(<ApplicantsJourneyDialogue/>);
+            
         }
-
-        console.log("Nothing");
-        return(<></>);
-
+        return(
+            <>
+            <Box width="100%">
+                {member_status === MemberStatus.whitelisted &&
+                
+                    <Box width = "100%" mb = "2rem">
+                        <Center>
+                            <Box width="100%">
+                                <div className="font-face-sfpb">
+                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> It seems you have friends in high places.  Very well.  Proceed. </Text>
+                                </div>
+                            </Box>
+                        </Center>
+                    </Box>
+                }
+                <Center mb ="1rem">
+                    <VStack>
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> What name would you like to go by? </Text> 
+                        </div>
+                        <HStack>
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> DM </Text> 
+                            </div>
+                            <div className="font-face-sfpb">
+                            <FormControl id="check_dm_name" maxWidth={"300px"} >
+                                <Input
+                                    height={DUNGEON_FONT_SIZE} 
+                                    color="white"
+                                    paddingTop="1rem"
+                                    paddingBottom="1rem"
+                                    borderColor="white"
+                                    type="text"
+                                    value={dm_name}
+                                    onChange={(event : React.ChangeEvent<HTMLInputElement>) => setDMName(event.target.value)}
+                                    autoFocus
+                                />
+                            </FormControl>
+                            </div>
+                        
+                        
+                        </HStack>
+                    </VStack>
+                </Center>
+                <Center mb = "2rem">
+                    {dm_name !== "" &&
+                        <Box as='button' onClick={Mint} borderColor="white" borderWidth='2px' height={"30px"}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Join </Text>      
+                            </div> 
+                        </Box>  
+                    }
+                    {dm_name === "" &&
+                        <Box height={"30px"} borderColor="black" borderWidth='2px'>
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Join </Text>      
+                            </div> 
+                        </Box>  
+                    }
+                </Center>
+                <Center mb = "2rem">      
+                    {current_dm_image !== null && current_dm_mint !== null &&
+                        <>
+                        <VStack spacing="3%">
+                        <HStack alignItems="center">
+                            <Box width="15%">
+                                <img style={{"imageRendering":"pixelated"}} src={current_dm_image} width="100" alt={""}/>
+                            </Box>
+                                        
+                                <div className="font-face-sfpb">
+                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Your membership has been completed. </Text>
+                                </div>
+                        </HStack>
+                        <Center>
+                        <Box width = "100%">
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_dm_mint.toString()+"?cluster=devnet"}>here</a></Text>
+                        </div>
+                        </Box>
+                        </Center>
+                        </VStack>
+                    
+                        </>            
+                    }
+                    </Center>  
+            </Box>
+            </>
+        );
     }
 
     return(
