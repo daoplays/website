@@ -40,13 +40,14 @@ import './css/fonts.css';
 import './css/wallet.css';
 import { bignum } from '@metaplex-foundation/beet';
 
-const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
+const WHITELIST_TOKEN =  new PublicKey("FZKeUtJYChwL6E45n6aqheyafuNUgCeUkckSkqjWgRC6");
 
-const COLLECTION_MASTER = new PublicKey('6LZUp9pMC9pCQGUJe4J74noXg7QU6ecqoYp3NQjCTjuM');
-const COLLECTION_META = new PublicKey('Hmtp5iKCciBCYDPdFBhkk74Rg5Y7tCddfKsD89Xv12B2');
-const COLLECTION_MINT = new PublicKey('7HGwBBXvpvPjgSCvj3FSiy2CemAd1mXSH51eJA7T45mA');
+const COLLECTION_MASTER = new PublicKey('Dgiym4UcVJyCrNKptMTHtvYKqXy54w4UekfWwqzcaZ4d');
+const COLLECTION_META = new PublicKey('7C92J99mh1PFRdJEpo9wV5nKqRQVn4eUU2HEHxxJPmU');
+const COLLECTION_MINT = new PublicKey('4rMSZrUxP5HAANmx6mSXZSkcrf8ZVgcaUkzu8JFsQL9M');
 const KEY_COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
 
+const DM_KEY_COST : number = 1;
 
 const enum DMInstruction {
     init = 0,
@@ -73,6 +74,7 @@ export function DMScreen()
     const state_interval = useRef<number | null>(null);
     const check_state = useRef<boolean>(true);
     const check_dm_data = useRef<boolean>(false);
+    const check_user_data = useRef<boolean>(true);
 
 
     const [last_fees, setLastFees] = useState<number | null>(null);
@@ -186,8 +188,6 @@ export function DMScreen()
             if (dm_index === null || current_fees === null) 
                 check_state.current = false;
 
-           if (dm_index !== null)
-            console.log("dm index", dm_index, bignum_to_num(dm_data.dm_fees[dm_index]));
             // otherwise we check if their fees have been updated
             if (dm_index !== null && bignum_to_num(dm_data.dm_fees[dm_index]) === 0) {
                 check_state.current = false;
@@ -200,16 +200,31 @@ export function DMScreen()
             setFounderFees(dm_data.founders_fees);
             setDMFees(dm_data.dm_fees);
 
- 
-            // get the user data also
+        }
+
+
+        if (check_user_data.current) {
+
             let dm_user_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], DM_PROGRAM))[0];
 
             let user_data = await request_DM_User_data(dm_user_account);
+
             if (user_data !== null) {
-                setKeysBurnt(user_data.keys_burnt);
+
+                if (keys_burnt === null || user_data.keys_burnt === 0) {
+                    setKeysBurnt(user_data.keys_burnt);   
+                    check_user_data.current = false;
+                }
+
+                if (keys_burnt !== null && user_data.keys_burnt > keys_burnt) {
+                    setKeysBurnt(user_data.keys_burnt);   
+                    check_user_data.current = false;
+                }
+
             }
             else {
                 setKeysBurnt(0);
+                check_user_data.current = false;
             }
     
             
@@ -236,7 +251,7 @@ export function DMScreen()
             }           
         }
 
-    }, [wallet, dm_fees_raised, dm_name, dm_index, current_fees]);
+    }, [wallet, dm_fees_raised, dm_name, dm_index, current_fees, keys_burnt]);
 
     // interval for checking state
     useEffect(() => {
@@ -379,6 +394,8 @@ export function DMScreen()
             console.log(error);
             return;
         }
+
+        check_user_data.current = true;
 
         return;
         
@@ -718,14 +735,17 @@ export function DMScreen()
             founder_excess = founder_sol + excess_fee_per_founder; 
         }
 
+        if (founder_excess === undefined)
+            return(<></>);
+
         return(
             <Box width="80%">
                 <Center>
                     <div className="font-face-sfpb">
                         <Text mb="2rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Welcome Founder!  Please help yourself to our records and your share of the guilds proceeds</Text>
                         <Divider/>
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Total Fees: {current_fees}</Text>
-                        <Text mb = "2rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> To Claim: {founder_excess}</Text>
+                        <Text mt="2rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Total Fees: {current_fees}</Text>
+                        <Text mb = "2rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> To Claim: {founder_excess.toFixed(5)}</Text>
                         <Center>
                             <Box as='button' onClick={GetFees} borderColor="white" borderWidth='2px' height={"30px"}>
                                 <div className="font-face-sfpb">
@@ -753,6 +773,43 @@ export function DMScreen()
         return "An Unknown Key"
     }
 
+    const ApplicantsJourneyFlavourTextArray : string[] = [
+        "The path to becoming a member of the Dungeon Masters Guild is not an easy one to tread. We require great sacrifice from our applicants in order to demonstrate their zeal and commitment. Be warned, once started there is no going back.",
+
+        "Ha, do not look so proud after taking only your first step along the path.  A single sacrifice means little to those who have cast aside as much as we in order to sit at the great table of the Dungeon Masters guild hall. Believe me, the hardest steps are still to come.",
+
+        "I can see it now, the doubt creeping upon your face as you cast aside your worldly possessions. Is it worth it? Hmph, it is far too late for such questions.",
+
+        "This Guild has existed for thousands of years, seeking to understand the worlds that exist alongside the one you have known. Some members have been driven mad from the knowledge they have gained here.  I hope for your sake you are not one of them.",
+
+        "There are those that refer to such books as the Necronomicon as 'most terrible', purporting that the knowledge within might usher in the end of times... Ha! Within the guild you will find books such as these are merely the opening notes to a symphony no-one outside has ever heard.",
+
+        "Over half way.. I must admit some small surprise to find you have trodden so far along the path without giving in.. Perhaps you will make it after all.",
+
+        "What ever it was that drove you here, that brought you to our shores, know that none within the guild will ever question you of it or judge you on your past.  We all have our secrets, some no doubt darker than your most fervent nightmares.  They are burnt along with the sacrifices you make here today.",
+
+        "With every sacrifice made I can see the determination within you grow.  Do not let overconfidence be your downfall at this stage, others have made it this far only to fall at the final hurdle.",
+
+        "People believe that we are the figures that hide in the shadows and pull the strings of the worlds leaders.. Let me rid you of this notion now.  We are not the figures in the shadows, we are the shadows themselves.",
+
+        "Your journey along the path is almost complete. One more sacrifice to shed the final chattels of your old life. One more sacrifice to be reborn as a member of the Dungeon Masters guild."
+    ]
+
+    function ApplicantsJourneyFlavourText({keys_burnt} : {keys_burnt : number | null})
+    {
+
+        if (keys_burnt === null) {
+            return(
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> </Text> 
+            );
+        }
+       
+        return(
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {ApplicantsJourneyFlavourTextArray[keys_burnt]}</Text> 
+        );
+        
+    }
+
     function ApplicantsJourneyDialogue()
     {
         let key_type = GetKeyName({key_type : burn_key_type});
@@ -760,9 +817,9 @@ export function DMScreen()
         return(
             <Box width =  "80%">
                 <Center>
-                    <VStack>
+                    <VStack spacing="1rem">
                         <div className="font-face-sfpb">   
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Keys Burnt {keys_burnt} </Text> 
+                            <ApplicantsJourneyFlavourText keys_burnt={keys_burnt}/>
                         </div>
                         <div className="font-face-sfpb">   
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Choose your sacrifice </Text> 
@@ -889,7 +946,7 @@ export function DMScreen()
                         </HStack>
                         </Center>
                         <Center>
-                        <HStack>
+                        <VStack>
                             {dm_name !== "" &&
                                 <Box as='button' onClick={CheckMemberStatus} borderColor="white" borderWidth='2px' height={"30px"}>
                                     <div className="font-face-sfpb">
@@ -908,7 +965,7 @@ export function DMScreen()
                             {dm_error != null &&
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="red"> {dm_error} </Text>    
                             }
-                        </HStack>
+                        </VStack>
                         </Center>
 
                     </div>
@@ -919,11 +976,15 @@ export function DMScreen()
 
         if (member_status === MemberStatus.member) {
 
-            if (dm_index === null)  {
+            if (dm_index === null || dm_fees_raised === null || current_fees === null)  {
                 return(<></>);
             }
             let this_member_fees = bignum_to_num(dm_fees[dm_index]) / LAMPORTS_PER_SOL;
             let this_member_excess = this_member_fees + excess_fee_per_dm;
+
+            if (this_member_excess === undefined)
+                return(<></>);
+
             return(
                 <Box width = "100%">
                     <Center>
@@ -932,10 +993,10 @@ export function DMScreen()
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Welcome DM {dm_name}. </Text>
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Please help yourself to our records and your share of the guilds proceeds</Text>
                                 <Divider/>
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Total Guild Fees Raised: {current_fees}</Text>
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Your Total Fees Raised: {dm_fees_raised}</Text>
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Total Guild Fees Raised: {current_fees.toFixed(5)}</Text>
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Your Total Fees Withdrawn: {dm_fees_raised.toFixed(5)}</Text>
 
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Your Outstanding Share: {this_member_excess}</Text>
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Your Outstanding Share: {this_member_excess.toFixed(5)}</Text>
 
                                 <Box as='button' onClick={GetFees} borderColor="white" borderWidth='2px' height={"30px"}>
                                     <div className="font-face-sfpb">
@@ -950,7 +1011,7 @@ export function DMScreen()
         }
 
         console.log("Applicant: ", keys_burnt);
-        if (member_status === MemberStatus.applicant && keys_burnt !== null && keys_burnt < 10) {
+        if (member_status === MemberStatus.applicant && keys_burnt !== null && keys_burnt < DM_KEY_COST) {
 
             return(<ApplicantsJourneyDialogue/>);
             
@@ -970,10 +1031,26 @@ export function DMScreen()
                         </Center>
                     </Box>
                 }
+                {(member_status === MemberStatus.whitelisted  || (keys_burnt !== null && keys_burnt >= DM_KEY_COST)) &&
+
+                <>
+
+                {member_status !== MemberStatus.whitelisted &&
+                    
+                    <Box width = "100%" mb = "2rem">
+                        <Center>
+                            <Box width="100%">
+                                <div className="font-face-sfpb">
+                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Your journey is complete.  The life you have known is now over, and a new one begins as a member of the Dungeon Masters guild. </Text>
+                                </div>
+                            </Box>
+                        </Center>
+                    </Box>
+                }
                 <Center mb ="1rem">
                     <VStack>
                         <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> What name would you like to go by? </Text> 
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Tell me, what should we call you? </Text> 
                         </div>
                         <HStack>
                             <div className="font-face-sfpb">
@@ -1015,6 +1092,8 @@ export function DMScreen()
                         </Box>  
                     }
                 </Center>
+                </>
+                }
                 <Center mb = "2rem">      
                     {current_dm_image !== null && current_dm_mint !== null &&
                         <>
@@ -1039,7 +1118,7 @@ export function DMScreen()
                     
                         </>            
                     }
-                    </Center>  
+                </Center>  
             </Box>
             </>
         );

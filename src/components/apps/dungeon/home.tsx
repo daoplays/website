@@ -119,10 +119,9 @@ type BetValueObject = Object & {
 
 const enum DungeonInstruction {
     add_funds = 0,
-    distribute = 1,
-    play = 2,
-    quit = 3,
-    explore = 4
+    play = 1,
+    quit = 2,
+    explore = 3
 }
 
 export function DungeonApp() 

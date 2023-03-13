@@ -46,10 +46,10 @@ import './css/wallet.css';
 
 const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
 
-const KEY_COLLECTION_MASTER = new PublicKey('4UV8u1C3VbXZ4JFHPRnBzbQvA44b9P3JnGfe3U8HpeDJ');
-const KEY_COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
-const KEY_COLLECTION_MINT = new PublicKey('8gD8vXEzs3FaPbTdySsSBr5nGLtqCiTCvaA8DNjWZVdJ');
-const LAUNCH_DATE = new Date(Date.UTC(2024, 1, 9, 15, 0)).getTime();
+const KEY_COLLECTION_MASTER = new PublicKey('7zanpVrB1Pboyj87t967xQF9T6eVRXrzQL3aWLMXijj5');
+const KEY_COLLECTION_META = new PublicKey('ChUHE8ZroK2WyZj8E1gjDuPkLVN4vcw6r3LqNyPRrfi1');
+const KEY_COLLECTION_MINT = new PublicKey('3fVG61sQSKnuhLymfcynpiPVESuMqMV6vd4SZ4FmjQZ8');
+const LAUNCH_DATE = new Date(Date.UTC(2022, 1, 9, 15, 0)).getTime();
 
 const enum ChestStatus {
     closed = 0,
@@ -64,8 +64,7 @@ const enum ChestStatus {
 const enum ShopInstruction {
     init = 0,
     create_token = 1,
-    create_collection = 2,
-    burn_token = 3
+    create_collection = 2
 }
 
 export function ShopScreen({num_xp} : {num_xp : number})
