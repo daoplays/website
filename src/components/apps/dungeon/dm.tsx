@@ -47,7 +47,7 @@ const COLLECTION_META = new PublicKey('7C92J99mh1PFRdJEpo9wV5nKqRQVn4eUU2HEHxxJP
 const COLLECTION_MINT = new PublicKey('4rMSZrUxP5HAANmx6mSXZSkcrf8ZVgcaUkzu8JFsQL9M');
 const KEY_COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
 
-const DM_KEY_COST : number = 1;
+const DM_KEY_COST : number = 10;
 
 const enum DMInstruction {
     init = 0,
