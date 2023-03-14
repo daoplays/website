@@ -1150,15 +1150,6 @@ export function DungeonApp()
                                 
                             </Box>  
                         </HStack>
-                        
-                        <HStack>
-                            <Box width="33%"/>
-                                <div className="font-face-sfpb">
-                                    <Text align="center" fontSize={font_size} color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
-                                </div>   
-                            <Box width="33%"/>
-                        </HStack>
-
                         {!isMobile &&
                         <HStack visibility={"hidden"}>
                             <Box width="33%" mt="2rem"/>
