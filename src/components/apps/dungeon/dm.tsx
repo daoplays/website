@@ -42,9 +42,9 @@ import { bignum } from '@metaplex-foundation/beet';
 
 const WHITELIST_TOKEN =  new PublicKey("FZKeUtJYChwL6E45n6aqheyafuNUgCeUkckSkqjWgRC6");
 
-const COLLECTION_MASTER = new PublicKey('Dgiym4UcVJyCrNKptMTHtvYKqXy54w4UekfWwqzcaZ4d');
-const COLLECTION_META = new PublicKey('7C92J99mh1PFRdJEpo9wV5nKqRQVn4eUU2HEHxxJPmU');
-const COLLECTION_MINT = new PublicKey('4rMSZrUxP5HAANmx6mSXZSkcrf8ZVgcaUkzu8JFsQL9M');
+const COLLECTION_MASTER = new PublicKey('9ew9V2nskKA21LnkeigzFjb2o2Pyik3nvMjHUTz8UF5s');
+const COLLECTION_META = new PublicKey('9HvcyHyLQLF9gEqaHb49TaKfAMPz5UouSZWfX1ykoYCf');
+const COLLECTION_MINT = new PublicKey('CRpAfeXWUQ7Wx321DESrYzmDr5LLXnJ2rDahKndxLB7q');
 const KEY_COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
 
 const DM_KEY_COST : number = 10;
@@ -839,7 +839,8 @@ export function DMScreen()
                                     value={burn_key_index}
                                     precision={0}
                                     borderColor="white"
-                                    min={1} max={3500}>
+                                    min={1} max={3500}
+                                    >
                                     
                                     
                                     <NumberInputField
@@ -847,6 +848,7 @@ export function DMScreen()
                                     paddingTop="1rem"
                                     paddingBottom="1rem"
                                     borderColor="white"
+                                    autoFocus
                                     />
                                 </NumberInput>
                             </div>

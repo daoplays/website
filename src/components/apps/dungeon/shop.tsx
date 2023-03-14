@@ -49,7 +49,7 @@ const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdw
 const KEY_COLLECTION_MASTER = new PublicKey('7zanpVrB1Pboyj87t967xQF9T6eVRXrzQL3aWLMXijj5');
 const KEY_COLLECTION_META = new PublicKey('ChUHE8ZroK2WyZj8E1gjDuPkLVN4vcw6r3LqNyPRrfi1');
 const KEY_COLLECTION_MINT = new PublicKey('3fVG61sQSKnuhLymfcynpiPVESuMqMV6vd4SZ4FmjQZ8');
-const LAUNCH_DATE = new Date(Date.UTC(2022, 1, 9, 15, 0)).getTime();
+const LAUNCH_DATE = new Date(Date.UTC(2024, 1, 9, 15, 0)).getTime();
 
 const enum ChestStatus {
     closed = 0,

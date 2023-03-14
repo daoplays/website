@@ -46,6 +46,9 @@ import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 
+const WIN_FACTORS : number[] = [0.0, 1.5, 2.25, 3.375, 5.0625, 10.125, 20.25, 40.5];
+
+
 var seedrandom = require('seedrandom');
 
 export const enum DungeonCharacter {
@@ -88,27 +91,34 @@ export const enum DungeonStatus {
 
 const DungeonEnemyAppearsText : string[][] = [
     // assasin
-    ["You have encountered an Assassin, prepare yourself!"],
+    ["You have encountered an Assassin, prepare yourself!", "A smoke bomb goes off at the end of the corridor and an assassin flits into view.  Prepare yourself!"],
     // blue slime
-    ["You have encountered an blue slime, prepare yourself!"],
+    ["You have encountered an blue slime, prepare yourself!", 
+    "A Blue Slime squeezes out of a crack in the wall, prepare yourself!", 
+    "A Blue Slime drops from the ceiling, prepare yourself!"],
     // boulder
     ["You enter a suspiciously empty room...", 
     "The hallway is dark but it seems empty..."],
     // carnivine
     ["You have encountered a Carnivine, prepare yourself!"],
     //dungeon master
-    ["You have encountered a Dungeon Master, prepare yourself!"],
+    ["You have encountered a Dungeon Master, prepare yourself!", 
+    "The air begins to crackle around you as a Dungeon Master prepares to attack, get ready!"],
     // elves
     ["You have encountered a group of elven archers, prepare yourself!", 
     "A patrolling group of elven archers turns the corner, prepare yourself!"], 
     // giant blue slime
-    ["You have encountered a giant blue slime, prepare yourself!"],
+    ["You have encountered a giant blue slime, prepare yourself!",
+    "Multiple blue slimes coalesce before you into a single giant slime! Prepare yourself!"],
     // giant green slime
-    ["You have encountered a giant green slime, prepare yourself!"],
+    ["You have encountered a giant green slime, prepare yourself!",
+    "Multiple green slimes coalesce before you into a single giant slime! Prepare yourself!"],
     // giant rat
-    ["You have encountered a giant rat, prepare yourself!"],
+    ["You have encountered a giant rat, prepare yourself!",
+    "You just have time to notice the terrible stench in the room before a giant rat suddenly bursts from the sewer grate ahead of you.  Prepare yourself!"],
     // giant spider
-    ["You have encountered a giant spider, prepare yourself!"],
+    ["You have encountered a giant spider, prepare yourself!",
+    "A mass of sticky web bars your way.  As you start to cut through a giant spider drops from the ceiling, prepare yourself!"],
     // goblins 
     ["You have encountered a pair of goblins, prepare yourself!"],
     // green slime 
@@ -138,7 +148,8 @@ const DungeonEnemyAppearsText : string[][] = [
     ["You enter a suspiciously empty room...", 
     "The hallway is dark but it seems empty..."],
     // werewolf
-    ["You have encountered a werewolf, prepare yourself!"]
+    ["You have encountered a werewolf, prepare yourself!",
+    "You have encountered a strange half naked man... who transforms before you into a werewolf! Prepare yourself!"]
 ];
 
 const DungeonEnemyDefeatedText : string[][] = [
@@ -302,22 +313,26 @@ const EnemyDefeatedText = ({current_enemy, current_level, num_plays} : {current_
 
 export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size, num_plays} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number, num_plays : number}) => {
 
+    let current_win = WIN_FACTORS[current_level] *  bet_size;
+
     if (current_level <  7) {
+        let next_win = WIN_FACTORS[current_level + 1] *  bet_size;
         return(
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
-            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,current_level) *  bet_size} SOL</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,current_level+1) *  bet_size} SOL</Text>
+            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {current_win.toFixed(3)} SOL</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and increase your loot to {next_win.toFixed(3)} SOL</Text>
        </div>
        );
     }
+
 
     // otherwise  we retire
     return(
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
             <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {Math.pow(2,current_level) *  bet_size} SOL</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {current_win.toFixed(3)} SOL</Text>
             
        </div>
        );

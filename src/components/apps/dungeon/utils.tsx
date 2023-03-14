@@ -479,7 +479,7 @@ export async function run_keyData_GPA(key_index : number) : Promise<KeyDataFromM
 
     // this should only be of length 1
     if ( program_accounts_result["result"].length !== 1) {
-        console.log("GPA returned more than one account");
+        console.log("GPA returned wrong number of accounts");
         return null
     }
 
