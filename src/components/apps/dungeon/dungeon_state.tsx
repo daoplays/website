@@ -46,7 +46,7 @@ import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 
-const WIN_FACTORS : number[] = [0.0, 1.5, 2.25, 3.375, 5.0625, 10.125, 20.25, 40.5];
+const WIN_FACTORS : number[] = [0.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
 
 var seedrandom = require('seedrandom');
@@ -115,7 +115,7 @@ const DungeonEnemyAppearsText : string[][] = [
     "Multiple green slimes coalesce before you into a single giant slime! Prepare yourself!"],
     // giant rat
     ["You have encountered a giant rat, prepare yourself!",
-    "You just have time to notice the terrible stench in the room before a giant rat suddenly bursts from the sewer grate ahead of you.  Prepare yourself!"],
+    "You notice the terrible stench in the room just as a giant rat suddenly bursts from the sewer grate ahead of you.  Prepare yourself!"],
     // giant spider
     ["You have encountered a giant spider, prepare yourself!",
     "A mass of sticky web bars your way.  As you start to cut through a giant spider drops from the ceiling, prepare yourself!"],
