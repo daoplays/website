@@ -115,7 +115,7 @@ const DungeonEnemyAppearsText : string[][] = [
     "Multiple green slimes coalesce before you into a single giant slime! Prepare yourself!"],
     // giant rat
     ["You have encountered a giant rat, prepare yourself!",
-    "You notice the terrible stench in the room just as a giant rat suddenly bursts from the sewer grate ahead of you.  Prepare yourself!"],
+    "You notice the terrible stench in the room just as a giant rat bursts from the sewer grate ahead of you.  Prepare yourself!"],
     // giant spider
     ["You have encountered a giant spider, prepare yourself!",
     "A mass of sticky web bars your way.  As you start to cut through a giant spider drops from the ceiling, prepare yourself!"],

@@ -261,6 +261,11 @@ export function Navigation(
                                         <Text fontSize='16px'  color="white"> Home </Text>      
                                     </div> 
                                     </Button>
+                                    <Button variant='link' size='md' onClick={ShowDM}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='16px'  color="white"> DM </Text>      
+                                        </div> 
+                                    </Button>
                                     <Button variant='link' size='md' onClick={ShowShop}>
                                         <div className="font-face-sfpb">
                                             <Text fontSize='16px'  color="white"> Shop </Text>      
