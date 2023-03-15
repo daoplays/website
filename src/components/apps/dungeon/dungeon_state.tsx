@@ -91,7 +91,8 @@ export const enum DungeonStatus {
 
 const DungeonEnemyAppearsText : string[][] = [
     // assasin
-    ["You have encountered an Assassin, prepare yourself!", "A smoke bomb goes off at the end of the corridor and an assassin flits into view.  Prepare yourself!"],
+    ["You have encountered an Assassin, prepare yourself!", 
+    "A smoke bomb goes off at the end of the corridor and an assassin flits into view.  Prepare yourself!"],
     // blue slime
     ["You have encountered an blue slime, prepare yourself!", 
     "A Blue Slime squeezes out of a crack in the wall, prepare yourself!", 
@@ -100,7 +101,9 @@ const DungeonEnemyAppearsText : string[][] = [
     ["You enter a suspiciously empty room...", 
     "The hallway is dark but it seems empty..."],
     // carnivine
-    ["You have encountered a Carnivine, prepare yourself!"],
+    ["You have encountered a Carnivine, prepare yourself!",
+    "The smell of flowers makes you relax, but only until you see the source is a Carnivine.  Prepare yourself!",
+    "Thick vines cover the walls.  You've entered the layer of a Carnivine!  Prepare yourself!"],
     //dungeon master
     ["You have encountered a Dungeon Master, prepare yourself!", 
     "The air begins to crackle around you as a Dungeon Master prepares to attack, get ready!"],
@@ -154,27 +157,38 @@ const DungeonEnemyAppearsText : string[][] = [
 
 const DungeonEnemyDefeatedText : string[][] = [
     // assassin
-    ["You have defeated the assassin"],
+    ["You have defeated the assassin",
+    "You see through the assassins tricks and are waiting to strike when it next appears in front of you",
+    "The assassin was quick, but you were quicker"],
     // blue slime
-    ["You have defeated the blue slime"],
+    ["You have defeated the oozing blue slime",
+    "A mere slime is no match for you!"],
     // boulder
     ["...but pass through without incident",
     "Just in time you notice a pressure plate hidden amongst the stones on the ground, and carefully step over it to continue onwards"],
     // carnivine
-    ["You have defeated the carnivine"],
+    ["You have defeated the carnivine",
+    "You turn the Carnivine into compost",
+    "You hack through thorns and leaves until the Carnivine is reduced to mulch"],
     // dungeon master
-    ["You have defeated the dungeon master"],
+    ["You have defeated the dungeon master",
+    "The dungeon master starts monologuing in typical villainic style.  Its overconfidence is its weakness and mid speech you strike it down",
+    "Lighting arcs towards you but just misses the mark.  You rush in while the dungeon master recharges and cut their head off before they can attack again"],
     // elves
     ["You have defeated the group of elven archers",
     "You attack before the elves have even noticed you, striking them down faster than they can draw their bows"], 
     // giant blue slime
-    ["You have defeated the giant blue slime"],
+    ["You have defeated the giant blue slime",
+    "Your attack causes the slime to rupture, spilling blue ooze all over the floor"],
     // giant green slime
-    ["You have defeated the giant green slime"],
+    ["You have defeated the giant green slime",
+    "Your attack causes the slime to rupture, spilling green ooze all over the floor"],
     // giant rat
-    ["You have defeated the giant rat"],
+    ["You have defeated the giant rat",
+    "Living underground has left the rat half blind, and you easily circle around and strike it down"],
     // giant spider
-    ["You have defeated the giant spider"],
+    ["You have defeated the giant spider",
+    "Running in, you slide beneath the spider and attack its soft underbelly with all your might"],
     // goblins 
     ["You have defeated the pair of goblins",
     "The goblins were intoxicated from mushroom brew. They barely put up a fight."],
@@ -203,32 +217,48 @@ const DungeonEnemyDefeatedText : string[][] = [
     ["...but pass through without incident",
     "Just in time you notice a pressure plate hidden amongst the stones on the ground, and carefully step over it to continue onwards"], 
     // werewolf
-    ["You have defeated the werewolf"]
+    ["You have defeated the werewolf",
+    "Before the transformation is complete you strike, cutting the head clean off",
+    "The werewolf attacks with bestial rage, but it is no match for you"]
 ];
 
 const DungeonPlayerDefeatedText : string[][] = [
     // assassin
-    ["The assassin has defeated you."],
+    ["The assassin has defeated you.",
+    "Surrounded by fog you can't keep track of the assassins movements. You only learn of its location when you feel its blade in your back"],
     // blue slime
-    ["The blue slime has defeated you."],
+    ["The slime oozes past your defenses and envelopes you, suffocating you where you stand",
+    "Your weapons melt into a pool at your feet as you try to attack, and soon you join them"],
     // boulder
     ["A boulder suddenly falls from the ceiling, crushing you instantly.",
     "The door behind you slams shut and a boulder starts rolling towards you.  With nowhere to run you all you can do is watch with horror as it approaches"], 
     // carvinvine
-    ["The carvnivine has defeated you."],
+    ["The carvnivine has defeated you.",
+    "Vines wrap around your legs and arms pulling you beneath the soft earth", 
+    "With every vine you cut down another replaces it.  Exhausted, you succumb to the Carnivines relentless attacks."],
     // dungeon master
-    ["The dungeon master has defeated you."],
+    ["The dungeon master has defeated you.",
+    "Lightning arcs from the dungeon master and instantly incinerates you as it makes contact",
+    "Through ancient magics the dungeon master takes control of your body and forces you to end your own life"],
     // elves
     ["You take an arrow to the knee, and while stumbling are unable to dodge the next volley to the heart",
     "A volley of arrows turns you into a human pin-cushion"], 
     // giant blue slime
-    ["The giant blue slime has defeated you."],
+    ["The giant blue slime has defeated you.",
+    "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
+    "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
     // giant green slime
-    ["The giant green slime has defeated you."],
+    ["The giant green slime has defeated you.",
+    "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
+    "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
     // giant rat
-    ["The giant rat has defeated you."],
+    ["The giant rat has defeated you.",
+    "As the rat approaches the smell of decay causes you to gag, and in that moment it strikes.",
+    "The rat trips you with its tail, and grabbing your ankles in its jaw it drags you into the sewers below"],
     // giant spider
-    ["The giant spider has defeated you."],
+    ["The giant spider has defeated you.",
+    "You get trapped in a mass of spider webs giving the spider ample time to wrap you up for a snack",
+    "With surprising speed the spider springs from its web and bites you.  The venom acts quickly and you fall to the ground paralyzed"],
     // goblins
     ["The goblins are too fast, you lose sight of them for just a second and the next thing you see is a knife to your throat"], 
     // green slime
@@ -256,7 +286,8 @@ const DungeonPlayerDefeatedText : string[][] = [
     ["A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.",
     "Spikes suddenly burst from holes in the ground beneath your feet and impale you before you can react"],
     // werewolf
-    ["The werewolf has defeated you."]    
+    ["The werewolf has defeated you.",
+    "The werewolf leaps on you faster than you can react and tears you to shreds"]    
 ];
 
 export const DisplayEnemyAppearsText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
