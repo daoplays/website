@@ -74,7 +74,7 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
 import { check_json, request_player_account_data, request_key_data_from_index, request_token_amount,
     serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA} from './utils';
 
-import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus} from './dungeon_state';
+import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS} from './dungeon_state';
 
 // navigation
 import {Navigation} from './navigation';
@@ -1426,7 +1426,7 @@ export function DungeonApp()
                 <Box width="100%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,current_level - 1) *  bet_value} SOL</del></Text>
+                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{(WIN_FACTORS[current_level - 1] *  bet_value).toFixed(3)} SOL</del></Text>
                             </div> 
                     </Center>
                 </Box>

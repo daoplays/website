@@ -46,7 +46,7 @@ import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 
-const WIN_FACTORS : number[] = [0.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
+export const WIN_FACTORS : number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
 
 var seedrandom = require('seedrandom');

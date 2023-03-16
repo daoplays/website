@@ -23,7 +23,7 @@ import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
 import { DUNGEON_FONT_SIZE, network_string, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SYSTEM_KEY, FOUNDER_1_KEY, FOUNDER_2_KEY, DM_PROGRAM, SHOP_PROGRAM, KeyType} from './constants';
+    METAPLEX_META, SYSTEM_KEY, FOUNDER_1_KEY, FOUNDER_2_KEY, DM_PROGRAM, SHOP_PROGRAM, KeyType, DEBUG} from './constants';
 
 import bs58 from "bs58";
 
@@ -167,8 +167,9 @@ export function DMScreen()
 
         if (check_state.current === true) {
             
+            if (DEBUG)
+                console.log("checking DM manager state");
 
-            console.log("checking DM manager state");
             let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
 
             let dm_data = await request_DM_Manager_data(program_data_key);
@@ -181,8 +182,10 @@ export function DMScreen()
             let this_current_fees = bignum_to_num(dm_data.total_fees);
             let this_last_fees = bignum_to_num(dm_data.last_fees);
 
-            console.log(this_current_fees);
-            console.log(this_last_fees);
+            if (DEBUG) {
+                console.log(this_current_fees);
+                console.log(this_last_fees);
+            }
 
             // if we don't have a dm index, or this is the first time we are here then just set check_state to false
             if (dm_index === null || current_fees === null) 
@@ -386,9 +389,12 @@ export function DMScreen()
                 return;
             }
 
-            console.log(transaction_response);
+            if (DEBUG)
+                console.log(transaction_response);
             let signature = transaction_response["result"];
-            console.log("sig: ", signature);
+
+            if (DEBUG)
+                console.log("sig: ", signature);
     
         } catch(error) {
             console.log(error);
@@ -647,7 +653,9 @@ export function DMScreen()
         if (wallet.publicKey === null)
             return;
 
-        console.log("dm name", dm_name);
+        if (DEBUG)
+            console.log("dm name", dm_name);
+
         if (dm_name === "")
             return;
 
@@ -907,16 +915,18 @@ export function DMScreen()
         let excess_fee_per_dm = excess_dm_fees / 250;
 
  
-
-        console.log(wallet.publicKey.toString());
-        console.log("Founder? ", (wallet.publicKey.toString() === FOUNDER_1_KEY.toString() || wallet.publicKey.toString() === FOUNDER_2_KEY.toString()));
+        if (DEBUG) {
+            console.log(wallet.publicKey.toString());
+            console.log("Founder? ", (wallet.publicKey.toString() === FOUNDER_1_KEY.toString() || wallet.publicKey.toString() === FOUNDER_2_KEY.toString()));
+        }
         
 
         if (wallet.publicKey.toString() === FOUNDER_1_KEY.toString() || wallet.publicKey.toString() === FOUNDER_2_KEY.toString()) {
             return(<FoundersDialogue/>);
         }
 
-        console.log("Member Status: ", member_status)
+        if (DEBUG)
+            console.log("Member Status: ", member_status)
 
         if (member_status === MemberStatus.unknown) {
             return(
@@ -1012,7 +1022,9 @@ export function DMScreen()
             );
         }
 
-        console.log("Applicant: ", keys_burnt);
+        if (DEBUG)
+            console.log("Applicant: ", keys_burnt); 
+            
         if (member_status === MemberStatus.applicant && keys_burnt !== null && keys_burnt < DM_KEY_COST) {
 
             return(<ApplicantsJourneyDialogue/>);
