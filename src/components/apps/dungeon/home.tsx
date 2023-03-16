@@ -4,13 +4,12 @@ import {
     Box,
     Button,
     HStack,
-    theme,
     Center,
     Text,
     VStack,
     Divider,
     NumberInput,
-    NumberInputField
+    NumberInputField,
 } from '@chakra-ui/react';
 
 import {
@@ -23,16 +22,17 @@ import {
     PopoverCloseButton,
   } from '@chakra-ui/react'
 
+import Select, { StylesConfig }  from 'react-select';
 import FocusLock from 'react-focus-lock';
 
 import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
-    getAssociatedTokenAddress
-  } from "@solana/spl-token";
+        getAssociatedTokenAddress
+} from "@solana/spl-token";
 import {
     WalletProvider,
     useWallet,
@@ -68,13 +68,13 @@ import selector from "./images/Selector.gif"
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, BET_SIZE} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType} from './constants';
 
 // dungeon utils
-import { check_json, request_player_account_data, request_key_data_from_index, KeyDataFromMint, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes} from './utils';
+import { check_json, request_player_account_data, request_key_data_from_index, request_token_amount,
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA} from './utils';
 
-import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus} from './dungeon_state';
+import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS} from './dungeon_state';
 
 // navigation
 import {Navigation} from './navigation';
@@ -84,16 +84,13 @@ import {FAQScreen} from './faq';
 import {OddsScreen} from './odds';
 import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
+import {DMScreen} from './dm';
 //import {DungeonScreen} from './dungeon';
 
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
-
-
-const DAOPLAYS_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
-const KAYAK_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
 
 const enum AccountStatus {
     unknown = 0,
@@ -104,19 +101,27 @@ const enum AccountStatus {
 
 const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
-const enum KeyType {
-    Bronze = 0,
-    Silver = 1,
-    Gold = 2,
-    Unknown = 3
+
+
+const enum BetSize {
+    SolanaBet1 = 0,
+    SolanaBet2 = 1,
+    SolanaBet3 = 2,
 }
+
+const BetSizeValues : number[] = [0.05, 0.1, 0.25];
+
+type BetValueObject = Object & {
+    value: BetSize,
+    label: string
+}
+
 
 const enum DungeonInstruction {
     add_funds = 0,
-    distribute = 1,
-    play = 2,
-    quit = 3,
-    explore = 4
+    play = 1,
+    quit = 2,
+    explore = 3
 }
 
 export function DungeonApp() 
@@ -126,6 +131,17 @@ export function DungeonApp()
     // properties used to set what to display
     const [data_account_status, setDataAccountStatus] = useState<AccountStatus>(AccountStatus.unknown);
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
+
+    // settings for this game
+    const [bet_size, setBetSize] = useState<BetSize>(BetSize.SolanaBet1);
+    const [bet_value, setBetValue] = useState<number>(BetSizeValues[0]);
+    const [select_value, setSelectValue] = useState<BetValueObject | null>(null);
+
+
+    const handleBetChange = (selected : BetSize) => {
+        setBetSize(selected);
+        setBetValue(BetSizeValues[selected])
+    }
 
     // these come from the blockchain
     const [num_plays, setNumPlays] = useState<number>(-1);
@@ -194,6 +210,98 @@ export function DungeonApp()
         setShowDiscountError(true);
     },[]);
 
+    function BetSizeInput() {
+
+
+        const handleSelectChange = (selected: SelectValue) => {
+            let selected_bet = selected as BetValueObject;
+            setSelectValue(selected_bet);
+            setBetSize(selected_bet.value);
+            setBetValue(BetSizeValues[selected_bet.value])
+        };
+
+
+        type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
+        
+        const colourStyles: StylesConfig<BetValueObject, false> = {
+            menu: (base) => ({
+                ...base,
+                width: "max-content",
+                minWidth: "100%"
+           }),
+            control: (provided) => ({ 
+                ...provided,
+                backgroundColor: 'black',
+                color: 'white'
+            }),
+            singleValue: (provided) => ({ 
+                ...provided,
+                fontSize: DUNGEON_FONT_SIZE,
+                backgroundColor: 'black',
+                color: 'white'
+            }),
+            placeholder: (provided) => ({ 
+                ...provided,
+                fontSize: DUNGEON_FONT_SIZE,
+                backgroundColor: 'black',
+                color: 'white'
+            }),
+            clearIndicator: (provided) => ({
+                ...provided,
+                padding: "0px"
+            }),
+            dropdownIndicator: (provided) => ({
+                ...provided,
+                padding: "0px"
+            }),
+            option: (provided, {isFocused}) => {
+              return {
+                ...provided,
+        
+                backgroundColor: isFocused ? 'grey' : 'black',
+                color: 'white'
+              };
+              
+            },
+          };
+          
+          return(
+            <div className="font-face-sfpb">
+
+            {!isMobile &&
+                <HStack alignItems="center" spacing="1px">
+                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet1)} borderWidth='2px' height={"30px"}  borderColor={bet_size === BetSize.SolanaBet1 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[0]}</Text>
+                    </Box>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet2)} height={"30px"}  borderWidth='2px'borderColor={bet_size === BetSize.SolanaBet2 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[1]}</Text>
+                    </Box>
+                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet3)} height={"30px"}  borderWidth='2px' borderColor={bet_size === BetSize.SolanaBet3 ? "white" : "black"}  width={"60px"}>
+                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[2]}</Text>
+                    </Box>
+                    <Box borderWidth='2px'  borderColor="black" height={"30px"} width={"60px"}>
+                        <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">SOL</Text>
+                    </Box>
+                </HStack>
+            }
+            {isMobile &&
+                    <Select 
+                    placeholder={BetSizeValues[0] + ' SOL'}
+                    styles={colourStyles}
+                    isSearchable={false}
+                    onChange={(choice: SelectValue) => {handleSelectChange(choice)}}
+                    value={select_value}
+                    options = {[
+                        { value: BetSize.SolanaBet1, label: BetSizeValues[0] + ' SOL' },
+                        { value: BetSize.SolanaBet2, label: BetSizeValues[1] + ' SOL' },
+                        { value: BetSize.SolanaBet3, label: BetSizeValues[2] + ' SOL' }
+                    ]}      
+                /> 
+            }
+            </div>
+
+          );
+    }
     
 
     function DiscountKeyInput() {
@@ -205,7 +313,7 @@ export function DungeonApp()
 
     return (
         <>
-    <div style={{marginTop : "2rem"}}></div>
+    <div style={{marginTop : "1rem"}}></div>
     <div style={{ margin: 0 }}>
     <Popover
         returnFocusOnClose={false}
@@ -213,33 +321,45 @@ export function DungeonApp()
         onClose={CloseDiscountError}
         placement='bottom'
         closeOnBlur={false}
+        
     >
         <PopoverTrigger>
             <Button variant='link' size='md' onClick={OpenDiscountError}>
                 <img style={{"imageRendering":"pixelated"}} src={key} width={key_size} alt={""}/>
             </Button> 
         </PopoverTrigger>
-        <PopoverContent>
-            <div className="font-face-sfpb">
-                <PopoverHeader fontSize={DUNGEON_FONT_SIZE} fontWeight='semibold'>Enter Key Number</PopoverHeader>
+        <PopoverContent backgroundColor={"black"} >
+            <div className="font-face-sfpb" color="white">
+                <PopoverHeader  style={{borderBottomWidth:0}} fontSize={DUNGEON_FONT_SIZE} color="white" fontWeight='semibold' ml="2rem" mr="2rem">Enter Key Number</PopoverHeader>
             </div>
             <PopoverArrow />
-            <PopoverCloseButton />
+            <PopoverCloseButton ml="1rem" color="white"/>
             <PopoverBody>
                 <FocusLock returnFocus persistentFocus={false}>
                 <VStack align="center">
                     <div className="font-face-sfpb">                                           
                     <NumberInput 
+                        fontSize={DUNGEON_FONT_SIZE} 
+                        color="white"
+                        size="lg"
                         onChange={(valueString) => setDiscountKeyIndex(valueString)}
                         value={discount_key_index}
                         precision={0}
+                        borderColor="white"
                         min={1} max={3500}>
-                        <NumberInputField/>
+                        
+                        
+                        <NumberInputField
+                        height={DUNGEON_FONT_SIZE} 
+                        paddingTop="1rem"
+                        paddingBottom="1rem"
+                        borderColor="white"
+                        />
                     </NumberInput>
                     </div>
                     <div className="font-face-sfpb">
 
-                        <Button variant='link' size='md'  onClick={ApplyKey}> 
+                        <Button variant='link' size='md'  color="white" onClick={ApplyKey}> 
                             Apply
                         </Button> 
                         
@@ -250,7 +370,9 @@ export function DungeonApp()
                 <>
                     <Divider mt = "1rem" mb = "1rem"/>
                     <div className="font-face-sfpb">
+                        <Text color="white" >
                         {discount_error}
+                        </Text>
                     </div>
                 </>
                 }
@@ -272,7 +394,9 @@ export function DungeonApp()
         const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature.current;
         var signature_response = await fetch(confirm_url).then((res) => res.json());
 
-        console.log("sig response:", signature_response);
+        if (DEBUG) 
+            console.log("sig response:", signature_response);
+
         let valid_response = check_json(signature_response)
         if (!valid_response) {
             return;
@@ -293,7 +417,9 @@ export function DungeonApp()
             current_signature.current = null;
             signature_check_count.current = 0;
         }
-
+        else {
+            signature_check_count.current += 1;
+        }
         if (signature_check_count.current >= 10) {
             setTransactionFailed(true);
             current_signature.current = null;
@@ -393,10 +519,13 @@ export function DungeonApp()
             let current_status = player_data.player_status + 1;
             if (initial_status.current === DungeonStatus.unknown) {
                 initial_status.current = current_status;
+                if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
+                    let current_bet_value_bn = new BN(player_data.current_bet_size);
+                    let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
+                    setBetValue(current_bet_value);
+                    console.log("setting current status to alive", current_bet_value);
+                }
             }
-
-            let test = new BN(player_data.num_plays);
-            console.log(test.toNumber());
 
             let current_num_plays = (new BN(player_data.num_plays)).toNumber();
 
@@ -578,12 +707,12 @@ export function DungeonApp()
 
         setProcessingTransaction(true);
         if (DEBUG) {
-            console.log("In play");
+            console.log("In play", bet_size, BetSizeValues[bet_size]);
         }
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character);
+        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, bet_size);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -692,7 +821,7 @@ export function DungeonApp()
         check_sol_balance.current = true;
 
 
-    },[wallet, player_character, current_key_index, current_key_mint]);
+    },[wallet, player_character, current_key_index, current_key_mint, bet_size]);
 
     const Quit = useCallback( async () => 
     {
@@ -703,6 +832,7 @@ export function DungeonApp()
         setProcessingTransaction(true);
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
+        let dm_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
 
         const instruction_data = serialise_basic_instruction(DungeonInstruction.quit);
 
@@ -711,10 +841,10 @@ export function DungeonApp()
             {pubkey: player_data_key, isSigner: false, isWritable: true},
             {pubkey: program_data_key, isSigner: false, isWritable: true},
 
-            {pubkey: DAOPLAYS_KEY, isSigner: false, isWritable: true},
-            {pubkey: KAYAK_KEY, isSigner: false, isWritable: true},
+            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false},
 
-            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+            {pubkey: DM_PROGRAM, isSigner: false, isWritable: false},
+            {pubkey: dm_data_key, isSigner: false, isWritable: true}
         ];
 
         const quit_instruction = new TransactionInstruction({
@@ -739,7 +869,7 @@ export function DungeonApp()
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
+            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction+"&config=true&p3=skippreflight";
             let transaction_response = await fetch(send_url).then((res) => res.json());
 
             let valid_response = check_json(transaction_response)
@@ -802,32 +932,7 @@ export function DungeonApp()
         // if we have been passed a number check the lookup account exists
         if (key_meta_data === null) {
 
-            let encoded_key_index = bs58.encode(index_buffer);
-            const program_accounts_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
-
-            var program_accounts_result;
-            try {
-                program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
-            }
-            catch(error) {
-                console.log(error);
-            }
-
-            console.log(program_accounts_result["result"]);
-
-            for (let i = 0; i < program_accounts_result["result"].length; i++) {
-
-                let encoded_data = program_accounts_result["result"][i]["account"]["data"][0];
-                let decoded_data = Buffer.from(encoded_data, "base64");
-
-                const [data] = KeyDataFromMint.struct.deserialize(decoded_data);
-
-
-                if (data.key_index !== parsed_key_index)
-                    continue;
-
-                key_meta_data = data;
-            }
+            key_meta_data = await run_keyData_GPA(parsed_key_index);
 
             if (key_meta_data === null) {
                 setDiscountError("Key " + discount_key_index + " has not been minted");
@@ -1045,15 +1150,6 @@ export function DungeonApp()
                                 
                             </Box>  
                         </HStack>
-                        
-                        <HStack>
-                            <Box width="33%"/>
-                                <div className="font-face-sfpb">
-                                    <Text align="center" fontSize={font_size} color="white">50% CHANCE TO  DOUBLE YOUR SOL</Text>
-                                </div>   
-                            <Box width="33%"/>
-                        </HStack>
-
                         {!isMobile &&
                         <HStack visibility={"hidden"}>
                             <Box width="33%" mt="2rem"/>
@@ -1069,6 +1165,8 @@ export function DungeonApp()
             </>
         )
     }
+
+
 
     const ConnectedPage = () =>  {
 
@@ -1126,10 +1224,9 @@ export function DungeonApp()
                                         <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 
                                     </div> 
-                                    <div className="font-face-sfpb">
-                                        <Text textAlign="center" fontSize={font_size} color="white">{BET_SIZE} SOL</Text>
-                                    </div>
-                                    
+                                    <BetSizeInput/>
+
+
                                     <DiscountKeyInput/>
                                     
                                 </VStack>
@@ -1210,7 +1307,7 @@ export function DungeonApp()
                 {player_state === DungeonStatus.dead &&
                 <>
                 <VStack alignItems="center" spacing="2%">
-                        <DisplayPlayerFailedText current_enemy={current_enemy}/>
+                        <DisplayPlayerFailedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
                         <Center>
                             <HStack alignItems="center">
                                 
@@ -1242,12 +1339,12 @@ export function DungeonApp()
                     <>
                                       
                     {enemy_state  === DungeonStatus.alive  && 
-                        <DisplayEnemyAppearsText current_enemy={current_enemy} current_level={current_level}/>
+                        <DisplayEnemyAppearsText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
                     }
                     {enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
-                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy}/>
+                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={bet_value} num_plays={num_plays}/>
 
                             {current_level < 7 &&
                                 <Center>
@@ -1329,7 +1426,7 @@ export function DungeonApp()
                 <Box width="100%">
                     <Center>
                             <div className="font-face-sfpb">
-                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{Math.pow(2,current_level - 1) *  BET_SIZE} SOL</del></Text>
+                                <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">You Have Died<br/><del>{(WIN_FACTORS[current_level - 1] *  bet_value).toFixed(3)} SOL</del></Text>
                             </div> 
                     </Center>
                 </Box>
@@ -1381,6 +1478,9 @@ export function DungeonApp()
                         {screen === Screen.SHOP_SCREEN &&
                             <ShopScreen num_xp={numXP}/>
                         }
+                        {screen === Screen.DM_SCREEN &&
+                            <DMScreen/>
+                        }
                         {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) &&
                             <UnconnectedPage/>
                         }
@@ -1409,6 +1509,9 @@ export function DungeonApp()
                         {screen === Screen.HELP_SCREEN &&
                             <HelpScreen/>
                         }
+                        {screen === Screen.DM_SCREEN &&
+                            <DMScreen/>
+                        }
                         </>
                     }                    
                 
@@ -1429,7 +1532,7 @@ function Home() {
   document.body.setAttribute('style', 'background: black;');
     return (
 
-        <ChakraProvider theme={theme}>
+        <ChakraProvider>
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
                         <DungeonApp />

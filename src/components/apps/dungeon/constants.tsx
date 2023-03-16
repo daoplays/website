@@ -11,9 +11,14 @@ export const PYTH_ETH_PROD = new PublicKey('JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLF
 export const PYTH_SOL_PROD = new PublicKey('H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG');
 
 export const METAPLEX_META = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
-export const SHOP_PROGRAM = new PublicKey("61Lmx2t4g2JDf8n1xmjF94H6Q9Vm2bqYj39ELKMjaST5");
+export const SHOP_PROGRAM = new PublicKey("E55LRJDDXn6zzEBxBr5V35e4L7pj94R3CF1Z9aWrNFo6");
 export const DUNGEON_PROGRAM = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 export const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
+
+export const FOUNDER_1_KEY = new PublicKey("2BLkynLAWGwW58SLDAnhwsoiAuVtzqyfHKA3W3MJFwEF");
+export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4ukWiCZBZz5");
+
+export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHyWXxPJ');
 
 
 // set font size
@@ -26,7 +31,7 @@ if (isMobile) {
 }
 
 export const PROD = true;
-export const DEBUG = true;
+export const DEBUG = false;
 
 export var network_string = "devnet";
 if (PROD) {
@@ -40,8 +45,13 @@ export const enum Screen {
     FAQ_SCREEN = 3,
     ODDS_SCREEN = 4,
     HELP_SCREEN = 5,
-    SHOP_SCREEN = 6
+    SHOP_SCREEN = 6,
+    DM_SCREEN = 7,
 }
 
-export const BET_SIZE = 0.05;
-
+export const enum KeyType {
+    Bronze = 0,
+    Silver = 1,
+    Gold = 2,
+    Unknown = 3
+}

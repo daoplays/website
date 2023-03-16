@@ -4,24 +4,41 @@ import {
     Text,
 } from '@chakra-ui/react';
 
+
 //  dungeon constants
-import {DUNGEON_FONT_SIZE, BET_SIZE} from './constants';
+import {DUNGEON_FONT_SIZE} from './constants';
 
 //enemies
+import assassin from "./images/Assassin.gif"
+import blue_slime from "./images/Blue_Slime.gif"
+import boulder from "./images/Boulder.png"
+import carnivine from "./images/Carnivine.gif"
+import dungeon_master from "./images/Dungeon_Master.gif"
+import elves from "./images/Elves.gif"
+import giant_blue_slime from "./images/Giant_Blue_Slime.gif"
+import giant_green_slime from "./images/Giant_Green_Slime.gif"
+import giant_rat from "./images/Giant_Rat.gif"
+import giant_spider from "./images/Giant_Spider.gif"
+import goblins from "./images/Goblins.gif"
+import green_slime from "./images/Green_Slime.gif"
+import mimic from "./images/Mimic.gif"
+import orc from "./images/Orc.gif"
+import shade from "./images/Shade.gif"
+import skeleton_knight from "./images/Skelly_Knight.gif"
+import skeletons from "./images/Skellies.gif"
+import skeleton_wizard from "./images/Skelly_Wiz.gif"
+import floor_spikes from "./images/Spikes.png"
+import werewolf from "./images/Werewolf.gif"
+
 import closed_chest from "./images/chest_closed.png"
 import open_chest from "./images/chest_open.png"
-import mimic from "./images/Mimic.gif"
-import slime from "./images/Slime.gif"
-import goblins from "./images/Goblins.gif"
-import skeletons_hallway from "./images/Skellies.gif"
-import skeletons_graveyard from "./images/Skellies.gif"
-import elves from "./images/Elves.gif"
-import orc from "./images/Orc.gif"
-import skeleton_knight from "./images/Skelly_Knight.gif"
-import skeleton_wizard from "./images/Skelly_Wiz.gif"
-import reaper from "./images/Reaper.gif"
-import boulder from "./images/Boulder.png"
-import floor_spikes from "./images/Spikes.png"
+import bones from "./images/Bones.png"
+import green_slime_corpse from "./images/slime_corpse.png"
+import blue_slime_corpse from "./images/Blue_Slime_Corpse.png"
+import spider_corpse from "./images/Spider_Corpse.png"
+import carnivine_corpse from "./images/Vine_Corpse.png"
+import werewolf_corpse from "./images/Wolf_Corpse.png"
+import shade_corpse from "./images/Shade_Corpse.png"
 
 //characters
 import knight from "./images/Knight.gif"
@@ -29,6 +46,10 @@ import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 
+export const WIN_FACTORS : number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
+
+
+var seedrandom = require('seedrandom');
 
 export const enum DungeonCharacter {
     knight = 0,
@@ -38,19 +59,27 @@ export const enum DungeonCharacter {
 
 export const enum DungeonEnemy {
     
-    Chest = 0,
-    Slime = 1,
-    Goblins = 2,
-    SkeletonsHallway = 3,
-    SkeletonsGraveyard = 4,
-    Elves = 5,
-    Orc = 6,
-    SkellyKnight = 7,
-    SkellyWizard = 8,
-    Reaper = 9,
-    Boulder = 10,
-    FloorSpikes = 11,
-    None = 12
+    Assassin = 0,
+    BlueSlime,
+    BoulderTrap,
+    Carnivine,
+    DM,
+    Elves,
+    GiantBlueSlime,
+    GiantGreenSlime,
+    GiantRat,
+    GiantSpider,
+    Goblins,
+    GreenSlime,
+    Mimic,
+    Orc,
+    Shade,
+    SkeletonKnight,
+    Skeletons,
+    SkeletonWizard,
+    SpikeTrap,
+    Werewolf,
+    None
 }
 
 export const enum DungeonStatus {
@@ -60,124 +89,281 @@ export const enum DungeonStatus {
     exploring = 3
 }
 
-const DungeonEnemyName = ["Mimic", "Slime", "Goblins", "Skeletons", "Skeletons", "Elves", "Orc", "Skeleton Knight", "Skeleton Wizard", "Reaper", "Boulder", "Floor Spikes"];
+const DungeonEnemyAppearsText : string[][] = [
+    // assasin
+    ["You have encountered an Assassin, prepare yourself!", 
+    "A smoke bomb goes off at the end of the corridor and an assassin flits into view.  Prepare yourself!"],
+    // blue slime
+    ["You have encountered an blue slime, prepare yourself!", 
+    "A Blue Slime squeezes out of a crack in the wall, prepare yourself!", 
+    "A Blue Slime drops from the ceiling, prepare yourself!"],
+    // boulder
+    ["You enter a suspiciously empty room...", 
+    "The hallway is dark but it seems empty..."],
+    // carnivine
+    ["You have encountered a Carnivine, prepare yourself!",
+    "The smell of flowers makes you relax, but only until you see the source is a Carnivine.  Prepare yourself!",
+    "Thick vines cover the walls.  You've entered the layer of a Carnivine!  Prepare yourself!"],
+    //dungeon master
+    ["You have encountered a Dungeon Master, prepare yourself!", 
+    "The air begins to crackle around you as a Dungeon Master prepares to attack, get ready!"],
+    // elves
+    ["You have encountered a group of elven archers, prepare yourself!", 
+    "A patrolling group of elven archers turns the corner, prepare yourself!"], 
+    // giant blue slime
+    ["You have encountered a giant blue slime, prepare yourself!",
+    "Multiple blue slimes coalesce before you into a single giant slime! Prepare yourself!"],
+    // giant green slime
+    ["You have encountered a giant green slime, prepare yourself!",
+    "Multiple green slimes coalesce before you into a single giant slime! Prepare yourself!"],
+    // giant rat
+    ["You have encountered a giant rat, prepare yourself!",
+    "You notice the terrible stench in the room just as a giant rat bursts from the sewer grate ahead of you.  Prepare yourself!"],
+    // giant spider
+    ["You have encountered a giant spider, prepare yourself!",
+    "A mass of sticky web bars your way.  As you start to cut through a giant spider drops from the ceiling, prepare yourself!"],
+    // goblins 
+    ["You have encountered a pair of goblins, prepare yourself!"],
+    // green slime 
+    ["You have encountered an oozing green slime, prepare yourself!", 
+    "A Green Slime squeezes out of a crack in the wall, prepare yourself!", 
+    "A Green Slime drops from the ceiling, prepare yourself!"],
+    // mimic
+    ["You have found a treasure chest!",
+    "You have found an old rusted treasure chest",
+    "You have found an elaborately gilded coffer"],
+    // orc
+    ["You have encountered a huge orc, prepare yourself!",
+    "The ground shakes as a gigantic orc charges towards you, prepare yourself!"], 
+    // shade
+    ["You have encountered the Grim Reaper, prepare yourself!",
+    "The shadows around you start shifting and take on the form of the Grim Reaper, prepare yourself!"], 
+    // skeleton_knight
+    ["You have encountered a skeleton knight, prepare yourself!",
+    "An armour-clad skeleton appears, prepare yourself!"], 
+    // skeletons
+    ["You have encountered a horde of skeletons, prepare yourself!",
+    "You hear the rattling of bones ahead, prepare yourself!"], 
+    // skeleton_wizard
+    ["You have encountered a skeleton wizard, prepare yourself!",
+    "A skeleton wizard suddenly appears before you, prepare yourself!"], 
+    // spikes
+    ["You enter a suspiciously empty room...", 
+    "The hallway is dark but it seems empty..."],
+    // werewolf
+    ["You have encountered a werewolf, prepare yourself!",
+    "You have encountered a strange half naked man... who transforms before you into a werewolf! Prepare yourself!"]
+];
 
-const DungeonEnemyInitialText = ["mimic", "an oozing green slime", "a pair of goblins", "a horde of skeletons", "a horde of skeletons", "a group of elven archers", "a huge orc", "a skeleton knight", "a skeleton wizard", "the Grim Reaper", "Boulder", "Floor Spikes"];
+const DungeonEnemyDefeatedText : string[][] = [
+    // assassin
+    ["You have defeated the assassin",
+    "You see through the assassins tricks and are waiting to strike when it next appears in front of you",
+    "The assassin was quick, but you were quicker"],
+    // blue slime
+    ["You have defeated the oozing blue slime",
+    "A mere slime is no match for you!"],
+    // boulder
+    ["...but pass through without incident",
+    "Just in time you notice a pressure plate hidden amongst the stones on the ground, and carefully step over it to continue onwards"],
+    // carnivine
+    ["You have defeated the carnivine",
+    "You turn the Carnivine into compost",
+    "You hack through thorns and leaves until the Carnivine is reduced to mulch"],
+    // dungeon master
+    ["You have defeated the dungeon master",
+    "The dungeon master starts monologuing in typical villainic style.  Its overconfidence is its weakness and mid speech you strike it down",
+    "Lighting arcs towards you but just misses the mark.  You rush in while the dungeon master recharges and cut their head off before they can attack again"],
+    // elves
+    ["You have defeated the group of elven archers",
+    "You attack before the elves have even noticed you, striking them down faster than they can draw their bows"], 
+    // giant blue slime
+    ["You have defeated the giant blue slime",
+    "Your attack causes the slime to rupture, spilling blue ooze all over the floor"],
+    // giant green slime
+    ["You have defeated the giant green slime",
+    "Your attack causes the slime to rupture, spilling green ooze all over the floor"],
+    // giant rat
+    ["You have defeated the giant rat",
+    "Living underground has left the rat half blind, and you easily circle around and strike it down"],
+    // giant spider
+    ["You have defeated the giant spider",
+    "Running in, you slide beneath the spider and attack its soft underbelly with all your might"],
+    // goblins 
+    ["You have defeated the pair of goblins",
+    "The goblins were intoxicated from mushroom brew. They barely put up a fight."],
+    // green slime 
+    ["You have defeated the oozing green slime",
+    "A mere slime is no match for you!"],
+    // mimic
+    ["You approach with great suspicion, but open it to find it full of gold!",
+    "You open the chest with care, and find it contains some useful supplies"],
+    // orc
+    ["You have defeated the orc",
+    "The orcs size means it is too slow to hit you, or defend against your strikes"],  
+    // shade
+    ["You have defeated the the Grim Reaper",
+    "The Reaper chose the wrong soul to go after and you return it to the shadows"], 
+    // skeleton_knight
+    ["You have defeated the skeleton knight",
+    "Noticing a crack in the knights armour you strike, and the knights protection disintegrates along with the skeleton itself"], 
+    // skeletons
+    ["You have defeated the horde of skeletons",
+    "You take out the skeletons one by one, leaving nothing but scattered bones across the floor"], 
+    // skeleton_wizard
+    ["You have defeated the skeleton wizard",
+    "Your attacks disrupt the skeleton's incantation, causing it to backfire!"], 
+    // spikes
+    ["...but pass through without incident",
+    "Just in time you notice a pressure plate hidden amongst the stones on the ground, and carefully step over it to continue onwards"], 
+    // werewolf
+    ["You have defeated the werewolf",
+    "Before the transformation is complete you strike, cutting the head clean off",
+    "The werewolf attacks with bestial rage, but it is no match for you"]
+];
 
-const DungeonEnemyDefeatText = ["The mimic's transformation stuns you for just a moment, but that is all it needed", "The slime oozes past your defenses and envelopes you, suffocating you where you stand", "The goblins are too fast, you lose sight of them for just a second and the next thing you see is a knife to your throat", "The skeletons manage to surround you, and strike from all sides", "There were just.. too many skeletons", "You take an arrow to the knee, and while stumbling are unable to dodge the next volley to the heart", "With one swing from it's axe the orc cracks your head open like an egg", "Your attacks are simply deflected off the knight's armour until it gets bored and strikes you down", "Hoarsely croaking some ancient incantation the wizard turns you inside out before you even have a chance to attack", "The Reaper's scythe passes through you as though you were no more than air as it claims another soul", "Boulder", "Floor Spikes"];
+const DungeonPlayerDefeatedText : string[][] = [
+    // assassin
+    ["The assassin has defeated you.",
+    "Surrounded by fog you can't keep track of the assassins movements. You only learn of its location when you feel its blade in your back"],
+    // blue slime
+    ["The slime oozes past your defenses and envelopes you, suffocating you where you stand",
+    "Your weapons melt into a pool at your feet as you try to attack, and soon you join them"],
+    // boulder
+    ["A boulder suddenly falls from the ceiling, crushing you instantly.",
+    "The door behind you slams shut and a boulder starts rolling towards you.  With nowhere to run you all you can do is watch with horror as it approaches"], 
+    // carvinvine
+    ["The carvnivine has defeated you.",
+    "Vines wrap around your legs and arms pulling you beneath the soft earth", 
+    "With every vine you cut down another replaces it.  Exhausted, you succumb to the Carnivines relentless attacks."],
+    // dungeon master
+    ["The dungeon master has defeated you.",
+    "Lightning arcs from the dungeon master and instantly incinerates you as it makes contact",
+    "Through ancient magics the dungeon master takes control of your body and forces you to end your own life"],
+    // elves
+    ["You take an arrow to the knee, and while stumbling are unable to dodge the next volley to the heart",
+    "A volley of arrows turns you into a human pin-cushion"], 
+    // giant blue slime
+    ["The giant blue slime has defeated you.",
+    "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
+    "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
+    // giant green slime
+    ["The giant green slime has defeated you.",
+    "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
+    "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
+    // giant rat
+    ["The giant rat has defeated you.",
+    "As the rat approaches the smell of decay causes you to gag, and in that moment it strikes.",
+    "The rat trips you with its tail, and grabbing your ankles in its jaw it drags you into the sewers below"],
+    // giant spider
+    ["The giant spider has defeated you.",
+    "You get trapped in a mass of spider webs giving the spider ample time to wrap you up for a snack",
+    "With surprising speed the spider springs from its web and bites you.  The venom acts quickly and you fall to the ground paralyzed"],
+    // goblins
+    ["The goblins are too fast, you lose sight of them for just a second and the next thing you see is a knife to your throat"], 
+    // green slime
+    ["The slime oozes past your defenses and envelopes you, suffocating you where you stand",
+    "Your weapons melt into a pool at your feet as you try to attack, and soon you join them"], 
+    // mimic
+    ["The mimic's transformation stuns you for just a moment, but that is all it needed",
+    "As you approach the chest you notice it starts to change shape, but before you can draw your weapon the mimic lunges and swallows you whole"], 
+    // orc
+    ["With one swing from it's axe the orc cracks your head open like an egg",
+    "The orc slams into you knocking you to the ground, and then crushes your head like a bug beneath its feet"], 
+    // shade
+    ["The Reaper's scythe passes through you as though you were no more than air as it claims another soul",
+    "Your weapons do nothing to the Reaper, and it calmly reaches out a boney finger to claim your soul"], 
+    // skeleton knight
+    ["Your attacks are simply deflected off the knight's armour until it gets bored and strikes you down",
+    "You are no match for the knight, only pieces are left after it is done with you"], 
+    // skeletons
+    ["The skeletons manage to surround you, and strike from all sides",
+    "There were just.. too many skeletons"], 
+    // skeleton wizard
+    ["Hoarsely croaking some ancient incantation the wizard turns you inside out before you even have a chance to attack",
+    "You collapse as your life energy is siphoned away by the skeletal mage"], 
+    // spikes
+    ["A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.",
+    "Spikes suddenly burst from holes in the ground beneath your feet and impale you before you can react"],
+    // werewolf
+    ["The werewolf has defeated you.",
+    "The werewolf leaps on you faster than you can react and tears you to shreds"]    
+];
 
-export const DisplayEnemyAppearsText = ({current_enemy, current_level} : {current_enemy : DungeonEnemy, current_level : number}) => {
+export const DisplayEnemyAppearsText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
 
-         
-    // for the traps we report an empty room
-    if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
-        return(
-        <div className="font-face-sfpb">
-           <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You enter a suspiciously empty room...</Text>
-       </div>
-       );
-    };
-
-    if (current_enemy === DungeonEnemy.Chest) {
-       return(
-       <div className="font-face-sfpb">
-          <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found a treasure chest in room {current_level}!</Text>
-      </div>
-      );
-   };
-    
+    let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
+    var random = seedrandom(seed_string);
+    let enemy_text : string[] = DungeonEnemyAppearsText[current_enemy];
+    let idx : number = Math.floor(random() * enemy_text.length);
+    let chosen_text : string = enemy_text[idx];
 
     // otherwise say the enemy type
     return(
        <div className="font-face-sfpb">
-           <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have encountered {DungeonEnemyInitialText[current_enemy]} in room {current_level}</Text>
-           <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Prepare yourself!</Text>
+           <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{chosen_text}</Text>
        </div>
     );
 }
 
-export const DisplayPlayerFailedText = ({current_enemy} : {current_enemy : DungeonEnemy}) => {
+export const DisplayPlayerFailedText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
 
-         
-    // for the traps we have special text for failure
-    if (current_enemy === DungeonEnemy.Boulder) {
-        return(
-            <Center>
-            <Box width="80%">
-            <div className="font-face-sfpb">
-                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A boulder suddenly falls from the ceiling, crushing you instantly.</Text>
-            </div>
-            </Box>
-            </Center>
-        );
-    }
+    let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
+    var random = seedrandom(seed_string);
 
-    if (current_enemy === DungeonEnemy.FloorSpikes) {
-        return(
-            <Center>
-            <Box width="80%">
-            <div className="font-face-sfpb">
-                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">A trapdoor opens beneath your feet, dropping you onto a mass of bloodied spikes.</Text>
-            </div>
-            </Box>
-            </Center>
-        );
-    }
-    
+    let enemy_text : string[] = DungeonPlayerDefeatedText[current_enemy];
+    let idx : number = Math.floor(random() * enemy_text.length);
+    let chosen_text : string = enemy_text[idx];
 
-    // otherwise say the enemy type
     return(
         <Center>
             <Box width="80%">
                 <div className="font-face-sfpb">
-                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{DungeonEnemyDefeatText[current_enemy]}</Text>
+                    <Text  mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{chosen_text}</Text>
                 </div>
             </Box>
         </Center>
     );
 }
 
-const EnemyDefeatedText = ({current_enemy} : {current_enemy : DungeonEnemy}) => {
+const EnemyDefeatedText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
 
-    // for the traps we have special text for survival
-    if (current_enemy === DungeonEnemy.Boulder || current_enemy === DungeonEnemy.FloorSpikes) {
-        return(
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">...but pass through without incident.</Text>
-         );
-    };
+    let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
+    var random = seedrandom(seed_string);
 
-    if (current_enemy === DungeonEnemy.Chest) {
-        return(
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You approach with great suspicion, but open it to find it full of gold!</Text>
-         );
-    };
+    let enemy_text : string[] = DungeonEnemyDefeatedText[current_enemy];
+    let idx : number = Math.floor(random() * enemy_text.length);
+    let chosen_text : string = enemy_text[idx];
 
-    // otherwise say the enemy type
     return(
-        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have defeated the {DungeonEnemyName[current_enemy]}</Text>  
+        <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{chosen_text}</Text>  
     );
     
 
 }
 
-export const DisplayPlayerSuccessText = ({current_level, current_enemy} : {current_level : number, current_enemy : DungeonEnemy}) => {
+export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size, num_plays} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number, num_plays : number}) => {
+
+    let current_win = WIN_FACTORS[current_level] *  bet_size;
 
     if (current_level <  7) {
+        let next_win = WIN_FACTORS[current_level + 1] *  bet_size;
         return(
         <div className="font-face-sfpb">
-            <EnemyDefeatedText current_enemy={current_enemy}/>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {Math.pow(2,current_level) *  BET_SIZE} SOL</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and double your loot to {Math.pow(2,current_level+1) *  BET_SIZE} SOL</Text>
+            <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
+            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {current_win.toFixed(3)} SOL</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and increase your loot to {next_win.toFixed(3)} SOL</Text>
        </div>
        );
     }
 
+
     // otherwise  we retire
     return(
         <div className="font-face-sfpb">
-            <EnemyDefeatedText current_enemy={current_enemy}/>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {Math.pow(2,current_level) *  BET_SIZE} SOL</Text>
+            <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
+            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {current_win.toFixed(3)} SOL</Text>
             
        </div>
        );
@@ -193,65 +379,115 @@ export const DisplayEnemy = ({player_state, enemy_state, current_enemy} : {playe
     if (enemy_state === DungeonStatus.dead)  {
 
         // for the traps we don't return anything
-        if (current_enemy === DungeonEnemy.Boulder) {
+        if (current_enemy === DungeonEnemy.BoulderTrap) {
             return(<></>);
         }
-        if (current_enemy === DungeonEnemy.FloorSpikes) {
+        if (current_enemy === DungeonEnemy.SpikeTrap) {
             return(<></>);
         }
 
-        if (current_enemy === DungeonEnemy.Chest) {
+        if (current_enemy === DungeonEnemy.Mimic) {
             return ( <img style={{"imageRendering":"pixelated"}} src={open_chest} width="10000" alt={""}/> );
         }
 
+        if (current_enemy === DungeonEnemy.GreenSlime || current_enemy === DungeonEnemy.GiantGreenSlime) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={green_slime_corpse} width="10000" alt={""}/> );
+        }
+
+        if (current_enemy === DungeonEnemy.BlueSlime || current_enemy === DungeonEnemy.GiantBlueSlime) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={blue_slime_corpse} width="10000" alt={""}/> );
+        }
+
+        if (current_enemy === DungeonEnemy.Werewolf) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={werewolf_corpse} width="10000" alt={""}/> );
+        }
+
+        if (current_enemy === DungeonEnemy.Carnivine) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={carnivine_corpse} width="10000" alt={""}/> );
+        }
+
+        if (current_enemy === DungeonEnemy.Shade) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={shade_corpse} width="10000" alt={""}/> );
+        }
+
+        if (current_enemy === DungeonEnemy.GiantSpider) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={spider_corpse} width="10000" alt={""}/> );
+        }
+
+        if (current_enemy === DungeonEnemy.Skeletons) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={bones} width="10000" alt={""}/> );
+        }
 
         return ( <img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/> );
     }
 
     if (player_state === DungeonStatus.dead) {
-        if (current_enemy === DungeonEnemy.Chest) {
+        if (current_enemy === DungeonEnemy.Mimic) {
             return ( <img style={{"imageRendering":"pixelated"}} src={mimic} width="10000" alt={""}/> );
         }
     }
 
     
-
-    if (current_enemy === DungeonEnemy.Chest) {
-        return ( <img style={{"imageRendering":"pixelated"}} src={closed_chest} width="10000" alt={""}/> );
+    if (current_enemy === DungeonEnemy.Assassin) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={assassin} width="10000" alt={""}/> );
     }
-    if (current_enemy === DungeonEnemy.Slime) {
-        return ( <img style={{"imageRendering":"pixelated"}} src={slime} width="10000" alt={""}/> );
+    if (current_enemy === DungeonEnemy.BlueSlime) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={blue_slime} width="10000" alt={""}/> );
     }
-    if (current_enemy === DungeonEnemy.Goblins) {
-        return ( <img style={{"imageRendering":"pixelated"}} src={goblins} width="10000" alt={""}/> );
+    if (current_enemy === DungeonEnemy.Carnivine) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={carnivine} width="10000" alt={""}/> );
     }
-    if (current_enemy === DungeonEnemy.SkeletonsHallway) {
-        return ( <img style={{"imageRendering":"pixelated"}} src={skeletons_hallway} width="10000" alt={""}/> );
-    }
-    if (current_enemy === DungeonEnemy.SkeletonsGraveyard) {
-        return ( <img style={{"imageRendering":"pixelated"}} src={skeletons_graveyard} width="10000" alt={""}/> );
+    if (current_enemy === DungeonEnemy.DM) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={dungeon_master} width="10000" alt={""}/> );
     }
     if (current_enemy === DungeonEnemy.Elves) {
         return ( <img style={{"imageRendering":"pixelated"}} src={elves} width="10000" alt={""}/> );
     }
+    if (current_enemy === DungeonEnemy.GiantBlueSlime) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={giant_blue_slime} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.GiantGreenSlime) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={giant_green_slime} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.GiantRat) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={giant_rat} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.GiantSpider) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={giant_spider} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.Goblins) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={goblins} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.GreenSlime) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={green_slime} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.Mimic) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={closed_chest} width="10000" alt={""}/> );
+    }
     if (current_enemy === DungeonEnemy.Orc) {
         return ( <img style={{"imageRendering":"pixelated"}} src={orc} width="10000" alt={""}/> );
     }
-    if (current_enemy === DungeonEnemy.SkellyKnight) {
+    if (current_enemy === DungeonEnemy.Shade) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={shade} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.SkeletonKnight) {
         return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_knight} width="10000" alt={""}/> );
     }
-    if (current_enemy === DungeonEnemy.SkellyWizard) {
+    if (current_enemy === DungeonEnemy.Skeletons) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={skeletons} width="10000" alt={""}/> );
+    }
+    if (current_enemy === DungeonEnemy.SkeletonWizard) {
         return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_wizard} width="10000" alt={""}/> );
     }
-    if (current_enemy === DungeonEnemy.Reaper) {
-        return ( <img style={{"imageRendering":"pixelated"}} src={reaper} width="10000" alt={""}/> );
+    if (current_enemy === DungeonEnemy.Werewolf) {
+        return ( <img style={{"imageRendering":"pixelated"}} src={werewolf} width="10000" alt={""}/> );
     }
 
     // for the traps we don't return anything
-    if (current_enemy === DungeonEnemy.Boulder) {
+    if (current_enemy === DungeonEnemy.BoulderTrap) {
         return(<></>);
     }
-    if (current_enemy === DungeonEnemy.FloorSpikes) {
+    if (current_enemy === DungeonEnemy.SpikeTrap) {
         return(<></>);
     }
 
@@ -266,10 +502,10 @@ export const DisplayPlayer = ({player_state, player_character, current_enemy} : 
 
     if (player_state === DungeonStatus.dead)  {
         // if the current enemy is a trap we should return that here
-        if (current_enemy === DungeonEnemy.Boulder) {
+        if (current_enemy === DungeonEnemy.BoulderTrap) {
             return ( <img style={{"imageRendering":"pixelated"}} src={boulder} width="10000" alt={""}/> );
         }
-        if (current_enemy === DungeonEnemy.FloorSpikes) {
+        if (current_enemy === DungeonEnemy.SpikeTrap) {
             return ( <img style={{"imageRendering":"pixelated"}} src={floor_spikes} width="10000" alt={""}/> );
         }
 
