@@ -44,7 +44,6 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 import {
     WalletModalProvider,
-    WalletMultiButton,
     useWalletModal
 } from '@solana/wallet-adapter-react-ui';
 
