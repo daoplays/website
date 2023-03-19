@@ -5,23 +5,21 @@ exports.handler = async function (event, context) {
     console.log(event);
     console.log(context);
 
-    let baseURL = process.env.AWS_POKE_URL;
-
+    let baseURL = "https://discord.com/api/channels/1086998476245700739/messages"
+    let bot_key = "Bot " + process.env.DISCORD_DUNGEON_BOT;
+    console.log("BOT KEY: ", bot_key, process.env.DISCORD_DUNGEON_BOT, process.env.DEVNET_URL);
     let config = {
         timeout: 10000,
-        headers: { 'Content-Type': 'application/json',  'x-api-key': process.env.AWS_POKE_KEY}
+        headers: { 'authorization': bot_key}
     };
 
 
     try {
 
  
-        let team_name = event.queryStringParameters.team_name;
-        let button = event.queryStringParameters.button;
-        let bid = event.queryStringParameters.bid;
+        const content = event.queryStringParameters.content;
 
-        console.log("have team name ", team_name);
-        var data = { 'team_name': team_name, "button": button, "bid": bid };
+        var data = { 'content': content};
 
         const res = await axios.post(baseURL, data, config);
 
