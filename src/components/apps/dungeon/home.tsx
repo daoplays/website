@@ -12,6 +12,9 @@ import {
     NumberInputField,
 } from '@chakra-ui/react';
 
+import Modal from 'react-bootstrap/Modal';
+
+
 import {
     Popover,
     PopoverTrigger,
@@ -35,13 +38,14 @@ import {
 } from "@solana/spl-token";
 import {
     WalletProvider,
-    useWallet,
+    useWallet
 } from '@solana/wallet-adapter-react';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 import {
     WalletModalProvider,
-    WalletMultiButton
+    WalletMultiButton,
+    useWalletModal
 } from '@solana/wallet-adapter-react-ui';
 
 import BN from 'bn.js'
@@ -150,6 +154,7 @@ export function DungeonApp()
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState<DungeonEnemy>(DungeonEnemy.None);
+
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState<string>("")
@@ -385,6 +390,54 @@ export function DungeonApp()
     </>
     )
     }
+
+    function Disclaimer() {
+        const [show, setShow] = useState(false);
+      
+        const handleClose = () => setShow(false);
+        const handleShow = () => setShow(true);
+
+        const { setVisible } = useWalletModal();
+
+        const handleConnectWallet = useCallback(async () => {
+            setShow(false);
+            setVisible(true);
+        }, [setVisible, setShow]);
+
+        return (
+          <>
+            <Box as='button' onClick={handleShow}>
+                <div className="font-face-sfpb">
+                    <Text style={{textDecoration: "underline"}} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">CONNECT<br/>WALLET</Text>      
+                </div> 
+            </Box> 
+            
+            <Modal centered show={show} onHide={handleClose} >
+            <div className="font-face-sfpb">
+              <Modal.Header style={{backgroundColor: "black"}}  closeButton>
+              
+                <Modal.Title  style={{"fontSize":30, "color":"white", "fontWeight":'semibold'}}>DISCLAIMER</Modal.Title>
+                
+              </Modal.Header>
+              </div>
+              <div className="font-face-sfpb text-center">
+             
+              <Modal.Body style={{"backgroundColor": "black", "fontSize":20, "color":"white", "fontWeight":'semibold'}}>I confirm online gambling is not forbidden in my jurisdiction and I'm at least 18 years old</Modal.Body>
+             
+              </div>
+             
+              <Modal.Footer style={{alignItems: "center", justifyContent: "center","backgroundColor": "black"}} >
+                <Box as='button' onClick={handleConnectWallet}>
+                    <div className="font-face-sfpb">
+                        <Text style={{textDecoration: "underline"}} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">CONFIRM</Text>      
+                    </div> 
+                </Box> 
+              </Modal.Footer>
+            </Modal>
+          </>
+        );
+      }
+    
 
     const CheckSignature = useCallback(async() =>
     {
@@ -1154,20 +1207,7 @@ export function DungeonApp()
                             </Box>
                             <Box width="27%">
                                 
-                                    {!isMobile &&
-                                        <div className="font-face-sfpb">
-                                        <WalletMultiButton  
-                                        className="wallet-button"  
-                                        >CONNECT<br/>WALLET</WalletMultiButton>
-                                        </div>
-                                    }
-                                    {isMobile &&
-                                        <div className="font-face-sfpb">
-                                        <WalletMultiButton  
-                                        className="mobile-wallet-button"  
-                                        >CONNECT<br/>WALLET</WalletMultiButton>
-                                        </div>
-                                    }
+                                <Disclaimer/>
                                 
                             </Box>  
                         </HStack>
