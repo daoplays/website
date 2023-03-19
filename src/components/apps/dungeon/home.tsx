@@ -47,6 +47,7 @@ import {
 import BN from 'bn.js'
 import bs58 from "bs58";
 
+
 import dungeon_title from "./images/Dungeon_Logo.png"
 import large_door from "./images/Large_Door.gif"
 import hallway from "./images/Hallway.gif"
@@ -72,9 +73,9 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
 
 // dungeon utils
 import { check_json, request_player_account_data, request_key_data_from_index, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA} from './utils';
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message} from './utils';
 
-import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS} from './dungeon_state';
+import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS, DungeonCharacterEmoji, DungeonEnemyEmoji, GoldEmoji} from './dungeon_state';
 
 // navigation
 import {Navigation} from './navigation';
@@ -552,6 +553,8 @@ export function DungeonApp()
                 return;
             }  
 
+            setWhichCharacter(player_data.player_character);
+
             setCurrentEnemy(player_data.dungeon_enemy);
             
             setCurrentLevel(player_data.in_progress);
@@ -661,6 +664,9 @@ export function DungeonApp()
             }
             const timer = setTimeout(() => {
 
+                // create the string we will post to discord
+                let post_string = DungeonCharacterEmoji[player_character]
+
                 // player killed enemy
                 if (animateLevel === 1) {
                     if (DEBUG) {
@@ -668,6 +674,7 @@ export function DungeonApp()
                     }
                     setPlayerState(DungeonStatus.alive);
                     setEnemyState(DungeonStatus.dead);
+                    post_string += " defeated ";
                 }
                 // enemy killed player
                 else {
@@ -676,14 +683,19 @@ export function DungeonApp()
                     }
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
+                    post_string += " was killed by ";
                 }
+                post_string += DungeonEnemyEmoji[current_enemy] + " in level " + current_level;
+
+                if (current_level > 0)
+                    post_discord_message(post_string);
 
                 setAnimateLevel(0);
                 }, 5000);
                 return () => clearTimeout(timer);
         
 
-    }, [animateLevel]);
+    }, [animateLevel, player_character, current_enemy, current_level]);
 
     useEffect(() => 
     {
@@ -701,6 +713,7 @@ export function DungeonApp()
 
     const Play = useCallback( async () => 
     {
+        setTransactionFailed(false);
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
@@ -826,6 +839,7 @@ export function DungeonApp()
     const Quit = useCallback( async () => 
     {
 
+        setTransactionFailed(false);
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
         
@@ -900,10 +914,17 @@ export function DungeonApp()
         setProcessingTransaction(false);
         check_user_state.current = true;
         check_sol_balance.current = true;
+
+        // send a discord message
+        let current_win = WIN_FACTORS[current_level] * BetSizeValues[bet_size];
+        let exit_string = current_level === 7 ? "retired at" : "escaped from";
+        let post_string = DungeonCharacterEmoji[player_character] + " has " + exit_string + " level " + current_level + " with " + current_win.toFixed(3) + " SOL " + GoldEmoji;
+        post_discord_message(post_string);
+
         return;
     
 
-    },[wallet]);
+    },[wallet, player_character, current_level, bet_size]);
 
     const ApplyKey = useCallback( async () => 
     {

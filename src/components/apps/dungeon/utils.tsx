@@ -2,7 +2,7 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
-import { network_string, SHOP_PROGRAM } from './constants';
+import { network_string, SHOP_PROGRAM, DEBUG } from './constants';
 import {
     Box,
 } from '@chakra-ui/react';
@@ -221,6 +221,26 @@ export function serialise_basic_instruction(instruction : number) : Buffer
     const [buf] = InstructionNoArgs.struct.serialize(data);
 
     return buf;
+}
+
+export async function post_discord_message(message : string) : Promise<null>
+{
+
+    const account_info_url = `/.netlify/functions/post_discord?content=`+message;
+
+    var response;
+    try {
+        response  = await fetch(account_info_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return null;
+    }
+
+    if (DEBUG)
+        console.log(response);
+
+    return null;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
