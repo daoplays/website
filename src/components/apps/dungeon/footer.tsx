@@ -142,10 +142,14 @@ export function Footer() {
         }
         let time = Date.parse(message.time);
         var now = new Date().getTime();
-        var distance = now - time;
-        let distance_min = (distance/1000/60).toFixed(2)
-        console.log(message.time)
-        console.log(time, now, );
+        var distance_seconds = (now - time)/1000;
+        let distance_min = (distance_seconds/60)
+
+        let display_distance = distance_seconds.toFixed(0) + " secs";
+        if(distance_seconds > 60)
+            display_distance = distance_min.toFixed(0) + " min";
+
+
         let split_message = message.message.split(" ");
         let character_emoji = emoji_map.get(split_message[0]);
 
@@ -159,7 +163,7 @@ export function Footer() {
                     <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">defeated</Text>
                     <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
                     <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">in level {split_message[5]}</Text>
-                    <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({distance_min} min ago)</Text>
+                    <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({display_distance} ago)</Text>
                 </HStack>
             );
         }
@@ -173,7 +177,7 @@ export function Footer() {
                     <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">was killed by</Text>
                     <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
                     <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">in level {split_message[7]}</Text>
-                    <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({distance_min} min ago)</Text>
+                    <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({display_distance} ago)</Text>
                 </HStack>
             );
         }
@@ -185,7 +189,7 @@ export function Footer() {
                 <img src={character_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
                 <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">{string_bit}</Text>
                 <img src={gold_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
-                <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({distance_min} min ago)</Text>
+                <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({display_distance} ago)</Text>
             </HStack>
         );
 
