@@ -226,7 +226,7 @@ export function serialise_basic_instruction(instruction : number) : Buffer
 export async function post_discord_message(message : string) : Promise<null>
 {
 
-    const account_info_url = `/.netlify/functions/post_discord?content=`+message;
+    const account_info_url = `/.netlify/functions/post_discord?method=post&content=`+message;
 
     var response;
     try {
@@ -241,6 +241,37 @@ export async function post_discord_message(message : string) : Promise<null>
         console.log(response);
 
     return null;
+}
+
+export interface DiscordMessage {
+    message : string;
+    time: string;
+}
+
+export async function get_discord_messages() : Promise<DiscordMessage[] | null>
+{
+
+    const account_info_url = `/.netlify/functions/post_discord?method=get`;
+
+    var response;
+    try {
+        response  = await fetch(account_info_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return null;
+    }
+
+    let parsed_response : DiscordMessage[] = [];
+
+    for (let i = 0; i < response.length; i++) {
+        let dm : DiscordMessage = {message: response[i]["content"], time: response[i]["timestamp"]}
+        parsed_response.push(dm)
+    }
+
+    console.log(parsed_response[0]);
+
+    return parsed_response;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

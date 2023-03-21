@@ -16,18 +16,30 @@ exports.handler = async function (event, context) {
 
     try {
 
- 
-        const content = event.queryStringParameters.content;
+        const method = event.queryStringParameters.method;
 
-        var data = { 'content': content};
+        if (method === "post") {
+            const content = event.queryStringParameters.content;
 
-        const res = await axios.post(baseURL, data, config);
+            var data = { 'content': content};
 
-        console.log("RESPONSE RECEIVED: ", res.data);
-        return {
-            statusCode: 200,
-            body: JSON.stringify(res.data),
-        };
+            const res = await axios.post(baseURL, data, config);
+
+            console.log("RESPONSE RECEIVED: ", res.data);
+            return {
+                statusCode: 200,
+                body: JSON.stringify(res.data),
+            };
+        }
+        else if (method === "get") {
+            const res = await axios.get(baseURL, config);
+
+            console.log("RESPONSE RECEIVED: ", res.data);
+            return {
+                statusCode: 200,
+                body: JSON.stringify(res.data),
+            };
+        }
     }
     catch (err) {
       console.log("AXIOS ERROR: ", err);

@@ -89,6 +89,7 @@ import {OddsScreen} from './odds';
 import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
 import {DMScreen} from './dm';
+import { Footer } from './footer';
 //import {DungeonScreen} from './dungeon';
 
 import './css/style.css';
@@ -1596,6 +1597,7 @@ function Home() {
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
                         <DungeonApp />
+                        <Footer/>
                     </WalletModalProvider>
                 </WalletProvider>
         </ChakraProvider>
