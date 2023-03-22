@@ -54,6 +54,7 @@ import bs58 from "bs58";
 import dungeon_title from "./images/Dungeon_Logo.png"
 import large_door from "./images/Large_Door.gif"
 import hallway from "./images/Hallway.gif"
+import hallway2 from "./images/Hallway2.gif"
 
 //buttons
 import enter_button from "./images/Enter_Button.png"
@@ -1317,6 +1318,11 @@ export function DungeonApp()
         if (DEBUG) {
             console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", current_level, "enemy state", DungeonStatusString[enemy_state], numXP);
         }
+
+        let background_image = hallway;
+        if(current_level > 4)
+            background_image = hallway2;
+
         return (
             
         <>
@@ -1333,7 +1339,7 @@ export function DungeonApp()
             <HStack mb = "2%" mt="1%">
                 <Box width="10%"></Box>         
                 <Box  style={{
-                    backgroundImage: `url(${hallway})`,
+                    backgroundImage: `url(${background_image})`,
                     backgroundPosition: 'center',
                     backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
