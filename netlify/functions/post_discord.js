@@ -7,7 +7,6 @@ exports.handler = async function (event, context) {
 
     let baseURL = "https://discord.com/api/channels/1086998476245700739/messages"
     let bot_key = "Bot " + process.env.DISCORD_DUNGEON_BOT;
-    console.log("BOT KEY: ", bot_key, process.env.DISCORD_DUNGEON_BOT, process.env.DEVNET_URL);
     let config = {
         timeout: 10000,
         headers: { 'authorization': bot_key}
@@ -16,18 +15,30 @@ exports.handler = async function (event, context) {
 
     try {
 
- 
-        const content = event.queryStringParameters.content;
+        const method = event.queryStringParameters.method;
 
-        var data = { 'content': content};
+        if (method === "post") {
+            const content = event.queryStringParameters.content;
 
-        const res = await axios.post(baseURL, data, config);
+            var data = { 'content': content};
 
-        console.log("RESPONSE RECEIVED: ", res.data);
-        return {
-            statusCode: 200,
-            body: JSON.stringify(res.data),
-        };
+            const res = await axios.post(baseURL, data, config);
+
+            console.log("RESPONSE RECEIVED: ", res.data);
+            return {
+                statusCode: 200,
+                body: JSON.stringify(res.data),
+            };
+        }
+        else if (method === "get") {
+            const res = await axios.get(baseURL, config);
+
+            console.log("RESPONSE RECEIVED: ", res.data);
+            return {
+                statusCode: 200,
+                body: JSON.stringify(res.data),
+            };
+        }
     }
     catch (err) {
       console.log("AXIOS ERROR: ", err);

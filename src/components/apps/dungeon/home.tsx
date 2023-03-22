@@ -12,6 +12,9 @@ import {
     NumberInputField,
 } from '@chakra-ui/react';
 
+import Modal from 'react-bootstrap/Modal';
+
+
 import {
     Popover,
     PopoverTrigger,
@@ -35,13 +38,13 @@ import {
 } from "@solana/spl-token";
 import {
     WalletProvider,
-    useWallet,
+    useWallet
 } from '@solana/wallet-adapter-react';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 import {
     WalletModalProvider,
-    WalletMultiButton
+    useWalletModal
 } from '@solana/wallet-adapter-react-ui';
 
 import BN from 'bn.js'
@@ -51,6 +54,7 @@ import bs58 from "bs58";
 import dungeon_title from "./images/Dungeon_Logo.png"
 import large_door from "./images/Large_Door.gif"
 import hallway from "./images/Hallway.gif"
+import hallway2 from "./images/Hallway2.gif"
 
 //buttons
 import enter_button from "./images/Enter_Button.png"
@@ -86,6 +90,7 @@ import {OddsScreen} from './odds';
 import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
 import {DMScreen} from './dm';
+import { Footer } from './footer';
 //import {DungeonScreen} from './dungeon';
 
 import './css/style.css';
@@ -150,6 +155,7 @@ export function DungeonApp()
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState<DungeonEnemy>(DungeonEnemy.None);
+
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState<string>("")
@@ -385,6 +391,54 @@ export function DungeonApp()
     </>
     )
     }
+
+    function Disclaimer() {
+        const [show, setShow] = useState(false);
+      
+        const handleClose = () => setShow(false);
+        const handleShow = () => setShow(true);
+
+        const { setVisible } = useWalletModal();
+
+        const handleConnectWallet = useCallback(async () => {
+            setShow(false);
+            setVisible(true);
+        }, [setVisible, setShow]);
+
+        return (
+          <>
+            <Box as='button' onClick={handleShow}>
+                <div className="font-face-sfpb">
+                    <Text style={{textDecoration: "underline"}} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">CONNECT<br/>WALLET</Text>      
+                </div> 
+            </Box> 
+            
+            <Modal centered show={show} onHide={handleClose} >
+            <div className="font-face-sfpb">
+              <Modal.Header style={{backgroundColor: "black"}}  closeButton>
+              
+                <Modal.Title  style={{"fontSize":30, "color":"white", "fontWeight":'semibold'}}>DISCLAIMER</Modal.Title>
+                
+              </Modal.Header>
+              </div>
+              <div className="font-face-sfpb text-center">
+             
+              <Modal.Body style={{"backgroundColor": "black", "fontSize":20, "color":"white", "fontWeight":'semibold'}}>I confirm online gambling is not forbidden in my jurisdiction and I'm at least 18 years old</Modal.Body>
+             
+              </div>
+             
+              <Modal.Footer style={{alignItems: "center", justifyContent: "center","backgroundColor": "black"}} >
+                <Box as='button' onClick={handleConnectWallet}>
+                    <div className="font-face-sfpb">
+                        <Text style={{textDecoration: "underline"}} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">CONFIRM</Text>      
+                    </div> 
+                </Box> 
+              </Modal.Footer>
+            </Modal>
+          </>
+        );
+      }
+    
 
     const CheckSignature = useCallback(async() =>
     {
@@ -917,8 +971,8 @@ export function DungeonApp()
 
         // send a discord message
         let current_win = WIN_FACTORS[current_level] * BetSizeValues[bet_size];
-        let exit_string = current_level === 7 ? "retired at" : "escaped from";
-        let post_string = DungeonCharacterEmoji[player_character] + " has " + exit_string + " level " + current_level + " with " + current_win.toFixed(3) + " SOL " + GoldEmoji;
+        let exit_string = current_level === 7 ? " retired at" : " escaped from";
+        let post_string = DungeonCharacterEmoji[player_character] + exit_string + " level " + current_level + " with " + current_win.toFixed(3) + " SOL " + GoldEmoji;
         post_discord_message(post_string);
 
         return;
@@ -1154,20 +1208,7 @@ export function DungeonApp()
                             </Box>
                             <Box width="27%">
                                 
-                                    {!isMobile &&
-                                        <div className="font-face-sfpb">
-                                        <WalletMultiButton  
-                                        className="wallet-button"  
-                                        >CONNECT<br/>WALLET</WalletMultiButton>
-                                        </div>
-                                    }
-                                    {isMobile &&
-                                        <div className="font-face-sfpb">
-                                        <WalletMultiButton  
-                                        className="mobile-wallet-button"  
-                                        >CONNECT<br/>WALLET</WalletMultiButton>
-                                        </div>
-                                    }
+                                <Disclaimer/>
                                 
                             </Box>  
                         </HStack>
@@ -1277,6 +1318,11 @@ export function DungeonApp()
         if (DEBUG) {
             console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", current_level, "enemy state", DungeonStatusString[enemy_state], numXP);
         }
+
+        let background_image = hallway;
+        if(current_level > 4)
+            background_image = hallway2;
+
         return (
             
         <>
@@ -1293,7 +1339,7 @@ export function DungeonApp()
             <HStack mb = "2%" mt="1%">
                 <Box width="10%"></Box>         
                 <Box  style={{
-                    backgroundImage: `url(${hallway})`,
+                    backgroundImage: `url(${background_image})`,
                     backgroundPosition: 'center',
                     backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
@@ -1557,6 +1603,7 @@ function Home() {
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
                         <DungeonApp />
+                        <Footer/>
                     </WalletModalProvider>
                 </WalletProvider>
         </ChakraProvider>
