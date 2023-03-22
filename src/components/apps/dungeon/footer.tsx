@@ -4,18 +4,12 @@ import {
     HStack,
     Center,
     Text,
-
+    VStack
 } from '@chakra-ui/react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 
-import {
-    Accordion,
-    AccordionItem,
-    AccordionButton,
-    AccordionPanel,
-    AccordionIcon,
-} from '@chakra-ui/react'
 import { isMobile } from "react-device-detect";
-
 
 import assassin_emoji from "./emojis/Assassin.gif"
 import blue_slime_emoji from "./emojis/BlueSlime.gif"
@@ -81,9 +75,12 @@ const emoji_map = new Map([
   ]);
 
 var FOOTER_TIME_FONT_SIZE = "10px"
-
+var EMOJI_SIZE = 32
+var FOOTER_WIDTH = "600px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
+    EMOJI_SIZE = 24
+    FOOTER_WIDTH = "350px"
 }
   
 
@@ -92,6 +89,9 @@ export function Footer() {
     const [discord_messages, setDiscordMessages] = useState<DiscordMessage[]>([])
     const state_interval = useRef<number | null>(null);
     const has_initial_state = useRef<boolean>(false);
+
+    const [show_live, setShowLive] = useState<boolean>(false);
+
 
 
     const check_discord_state = useCallback(async () => 
@@ -153,17 +153,28 @@ export function Footer() {
         let split_message = message.message.split(" ");
         let character_emoji = emoji_map.get(split_message[0]);
 
+        //console.log(split_message);
+        //console.log(split_message.length);
+
         // defeated enemy
 
         if (split_message.length === 6) {
             let enemy_emoji =  emoji_map.get(split_message[2]);
             return(
+                
                 <HStack>
-                    <img src={character_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
-                    <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">defeated</Text>
-                    <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
-                    <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">in level {split_message[5]}</Text>
-                    <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({display_distance} ago)</Text>
+                    <Box width="80%">
+                        <HStack>
+                            <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                            <Text fontSize={DUNGEON_FONT_SIZE}  color="white">defeated</Text>
+                            <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                            <Text fontSize={DUNGEON_FONT_SIZE}  color="white">in level {split_message[5]}</Text>
+                            
+                        </HStack>
+                    </Box>
+                    <Box width="20%">
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">({display_distance} ago)</Text>
+                    </Box>
                 </HStack>
             );
         }
@@ -172,24 +183,39 @@ export function Footer() {
         if (split_message.length === 8) {
             let enemy_emoji =  emoji_map.get(split_message[4]);
             return(
-                <HStack>
-                    <img src={character_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
-                    <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">was killed by</Text>
-                    <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
-                    <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">in level {split_message[7]}</Text>
-                    <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({display_distance} ago)</Text>
-                </HStack>
+                <Box >
+                    <HStack>
+                        <Box width="80%">
+                            <HStack>
+                                <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                                <Text fontSize={DUNGEON_FONT_SIZE}  color="white">was killed by</Text>
+                                <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                                <Text fontSize={DUNGEON_FONT_SIZE} color="white">in level {split_message[7]}</Text>
+                            </HStack>
+                        </Box>
+                        <Box width="20%">
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">({display_distance} ago)</Text>
+                        </Box>
+                    </HStack>
+                    </Box>
             );
         }
 
-        let string_bit = split_message.slice(1,8).join(" ");
+        let string_bit = split_message.slice(1,7).join(" ");
 
         return(
             <HStack>
-                <img src={character_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
-                <Text fontSize={DUNGEON_FONT_SIZE} align="center" color="white">{string_bit}</Text>
-                <img src={gold_emoji} width="auto" alt={""} style={{maxHeight: 32, maxWidth: 32}}/>
-                <Text fontSize={FOOTER_TIME_FONT_SIZE} align="center" color="grey">({display_distance} ago)</Text>
+                <Box width="80%">
+                    <HStack>
+                        <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                        <Text fontSize={DUNGEON_FONT_SIZE} color="white">{string_bit}</Text>
+                        <img src={gold_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                    </HStack>
+                </Box>
+                <Box width="20%">
+                <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">({display_distance} ago)</Text>
+                </Box>
+
             </HStack>
         );
 
@@ -199,19 +225,14 @@ export function Footer() {
         <div className="font-face-sfpb">
             <div className="footer" style={{paddingTop: "50px"}}>
                 <footer className="py-3 bg-dark fixed-bottom">
-                    <Box width = "100%"><Center>
+                        <Center width="100%">
+                            <Box ml="2rem" mr="2rem" width="600px">
 
-                            <Accordion allowToggle> 
-                                <AccordionItem border='none'>
-                                    <h2>
-                                        
-                                    <AccordionButton>
+                                {show_live && 
+                                <>
+                                <Center>
+                                    <VStack align="left" width={FOOTER_WIDTH}>
                                         <ParseDiscordMessage message={discord_messages[0]}/>
-                                        <AccordionIcon color="white"/>
-                                    </AccordionButton>
-                                    
-                                    </h2>
-                                    <AccordionPanel pb={4} color="white" >
                                         <ParseDiscordMessage message={discord_messages[1]}/>
                                         <ParseDiscordMessage message={discord_messages[2]}/>
                                         <ParseDiscordMessage message={discord_messages[3]}/>
@@ -221,11 +242,31 @@ export function Footer() {
                                         <ParseDiscordMessage message={discord_messages[7]}/>
                                         <ParseDiscordMessage message={discord_messages[8]}/>
                                         <ParseDiscordMessage message={discord_messages[9]}/>
-                                    </AccordionPanel>
-                                </AccordionItem>
-                            </Accordion>
-                            </Center>
-                    </Box>
+                                    </VStack>
+                                </Center>
+                                <Center>
+                                    <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
+                                        <FontAwesomeIcon color="white" icon={solid('chevron-down')} size="lg"/>
+                                    </Box>
+                                </Center>
+                                </>
+                                }
+                                {!show_live && 
+                                <>
+                                <Center>
+                                    <VStack align="left" width={FOOTER_WIDTH}>
+                                        <ParseDiscordMessage message={discord_messages[0]}/>
+                                    </VStack>
+                                </Center>
+                                <Center>
+                                    <Box as='button' onClick={() => setShowLive(true)} width={"60px"}>
+                                        <FontAwesomeIcon color="white" icon={solid('chevron-up')} size="lg"/>
+                                    </Box>
+                                </Center>
+                                </>
+                                }
+                            </Box>
+                        </Center>
                 </footer>
             </div>
         </div>

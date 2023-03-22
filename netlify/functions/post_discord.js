@@ -7,7 +7,6 @@ exports.handler = async function (event, context) {
 
     let baseURL = "https://discord.com/api/channels/1086998476245700739/messages"
     let bot_key = "Bot " + process.env.DISCORD_DUNGEON_BOT;
-    console.log("BOT KEY: ", bot_key, process.env.DISCORD_DUNGEON_BOT, process.env.DEVNET_URL);
     let config = {
         timeout: 10000,
         headers: { 'authorization': bot_key}

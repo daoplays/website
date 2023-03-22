@@ -970,8 +970,8 @@ export function DungeonApp()
 
         // send a discord message
         let current_win = WIN_FACTORS[current_level] * BetSizeValues[bet_size];
-        let exit_string = current_level === 7 ? "retired at" : "escaped from";
-        let post_string = DungeonCharacterEmoji[player_character] + " has " + exit_string + " level " + current_level + " with " + current_win.toFixed(3) + " SOL " + GoldEmoji;
+        let exit_string = current_level === 7 ? " retired at" : " escaped from";
+        let post_string = DungeonCharacterEmoji[player_character] + exit_string + " level " + current_level + " with " + current_win.toFixed(3) + " SOL " + GoldEmoji;
         post_discord_message(post_string);
 
         return;
