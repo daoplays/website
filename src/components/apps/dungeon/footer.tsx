@@ -223,15 +223,12 @@ export function Footer() {
 
     return (
         <div className="font-face-sfpb">
-            <div className="footer" style={{paddingTop: "50px"}}>
-                <footer className="py-3 bg-dark fixed-bottom">
-                        <Center width="100%">
-                            <Box ml="2rem" mr="2rem" width="600px">
+                <div className="fixed-bottom" style={{width:"600px"}}>
+                            <Box ml="2rem" mr="2rem" width="600px" borderWidth='2px' borderColor="white" borderBottomColor="black" >
 
                                 {show_live && 
                                 <>
-                                <Center>
-                                    <VStack align="left" width={FOOTER_WIDTH}>
+                                    <VStack align="left" width={FOOTER_WIDTH} ml="1rem" mt="1rem" mr="1rem">
                                         <ParseDiscordMessage message={discord_messages[0]}/>
                                         <ParseDiscordMessage message={discord_messages[1]}/>
                                         <ParseDiscordMessage message={discord_messages[2]}/>
@@ -243,7 +240,6 @@ export function Footer() {
                                         <ParseDiscordMessage message={discord_messages[8]}/>
                                         <ParseDiscordMessage message={discord_messages[9]}/>
                                     </VStack>
-                                </Center>
                                 <Center>
                                     <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
                                         <FontAwesomeIcon color="white" icon={solid('chevron-down')} size="lg"/>
@@ -253,11 +249,9 @@ export function Footer() {
                                 }
                                 {!show_live && 
                                 <>
-                                <Center>
-                                    <VStack align="left" width={FOOTER_WIDTH}>
-                                        <ParseDiscordMessage message={discord_messages[0]}/>
-                                    </VStack>
-                                </Center>
+                                <VStack align="left" width={FOOTER_WIDTH} ml="1rem" mt="1rem" mr="1rem">
+                                    <ParseDiscordMessage message={discord_messages[0]}/>
+                                </VStack>
                                 <Center>
                                     <Box as='button' onClick={() => setShowLive(true)} width={"60px"}>
                                         <FontAwesomeIcon color="white" icon={solid('chevron-up')} size="lg"/>
@@ -266,9 +260,7 @@ export function Footer() {
                                 </>
                                 }
                             </Box>
-                        </Center>
-                </footer>
+                </div>
             </div>
-        </div>
     );
 }
