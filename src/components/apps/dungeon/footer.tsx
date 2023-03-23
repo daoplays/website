@@ -76,7 +76,7 @@ const emoji_map = new Map([
 
 var FOOTER_TIME_FONT_SIZE = "10px"
 var EMOJI_SIZE = 32
-var FOOTER_WIDTH = "600px"
+var FOOTER_WIDTH : string = "600px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
     EMOJI_SIZE = 24
@@ -221,10 +221,60 @@ export function Footer() {
 
     }
 
+    if (isMobile)  {
+        return (
+            <div className="font-face-sfpb">
+                    <div className="fixed-bottom">
+                    <Box width="100%" >
+                        <Center width="100%">
+                                <Box mb = "1rem"  width="90%" borderWidth='2px' borderColor="white" borderBottomColor="black" >
+    
+                                    {show_live && 
+                                    <>
+                                        <VStack align="left" ml="8px" mr="8px" mt="8px">
+                                            <ParseDiscordMessage message={discord_messages[0]}/>
+                                            <ParseDiscordMessage message={discord_messages[1]}/>
+                                            <ParseDiscordMessage message={discord_messages[2]}/>
+                                            <ParseDiscordMessage message={discord_messages[3]}/>
+                                            <ParseDiscordMessage message={discord_messages[4]}/>
+                                            <ParseDiscordMessage message={discord_messages[5]}/>
+                                            <ParseDiscordMessage message={discord_messages[6]}/>
+                                            <ParseDiscordMessage message={discord_messages[7]}/>
+                                            <ParseDiscordMessage message={discord_messages[8]}/>
+                                            <ParseDiscordMessage message={discord_messages[9]}/>
+                                        </VStack>
+                                    <Center>
+                                        <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
+                                            <FontAwesomeIcon color="white" icon={solid('chevron-down')} size="lg"/>
+                                        </Box>
+                                    </Center>
+                                    </>
+                                    }
+                                    {!show_live && 
+                                    <>
+                                    <VStack align="left" ml="8px" mr="8px" mt="8px" >
+                                        <ParseDiscordMessage message={discord_messages[0]}/>
+                                    </VStack>
+                                    <Center>
+                                        <Box as='button' onClick={() => setShowLive(true)} width={"60px"}>
+                                            <FontAwesomeIcon color="white" icon={solid('chevron-up')} size="lg"/>
+                                        </Box>
+                                    </Center>
+                                    </>
+                                    }
+                                </Box>
+                            </Center>
+                            </Box>
+                    </div>
+                </div>
+        );
+
+    }
+
     return (
         <div className="font-face-sfpb">
                 <div className="fixed-bottom" style={{width:"600px"}}>
-                            <Box ml="2rem" mr="2rem" width="600px" borderWidth='2px' borderColor="white" borderBottomColor="black" >
+                            <Box ml="2rem" mr="2rem" width={FOOTER_WIDTH} borderWidth='2px' borderColor="white" borderBottomColor="black" >
 
                                 {show_live && 
                                 <>
