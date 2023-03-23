@@ -76,7 +76,7 @@ const emoji_map = new Map([
 
 var FOOTER_TIME_FONT_SIZE = "10px"
 var EMOJI_SIZE = 32
-var FOOTER_WIDTH = "600px"
+var FOOTER_WIDTH : string = "600px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
     EMOJI_SIZE = 24
@@ -173,7 +173,7 @@ export function Footer() {
                         </HStack>
                     </Box>
                     <Box width="20%">
-                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">({display_distance} ago)</Text>
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
                     </Box>
                 </HStack>
             );
@@ -194,7 +194,7 @@ export function Footer() {
                             </HStack>
                         </Box>
                         <Box width="20%">
-                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">({display_distance} ago)</Text>
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
                         </Box>
                     </HStack>
                     </Box>
@@ -213,7 +213,7 @@ export function Footer() {
                     </HStack>
                 </Box>
                 <Box width="20%">
-                <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">({display_distance} ago)</Text>
+                <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">{display_distance} ago</Text>
                 </Box>
 
             </HStack>
@@ -221,17 +221,64 @@ export function Footer() {
 
     }
 
+    if (isMobile)  {
+        return (
+            <div className="font-face-sfpb">
+                    <div className="fixed-bottom ">
+                    <Box width="100%" >
+                        <Center width="100%">
+                                <Box mb = "1rem"  width="100%" borderWidth='2px' borderColor="white" borderLeft="hidden" borderRight="hidden" borderBottom="hidden" backgroundColor="#171923" >
+    
+                                    {show_live && 
+                                    <>
+                                        <VStack align="left" mt="8px" ml="4px" mr="4px">
+                                            <ParseDiscordMessage message={discord_messages[0]}/>
+                                            <ParseDiscordMessage message={discord_messages[1]}/>
+                                            <ParseDiscordMessage message={discord_messages[2]}/>
+                                            <ParseDiscordMessage message={discord_messages[3]}/>
+                                            <ParseDiscordMessage message={discord_messages[4]}/>
+                                            <ParseDiscordMessage message={discord_messages[5]}/>
+                                            <ParseDiscordMessage message={discord_messages[6]}/>
+                                            <ParseDiscordMessage message={discord_messages[7]}/>
+                                            <ParseDiscordMessage message={discord_messages[8]}/>
+                                            <ParseDiscordMessage message={discord_messages[9]}/>
+                                        </VStack>
+                                    <Center>
+                                        <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
+                                            <FontAwesomeIcon color="white" icon={solid('chevron-down')} size="lg"/>
+                                        </Box>
+                                    </Center>
+                                    </>
+                                    }
+                                    {!show_live && 
+                                    <>
+                                    <VStack align="left" ml="8px" mr="8px" mt="8px" >
+                                        <ParseDiscordMessage message={discord_messages[0]}/>
+                                    </VStack>
+                                    <Center>
+                                        <Box as='button' onClick={() => setShowLive(true)} width={"60px"}>
+                                            <FontAwesomeIcon color="white" icon={solid('chevron-up')} size="lg"/>
+                                        </Box>
+                                    </Center>
+                                    </>
+                                    }
+                                </Box>
+                            </Center>
+                            </Box>
+                    </div>
+                </div>
+        );
+
+    }
+
     return (
         <div className="font-face-sfpb">
-            <div className="footer" style={{paddingTop: "50px"}}>
-                <footer className="py-3 bg-dark fixed-bottom">
-                        <Center width="100%">
-                            <Box ml="2rem" mr="2rem" width="600px">
+                <div className="fixed-bottom" style={{width:"600px"}}>
+                            <Box ml="2rem" mr="2rem" width={FOOTER_WIDTH} borderWidth='2px' borderColor="white" borderBottomColor="black" >
 
                                 {show_live && 
                                 <>
-                                <Center>
-                                    <VStack align="left" width={FOOTER_WIDTH}>
+                                    <VStack align="left" width={FOOTER_WIDTH} ml="1rem" mt="1rem" mr="1rem">
                                         <ParseDiscordMessage message={discord_messages[0]}/>
                                         <ParseDiscordMessage message={discord_messages[1]}/>
                                         <ParseDiscordMessage message={discord_messages[2]}/>
@@ -243,7 +290,6 @@ export function Footer() {
                                         <ParseDiscordMessage message={discord_messages[8]}/>
                                         <ParseDiscordMessage message={discord_messages[9]}/>
                                     </VStack>
-                                </Center>
                                 <Center>
                                     <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
                                         <FontAwesomeIcon color="white" icon={solid('chevron-down')} size="lg"/>
@@ -253,11 +299,9 @@ export function Footer() {
                                 }
                                 {!show_live && 
                                 <>
-                                <Center>
-                                    <VStack align="left" width={FOOTER_WIDTH}>
-                                        <ParseDiscordMessage message={discord_messages[0]}/>
-                                    </VStack>
-                                </Center>
+                                <VStack align="left" width={FOOTER_WIDTH} ml="1rem" mt="1rem" mr="1rem">
+                                    <ParseDiscordMessage message={discord_messages[0]}/>
+                                </VStack>
                                 <Center>
                                     <Box as='button' onClick={() => setShowLive(true)} width={"60px"}>
                                         <FontAwesomeIcon color="white" icon={solid('chevron-up')} size="lg"/>
@@ -266,9 +310,7 @@ export function Footer() {
                                 </>
                                 }
                             </Box>
-                        </Center>
-                </footer>
+                </div>
             </div>
-        </div>
     );
 }
