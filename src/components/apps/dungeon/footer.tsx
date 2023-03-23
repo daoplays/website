@@ -173,7 +173,7 @@ export function Footer() {
                         </HStack>
                     </Box>
                     <Box width="20%">
-                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">({display_distance} ago)</Text>
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
                     </Box>
                 </HStack>
             );
@@ -194,7 +194,7 @@ export function Footer() {
                             </HStack>
                         </Box>
                         <Box width="20%">
-                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">({display_distance} ago)</Text>
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
                         </Box>
                     </HStack>
                     </Box>
@@ -213,7 +213,7 @@ export function Footer() {
                     </HStack>
                 </Box>
                 <Box width="20%">
-                <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">({display_distance} ago)</Text>
+                <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">{display_distance} ago</Text>
                 </Box>
 
             </HStack>
