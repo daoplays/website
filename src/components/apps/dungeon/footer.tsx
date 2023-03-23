@@ -227,7 +227,7 @@ export function Footer() {
                     <div className="fixed-bottom ">
                     <Box width="100%" >
                         <Center width="100%">
-                                <Box mb = "1rem"  width="90%" borderWidth='2px' borderColor="white" borderBottom="hidden" backgroundColor="black" >
+                                <Box mb = "1rem"  width="90%" borderWidth='2px' borderColor="white" borderBottom="hidden" backgroundColor="#171923" >
     
                                     {show_live && 
                                     <>
