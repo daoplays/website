@@ -224,14 +224,14 @@ export function Footer() {
     if (isMobile)  {
         return (
             <div className="font-face-sfpb">
-                    <div className="fixed-bottom">
+                    <div className="fixed-bottom ">
                     <Box width="100%" >
                         <Center width="100%">
-                                <Box mb = "1rem"  width="90%" borderWidth='2px' borderColor="white" borderBottomColor="black" >
+                                <Box mb = "1rem"  width="90%" borderWidth='2px' borderColor="white" borderBottom="hidden" backgroundColor="black" >
     
                                     {show_live && 
                                     <>
-                                        <VStack align="left" ml="8px" mr="8px" mt="8px">
+                                        <VStack align="left" ml="8px" mr="8px" mt="8px" >
                                             <ParseDiscordMessage message={discord_messages[0]}/>
                                             <ParseDiscordMessage message={discord_messages[1]}/>
                                             <ParseDiscordMessage message={discord_messages[2]}/>
