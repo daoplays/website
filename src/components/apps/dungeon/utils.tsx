@@ -269,7 +269,7 @@ export async function get_discord_messages() : Promise<DiscordMessage[] | null>
         parsed_response.push(dm)
     }
 
-    console.log(parsed_response[0]);
+    //console.log(parsed_response[0]);
 
     return parsed_response;
 }

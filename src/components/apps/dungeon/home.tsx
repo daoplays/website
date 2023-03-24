@@ -34,8 +34,10 @@ import { isMobile } from "react-device-detect";
 
 import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
+        TOKEN_PROGRAM_ID,
         getAssociatedTokenAddress
 } from "@solana/spl-token";
+
 import {
     WalletProvider,
     useWallet
@@ -97,6 +99,10 @@ import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
+
+// free play mint
+const FREE_PLAY_MINT = new PublicKey('4JxGUVRp6CRffKpbtnSCZ4Z5dHqUWMZSxMuvFd7fG3nC');
+
 
 const enum AccountStatus {
     unknown = 0,
@@ -591,6 +597,12 @@ export function DungeonApp()
                 return;
             }
 
+            if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
+                let current_bet_value_bn = new BN(player_data.current_bet_size);
+                let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
+                setBetValue(current_bet_value);
+            }
+
             setNumPlays(current_num_plays);
 
             let current_num_wins = (new BN(player_data.num_wins)).toNumber();
@@ -799,6 +811,20 @@ export function DungeonApp()
 
         account_vector.push({pubkey: program_data_key, isSigner: false, isWritable: true});
         account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: false});
+
+        // next 3 accounts are for the free play tokens
+        account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+        account_vector.push({pubkey: FREE_PLAY_MINT, isSigner: false, isWritable: true});
+
+        let free_play_token_account = await getAssociatedTokenAddress(
+            FREE_PLAY_MINT, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        account_vector.push({pubkey: free_play_token_account, isSigner: false, isWritable: true});
+
+
 
         if (current_key_mint && current_key_index) {
 
