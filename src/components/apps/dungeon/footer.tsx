@@ -96,7 +96,7 @@ export function Footer() {
 
     const check_discord_state = useCallback(async () => 
     {
-        console.log("in check discord state");
+        //console.log("in check discord state");
 
         let messages = await get_discord_messages();
 

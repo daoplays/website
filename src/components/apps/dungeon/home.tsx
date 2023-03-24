@@ -597,6 +597,12 @@ export function DungeonApp()
                 return;
             }
 
+            if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
+                let current_bet_value_bn = new BN(player_data.current_bet_size);
+                let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
+                setBetValue(current_bet_value);
+            }
+
             setNumPlays(current_num_plays);
 
             let current_num_wins = (new BN(player_data.num_wins)).toNumber();
