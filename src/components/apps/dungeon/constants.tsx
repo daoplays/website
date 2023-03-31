@@ -30,7 +30,7 @@ if (isMobile) {
     DUNGEON_FONT_SIZE = "10px"
 }
 
-export const PROD = true;
+export const PROD = false;
 export const DEBUG = false;
 
 export var network_string = "devnet";
@@ -47,6 +47,7 @@ export const enum Screen {
     HELP_SCREEN = 5,
     SHOP_SCREEN = 6,
     DM_SCREEN = 7,
+    ACHIEVEMENT_SCREEN = 8,
 }
 
 export const enum KeyType {

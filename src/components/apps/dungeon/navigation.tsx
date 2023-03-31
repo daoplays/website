@@ -142,6 +142,13 @@ export function Navigation(
         
     },[setScreen]);
 
+    const ShowAchievements = useCallback( async () => 
+    {
+            setScreen(Screen.ACHIEVEMENT_SCREEN);
+            return;
+        
+    },[setScreen]);
+
     function DesktopNavigation() {
 
         return (
@@ -182,6 +189,11 @@ export function Navigation(
                         <Button variant='link' size='md' onClick={ShowShop}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Shop </Text>      
+                            </div> 
+                        </Button>
+                        <Button variant='link' size='md' onClick={ShowAchievements}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> Achievements </Text>      
                             </div> 
                         </Button>
                         <Button variant='link' size='md' onClick={ShowOdds}>

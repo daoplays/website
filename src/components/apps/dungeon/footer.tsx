@@ -274,7 +274,7 @@ export function Footer() {
     return (
         <div className="font-face-sfpb">
                 <div className="fixed-bottom" style={{width:"600px"}}>
-                            <Box ml="2rem" mr="2rem" width={FOOTER_WIDTH} borderWidth='2px' borderColor="white" borderBottomColor="black" >
+                            <Box ml="2rem" mr="2rem" width={FOOTER_WIDTH} borderWidth='2px' borderColor="white" borderBottomColor="black" backgroundColor="#171923">
 
                                 {show_live && 
                                 <>
