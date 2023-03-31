@@ -84,7 +84,7 @@ import { check_json, request_player_account_data, request_key_data_from_index, r
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS, DungeonCharacterEmoji, DungeonEnemyEmoji, GoldEmoji} from './dungeon_state';
 
-import { AchievementNames, AchievementDescriptions, AchievementCard } from './achievements';
+import { AchievementNames, AchievementDescriptions, AchievementCard, AchievementTypes } from './achievements';
 
 // navigation
 import {Navigation} from './navigation';
@@ -112,7 +112,7 @@ const ACHIEVEMENTS_COLLECTION_MASTER = new PublicKey('7zanpVrB1Pboyj87t967xQF9T6
 const ACHIEVEMENTS_COLLECTION_META = new PublicKey('ChUHE8ZroK2WyZj8E1gjDuPkLVN4vcw6r3LqNyPRrfi1');
 const ACHIEVEMENTS_COLLECTION_MINT = new PublicKey('3fVG61sQSKnuhLymfcynpiPVESuMqMV6vd4SZ4FmjQZ8');
 
-const ACHIEVEMENT_SEED = "achievement_beta_v2";
+const ACHIEVEMENT_SEED = "achievement_beta_v3";
 
 const enum AccountStatus {
     unknown = 0,
@@ -463,14 +463,40 @@ export function DungeonApp()
         );
       }
 
-    const CheckNewAchievements = useCallback( async () => 
+
+    const CheckNewQuitAchievements = useCallback( async () => 
     {
         if (achievement_status === null)
             return;
 
         let temp_new : number[] = [];
         for (let i = 0; i < achievement_status.length; i++) {
-            if (achievement_status[i] === 2) {
+            if (achievement_status[i] === 2 && AchievementTypes[i] === 1) {
+                temp_new.push(i);
+            }
+        }
+        console.log("set new quit achievements", temp_new);
+        setNewAchievements(temp_new);
+        new_achievements_ref.current = temp_new;
+        return;
+        
+    },[achievement_status]);
+
+    useEffect(() => 
+    {
+      CheckNewQuitAchievements();
+
+    }, [achievement_status, CheckNewQuitAchievements]);
+
+
+    const CheckNewPlayAchievements = useCallback( async () => 
+    {
+        if (achievement_status === null)
+            return;
+
+        let temp_new : number[] = [];
+        for (let i = 0; i < achievement_status.length; i++) {
+            if (achievement_status[i] === 2 && AchievementTypes[i] === 0) {
                temp_new.push(i);
             }
         }
@@ -533,7 +559,7 @@ export function DungeonApp()
               </div>
              
               <Modal.Footer style={{alignItems: "center", justifyContent: "center","backgroundColor": "black"}} >
-                <Box as='button' onClick={ClaimAchievement}>
+                <Box as='button' onClick={(e : any) => ClaimAchievement(which_achievement)}>
                     <div className="font-face-sfpb">
                         <Text style={{textDecoration: "underline"}} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">Claim Achievement</Text>      
                     </div> 
@@ -866,12 +892,12 @@ export function DungeonApp()
                     post_discord_message(post_string);
 
                 setAnimateLevel(0);
-                CheckNewAchievements()
+                CheckNewPlayAchievements()
                 }, 5000);
                 return () => clearTimeout(timer);
         
 
-    }, [animateLevel, player_character, current_enemy, current_level, CheckNewAchievements]);
+    }, [animateLevel, player_character, current_enemy, current_level, CheckNewPlayAchievements]);
 
     useEffect(() => 
     {
@@ -1124,12 +1150,12 @@ export function DungeonApp()
 
     },[wallet, player_character, current_level, bet_size]);
 
-    const ClaimAchievement = useCallback( async () => 
+    const ClaimAchievement = useCallback( async (which : number) => 
     {
         setTransactionFailed(false);
 
-        console.log("in claim", which_achievement);
-        if (wallet.publicKey === null || wallet.signTransaction === undefined || which_achievement === null)
+        console.log("in claim", which);
+        if (wallet.publicKey === null || wallet.signTransaction === undefined || which === null)
             return;
 
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
@@ -1156,7 +1182,7 @@ export function DungeonApp()
         console.log("token account ", wallet.publicKey.toString(), nft_mint_pubkey.toString(), nft_account_key.toString())
         console.log("shop account", shop_program_data_key.toString());
 
-        const instruction_data = serialise_claim_achievement_instruction(DungeonInstruction.claim_achievement, which_achievement);
+        const instruction_data = serialise_claim_achievement_instruction(DungeonInstruction.claim_achievement, which);
         const init_data = serialise_basic_instruction(DungeonInstruction.add_funds);
 
         var account_vector  = [
@@ -1243,7 +1269,7 @@ export function DungeonApp()
 
         setShowAchievement(false)
 
-    },[wallet, which_achievement]);
+    },[wallet]);
 
     const ApplyKey = useCallback( async () => 
     {

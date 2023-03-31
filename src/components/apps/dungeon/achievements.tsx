@@ -135,6 +135,41 @@ export const AchievementImages : string[] = [
     first_blood
 ]
 
+// there are two types of achievement, play (0) and quit (1)
+export const AchievementTypes : number[] = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+]
+
   export const AchievementCard = ({index, AchievementState, show_mint, ClaimAchievement} : {index : number, AchievementState: number[] | null, show_mint: boolean, ClaimAchievement: any}) => {
 
     if (AchievementState === null || AchievementState === undefined)
@@ -157,7 +192,7 @@ export const AchievementImages : string[] = [
                         <HStack>
                             <Text>{AchievementDescriptions[index]}</Text>
                             
-                            <Box as='button'  onClick={() => ClaimAchievement()}  borderWidth='2px' borderColor="white"   width="60px">
+                            <Box as='button'  onClick={() => ClaimAchievement(index)}  borderWidth='2px' borderColor="white"   width="60px">
                                 <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Mint</Text>
                             </Box>
                             

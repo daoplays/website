@@ -1,5 +1,5 @@
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, bignum, bool } from '@metaplex-foundation/beet'
+import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
 import { network_string, SHOP_PROGRAM, DEBUG } from './constants';
@@ -329,7 +329,7 @@ class AchievementData {
       readonly games_played_today: number,
       readonly total_days_played: number,
 
-      readonly total_sol_claimed: number
+      readonly total_lamports_claimed: bignum
 
 
     ) {}
@@ -352,12 +352,12 @@ class AchievementData {
         ['games_played_today', u16],
         ['total_days_played', u16],
 
-        ['total_sol_claimed', u32]
+        ['total_lamports_claimed', u64]
 
 
 
       ],
-      (args) => new AchievementData(args.achievement_state!, args.levels_won!, args.levels_quit!, args.levels_lost!, args.enemies_lose!, args.enemies_win!, args.games_played!, args.losing_streak!, args.winning_streak!, args.last_date_played!, args.play_streak!, args.games_played!, args.total_days_played!, args.total_sol_claimed!),
+      (args) => new AchievementData(args.achievement_state!, args.levels_won!, args.levels_quit!, args.levels_lost!, args.enemies_lose!, args.enemies_win!, args.games_played!, args.losing_streak!, args.winning_streak!, args.last_date_played!, args.play_streak!, args.games_played!, args.total_days_played!, args.total_lamports_claimed!),
       'AchievementData'
     )
 }
