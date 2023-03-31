@@ -7,6 +7,7 @@ import {
     VStack,
     Divider
 } from '@chakra-ui/react';
+import { isMobile } from "react-device-detect";
 
 import Card from 'react-bootstrap/Card';
 import Container from 'react-bootstrap/Container';
@@ -175,13 +176,15 @@ export const AchievementTypes : number[] = [
     if (AchievementState === null || AchievementState === undefined)
         return (<></>);
 
+    let image_size = !isMobile ? "100px" : "50px";
+    let divider_size = !isMobile ? "100px" : "70px";
     return (
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE, width:"100%", marginBottom:"1rem"}}>
         <Card style={{ flexDirection: "row", borderWidth:'2px', borderColor:'white', filter:  (AchievementState !== null && AchievementState[index] === 1) ? "blur(7px)" : "blur(0px)" }} bg="dark">
 
             
-            <Card.Img style={{width: "100px",objectFit: "scale-down", "imageRendering":"pixelated"}} src={AchievementImages[index]} alt="banner" />
-            <Center height='100px'>
+            <Card.Img style={{width: image_size, objectFit: "scale-down", "imageRendering":"pixelated"}} src={AchievementImages[index]} alt="banner" />
+            <Center height={divider_size}>
             <Divider orientation='vertical' />
             </Center>
   

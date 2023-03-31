@@ -283,6 +283,11 @@ export function Navigation(
                                             <Text fontSize='16px'  color="white"> Shop </Text>      
                                         </div> 
                                     </Button>
+                                    <Button variant='link' size='md' onClick={ShowAchievements}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='16px'  color="white"> Achievements </Text>      
+                                        </div> 
+                                    </Button>
                                     <Button variant='link' size='md' onClick={ShowOdds}>
                                         <div className="font-face-sfpb">
                                             <Text fontSize='16px'  color="white"> Odds </Text>      

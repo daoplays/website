@@ -835,7 +835,7 @@ export function DungeonApp()
             if (current_level === 0)
                 return;
 
-            if (currentStatus === DungeonStatus.alive) {
+            if (check_user_state.current === false && screen === Screen.HOME_SCREEN && current_level > 0 && currentStatus === DungeonStatus.alive) {
                 setScreen(Screen.DUNGEON_SCREEN);
             }
 
@@ -856,7 +856,7 @@ export function DungeonApp()
                 setAnimateLevel(2);
             }
 
-        }, [num_plays, current_level, current_enemy, currentStatus, data_account_status]);
+        }, [num_plays, current_level, current_enemy, currentStatus, data_account_status, screen]);
 
     useEffect(() => 
     {
@@ -1159,6 +1159,7 @@ export function DungeonApp()
             return;
 
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
+        let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
 
         let shop_program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM))[0];
@@ -1187,6 +1188,7 @@ export function DungeonApp()
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+            {pubkey: player_data_key, isSigner: false, isWritable: true},
             {pubkey: player_achievement_key, isSigner: false, isWritable: true},
 
             {pubkey: ACHIEVEMENTS_COLLECTION_MINT, isSigner: false, isWritable: true},
@@ -1267,7 +1269,12 @@ export function DungeonApp()
             return;
         }
 
+        check_user_state.current = true;
         setShowAchievement(false)
+
+        let post_string = DungeonCharacterEmoji[player_character] + " earned " + AchievementNames[which];
+        if (PROD)
+            post_discord_message(post_string);
 
     },[wallet]);
 
@@ -1812,7 +1819,9 @@ export function DungeonApp()
         <>
             
         <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance}/>
-        <AchievementsModal/>
+        {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN) &&
+            <AchievementsModal/>
+        }
 
         <Box width="100%" mb = "2%">
             <Center>
