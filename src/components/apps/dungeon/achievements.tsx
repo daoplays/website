@@ -15,7 +15,11 @@ import Col from 'react-bootstrap/Col';
 
 import { DUNGEON_FONT_SIZE } from './constants';
 
-import first_blood from "./achievement_nfts/DungeonExplorer.gif"
+import dungeon_crawler from "./achievement_nfts/DungeonCrawler.gif"
+import dungeon_explorer from "./achievement_nfts/DungeonExplorer.gif"
+import dungeon_paragon from "./achievement_nfts/DungeonParagon.gif"
+import scrounger from "./achievement_nfts/Scrounger.gif"
+import scavenger from "./achievement_nfts/Scavenger.gif"
 
 export const enum Achievements {
     DungeonCrawler,
@@ -103,37 +107,31 @@ export const AchievementDescriptions : string[] = [
 ]
 
 export const AchievementImages : string[] = [
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood,
-    first_blood
+    dungeon_crawler,
+    dungeon_explorer,
+    dungeon_paragon,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scavenger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger,
+    scrounger
 ]
 
 // there are two types of achievement, play (0) and quit (1)
@@ -162,12 +160,6 @@ export const AchievementTypes : number[] = [
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
     0
 ]
 
@@ -191,7 +183,7 @@ export const AchievementTypes : number[] = [
             <Card.Body color="white"> 
                    <VStack alignItems={"left"}>
                     <Text style={{fontWeight:"bold"}}>{AchievementNames[index]}</Text>
-                    {show_mint && (AchievementState[index] === 2 || AchievementState[index] === 3) &&
+                    {show_mint && (AchievementState[index] === 2 || AchievementState[index] === 3) ?
                         <HStack>
                             <Text>{AchievementDescriptions[index]}</Text>
                             
@@ -200,11 +192,11 @@ export const AchievementTypes : number[] = [
                             </Box>
                             
                         </HStack>
-                    
+
+                    :
+                    <Text>{AchievementDescriptions[index]}</Text>
                     }
-                    {(!show_mint || AchievementState[index] === 4) &&
-                        <Text>{AchievementDescriptions[index]}</Text>
-                    }
+
                 </VStack>
             </Card.Body>
             </Card>
