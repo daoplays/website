@@ -1816,7 +1816,7 @@ export function DungeonApp()
                             <DMScreen/>
                         }
                         {screen === Screen.ACHIEVEMENT_SCREEN &&
-                            <AchievementsScreen AchievementState={achievement_status}/>
+                            <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement}/>
                         }
                         {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) &&
                             <UnconnectedPage/>
