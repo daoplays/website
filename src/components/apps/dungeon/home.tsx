@@ -647,7 +647,7 @@ export function DungeonApp()
             return;
         }
 
-        if (!check_user_state.current && !check_data_account.current)
+        if (!check_user_state.current && !check_data_account.current && !check_achievements.current)
             return;
 
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
@@ -767,6 +767,7 @@ export function DungeonApp()
 
         if (check_achievements.current) {
 
+            console.log("check achievement status");
             try {
                 // get the achievement data
                 let achievement_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
@@ -775,8 +776,9 @@ export function DungeonApp()
                 if (achievement_data !== null) {
                     console.log(achievement_data);
 
+                    console.log(achievement_data.n_interactions,  achievement_interations.current);
                     if (achievement_data.n_interactions !== achievement_interations.current) {
-
+                        console.log("update achievement state");
                         setAchievementStatus(achievement_data.achievement_state);
                         achievement_interations.current = achievement_data.n_interactions;
                         check_achievements.current = false;
