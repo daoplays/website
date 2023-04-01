@@ -108,11 +108,11 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 const FREE_PLAY_MINT = new PublicKey('4JxGUVRp6CRffKpbtnSCZ4Z5dHqUWMZSxMuvFd7fG3nC');
 
 // achievement collection
-const ACHIEVEMENTS_COLLECTION_MASTER = new PublicKey('7zanpVrB1Pboyj87t967xQF9T6eVRXrzQL3aWLMXijj5');
-const ACHIEVEMENTS_COLLECTION_META = new PublicKey('ChUHE8ZroK2WyZj8E1gjDuPkLVN4vcw6r3LqNyPRrfi1');
-const ACHIEVEMENTS_COLLECTION_MINT = new PublicKey('3fVG61sQSKnuhLymfcynpiPVESuMqMV6vd4SZ4FmjQZ8');
+const ACHIEVEMENTS_COLLECTION_MASTER = new PublicKey('aQeYDQUkzB4uPMXqTLoo9j9eG6NUifmoStbPMw7Smz8');
+const ACHIEVEMENTS_COLLECTION_META = new PublicKey('6gpyTc4LFFM7T6hNPUG7VtcvWroTR73Ft4amRRcrhxKK');
+const ACHIEVEMENTS_COLLECTION_MINT = new PublicKey('GLKZu8y9k7q4ukXaStuTGRFtUL4y7NVcTDMcZJcSfTPs');
 
-const ACHIEVEMENT_SEED = "achievement_beta_v3";
+const ACHIEVEMENT_SEED = "achievement_s1";
 
 const enum AccountStatus {
     unknown = 0,
