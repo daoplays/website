@@ -108,11 +108,11 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 const FREE_PLAY_MINT = new PublicKey('4JxGUVRp6CRffKpbtnSCZ4Z5dHqUWMZSxMuvFd7fG3nC');
 
 // achievement collection
-const ACHIEVEMENTS_COLLECTION_MASTER = new PublicKey('aQeYDQUkzB4uPMXqTLoo9j9eG6NUifmoStbPMw7Smz8');
-const ACHIEVEMENTS_COLLECTION_META = new PublicKey('6gpyTc4LFFM7T6hNPUG7VtcvWroTR73Ft4amRRcrhxKK');
-const ACHIEVEMENTS_COLLECTION_MINT = new PublicKey('GLKZu8y9k7q4ukXaStuTGRFtUL4y7NVcTDMcZJcSfTPs');
+const ACHIEVEMENTS_COLLECTION_MASTER = new PublicKey('72Lwj7RDVN4yzCzUsZnvRF4Nav8Z8rVXB2fYzrkWLbHk');
+const ACHIEVEMENTS_COLLECTION_META = new PublicKey('FzbP3YEELyR1aMspJF9KgVAmTM7AJ2q8Y1ervqP3Wcq');
+const ACHIEVEMENTS_COLLECTION_MINT = new PublicKey('3pA2AKFXzj9DspM6iinzcsdx5rW9pQdiNJY4eYvz126Q');
 
-const ACHIEVEMENT_SEED = "achievement_s2";
+const ACHIEVEMENT_SEED = "achievements_s1";
 
 const enum AccountStatus {
     unknown = 0,
@@ -477,7 +477,6 @@ export function DungeonApp()
                 temp_new.push(i);
             }
         }
-        console.log("set new quit achievements", temp_new);
         setNewAchievements(temp_new);
         new_achievements_ref.current = temp_new;
         return;
@@ -502,7 +501,6 @@ export function DungeonApp()
                temp_new.push(i);
             }
         }
-        console.log("set new achievements", temp_new);
         setNewAchievements(temp_new);
         new_achievements_ref.current = temp_new;
         return;
@@ -511,14 +509,13 @@ export function DungeonApp()
 
     useEffect(() => 
     {
-        console.log("in new achievement use effect", new_achievements);
-        console.log("also check the ref", new_achievements_ref.current);
         if (show_achievement === true || new_achievements_ref.current.length === 0)
             return;
 
 
         for (let i = 0; i < new_achievements_ref.current.length; i++) {
-            console.log("Have achievement", i, AchievementNames[i], AchievementDescriptions[i]);
+            if (DEBUG)
+                console.log("Have achievement", i, AchievementNames[i], AchievementDescriptions[i]);
         }
 
         setWhichAchievement(new_achievements_ref.current[0]);
@@ -529,14 +526,13 @@ export function DungeonApp()
 
     function AchievementsModal() {
       
-        const handleClose = () => {console.log("closing modal"); setShowAchievement(false)};
+        const handleClose = () => {setShowAchievement(false)};
         if (which_achievement === null || show_achievement === false)
             return(<></>);
 
         if (new_achievements !== null && new_achievements.length !== 0) {
             let temp_new = new_achievements;
             temp_new.shift();
-            console.log("in modal set achievements", temp_new);
             new_achievements_ref.current = temp_new;
         }
 
@@ -710,7 +706,7 @@ export function DungeonApp()
                         let current_bet_value_bn = new BN(player_data.current_bet_size);
                         let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
                         setBetValue(current_bet_value);
-                        console.log("setting current status to alive", current_bet_value);
+                        //console.log("setting current status to alive", current_bet_value);
                     }
                 }
 
@@ -767,18 +763,28 @@ export function DungeonApp()
 
         if (check_achievements.current) {
 
-            console.log("check achievement status");
+            if (DEBUG) {
+                console.log("check achievement status");
+            }
+
             try {
                 // get the achievement data
                 let achievement_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
                 let achievement_data = await request_player_achievement_data(achievement_data_key);
 
                 if (achievement_data !== null) {
-                    console.log(achievement_data);
 
-                    console.log(achievement_data.n_interactions,  achievement_interations.current);
+                    if (DEBUG) {
+                        console.log(achievement_data);
+                        console.log(achievement_data.n_interactions,  achievement_interations.current);
+                    }
+
                     if (achievement_data.n_interactions !== achievement_interations.current) {
-                        console.log("update achievement state");
+
+                        if (DEBUG) {
+                            console.log("update achievement state");
+                        }
+
                         setAchievementStatus(achievement_data.achievement_state);
                         achievement_interations.current = achievement_data.n_interactions;
                         check_achievements.current = false;
@@ -1181,7 +1187,6 @@ export function DungeonApp()
     {
         setTransactionFailed(false);
 
-        console.log("in claim", which);
         if (wallet.publicKey === null || wallet.signTransaction === undefined || which === null)
             return;
 
@@ -1206,9 +1211,6 @@ export function DungeonApp()
             wallet.publicKey, // owner
             true // allow owner off curve
         );
-
-        console.log("token account ", wallet.publicKey.toString(), nft_mint_pubkey.toString(), nft_account_key.toString())
-        console.log("shop account", shop_program_data_key.toString());
 
         const instruction_data = serialise_claim_achievement_instruction(DungeonInstruction.claim_achievement, which);
         const init_data = serialise_basic_instruction(DungeonInstruction.add_funds);
@@ -1300,7 +1302,7 @@ export function DungeonApp()
         setShowAchievement(false)
 
         let post_string = DungeonCharacterEmoji[player_character] + " earned " + AchievementNames[which];
-        if (PROD)
+        //if (PROD)
             post_discord_message(post_string);
 
     },[wallet, player_character]);

@@ -155,7 +155,7 @@ export function Navigation(
         <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
                 {wallet.publicKey !== null &&
-                        <Box width="60%">
+                        <Box width="50%">
                             <HStack>
                                 <WalletConnected />
                                 <div className="font-face-sfpb">
@@ -172,9 +172,9 @@ export function Navigation(
                         
                     }
                 {wallet.publicKey === null &&
-                    <Box width="60%"></Box>
+                    <Box width="50%"></Box>
                 }
-                <Box width="40%">
+                <Box width="50%">
                     <HStack spacing="5%">
                         <Button variant='link' size='md' onClick={ShowHome}>
                             <div className="font-face-sfpb">
