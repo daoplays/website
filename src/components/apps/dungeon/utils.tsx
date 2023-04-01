@@ -311,6 +311,59 @@ class PlayerData {
     )
 }
 
+class AchievementData {
+    constructor(
+      readonly achievement_state: number[],
+      readonly levels_won: number[][],
+      readonly levels_quit: number[],
+      readonly levels_lost: number[],
+      readonly enemies_lose: number[][],
+      readonly enemies_win: number[][],
+
+      readonly games_played: number,
+      readonly losing_streak: number,
+      readonly winning_streak: number,
+
+      readonly last_date_played: number,
+      readonly play_streak: number,
+      readonly games_played_today: number,
+      readonly total_days_played: number,
+
+      readonly total_lamports_claimed: bignum,
+
+      readonly n_interactions: number,
+
+
+    ) {}
+  
+    static readonly struct = new BeetStruct<AchievementData>(
+      [
+        ['achievement_state', uniformFixedSizeArray(u8, 128)],
+        ['levels_won', uniformFixedSizeArray(u16, 3*7)],
+        ['levels_quit', uniformFixedSizeArray(u16, 7)],
+        ['levels_lost', uniformFixedSizeArray(u16, 7)],
+        ['enemies_lose', uniformFixedSizeArray(u16, 3*32)],
+        ['enemies_win', uniformFixedSizeArray(u16, 3*32)],
+
+        ['games_played', u16],
+        ['losing_streak', u16],
+        ['winning_streak', u16],
+
+        ['last_date_played', u16],
+        ['play_streak', u16],
+        ['games_played_today', u16],
+        ['total_days_played', u16],
+
+        ['total_lamports_claimed', u64],
+
+        ['n_interactions', u16]
+
+
+      ],
+      (args) => new AchievementData(args.achievement_state!, args.levels_won!, args.levels_quit!, args.levels_lost!, args.enemies_lose!, args.enemies_win!, args.games_played!, args.losing_streak!, args.winning_streak!, args.last_date_played!, args.play_streak!, args.games_played!, args.total_days_played!, args.total_lamports_claimed!, args.n_interactions!),
+      'AchievementData'
+    )
+}
 
 class DungeonPlayInstruction {
     constructor(
@@ -349,6 +402,24 @@ class DungeonExploreInstruction {
     )
 }
 
+
+class DungeonClaimAchievementInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly achievement: number
+
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<DungeonClaimAchievementInstruction>(
+      [
+        ['instruction', u8],
+        ['achievement', u8]
+      ],
+      (args) => new DungeonClaimAchievementInstruction(args.instruction!, args.achievement!),
+      'DungeonClaimAchievementInstruction'
+    )
+}
+
 export async function request_player_account_data(pubkey : PublicKey) : Promise<PlayerData | null>
 {
  
@@ -359,6 +430,20 @@ export async function request_player_account_data(pubkey : PublicKey) : Promise<
     }
 
     const [data] = PlayerData.struct.deserialize(account_data);
+
+    return data;
+}
+
+export async function request_player_achievement_data(pubkey : PublicKey) : Promise<AchievementData | null>
+{
+ 
+    let account_data = await request_raw_account_data(pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = AchievementData.struct.deserialize(account_data);
 
     return data;
 }
@@ -378,6 +463,15 @@ export function serialise_explore_instruction(instruction : number, seed : numbe
 
     const data = new DungeonExploreInstruction(instruction, seed, which_character);
     const [buf] = DungeonExploreInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_claim_achievement_instruction(instruction : number, achievement : number) : Buffer
+{
+
+    const data = new DungeonClaimAchievementInstruction(instruction, achievement);
+    const [buf] = DungeonClaimAchievementInstruction.struct.serialize(data);
 
     return buf;
 }

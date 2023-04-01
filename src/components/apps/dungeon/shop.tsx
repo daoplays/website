@@ -453,7 +453,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
     },[wallet]);
 
     return(
-        <>
+        <VStack alignItems="center">
         <Box width="100%">
                     <HStack>
                         <Box width="65%"></Box>  
@@ -619,7 +619,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
                 </VStack>
             </Center>
         </Box>
-        </>
+        </VStack>
     );
 }
 

@@ -156,6 +156,27 @@ export function Footer() {
         //console.log(split_message);
         //console.log(split_message.length);
 
+        // earned an achievement
+        if (split_message[1] === "earned") {
+            let string_bit = split_message.slice(1,split_message.length).join(" ");
+           // console.log(string_bit);
+
+            return(
+                
+                <HStack>
+                    <Box width="80%">
+                        <HStack>
+                            <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                            <Text fontSize={DUNGEON_FONT_SIZE} color="white">{string_bit}</Text>
+                        </HStack>
+                    </Box>
+                    <Box width="20%">
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
+                    </Box>
+                </HStack>
+            );
+        }
+
         // defeated enemy
 
         if (split_message.length === 6) {
@@ -274,7 +295,7 @@ export function Footer() {
     return (
         <div className="font-face-sfpb">
                 <div className="fixed-bottom" style={{width:"600px"}}>
-                            <Box ml="2rem" mr="2rem" width={FOOTER_WIDTH} borderWidth='2px' borderColor="white" borderBottomColor="black" >
+                            <Box ml="2rem" mr="2rem" width={FOOTER_WIDTH} borderWidth='2px' borderColor="white" borderBottomColor="black" backgroundColor="#171923">
 
                                 {show_live && 
                                 <>

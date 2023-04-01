@@ -142,13 +142,20 @@ export function Navigation(
         
     },[setScreen]);
 
+    const ShowAchievements = useCallback( async () => 
+    {
+            setScreen(Screen.ACHIEVEMENT_SCREEN);
+            return;
+        
+    },[setScreen]);
+
     function DesktopNavigation() {
 
         return (
         <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
                 {wallet.publicKey !== null &&
-                        <Box width="60%">
+                        <Box width="50%">
                             <HStack>
                                 <WalletConnected />
                                 <div className="font-face-sfpb">
@@ -165,9 +172,9 @@ export function Navigation(
                         
                     }
                 {wallet.publicKey === null &&
-                    <Box width="60%"></Box>
+                    <Box width="50%"></Box>
                 }
-                <Box width="40%">
+                <Box width="50%">
                     <HStack spacing="5%">
                         <Button variant='link' size='md' onClick={ShowHome}>
                             <div className="font-face-sfpb">
@@ -182,6 +189,11 @@ export function Navigation(
                         <Button variant='link' size='md' onClick={ShowShop}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Shop </Text>      
+                            </div> 
+                        </Button>
+                        <Button variant='link' size='md' onClick={ShowAchievements}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> Achievements </Text>      
                             </div> 
                         </Button>
                         <Button variant='link' size='md' onClick={ShowOdds}>
@@ -269,6 +281,11 @@ export function Navigation(
                                     <Button variant='link' size='md' onClick={ShowShop}>
                                         <div className="font-face-sfpb">
                                             <Text fontSize='16px'  color="white"> Shop </Text>      
+                                        </div> 
+                                    </Button>
+                                    <Button variant='link' size='md' onClick={ShowAchievements}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize='16px'  color="white"> Achievements </Text>      
                                         </div> 
                                     </Button>
                                     <Button variant='link' size='md' onClick={ShowOdds}>

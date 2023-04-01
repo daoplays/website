@@ -11,7 +11,7 @@ export const PYTH_ETH_PROD = new PublicKey('JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLF
 export const PYTH_SOL_PROD = new PublicKey('H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG');
 
 export const METAPLEX_META = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
-export const SHOP_PROGRAM = new PublicKey("E55LRJDDXn6zzEBxBr5V35e4L7pj94R3CF1Z9aWrNFo6");
+export const SHOP_PROGRAM = new PublicKey("9K7t9ssZvrRw7BHFDQoCoZcnP3QWhR8BcCfrgzE9Hrc3");
 export const DUNGEON_PROGRAM = new PublicKey('FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk');
 export const SYSTEM_KEY = new PublicKey("11111111111111111111111111111111");
 
@@ -47,6 +47,7 @@ export const enum Screen {
     HELP_SCREEN = 5,
     SHOP_SCREEN = 6,
     DM_SCREEN = 7,
+    ACHIEVEMENT_SCREEN = 8,
 }
 
 export const enum KeyType {
