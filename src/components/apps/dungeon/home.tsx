@@ -1276,7 +1276,7 @@ export function DungeonApp()
         if (PROD)
             post_discord_message(post_string);
 
-    },[wallet]);
+    },[wallet, player_character]);
 
     const ApplyKey = useCallback( async () => 
     {
