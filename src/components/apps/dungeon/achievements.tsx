@@ -22,7 +22,7 @@ import first_blood from "./achievement_nfts/FirstBlood.gif"
 import jack_of_all_trades from "./achievement_nfts/JackOfAllTrades.gif"
 import scrounger from "./achievement_nfts/Scrounger.gif"
 import scavenger from "./achievement_nfts/Scavenger.gif"
-import unlucky from "./achievement_nfts/Cursed.gif"
+import unlucky from "./achievement_nfts/Unlucky.gif"
 import cursed from "./achievement_nfts/Cursed.gif"
 import daily_dungeon_1 from "./achievement_nfts/DailyDungeonI.gif"
 import daily_dungeon_2 from "./achievement_nfts/DailyDungeonII.gif"
@@ -179,7 +179,7 @@ export const AchievementTypes : number[] = [
     let divider_size = !isMobile ? "100px" : "70px";
     return (
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE, width:"100%", marginBottom:"1rem"}}>
-        <Card style={{ flexDirection: "row", borderWidth:'2px', borderColor:'white', filter:  (AchievementState !== null && AchievementState[index] === 1) ? "blur(0px)" : "blur(0px)" }} bg="dark">
+        <Card style={{ flexDirection: "row", borderWidth:'2px', borderColor:'white', filter:  (AchievementState !== null && AchievementState[index] === 1) ? "blur(7px)" : "blur(0px)" }} bg="dark">
 
             
             <Card.Img style={{width: image_size, objectFit: "scale-down", "imageRendering":"pixelated"}} src={AchievementImages[index]} alt="banner" />
