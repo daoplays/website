@@ -329,7 +329,9 @@ class AchievementData {
       readonly games_played_today: number,
       readonly total_days_played: number,
 
-      readonly total_lamports_claimed: bignum
+      readonly total_lamports_claimed: bignum,
+
+      readonly n_interactions: number,
 
 
     ) {}
@@ -352,12 +354,13 @@ class AchievementData {
         ['games_played_today', u16],
         ['total_days_played', u16],
 
-        ['total_lamports_claimed', u64]
+        ['total_lamports_claimed', u64],
 
+        ['n_interactions', u16]
 
 
       ],
-      (args) => new AchievementData(args.achievement_state!, args.levels_won!, args.levels_quit!, args.levels_lost!, args.enemies_lose!, args.enemies_win!, args.games_played!, args.losing_streak!, args.winning_streak!, args.last_date_played!, args.play_streak!, args.games_played!, args.total_days_played!, args.total_lamports_claimed!),
+      (args) => new AchievementData(args.achievement_state!, args.levels_won!, args.levels_quit!, args.levels_lost!, args.enemies_lose!, args.enemies_win!, args.games_played!, args.losing_streak!, args.winning_streak!, args.last_date_played!, args.play_streak!, args.games_played!, args.total_days_played!, args.total_lamports_claimed!, args.n_interactions!),
       'AchievementData'
     )
 }

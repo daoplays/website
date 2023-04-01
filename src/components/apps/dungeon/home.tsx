@@ -112,7 +112,7 @@ const ACHIEVEMENTS_COLLECTION_MASTER = new PublicKey('aQeYDQUkzB4uPMXqTLoo9j9eG6
 const ACHIEVEMENTS_COLLECTION_META = new PublicKey('6gpyTc4LFFM7T6hNPUG7VtcvWroTR73Ft4amRRcrhxKK');
 const ACHIEVEMENTS_COLLECTION_MINT = new PublicKey('GLKZu8y9k7q4ukXaStuTGRFtUL4y7NVcTDMcZJcSfTPs');
 
-const ACHIEVEMENT_SEED = "achievement_s1";
+const ACHIEVEMENT_SEED = "achievement_s2";
 
 const enum AccountStatus {
     unknown = 0,
@@ -179,6 +179,7 @@ export function DungeonApp()
     const [achievement_status, setAchievementStatus] = useState<number[] | null>(null);
     const [new_achievements, setNewAchievements] = useState<number[] | null>(null);
     const new_achievements_ref = useRef<number[]>([]);
+    const achievement_interations = useRef<number>(-1);
 
 
     // if we have a key then discounts can be applied
@@ -214,6 +215,7 @@ export function DungeonApp()
     const check_data_account = useRef<boolean>(true);
     const check_sol_balance = useRef<boolean>(true);
     const check_user_state = useRef<boolean>(true);
+    const check_achievements = useRef<boolean>(true);
     const state_interval = useRef<number | null>(null);
 
 
@@ -691,86 +693,105 @@ export function DungeonApp()
         }
         
 
-        if (!check_user_state.current)
-            return;
+        if (check_user_state.current) {
 
-        try {
+            try {
 
-            let player_data = await request_player_account_data(player_data_key);
+                let player_data = await request_player_account_data(player_data_key);
 
-            if (player_data === null) {
-                return;
-            }
+                if (player_data === null) {
+                    return;
+                }
 
-            let current_status = player_data.player_status + 1;
-            if (initial_status.current === DungeonStatus.unknown) {
-                initial_status.current = current_status;
+                let current_status = player_data.player_status + 1;
+                if (initial_status.current === DungeonStatus.unknown) {
+                    initial_status.current = current_status;
+                    if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
+                        let current_bet_value_bn = new BN(player_data.current_bet_size);
+                        let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
+                        setBetValue(current_bet_value);
+                        console.log("setting current status to alive", current_bet_value);
+                    }
+                }
+
+                let current_num_plays = (new BN(player_data.num_plays)).toNumber();
+
+                if (current_num_plays <= num_plays) {
+                    if (DEBUG) {
+                        console.log("num plays not increased", current_num_plays);
+                    }
+                    return;
+                }
+
                 if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
                     let current_bet_value_bn = new BN(player_data.current_bet_size);
                     let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
                     setBetValue(current_bet_value);
-                    console.log("setting current status to alive", current_bet_value);
                 }
-            }
 
-            let current_num_plays = (new BN(player_data.num_plays)).toNumber();
+                setNumPlays(current_num_plays);
 
-            if (current_num_plays <= num_plays) {
+                let current_num_wins = (new BN(player_data.num_wins)).toNumber();
+
                 if (DEBUG) {
-                    console.log("num plays not increased", current_num_plays);
+                    console.log("in init, progress: ", player_data.in_progress, "enemy", player_data.dungeon_enemy, "alive", DungeonStatusString[player_data.player_status + 1], "num_plays", current_num_plays, "num_wins", current_num_wins);
                 }
-                return;
+
+                if (initial_num_plays.current ===  -1) {
+                    initial_num_plays.current =  current_num_plays;
+                }
+
+                if (current_num_plays === 0)  {
+                    return;
+                }  
+
+                setWhichCharacter(player_data.player_character);
+
+                setCurrentEnemy(player_data.dungeon_enemy);
+                
+                setCurrentLevel(player_data.in_progress);
+
+                setCurrentStatus(current_status);
+
+                setNumXP(current_num_wins);
+
+                check_user_state.current = false;
+                
+            } catch(error) {
+                console.log(error);
+                setCurrentLevel(0);
+                setCurrentStatus(DungeonStatus.unknown);
+                setCurrentEnemy(DungeonEnemy.None);
             }
+        }
 
-            if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
-                let current_bet_value_bn = new BN(player_data.current_bet_size);
-                let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
-                setBetValue(current_bet_value);
+        if (check_achievements.current) {
+
+            try {
+                // get the achievement data
+                let achievement_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
+                let achievement_data = await request_player_achievement_data(achievement_data_key);
+
+                if (achievement_data !== null) {
+                    console.log(achievement_data);
+
+                    if (achievement_data.n_interactions !== achievement_interations.current) {
+
+                        setAchievementStatus(achievement_data.achievement_state);
+                        achievement_interations.current = achievement_data.n_interactions;
+                        check_achievements.current = false;
+
+                    }
+                }
+                else {
+                    setAchievementStatus(null);
+                    check_achievements.current = false;
+                }
+                
+            } catch(error) {
+                console.log(error);
+                setAchievementStatus(null);
             }
-
-            setNumPlays(current_num_plays);
-
-            let current_num_wins = (new BN(player_data.num_wins)).toNumber();
-
-            if (DEBUG) {
-                console.log("in init, progress: ", player_data.in_progress, "enemy", player_data.dungeon_enemy, "alive", DungeonStatusString[player_data.player_status + 1], "num_plays", current_num_plays, "num_wins", current_num_wins);
-            }
-
-            if (initial_num_plays.current ===  -1) {
-                initial_num_plays.current =  current_num_plays;
-            }
-
-            if (current_num_plays === 0)  {
-                return;
-            }  
-
-            setWhichCharacter(player_data.player_character);
-
-            setCurrentEnemy(player_data.dungeon_enemy);
-            
-            setCurrentLevel(player_data.in_progress);
-
-            setCurrentStatus(current_status);
-
-            setNumXP(current_num_wins);
-
-            check_user_state.current = false;
-
-            // finally get the achievement data
-            let achievement_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
-            let achievement_data = await request_player_achievement_data(achievement_data_key);
-
-            if (achievement_data !== null) {
-                console.log(achievement_data);
-
-                setAchievementStatus(achievement_data.achievement_state);
-            }
-            
-        } catch(error) {
-            console.log(error);
-            setCurrentLevel(0);
-            setCurrentStatus(DungeonStatus.unknown);
-            setCurrentEnemy(DungeonEnemy.None);
         }
         
 
@@ -816,10 +837,12 @@ export function DungeonApp()
         setCurrentEnemy(DungeonEnemy.None);
         setEnemyState(DungeonStatus.unknown);
         setAchievementStatus(null);
+        achievement_interations.current = -1;
 
         check_data_account.current = true;
         check_user_state.current = true;
         check_sol_balance.current = true;
+        check_achievements.current = true;
         signature_check_count.current = 0;
 
     }, [wallet]);
@@ -1051,7 +1074,7 @@ export function DungeonApp()
         setProcessingTransaction(false);
         check_user_state.current = true;
         check_sol_balance.current = true;
-
+        check_achievements.current = true;
 
     },[wallet, player_character, current_key_index, current_key_mint, bet_size]);
 
@@ -1136,6 +1159,8 @@ export function DungeonApp()
         setProcessingTransaction(false);
         check_user_state.current = true;
         check_sol_balance.current = true;
+        check_achievements.current = true;
+
 
         // send a discord message
         let current_win = WIN_FACTORS[current_level] * BetSizeValues[bet_size];
@@ -1269,7 +1294,7 @@ export function DungeonApp()
             return;
         }
 
-        check_user_state.current = true;
+        check_achievements.current = true;
         setShowAchievement(false)
 
         let post_string = DungeonCharacterEmoji[player_character] + " earned " + AchievementNames[which];

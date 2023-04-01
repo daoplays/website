@@ -172,14 +172,15 @@ export const AchievementTypes : number[] = [
 
   export const AchievementCard = ({index, AchievementState, show_mint, ClaimAchievement} : {index : number, AchievementState: number[] | null, show_mint: boolean, ClaimAchievement: any}) => {
 
-    if (AchievementState === null || AchievementState === undefined)
-        return (<></>);
+    let this_state = 1;
+    if (AchievementState !== null && AchievementState !== undefined)
+        this_state = AchievementState[index];
 
     let image_size = !isMobile ? "100px" : "50px";
     let divider_size = !isMobile ? "100px" : "70px";
     return (
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE, width:"100%", marginBottom:"1rem"}}>
-        <Card style={{ flexDirection: "row", borderWidth:'2px', borderColor:'white', filter:  (AchievementState !== null && AchievementState[index] === 1) ? "blur(7px)" : "blur(0px)" }} bg="dark">
+        <Card style={{ flexDirection: "row", borderWidth:'2px', borderColor:'white', filter:  (this_state === 1) ? "blur(7px)" : "blur(0px)" }} bg="dark">
 
             
             <Card.Img style={{width: image_size, objectFit: "scale-down", "imageRendering":"pixelated"}} src={AchievementImages[index]} alt="banner" />
@@ -190,7 +191,7 @@ export const AchievementTypes : number[] = [
             <Card.Body color="white"> 
                    <VStack alignItems={"left"}>
                     <Text style={{fontWeight:"bold"}}>{AchievementNames[index]}</Text>
-                    {show_mint && (AchievementState[index] === 2 || AchievementState[index] === 3) ?
+                    {show_mint && (this_state === 2 || this_state === 3) ?
                         <HStack>
                             <Text>{AchievementDescriptions[index]}</Text>
                             
