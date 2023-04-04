@@ -84,7 +84,7 @@ import { check_json, request_player_account_data, request_key_data_from_index, r
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS, DungeonCharacterEmoji, DungeonEnemyEmoji, GoldEmoji} from './dungeon_state';
 
-import { AchievementNames, AchievementDescriptions, AchievementCard, AchievementTypes } from './achievements';
+import { AchievementCard, AchievementMetaData } from './achievements';
 
 // navigation
 import {Navigation} from './navigation';
@@ -222,6 +222,10 @@ export function DungeonApp()
 
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
+
+    // discord processing
+    const discord_play_message_sent = useRef<boolean>(false);
+
 
 
     useEffect(() => 
@@ -473,7 +477,7 @@ export function DungeonApp()
 
         let temp_new : number[] = [];
         for (let i = 0; i < achievement_status.length; i++) {
-            if (achievement_status[i] === 2 && AchievementTypes[i] === 1) {
+            if (achievement_status[i] === 2 && AchievementMetaData[i].type === 1) {
                 temp_new.push(i);
             }
         }
@@ -497,7 +501,7 @@ export function DungeonApp()
 
         let temp_new : number[] = [];
         for (let i = 0; i < achievement_status.length; i++) {
-            if (achievement_status[i] === 2 && AchievementTypes[i] === 0) {
+            if (achievement_status[i] === 2 && AchievementMetaData[i].type === 0) {
                temp_new.push(i);
             }
         }
@@ -515,7 +519,7 @@ export function DungeonApp()
 
         for (let i = 0; i < new_achievements_ref.current.length; i++) {
             if (DEBUG)
-                console.log("Have achievement", i, AchievementNames[i], AchievementDescriptions[i]);
+                console.log("Have achievement", i, AchievementMetaData[i].name, AchievementMetaData[i].description);
         }
 
         setWhichAchievement(new_achievements_ref.current[0]);
@@ -919,8 +923,10 @@ export function DungeonApp()
                 }
                 post_string += DungeonEnemyEmoji[current_enemy] + " in level " + current_level;
 
-                if (current_level > 0 && PROD)
+                if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
                     post_discord_message(post_string);
+                    discord_play_message_sent.current = true;
+                }
 
                 setAnimateLevel(0);
                 CheckNewPlayAchievements()
@@ -1083,6 +1089,7 @@ export function DungeonApp()
         check_user_state.current = true;
         check_sol_balance.current = true;
         check_achievements.current = true;
+        discord_play_message_sent.current = false;
 
     },[wallet, player_character, current_key_index, current_key_mint, bet_size]);
 
@@ -1301,8 +1308,8 @@ export function DungeonApp()
         check_achievements.current = true;
         setShowAchievement(false)
 
-        let post_string = DungeonCharacterEmoji[player_character] + " earned " + AchievementNames[which];
-        //if (PROD)
+        let post_string = DungeonCharacterEmoji[player_character] + " earned " + AchievementMetaData[which].name;
+        if (PROD)
             post_discord_message(post_string);
 
     },[wallet, player_character]);
