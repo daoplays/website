@@ -20,6 +20,9 @@ export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4uk
 
 export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHyWXxPJ');
 
+// account seeds
+export const MAIN_ACCOUNT_SEED = "house_account";
+
 
 // set font size
 export var DEFAULT_FONT_SIZE = "30px"

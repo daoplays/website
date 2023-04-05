@@ -76,7 +76,7 @@ import selector from "./images/Selector.gif"
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType, MAIN_ACCOUNT_SEED} from './constants';
 
 // dungeon utils
 import { check_json, request_player_account_data, request_key_data_from_index, request_token_amount,
@@ -961,7 +961,7 @@ export function DungeonApp()
         if (DEBUG) {
             console.log("In play", bet_size, BetSizeValues[bet_size]);
         }
-        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
 
@@ -1101,7 +1101,7 @@ export function DungeonApp()
             return;
         
         setProcessingTransaction(true);
-        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let dm_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
@@ -1197,7 +1197,7 @@ export function DungeonApp()
         if (wallet.publicKey === null || wallet.signTransaction === undefined || which === null)
             return;
 
-        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
 
