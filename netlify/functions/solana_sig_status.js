@@ -10,6 +10,11 @@ exports.handler = async function (event, context) {
         return;
     }
 
+    if (!event.queryStringParameters.bearer) {
+        console.log("No Bearer token present");
+        return;
+    }
+
     const function_name = event.queryStringParameters.function_name;
     const network = event.queryStringParameters.network;
 
@@ -28,7 +33,11 @@ exports.handler = async function (event, context) {
 
     let config = {
         timeout: 10000,
-        headers: {'Content-Type': 'application/json'}
+        headers: {
+            'Accept': 'application/json', 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${event.queryStringParameters.bearer}`
+        }
     };
 
     try {

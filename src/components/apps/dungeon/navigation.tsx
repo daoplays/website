@@ -40,7 +40,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 export function Navigation(
-    {setScreen, check_sol_balance} : {setScreen: React.Dispatch<SetStateAction<number>>, check_sol_balance : React.MutableRefObject<boolean>}
+    {setScreen, check_sol_balance, bearer_token} : {setScreen: React.Dispatch<SetStateAction<number>>, check_sol_balance : React.MutableRefObject<boolean>, bearer_token : string}
 ) {
 
     const wallet = useWallet();
@@ -62,7 +62,7 @@ export function Navigation(
         if (check_sol_balance.current === false)
             return;
 
-        let current_balance = await request_current_balance(wallet.publicKey);
+        let current_balance = await request_current_balance(bearer_token, wallet.publicKey);
 
         //console.log("balance ", current_balance);
         if (current_balance !== balance) {
@@ -71,7 +71,7 @@ export function Navigation(
 
         setBalance(current_balance);
 
-    },[wallet, balance, check_sol_balance]);
+    },[wallet, balance, check_sol_balance, bearer_token]);
 
 
   // Use the useEffect hook to cleanup the interval when the component unmounts

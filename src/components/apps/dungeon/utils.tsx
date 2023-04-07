@@ -14,6 +14,28 @@ import {
     WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
 
+export async function get_JWT_token() : Promise<any | null>
+{
+   
+    const token_url = `/.netlify/functions/jwt`;
+
+    var token_result;
+    try {
+        token_result = await fetch(token_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return null;
+    }
+
+    if (DEBUG)
+        console.log(token_result);
+
+
+    return token_result
+}
+
+
 export function WalletConnected() 
 {
     return (
@@ -33,7 +55,6 @@ export function uInt16ToLEBytes(num : number) : Buffer {
    
     return bytes
  }
-
 
 interface BasicReply {
     id : number;
@@ -55,6 +76,49 @@ export function check_json(json_response : BasicReply) : boolean
 
     return true;
 }
+
+interface BlockHash {
+   blockhash : string;
+   lastValidBlockHeight : number;
+}
+
+export async function get_current_blockhash(bearer : string) : Promise<BlockHash>
+{
+    const blockhash_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getLatestBlockhash`;
+    const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+    let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+    let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+
+    let hash_data : BlockHash = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+    return hash_data;
+
+}
+
+interface TransactionResponseData {
+    id : number;
+    jsonrpc : string;
+    result : string;
+}
+
+
+export async function send_transaction(bearer : string, encoded_transaction : string) : Promise <TransactionResponseData>
+{
+    const send_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
+    var response_json = await fetch(send_url).then((res) => res.json());
+    let transaction_response : TransactionResponseData = response_json;
+
+    let valid_json = check_json(response_json);
+
+    if (valid_json)
+        return transaction_response;
+
+    transaction_response.result = "INVALID"
+    return transaction_response;
+
+    
+}
+
 
 interface AccountData {
     id : number;
@@ -94,6 +158,7 @@ interface TokenBalanceData {
 
 
 
+
 class InstructionNoArgs {
     constructor(
       readonly instruction: number
@@ -108,10 +173,9 @@ class InstructionNoArgs {
     )
 }
 
-
-export async function request_current_balance(pubkey : PublicKey) : Promise<number>
+export async function request_current_balance(bearer : string, pubkey : PublicKey) : Promise<number>
 {
-    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+"&config=true&encoding=base64&commitment=confirmed";
+    const account_info_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+"&config=true&encoding=base64&commitment=confirmed";
 
     var account_info_result;
     try {
@@ -137,9 +201,9 @@ export async function request_current_balance(pubkey : PublicKey) : Promise<numb
     return current_balance;
 
 }
-export async function request_token_amount(pubkey : PublicKey) : Promise<number>
+export async function request_token_amount(bearer : string, pubkey : PublicKey) : Promise<number>
 {
-    const url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
+    const url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
 
     var response;
     try {
@@ -174,13 +238,30 @@ export async function request_token_amount(pubkey : PublicKey) : Promise<number>
     return token_amount;
 }
 
-export async function request_raw_account_data(pubkey : PublicKey) : Promise<Buffer | null>
+// Example POST method implementation:
+async function postData(url = "", bearer = "", data = {}) {
+    // Default options are marked with *
+    const response = await fetch(url, {
+      method: "POST", // *GET, POST, PUT, DELETE, etc.
+      headers: {
+        'Accept': 'application/json', 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${bearer}`
+      },
+      body: JSON.stringify(data), // body data type must match "Content-Type" header
+    });
+    return response.json(); // parses JSON response into native JavaScript objects
+}
+
+
+
+export async function request_raw_account_data(bearer : string, pubkey : PublicKey) : Promise<Buffer | null>
 {
-    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getAccountInfo", "params": [pubkey.toString(), {"encoding": "base64", "commitment": "confirmed"}]};
 
     var response;
     try {
-        response  = await fetch(account_info_url).then((res) => res.json());
+        response = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -420,10 +501,10 @@ class DungeonClaimAchievementInstruction {
     )
 }
 
-export async function request_player_account_data(pubkey : PublicKey) : Promise<PlayerData | null>
+export async function request_player_account_data(bearer : string, pubkey : PublicKey) : Promise<PlayerData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -434,10 +515,10 @@ export async function request_player_account_data(pubkey : PublicKey) : Promise<
     return data;
 }
 
-export async function request_player_achievement_data(pubkey : PublicKey) : Promise<AchievementData | null>
+export async function request_player_achievement_data(bearer : string, pubkey : PublicKey) : Promise<AchievementData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -546,10 +627,10 @@ class ShopUserData {
     )
 }
 
-export async function request_key_data_from_mint(pubkey : PublicKey) : Promise<KeyDataFromMint | null>
+export async function request_key_data_from_mint(bearer : string, pubkey : PublicKey) : Promise<KeyDataFromMint | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -560,10 +641,10 @@ export async function request_key_data_from_mint(pubkey : PublicKey) : Promise<K
     return data;
 }
 
-export async function request_key_data_from_index(pubkey : PublicKey) : Promise<KeyDataFromIndex | null>
+export async function request_key_data_from_index(bearer : string, pubkey : PublicKey) : Promise<KeyDataFromIndex | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer ,pubkey);
 
     if (account_data === null) {
         return null;
@@ -574,10 +655,10 @@ export async function request_key_data_from_index(pubkey : PublicKey) : Promise<
     return data;
 }
 
-export async function request_shop_data(pubkey : PublicKey) : Promise<ShopData | null>
+export async function request_shop_data(bearer : string, pubkey : PublicKey) : Promise<ShopData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -589,10 +670,10 @@ export async function request_shop_data(pubkey : PublicKey) : Promise<ShopData |
 }
 
 
-export async function request_shop_user_data(pubkey : PublicKey) : Promise<ShopUserData | null>
+export async function request_shop_user_data(bearer : string, pubkey : PublicKey) : Promise<ShopUserData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -603,13 +684,13 @@ export async function request_shop_user_data(pubkey : PublicKey) : Promise<ShopU
     return data;
 }
 
-export async function run_keyData_GPA(key_index : number) : Promise<KeyDataFromMint | null>
+export async function run_keyData_GPA(bearer : string, key_index : number) : Promise<KeyDataFromMint | null>
 {
     let index_buffer = uInt16ToLEBytes(key_index);
 
 
     let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {
@@ -738,10 +819,10 @@ export function serialise_DM_Mint_instruction(instruction : number, name : strin
     return buf;
 }
 
-export async function request_DM_Manager_data(pubkey : PublicKey) : Promise<DMManagerData | null>
+export async function request_DM_Manager_data(bearer : string, pubkey : PublicKey) : Promise<DMManagerData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -752,10 +833,10 @@ export async function request_DM_Manager_data(pubkey : PublicKey) : Promise<DMMa
     return data;
 }
 
-export async function request_DM_data(pubkey : PublicKey) : Promise<DMData | null>
+export async function request_DM_data(bearer : string, pubkey : PublicKey) : Promise<DMData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -766,10 +847,10 @@ export async function request_DM_data(pubkey : PublicKey) : Promise<DMData | nul
     return data;
 }
 
-export async function request_DM_User_data(pubkey : PublicKey) : Promise<DMUserData | null>
+export async function request_DM_User_data(bearer : string, pubkey : PublicKey) : Promise<DMUserData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
