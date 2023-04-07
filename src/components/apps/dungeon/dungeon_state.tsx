@@ -138,7 +138,7 @@ const DungeonEnemyAppearsText : string[][] = [
     // carnivine
     ["You have encountered a Carnivine, prepare yourself!",
     "The smell of flowers makes you relax, but only until you see the source is a Carnivine.  Prepare yourself!",
-    "Thick vines cover the walls.  You've entered the layer of a Carnivine!  Prepare yourself!"],
+    "Thick vines cover the walls.  You've entered the lair of a Carnivine!  Prepare yourself!"],
     //dungeon master
     ["You have encountered a Dungeon Master, prepare yourself!", 
     "The air begins to crackle around you as a Dungeon Master prepares to attack, get ready!"],
@@ -282,7 +282,7 @@ const DungeonPlayerDefeatedText : string[][] = [
     ["The giant blue slime has defeated you.",
     "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
     "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
-    // giant green slime
+    // giant greenf slime
     ["The giant green slime has defeated you.",
     "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
     "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
