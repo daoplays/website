@@ -5,7 +5,15 @@ const jwt = require("jsonwebtoken")
 exports.handler = async function (event, context) {
 
     // read private key
-    const privateKey = process.env.JWT_PRIVATE_KEY
+    const privateKey = atob(process.env.JWT_PRIVATE_KEY)
+
+    //const encodedAccessToken = btoa(privateKey);
+    //const decodedAccessToken = atob(encodedAccessToken);
+    //console.log("encoded key:")
+    //console.log(process.env.JWT_PRIVATE_KEY)
+    //console.log(privateKey);
+    //console.log(encodedAccessToken);
+    //console.log(decodedAccessToken);
 
     try {
         //Create payload and JWT
