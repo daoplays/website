@@ -74,13 +74,13 @@ import selector from "./images/Selector.gif"
 
 
 //  dungeon constants
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
+import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
     METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType, MAIN_ACCOUNT_SEED} from './constants';
 
 // dungeon utils
-import { check_json, request_player_account_data, request_key_data_from_index, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction, get_JWT_token, get_current_blockhash, send_transaction} from './utils';
+import { request_player_account_data, request_key_data_from_index, request_token_amount,
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction, get_JWT_token, get_current_blockhash, send_transaction, check_signature, request_current_balance} from './utils';
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS, DungeonCharacterEmoji, DungeonEnemyEmoji, GoldEmoji} from './dungeon_state';
 
@@ -583,23 +583,19 @@ export function DungeonApp()
         if (current_signature.current === null)
             return;
 
-        const confirm_url = `/.netlify/functions/solana_sig_status?bearer=`+bearer_token+`&network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature.current;
-        var signature_response = await fetch(confirm_url).then((res) => res.json());
+        let signature_response = await check_signature(bearer_token, current_signature.current);
 
-        if (DEBUG) 
-            console.log("sig response:", signature_response);
-
-        let valid_response = check_json(signature_response)
-        if (!valid_response) {
+        if (signature_response === null) {
             return;
         }
 
-        let confirmation = signature_response["result"]["value"][0];
+        //console.log(signature_response);
+        let confirmation = signature_response.result?.value[0];
         
         if (confirmation !== null) {
 
-            if (confirmation["err"] !== null) {
-                console.log("error: ", confirmation["err"]);
+            if (confirmation?.err !== null) {
+                console.log("error: ", confirmation?.err);
                 setTransactionFailed(true);
             }
             else {
@@ -667,26 +663,8 @@ export function DungeonApp()
             // first check if the data account exists
             try {
 
-                const balance_url = `/.netlify/functions/solana?bearer=`+bearer_token+`&network=`+network_string+`&function_name=getBalance&p1=`+player_data_key.toString()+"&config=true&encoding=base64&commitment=confirmed";
-                var balance_result;
-                try {
-                    balance_result = await fetch(balance_url).then((res) => res.json());
-                }
-                catch(error) {
-                    console.log(error);
-                    return;
-                }
-
-                let valid_response = check_json(balance_result)
-                if (!valid_response) {
-                    return;
-                }
-
-                if (balance_result["result"]["value"] == null) {
-                    return;
-                }
-                
-                let balance = balance_result["result"]["value"];
+                let balance = await request_current_balance(bearer_token, player_data_key);
+               
                 if (balance > 0) {
                     setDataAccountStatus(AccountStatus.created);
                     check_data_account.current = false;
@@ -962,7 +940,7 @@ export function DungeonApp()
 
         let one_second = 1000;
         if (bearer_interval.current === null) {
-            bearer_interval.current = window.setInterval(set_JWT_token, one_second * 60);
+            bearer_interval.current = window.setInterval(set_JWT_token, one_second * 60 * 5);
         }
         else{
             window.clearInterval(bearer_interval.current);

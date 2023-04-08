@@ -47,6 +47,21 @@ export function WalletConnected()
     );
 }
 
+// Example POST method implementation:
+async function postData(url = "", bearer = "", data = {}) {
+    // Default options are marked with *
+    const response = await fetch(url, {
+      method: "POST", // *GET, POST, PUT, DELETE, etc.
+      headers: {
+        'Accept': 'application/json', 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${bearer}`
+      },
+      body: JSON.stringify(data), // body data type must match "Content-Type" header
+    });
+    return response.json(); // parses JSON response into native JavaScript objects
+}
+
 
 export function uInt16ToLEBytes(num : number) : Buffer {
 
@@ -67,15 +82,24 @@ export function check_json(json_response : BasicReply) : boolean
 {
 
     if (json_response.result === undefined) {
-        if (json_response.result !== undefined) {
+        if (json_response.error !== undefined) {
             console.log(json_response.error)
             
         }
         return  false;
     }
 
+    if (json_response.result === null)
+        return false;
+
     return true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Transactions ///////////////////////// /////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 interface BlockHash {
    blockhash : string;
@@ -84,8 +108,10 @@ interface BlockHash {
 
 export async function get_current_blockhash(bearer : string) : Promise<BlockHash>
 {
-    const blockhash_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getLatestBlockhash`;
-    const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getLatestBlockhash"};
+    const blockhash_data_result = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+
+    
     let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
     let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
 
@@ -104,8 +130,9 @@ interface TransactionResponseData {
 
 export async function send_transaction(bearer : string, encoded_transaction : string) : Promise <TransactionResponseData>
 {
-    const send_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
-    var response_json = await fetch(send_url).then((res) => res.json());
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "sendTransaction", "params": [encoded_transaction]};
+   
+    var response_json = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
     let transaction_response : TransactionResponseData = response_json;
 
     let valid_json = check_json(response_json);
@@ -115,6 +142,43 @@ export async function send_transaction(bearer : string, encoded_transaction : st
 
     transaction_response.result = "INVALID"
     return transaction_response;
+
+    
+}
+
+interface SignatureResponseData {
+    id : number;
+    jsonrpc : string;
+    result: {
+        context: {
+            apiVersion : string;
+            slot : number;
+        };
+        value : [{
+            confirmationStatus : string;
+            confirmations : number;
+            err : string | null;
+            slot : number;
+        }];
+    } | null;
+}
+
+
+export async function check_signature(bearer : string, signature : string) : Promise <SignatureResponseData | null>
+{
+
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getSignatureStatuses", "params": [[signature],{"searchTransactionHistory": true}]};
+   
+    var response_json = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+    let transaction_response : SignatureResponseData = response_json;
+
+    let valid_json = check_json(response_json);
+
+    if (valid_json)
+        return transaction_response;
+
+    
+    return null;
 
     
 }
@@ -175,11 +239,12 @@ class InstructionNoArgs {
 
 export async function request_current_balance(bearer : string, pubkey : PublicKey) : Promise<number>
 {
-    const account_info_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+"&config=true&encoding=base64&commitment=confirmed";
+
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getAccountInfo", "params": [pubkey.toString(), {"encoding": "base64", "commitment": "confirmed"}]};
 
     var account_info_result;
     try {
-        account_info_result = await fetch(account_info_url).then((res) => res.json());
+        account_info_result = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -203,11 +268,11 @@ export async function request_current_balance(bearer : string, pubkey : PublicKe
 }
 export async function request_token_amount(bearer : string, pubkey : PublicKey) : Promise<number>
 {
-    const url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getTokenAccountBalance", "params": [pubkey.toString(), {"encoding": "base64", "commitment": "confirmed"}]};
 
     var response;
     try {
-        response  = await fetch(url).then((res) => res.json());
+        response  = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -238,20 +303,7 @@ export async function request_token_amount(bearer : string, pubkey : PublicKey) 
     return token_amount;
 }
 
-// Example POST method implementation:
-async function postData(url = "", bearer = "", data = {}) {
-    // Default options are marked with *
-    const response = await fetch(url, {
-      method: "POST", // *GET, POST, PUT, DELETE, etc.
-      headers: {
-        'Accept': 'application/json', 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${bearer}`
-      },
-      body: JSON.stringify(data), // body data type must match "Content-Type" header
-    });
-    return response.json(); // parses JSON response into native JavaScript objects
-}
+
 
 
 

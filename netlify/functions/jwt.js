@@ -20,7 +20,7 @@ exports.handler = async function (event, context) {
         var token = jwt.sign({}, privateKey, {
 
             algorithm: 'RS256', //algo used to create JWT
-            expiresIn: "2d" // set a 2 day expiration
+            expiresIn: "6m" // set a 2 day expiration
 
         });
 
