@@ -51,6 +51,7 @@ export const enum Screen {
     SHOP_SCREEN = 6,
     DM_SCREEN = 7,
     ACHIEVEMENT_SCREEN = 8,
+    STATS_SCREEN = 9
 }
 
 export const enum KeyType {
@@ -59,7 +60,3 @@ export const enum KeyType {
     Gold = 2,
     Unknown = 3
 }
-
-
-
-export const bearer = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODA4NjE4NzAsImV4cCI6MTY4MTAzNDY3MH0.Gyhz6F1rg08DpgE3UHYVm1D2G7CyPeaSpu8Re1FvqtwGQOeSP684UE4NbIUtc6KilIr5E3q5h9OOxsExXdmce2axgNdX35JcBlmQ1At6xcMmV_DRI_tVZOlxkRH654uMpCn0n_gmI879OkNoR64pnHiO-IgJoFn8-iYX4DHUAmvzkiN3_nXmLjU4-dkCq1yYxy4ObmBLBkFDZdffptCrUN2Bfy6F0zSMhsJ3nt3N751VG6z6wPae-rdN67w4zEU6OrtzOcHXHEtNm4ndLC3-3xJ79wOi6YhvO_ac_G9oZxu2552K4f1bRDojwl7f60oaIaDCUI1uKNoyhXPkLSayuA"

@@ -96,6 +96,7 @@ import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
 import {DMScreen} from './dm';
 import { AchievementsScreen } from './achievements';
+import {StatsScreen} from './stats';
 import { Footer } from './footer';
 //import {DungeonScreen} from './dungeon';
 
@@ -604,12 +605,14 @@ export function DungeonApp()
 
             current_signature.current = null;
             signature_check_count.current = 0;
+            setProcessingTransaction(false);
         }
         else {
             signature_check_count.current += 1;
         }
         if (signature_check_count.current >= 10) {
             setTransactionFailed(true);
+            setProcessingTransaction(false);
             current_signature.current = null;
             signature_check_count.current = 0;
         }
@@ -1100,7 +1103,7 @@ export function DungeonApp()
         setScreen(Screen.DUNGEON_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.alive);
-        setProcessingTransaction(false);
+        //setProcessingTransaction(false);
         check_user_state.current = true;
         check_sol_balance.current = true;
         check_achievements.current = true;
@@ -1178,7 +1181,7 @@ export function DungeonApp()
 
         setScreen(Screen.HOME_SCREEN);
         setEnemyState(DungeonStatus.unknown);
-        setProcessingTransaction(false);
+        //setProcessingTransaction(false);
         check_user_state.current = true;
         check_sol_balance.current = true;
         check_achievements.current = true;
@@ -1890,6 +1893,9 @@ export function DungeonApp()
                         {screen === Screen.ACHIEVEMENT_SCREEN &&
                             <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement}/>
                         }
+                        {screen === Screen.STATS_SCREEN &&
+                            <StatsScreen/>
+                        }
                         {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) &&
                             <UnconnectedPage/>
                         }
@@ -1920,6 +1926,9 @@ export function DungeonApp()
                         }
                         {screen === Screen.ACHIEVEMENT_SCREEN &&
                             <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
+                        }
+                        {screen === Screen.STATS_SCREEN &&
+                            <StatsScreen/>
                         }
                         {screen === Screen.DM_SCREEN &&
                             <DMScreen bearer_token={bearer_token}/>

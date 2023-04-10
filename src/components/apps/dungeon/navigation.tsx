@@ -149,13 +149,20 @@ export function Navigation(
         
     },[setScreen]);
 
+    const ShowStats = useCallback( async () => 
+    {
+            setScreen(Screen.STATS_SCREEN);
+            return;
+        
+    },[setScreen]);
+
     function DesktopNavigation() {
 
         return (
         <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
                 {wallet.publicKey !== null &&
-                        <Box width="50%">
+                        <Box width="40%">
                             <HStack>
                                 <WalletConnected />
                                 <div className="font-face-sfpb">
@@ -172,9 +179,9 @@ export function Navigation(
                         
                     }
                 {wallet.publicKey === null &&
-                    <Box width="50%"></Box>
+                    <Box width="40%"></Box>
                 }
-                <Box width="50%">
+                <Box width="60%">
                     <HStack spacing="5%">
                         <Button variant='link' size='md' onClick={ShowHome}>
                             <div className="font-face-sfpb">
@@ -194,6 +201,11 @@ export function Navigation(
                         <Button variant='link' size='md' onClick={ShowAchievements}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Achievements </Text>      
+                            </div> 
+                        </Button>
+                        <Button variant='link' size='md' onClick={ShowStats}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> Stats </Text>      
                             </div> 
                         </Button>
                         <Button variant='link' size='md' onClick={ShowOdds}>
