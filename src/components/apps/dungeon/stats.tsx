@@ -5,7 +5,8 @@ import {
    Box,
    Center,
     HStack,
-    Text
+    Text,
+    VStack
     
 } from '@chakra-ui/react';
 import Table from 'react-bootstrap/Table';
@@ -14,7 +15,7 @@ import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import Container from 'react-bootstrap/Container';
 
-import { DUNGEON_FONT_SIZE } from './constants';
+import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE } from './constants';
 
 import './css/table.css';
 import './css/fonts.css';
@@ -49,6 +50,75 @@ if (isMobile) {
     EMOJI_SIZE = 24
 }
 */
+
+
+function HorizontalBar({title, x1, x2} : {title: string, x1 : number[], x2 : number[]})
+{
+    var trace1 = {
+        x: x1,
+        //y: ['giraffes'],
+        orientation: 'h',
+        marker: {
+          color: 'rgb(167,251,93,255)',
+          width: 1
+        },
+        type: 'bar',
+        text: x1[0].toFixed(3),
+        textposition: 'auto',
+        name: 'Win',
+        hoverinfo: "Win"
+      };
+      
+      var trace2 = {
+        x: x2,
+        //y: ['giraffes'],
+        orientation: 'h',
+        type: 'bar',
+        marker: {
+          color: 'rgb(126,165,248,255)',
+          width: 1
+        },
+        text: x2[0].toFixed(3),
+        textposition: 'auto',
+        name: 'Lose'
+      };
+      
+      var data = [trace1, trace2];
+      
+      var layout = {
+        height: 300,
+        width: 500,
+        title: title,
+        barmode: 'stack',
+        showlegend: false,
+        plot_bgcolor:"black",
+        paper_bgcolor:"black",
+        margin : {
+            t: 40
+        },
+        font: {
+            family: 'SFPixelate',
+            size: 18,
+            color: 'white'
+          },
+          yaxis: {
+            showticklabels : false,
+            showline: false
+        },
+        xaxis: {
+            showticklabels : false
+        },
+      };
+      
+
+    return(
+
+          <PlotlyChart
+            data={data}
+            layout={layout}
+        />
+    );
+}
 
 function PieChart({values, labels, title} : {values : number[], labels : string[], title : string})
 {
@@ -312,6 +382,9 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
         <Box width = "80%">
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 
+            <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Per Level Play Statistics</h2><br />
+
+
             <Table className="custom-table">
                 <thead>
                 <tr>
@@ -374,6 +447,9 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
                 </tbody>
             </Table>
 
+            <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Per Tier Play Statistics</h2><br />
+
+
             <Table className="custom-table">
                 <thead>
                 <tr>
@@ -426,8 +502,15 @@ export function StatsScreen()
     const [betsize_data, setBetSizeData] = useState<number[]>([]);
     const [total_plays, setTotalPlays] = useState<number>(0);
     const [total_volume, setTotalVolume] = useState<number>(0);
+    const [total_users, setTotalUsers] = useState<number>(0);
     const [plays_data, setPlaysData] = useState<number[]>([]);
     const [wins_data, setWinsData] = useState<number[]>([]);
+
+    const [tier_1_wins, setTier1Wins] = useState<number>(0);
+    const [tier_2_wins, setTier2Wins] = useState<number>(0);
+    const [tier_1_losses, setTier1Losses] = useState<number>(0);
+    const [tier_2_losses, setTier2Losses] = useState<number>(0);
+
 
 
     const FetchData = useCallback( async () => 
@@ -467,13 +550,28 @@ export function StatsScreen()
         setBetSizeData(main_stats["bet_sizes"]);
         setTotalPlays(main_stats["total_games"]);
         setTotalVolume(main_stats["total_volume"]);
+        setTotalUsers(main_stats["total_users"])
         setPlaysData(main_stats["plays"]);
         setWinsData(main_stats["wins"]);
 
 
+        let tier_1_wins = main_stats["wins"][0] + main_stats["wins"][1] + main_stats["wins"][2];
+        let tier_1_plays = main_stats["plays"][0] + main_stats["plays"][1] + main_stats["plays"][2]
+        setTier1Wins(tier_1_wins / tier_1_plays);
+        setTier1Losses((tier_1_plays - tier_1_wins) / tier_1_plays);
+
+        let tier_2_wins = main_stats["wins"][3] + main_stats["wins"][4] + main_stats["wins"][5] + main_stats["wins"][6];
+        let tier_2_plays = main_stats["plays"][3] + main_stats["plays"][4] + main_stats["plays"][5] + main_stats["plays"][6]
+
+        setTier2Wins(tier_2_wins / tier_2_plays);
+        setTier2Losses((tier_2_plays - tier_2_wins) / tier_2_plays);
+
+
+
+
 
         
-    },[setVolumeData, setUserData, setCharacterData]);
+    },[setVolumeData, setUserData, setCharacterData, setTier1Wins, setTier1Losses, setTier2Wins, setTier2Losses, setTotalUsers]);
 
     useEffect(() => 
     {
@@ -562,20 +660,25 @@ export function StatsScreen()
             <Tab eventKey="home" title="Overview" tabClassName="custom-tab">
 
                 <Center>
-                    <LongPlot title="Dungeons & Degens Daily Data" x_data={dates} y_data={volume_data} y2_data={user_data}/>
-                </Center>
-                <Center>
                     <HStack>
-                    <Box mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                        <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
-                        <Text align="center">Total Plays  <br/> {total_plays}</Text>
-                        </div>
-                    </Box>
-                    <Box ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                        <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
-                        <Text align="center">Total Volume <br/> {total_volume.toFixed(2)}</Text>
-                        </div>
-                    </Box>  
+                        <LongPlot title="Dungeons & Degens Daily Data" x_data={dates} y_data={volume_data} y2_data={user_data}/>
+                        <VStack alignItems="left">
+                            <Box width = "100%" mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
+                                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                                <Text align="center">Total Plays  <br/> {total_plays}</Text>
+                                </div>
+                            </Box>
+                            <Box width = "100%"  ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
+                                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                                <Text align="center">Total Volume <br/> {total_volume.toFixed(2)}</Text>
+                                </div>
+                            </Box> 
+                            <Box width = "100%"  ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
+                                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                                <Text align="center">Total Users <br/> {total_users}</Text>
+                                </div>
+                            </Box>   
+                        </VStack>
                     </HStack>
                 </Center>
                 <Center>
@@ -583,6 +686,15 @@ export function StatsScreen()
                         <PieChart values={character_data} labels={["Knight", "Ranger", "Wizard"]} title="Character Choices"/>
                         <PieChart values={betsize_data} labels={["0.05", "0.1", "0.25"]} title="Bet Size Choices"/>
                     </HStack>
+                </Center>
+
+                <Center>
+                    <HStack>
+                <HorizontalBar title="Tier 1 W/L" x1={[tier_1_wins]} x2={[tier_1_losses]}/>
+                <HorizontalBar title="Tier 2 W/L" x1={[tier_2_wins]} x2={[tier_2_losses]}/>
+
+                </HStack>
+
                 </Center>
             </Tab>
             <Tab eventKey="games" title="Games" tabClassName="custom-tab">
