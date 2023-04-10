@@ -1267,6 +1267,7 @@ export function DungeonApp()
             keys: [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
                 {pubkey: program_data_key, isSigner: false, isWritable: true},
+                {pubkey: program_data_key, isSigner: false, isWritable: true},
                 {pubkey: SYSTEM_KEY, isSigner: false, isWritable: true}
             ],
             programId: DUNGEON_PROGRAM,
