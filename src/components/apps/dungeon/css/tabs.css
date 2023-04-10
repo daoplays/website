@@ -19,11 +19,12 @@
   
 .custom-tab.active {
     background-color: #000 !important;
-    color: #fff !important;
+    color: white !important;
     font-family: "SFPixelate" !important;
     border: white !important;
     border-top-left-radius: 5px !important;
     border-top-right-radius: 5px !important;
     border-bottom: 5px !important;
     margin-bottom: 5px !important;
+    text-decoration: underline !important;
 }

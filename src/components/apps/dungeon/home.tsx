@@ -1621,6 +1621,7 @@ export function DungeonApp()
                             <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                 <VStack align="center">
                                     <div className="font-face-sfpb">
+                                        {/*<Button variant='link' size='md' onClick={Play}>*/}
                                         <Button variant='link' size='md' onClick={Play}>
                                         <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 

@@ -657,7 +657,7 @@ export function StatsScreen()
         <Tabs
             className="custom-tab" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
         >
-            <Tab eventKey="home" title="Overview" tabClassName="custom-tab">
+            <Tab eventKey="home" title="OVERVIEW" tabClassName="custom-tab">
 
                 <Center>
                     <HStack>
@@ -697,7 +697,7 @@ export function StatsScreen()
 
                 </Center>
             </Tab>
-            <Tab eventKey="games" title="Games" tabClassName="custom-tab">
+            <Tab eventKey="games" title="GAMES" tabClassName="custom-tab">
                 <GameStats plays={plays_data} wins ={wins_data}/>
                 
             </Tab> 
