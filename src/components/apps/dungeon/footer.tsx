@@ -181,13 +181,13 @@ export function Footer() {
         const now = new Date().getTime();
         const distance_seconds = (now - time) / 1000;
         const distance_minutes = distance_seconds / 60;
-        console.log(distance_seconds, distance_minutes);
+        // console.log(distance_seconds, distance_minutes);
         const display_distance =
             distance_seconds > 60
                 ? `${distance_minutes.toFixed(0)} min`
                 : `${distance_seconds.toFixed(0)} secs`;
 
-        console.log('display_distance', display_distance);
+        // console.log('display_distance', display_distance);
 
 
         const split_message = message?.message?.message.split(" ") || [];
