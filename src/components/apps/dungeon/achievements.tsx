@@ -78,7 +78,6 @@ export const enum Achievements {
     MasterOfAll,
     Fertilizer,
     DMSlayer
-    
 }
 
 export interface Achievement {
