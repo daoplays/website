@@ -33,7 +33,7 @@ if (isMobile) {
     DUNGEON_FONT_SIZE = "10px"
 }
 
-export const PROD = false;
+export const PROD = true;
 export const DEBUG = false;
 
 export var network_string = "devnet";

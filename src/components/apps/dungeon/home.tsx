@@ -1621,10 +1621,15 @@ export function DungeonApp()
                             <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                 <VStack align="center">
                                     <div className="font-face-sfpb">
-                                        {/*<Button variant='link' size='md' onClick={Play}>*/}
+                                        
+                                        <Box borderWidth='2px'  borderColor="white" width="100%">
+                                        <Text align="center" fontSize={font_size} color="white"> Back Soon! </Text>
+                                        </Box>
+                                        {/*
                                         <Button variant='link' size='md' onClick={Play}>
                                         <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 
+                                        */}
                                     </div> 
                                     <BetSizeInput/>
 
