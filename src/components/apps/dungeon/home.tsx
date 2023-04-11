@@ -60,7 +60,7 @@ import hallway from "./images/Hallway.gif"
 import hallway2 from "./images/Hallway2.gif"
 
 //buttons
-//import enter_button from "./images/Enter_Button.png"
+import enter_button from "./images/Enter_Button.png"
 
 // shop items
 import key from "./images/Key.png"
@@ -1621,15 +1621,16 @@ export function DungeonApp()
                             <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                 <VStack align="center">
                                     <div className="font-face-sfpb">
-                                        
+                                        {/*
                                         <Box borderWidth='2px'  borderColor="white" width="100%">
                                         <Text align="center" fontSize={font_size} color="white"> Back Soon! </Text>
                                         </Box>
-                                        {/*
+                                        */}
+                                        
                                         <Button variant='link' size='md' onClick={Play}>
                                         <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 
-                                        */}
+                                        
                                     </div> 
                                     <BetSizeInput/>
 
