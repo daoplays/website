@@ -44,6 +44,12 @@ import { get_discord_messages, DiscordMessage } from './utils';
 //  dungeon constants
 import { DUNGEON_FONT_SIZE} from './constants';
 
+interface DefeatedEnemyInterface {
+    characterEmoji: string | undefined;
+    enemyEmoji: any;
+    level: string | undefined;
+    display_distance: string | null;
+}
 
 const emoji_map = new Map([
     // enemies
@@ -74,9 +80,9 @@ const emoji_map = new Map([
     ["<a:Wizard:1070471413829472287>", wizard_emoji]
   ]);
 
-var FOOTER_TIME_FONT_SIZE = "10px"
-var EMOJI_SIZE = 32
-var FOOTER_WIDTH : string = "600px"
+var FOOTER_TIME_FONT_SIZE = "8px"
+var EMOJI_SIZE = 20
+var FOOTER_WIDTH: string = "420px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
     EMOJI_SIZE = 24
@@ -134,112 +140,172 @@ export function Footer() {
 
     }, [check_discord_state]);
 
-    const ParseDiscordMessage = ({message} : {message : DiscordMessage}) => {
+    const EnemyDefeated = ({ characterEmoji, enemyEmoji, level, display_distance }: DefeatedEnemyInterface) => {
+        return (
+            <HStack>
+                <Box width="80%">
+                    <HStack>
+                        <img
+                            src={characterEmoji}
+                            width="auto"
+                            alt=""
+                            style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
+                        />
+                        <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                            defeated
+                        </Text>
+                        <img
+                            src={enemyEmoji}
+                            width="auto"
+                            alt=""
+                            style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
+                        />
+                        <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                            in level {level}
+                        </Text>
+                    </HStack>
+                </Box>
+                <Box width="20%">
+                    <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">
+                        {display_distance} ago
+                    </Text>
+                </Box>
+            </HStack>
+        );
+    };
 
-        if (discord_messages.length === 0) {
-            return(<></>);
+    const ParseDiscordMessage = (message: DiscordMessage) => {
 
-        }
-        let time = Date.parse(message.time);
-        var now = new Date().getTime();
-        var distance_seconds = (now - time)/1000;
-        let distance_min = (distance_seconds/60)
+        // let message= message?.message;
+        const time = Date.parse(message?.message?.time);
+        const now = new Date().getTime();
+        const distance_seconds = (now - time) / 1000;
+        const distance_minutes = distance_seconds / 60;
+        console.log(distance_seconds, distance_minutes);
+        const display_distance =
+            distance_seconds > 60
+                ? `${distance_minutes.toFixed(0)} min`
+                : `${distance_seconds.toFixed(0)} secs`;
 
-        let display_distance = distance_seconds.toFixed(0) + " secs";
-        if(distance_seconds > 60)
-            display_distance = distance_min.toFixed(0) + " min";
+        console.log('display_distance', display_distance);
 
 
-        let split_message = message.message.split(" ");
-        let character_emoji = emoji_map.get(split_message[0]);
+        const split_message = message?.message?.message.split(" ") || [];
 
-        //console.log(split_message);
-        //console.log(split_message.length);
+        const character_emoji = emoji_map.get(split_message && split_message[0]);
 
         // earned an achievement
-        if (split_message[1] === "earned") {
-            let string_bit = split_message.slice(1,split_message.length).join(" ");
-           // console.log(string_bit);
+        if (split_message && (split_message[1] === "earned")) {
+            const string_bit = split_message?.slice(1, split_message.length).join(" ");
 
-            return(
-                
-                <HStack>
+            return (
+                <HStack >
                     <Box width="80%">
                         <HStack>
-                            <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                            <Text fontSize={DUNGEON_FONT_SIZE} color="white">{string_bit}</Text>
+                              <img
+                                  src={character_emoji}
+                                  width="auto"
+                                  alt=""
+                                  style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
+                              />
+                              <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                                  {string_bit}
+                              </Text>
                         </HStack>
                     </Box>
                     <Box width="20%">
-                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
+                          <Text fontSize={FOOTER_TIME_FONT_SIZE} marginEnd="1em" color="grey">
+                              {display_distance} ago
+                          </Text>
                     </Box>
                 </HStack>
             );
         }
 
         // defeated enemy
+        if (split_message?.length === 6) {
+            const enemy_emoji = emoji_map.get(split_message && split_message[2]);
+            const level = split_message && split_message[5];
 
-        if (split_message.length === 6) {
-            let enemy_emoji =  emoji_map.get(split_message[2]);
-            return(
-                
+            return (
+                <EnemyDefeated
+
+                      characterEmoji={character_emoji}
+                      enemyEmoji={enemy_emoji}
+                      level={level}
+                      display_distance={display_distance}
+                  />
+            );
+        }
+
+        // died
+        if (split_message?.length === 8) {
+            let enemy_emoji = emoji_map.get(split_message && split_message[4]);
+            return (
                 <HStack>
                     <Box width="80%">
                         <HStack>
-                            <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                            <Text fontSize={DUNGEON_FONT_SIZE}  color="white">defeated</Text>
-                            <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                            <Text fontSize={DUNGEON_FONT_SIZE}  color="white">in level {split_message[5]}</Text>
-                            
+                            <img
+                                src={character_emoji}
+                                width="auto"
+                                alt={""}
+                                style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
+                            />
+                            <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                                was killed by
+                            </Text>
+                            <img
+                                src={enemy_emoji}
+                                width="auto"
+                                alt={""}
+                                style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
+                            />
+                            <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                                in level {split_message[7]}
+                            </Text>
                         </HStack>
                     </Box>
                     <Box width="20%">
-                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
+                        <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">
+                            {display_distance} ago
+                        </Text>
                     </Box>
                 </HStack>
             );
         }
 
-        // died
-        if (split_message.length === 8) {
-            let enemy_emoji =  emoji_map.get(split_message[4]);
-            return(
-                <Box >
-                    <HStack>
-                        <Box width="80%">
-                            <HStack>
-                                <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                                <Text fontSize={DUNGEON_FONT_SIZE}  color="white">was killed by</Text>
-                                <img src={enemy_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                                <Text fontSize={DUNGEON_FONT_SIZE} color="white">in level {split_message[7]}</Text>
-                            </HStack>
-                        </Box>
-                        <Box width="20%">
-                        <Text fontSize={FOOTER_TIME_FONT_SIZE}  color="grey">{display_distance} ago</Text>
-                        </Box>
-                    </HStack>
-                    </Box>
-            );
-        }
+        // all other cases
+        let string_bit = Array.isArray(split_message) ? split_message?.slice(1, 7)?.join(" ") : '';
 
-        let string_bit = split_message.slice(1,7).join(" ");
 
-        return(
+        return (
             <HStack>
                 <Box width="80%">
                     <HStack>
-                        <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                        <Text fontSize={DUNGEON_FONT_SIZE} color="white">{string_bit}</Text>
-                        <img src={gold_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                        <img
+                            src={character_emoji}
+                            width="auto"
+                            alt={""}
+                            style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
+                        />
+                        <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                            {string_bit}
+                        </Text>
+                        <img
+                            src={gold_emoji}
+                            width="auto"
+                            alt={""}
+                            style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
+                        />
                     </HStack>
                 </Box>
                 <Box width="20%">
-                <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">{display_distance} ago</Text>
+                    <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">
+                        {display_distance} ago
+                    </Text>
                 </Box>
-
             </HStack>
         );
-
     }
 
     if (isMobile)  {
@@ -253,17 +319,12 @@ export function Footer() {
                                     {show_live && 
                                     <>
                                         <VStack align="left" mt="8px" ml="4px" mr="4px">
-                                            <ParseDiscordMessage message={discord_messages[0]}/>
-                                            <ParseDiscordMessage message={discord_messages[1]}/>
-                                            <ParseDiscordMessage message={discord_messages[2]}/>
-                                            <ParseDiscordMessage message={discord_messages[3]}/>
-                                            <ParseDiscordMessage message={discord_messages[4]}/>
-                                            <ParseDiscordMessage message={discord_messages[5]}/>
-                                            <ParseDiscordMessage message={discord_messages[6]}/>
-                                            <ParseDiscordMessage message={discord_messages[7]}/>
-                                            <ParseDiscordMessage message={discord_messages[8]}/>
-                                            <ParseDiscordMessage message={discord_messages[9]}/>
+                                        {discord_messages.slice(0, 9).map((message, index) => (
+                                            <ParseDiscordMessage key={index} message={message} />
+                                        ))}
                                         </VStack>
+
+
                                     <Center>
                                         <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
                                             <FontAwesomeIcon color="white" icon={solid('chevron-down')} size="lg"/>
@@ -294,22 +355,15 @@ export function Footer() {
 
     return (
         <div className="font-face-sfpb">
-                <div className="fixed-bottom" style={{width:"600px"}}>
+            <div className="fixed-bottom" style={{ width: "400px" }}>
                             <Box ml="2rem" mr="2rem" width={FOOTER_WIDTH} borderWidth='2px' borderColor="white" borderBottomColor="black" backgroundColor="#171923">
 
                                 {show_live && 
                                 <>
                                     <VStack align="left" width={FOOTER_WIDTH} ml="1rem" mt="1rem" mr="1rem">
-                                        <ParseDiscordMessage message={discord_messages[0]}/>
-                                        <ParseDiscordMessage message={discord_messages[1]}/>
-                                        <ParseDiscordMessage message={discord_messages[2]}/>
-                                        <ParseDiscordMessage message={discord_messages[3]}/>
-                                        <ParseDiscordMessage message={discord_messages[4]}/>
-                                        <ParseDiscordMessage message={discord_messages[5]}/>
-                                        <ParseDiscordMessage message={discord_messages[6]}/>
-                                        <ParseDiscordMessage message={discord_messages[7]}/>
-                                        <ParseDiscordMessage message={discord_messages[8]}/>
-                                        <ParseDiscordMessage message={discord_messages[9]}/>
+                            {discord_messages.slice(0, 9).map((message, index) => (
+                                <ParseDiscordMessage key={index} message={message} />
+                            ))}
                                     </VStack>
                                 <Center>
                                     <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
