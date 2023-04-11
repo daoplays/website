@@ -60,7 +60,7 @@ import hallway from "./images/Hallway.gif"
 import hallway2 from "./images/Hallway2.gif"
 
 //buttons
-import enter_button from "./images/Enter_Button.png"
+//import enter_button from "./images/Enter_Button.png"
 
 // shop items
 import key from "./images/Key.png"
