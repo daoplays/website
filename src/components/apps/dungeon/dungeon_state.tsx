@@ -138,7 +138,7 @@ const DungeonEnemyAppearsText : string[][] = [
     // carnivine
     ["You have encountered a Carnivine, prepare yourself!",
     "The smell of flowers makes you relax, but only until you see the source is a Carnivine.  Prepare yourself!",
-    "Thick vines cover the walls.  You've entered the layer of a Carnivine!  Prepare yourself!"],
+    "Thick vines cover the walls.  You've entered the lair of a Carnivine!  Prepare yourself!"],
     //dungeon master
     ["You have encountered a Dungeon Master, prepare yourself!", 
     "The air begins to crackle around you as a Dungeon Master prepares to attack, get ready!"],
@@ -171,8 +171,8 @@ const DungeonEnemyAppearsText : string[][] = [
     ["You have encountered a huge orc, prepare yourself!",
     "The ground shakes as a gigantic orc charges towards you, prepare yourself!"], 
     // shade
-    ["You have encountered the Grim Reaper, prepare yourself!",
-    "The shadows around you start shifting and take on the form of the Grim Reaper, prepare yourself!"], 
+    ["You have encountered a Shade, prepare yourself!",
+    "The shadows around you start shifting and take on the form of a Shade, prepare yourself!"], 
     // skeleton_knight
     ["You have encountered a skeleton knight, prepare yourself!",
     "An armour-clad skeleton appears, prepare yourself!"], 
@@ -237,8 +237,8 @@ const DungeonEnemyDefeatedText : string[][] = [
     ["You have defeated the orc",
     "The orcs size means it is too slow to hit you, or defend against your strikes"],  
     // shade
-    ["You have defeated the the Grim Reaper",
-    "The Reaper chose the wrong soul to go after and you return it to the shadows"], 
+    ["You have defeated the Shade",
+    "The Shade chose the wrong soul to go after and you return it to the shadows"], 
     // skeleton_knight
     ["You have defeated the skeleton knight",
     "Noticing a crack in the knights armour you strike, and the knights protection disintegrates along with the skeleton itself"], 
@@ -282,7 +282,7 @@ const DungeonPlayerDefeatedText : string[][] = [
     ["The giant blue slime has defeated you.",
     "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
     "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
-    // giant green slime
+    // giant greenf slime
     ["The giant green slime has defeated you.",
     "Your attacks are absorbed by the giant slimes mass.  There is nothing you can do as it slowly envelops you.",
     "You can see the remains of other adventurers floating inside the giant slime, and realize with horror you will soon be joining them."],
@@ -306,8 +306,8 @@ const DungeonPlayerDefeatedText : string[][] = [
     ["With one swing from it's axe the orc cracks your head open like an egg",
     "The orc slams into you knocking you to the ground, and then crushes your head like a bug beneath its feet"], 
     // shade
-    ["The Reaper's scythe passes through you as though you were no more than air as it claims another soul",
-    "Your weapons do nothing to the Reaper, and it calmly reaches out a boney finger to claim your soul"], 
+    ["The Shade's scythe passes through you as though you were no more than air as it claims another soul",
+    "Your weapons do nothing to the Shade, and it calmly reaches out a shadowy hand to claim your soul"], 
     // skeleton knight
     ["Your attacks are simply deflected off the knight's armour until it gets bored and strikes you down",
     "You are no match for the knight, only pieces are left after it is done with you"], 

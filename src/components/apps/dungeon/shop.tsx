@@ -16,13 +16,13 @@ import {
     ASSOCIATED_TOKEN_PROGRAM_ID
   } from "@solana/spl-token";
 
-import { DUNGEON_FONT_SIZE, network_string, PROD ,
+import { DUNGEON_FONT_SIZE, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
     METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY} from './constants';
 
 import bs58 from "bs58";
   
-import { check_json, request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction} from './utils';
+import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction} from './utils';
 
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -67,7 +67,7 @@ const enum ShopInstruction {
     create_collection = 2
 }
 
-export function ShopScreen({num_xp} : {num_xp : number})
+export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_token : string})
 {
     const wallet = useWallet();
     const [chest_state, setChestState] = useState<ChestStatus>(ChestStatus.closed);
@@ -127,7 +127,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM))[0];
         let dungeon_key_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
 
-        let user_data = await request_shop_user_data(dungeon_key_data_account);
+        let user_data = await request_shop_user_data(bearer_token, dungeon_key_data_account);
         
         let user_keys_bought = 0;
 
@@ -149,7 +149,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
         }
       
 
-        let shop_data = await request_shop_data(program_data_key);
+        let shop_data = await request_shop_data(bearer_token, program_data_key);
 
         // if the shop hasn't been set up yet just return
         if (shop_data === null){
@@ -190,7 +190,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
         setXPReq(total_xp_req);
         check_xp.current = false;
 
-    }, [wallet, user_num_keys]);
+    }, [wallet, user_num_keys, bearer_token]);
 
     const check_key = useCallback(async() =>
     {
@@ -201,7 +201,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
         try {
 
             //console.log("request meta data");
-            let raw_meta_data = await request_raw_account_data(current_key.current);
+            let raw_meta_data = await request_raw_account_data(bearer_token, current_key.current);
 
             if (raw_meta_data === null) {
                 return;
@@ -227,7 +227,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
         }
             
 
-    }, []);
+    }, [bearer_token]);
 
     // interval for checking key
     useEffect(() => {
@@ -404,12 +404,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
                 data: init_data
             });
 
-            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
-
+            let txArgs = await get_current_blockhash(bearer_token);
             let transaction = new Transaction(txArgs);
             transaction.feePayer = wallet.publicKey;
 
@@ -424,19 +419,12 @@ export function ShopScreen({num_xp} : {num_xp : number})
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
-                let transaction_response = await fetch(send_url).then((res) => res.json());
-
-                let valid_response = check_json(transaction_response)
-
-                if (!valid_response) {
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+                if (transaction_response.result === "INVALID") {
                     console.log(transaction_response)
                     return;
                 }
-
-                //console.log(transaction_response);
-                //let signature = transaction_response["result"];
-                //console.log("sig: ", signature);
      
             } catch(error) {
                 console.log(error);
@@ -450,7 +438,7 @@ export function ShopScreen({num_xp} : {num_xp : number})
             return;
         
 
-    },[wallet]);
+    },[wallet, bearer_token]);
 
     return(
         <VStack alignItems="center">

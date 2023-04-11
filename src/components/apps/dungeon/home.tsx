@@ -60,7 +60,7 @@ import hallway from "./images/Hallway.gif"
 import hallway2 from "./images/Hallway2.gif"
 
 //buttons
-import enter_button from "./images/Enter_Button.png"
+//import enter_button from "./images/Enter_Button.png"
 
 // shop items
 import key from "./images/Key.png"
@@ -74,17 +74,17 @@ import selector from "./images/Selector.gif"
 
 
 //  dungeon constants
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, network_string, PROD,
+import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType, MAIN_ACCOUNT_SEED} from './constants';
 
 // dungeon utils
-import { check_json, request_player_account_data, request_key_data_from_index, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction} from './utils';
+import { request_player_account_data, request_key_data_from_index, request_token_amount,
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction, get_JWT_token, get_current_blockhash, send_transaction, check_signature, request_current_balance} from './utils';
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS, DungeonCharacterEmoji, DungeonEnemyEmoji, GoldEmoji} from './dungeon_state';
 
-import { AchievementNames, AchievementDescriptions, AchievementCard, AchievementTypes } from './achievements';
+import { AchievementCard, AchievementMetaData } from './achievements';
 
 // navigation
 import {Navigation} from './navigation';
@@ -96,6 +96,7 @@ import {HelpScreen} from './help';
 import {ShopScreen} from './shop';
 import {DMScreen} from './dm';
 import { AchievementsScreen } from './achievements';
+import {StatsScreen} from './stats';
 import { Footer } from './footer';
 //import {DungeonScreen} from './dungeon';
 
@@ -150,6 +151,10 @@ const enum DungeonInstruction {
 export function DungeonApp() 
 {
     const wallet = useWallet();
+
+    // bearer token used to authorise RPC requests
+    const [bearer_token, setBearerToken] = useState<string>("");
+    const bearer_interval = useRef<number | null>(null);
 
     // properties used to set what to display
     const [data_account_status, setDataAccountStatus] = useState<AccountStatus>(AccountStatus.unknown);
@@ -222,6 +227,10 @@ export function DungeonApp()
 
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
+
+    // discord processing
+    const discord_play_message_sent = useRef<boolean>(false);
+
 
 
     useEffect(() => 
@@ -473,7 +482,7 @@ export function DungeonApp()
 
         let temp_new : number[] = [];
         for (let i = 0; i < achievement_status.length; i++) {
-            if (achievement_status[i] === 2 && AchievementTypes[i] === 1) {
+            if (achievement_status[i] === 2 && AchievementMetaData[i].type === 1) {
                 temp_new.push(i);
             }
         }
@@ -497,7 +506,7 @@ export function DungeonApp()
 
         let temp_new : number[] = [];
         for (let i = 0; i < achievement_status.length; i++) {
-            if (achievement_status[i] === 2 && AchievementTypes[i] === 0) {
+            if (achievement_status[i] === 2 && AchievementMetaData[i].type === 0) {
                temp_new.push(i);
             }
         }
@@ -515,7 +524,7 @@ export function DungeonApp()
 
         for (let i = 0; i < new_achievements_ref.current.length; i++) {
             if (DEBUG)
-                console.log("Have achievement", i, AchievementNames[i], AchievementDescriptions[i]);
+                console.log("Have achievement", i, AchievementMetaData[i].name, AchievementMetaData[i].description);
         }
 
         setWhichAchievement(new_achievements_ref.current[0]);
@@ -575,23 +584,19 @@ export function DungeonApp()
         if (current_signature.current === null)
             return;
 
-        const confirm_url = `/.netlify/functions/solana_sig_status?network=`+network_string+`&function_name=getSignatureStatuses&p1=`+current_signature.current;
-        var signature_response = await fetch(confirm_url).then((res) => res.json());
+        let signature_response = await check_signature(bearer_token, current_signature.current);
 
-        if (DEBUG) 
-            console.log("sig response:", signature_response);
-
-        let valid_response = check_json(signature_response)
-        if (!valid_response) {
+        if (signature_response === null) {
             return;
         }
 
-        let confirmation = signature_response["result"]["value"][0];
+        //console.log(signature_response);
+        let confirmation = signature_response.result?.value[0];
         
         if (confirmation !== null) {
 
-            if (confirmation["err"] !== null) {
-                console.log("error: ", confirmation["err"]);
+            if (confirmation?.err !== null) {
+                console.log("error: ", confirmation?.err);
                 setTransactionFailed(true);
             }
             else {
@@ -600,17 +605,19 @@ export function DungeonApp()
 
             current_signature.current = null;
             signature_check_count.current = 0;
+            setProcessingTransaction(false);
         }
         else {
             signature_check_count.current += 1;
         }
         if (signature_check_count.current >= 10) {
             setTransactionFailed(true);
+            setProcessingTransaction(false);
             current_signature.current = null;
             signature_check_count.current = 0;
         }
 
-    }, []);
+    }, [bearer_token]);
 
     // interval for checking signatures
     useEffect(() => {
@@ -635,6 +642,12 @@ export function DungeonApp()
      
     const check_state = useCallback(async () => 
     {     
+
+        if (bearer_token === "") {
+            console.log("no bearer token set in check_state");
+            return;
+        }
+
         if (DEBUG) {
             console.log("in in it check_updates ", check_user_state.current, " check balance: ", check_data_account.current);
         }
@@ -653,26 +666,8 @@ export function DungeonApp()
             // first check if the data account exists
             try {
 
-                const balance_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getBalance&p1=`+player_data_key.toString()+"&config=true&encoding=base64&commitment=confirmed";
-                var balance_result;
-                try {
-                    balance_result = await fetch(balance_url).then((res) => res.json());
-                }
-                catch(error) {
-                    console.log(error);
-                    return;
-                }
-
-                let valid_response = check_json(balance_result)
-                if (!valid_response) {
-                    return;
-                }
-
-                if (balance_result["result"]["value"] == null) {
-                    return;
-                }
-                
-                let balance = balance_result["result"]["value"];
+                let balance = await request_current_balance(bearer_token, player_data_key);
+               
                 if (balance > 0) {
                     setDataAccountStatus(AccountStatus.created);
                     check_data_account.current = false;
@@ -693,7 +688,7 @@ export function DungeonApp()
 
             try {
 
-                let player_data = await request_player_account_data(player_data_key);
+                let player_data = await request_player_account_data(bearer_token, player_data_key);
 
                 if (player_data === null) {
                     return;
@@ -770,7 +765,7 @@ export function DungeonApp()
             try {
                 // get the achievement data
                 let achievement_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
-                let achievement_data = await request_player_achievement_data(achievement_data_key);
+                let achievement_data = await request_player_achievement_data(bearer_token, achievement_data_key);
 
                 if (achievement_data !== null) {
 
@@ -803,7 +798,7 @@ export function DungeonApp()
         }
         
 
-    }, [wallet, num_plays]);
+    }, [wallet, num_plays, bearer_token]);
 
     // interval for checking state
     useEffect(() => {
@@ -919,8 +914,10 @@ export function DungeonApp()
                 }
                 post_string += DungeonEnemyEmoji[current_enemy] + " in level " + current_level;
 
-                if (current_level > 0 && PROD)
+                if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
                     post_discord_message(post_string);
+                    discord_play_message_sent.current = true;
+                }
 
                 setAnimateLevel(0);
                 CheckNewPlayAchievements()
@@ -930,18 +927,51 @@ export function DungeonApp()
 
     }, [animateLevel, player_character, current_enemy, current_level, CheckNewPlayAchievements]);
 
+
+    
+
+    const set_JWT_token = useCallback(async () => 
+    { 
+        console.log("Setting new JWT token");
+        let token = await get_JWT_token();
+        setBearerToken(token["token"]);
+
+    }, []);
+
+    // interval for checking JWT
+    useEffect(() => {
+
+        let one_second = 1000;
+        if (bearer_interval.current === null) {
+            bearer_interval.current = window.setInterval(set_JWT_token, one_second * 60 * 5);
+        }
+        else{
+            window.clearInterval(bearer_interval.current);
+            bearer_interval.current = null;
+            
+        }
+        // here's the cleanup function
+        return () => {
+            if (bearer_interval.current !== null) {
+            window.clearInterval(bearer_interval.current);
+            bearer_interval.current = null;
+            }
+        };
+    }, [set_JWT_token]);
+
     useEffect(() => 
     {
         if (DEBUG) {
             console.log("In initial use effect");
         }
 
+        set_JWT_token();
         setPlayerState(DungeonStatus.unknown);
         setEnemyState(DungeonStatus.unknown);
         
 
 
-    }, []);
+    }, [set_JWT_token]);
 
 
     const Play = useCallback( async () => 
@@ -955,7 +985,7 @@ export function DungeonApp()
         if (DEBUG) {
             console.log("In play", bet_size, BetSizeValues[bet_size]);
         }
-        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
 
@@ -1031,11 +1061,7 @@ export function DungeonApp()
             data: instruction_data
         });
 
-        const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-        const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-        let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-        let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-        const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+        let txArgs = await get_current_blockhash(bearer_token);
 
         let transaction = new Transaction(txArgs);
         transaction.feePayer = wallet.publicKey;
@@ -1047,17 +1073,15 @@ export function DungeonApp()
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&config=true&p3=skippreflight";
-            var transaction_response = await fetch(send_url).then((res) => res.json());
-
-            let valid_response = check_json(transaction_response)
-            if (!valid_response) {
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
                 return;
             }
 
-            let signature = transaction_response["result"];
+            let signature = transaction_response.result;
 
             if (DEBUG) {
                 console.log("play signature: ", signature);
@@ -1079,12 +1103,13 @@ export function DungeonApp()
         setScreen(Screen.DUNGEON_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.alive);
-        setProcessingTransaction(false);
+        //setProcessingTransaction(false);
         check_user_state.current = true;
         check_sol_balance.current = true;
         check_achievements.current = true;
+        discord_play_message_sent.current = false;
 
-    },[wallet, player_character, current_key_index, current_key_mint, bet_size]);
+    },[wallet, player_character, current_key_index, current_key_mint, bet_size, bearer_token]);
 
     const Quit = useCallback( async () => 
     {
@@ -1094,7 +1119,7 @@ export function DungeonApp()
             return;
         
         setProcessingTransaction(true);
-        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let dm_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
@@ -1120,11 +1145,7 @@ export function DungeonApp()
             data: instruction_data
         });
 
-        const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-        const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-        let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-        let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-        const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+        let txArgs = await get_current_blockhash(bearer_token);
 
         let transaction = new Transaction(txArgs);
         transaction.feePayer = wallet.publicKey;
@@ -1136,19 +1157,15 @@ export function DungeonApp()
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&config=true&p3=skippreflight";
-            let transaction_response = await fetch(send_url).then((res) => res.json());
-
-            let valid_response = check_json(transaction_response)
-
-            if (!valid_response) {
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
                 return;
             }
 
-            let signature = transaction_response["result"];
-
+            let signature = transaction_response.result;
             current_signature.current = signature;
             signature_check_count.current = 0;
 
@@ -1164,7 +1181,7 @@ export function DungeonApp()
 
         setScreen(Screen.HOME_SCREEN);
         setEnemyState(DungeonStatus.unknown);
-        setProcessingTransaction(false);
+        //setProcessingTransaction(false);
         check_user_state.current = true;
         check_sol_balance.current = true;
         check_achievements.current = true;
@@ -1181,7 +1198,7 @@ export function DungeonApp()
         return;
     
 
-    },[wallet, player_character, current_level, bet_size]);
+    },[wallet, player_character, current_level, bet_size, bearer_token]);
 
     const ClaimAchievement = useCallback( async (which : number) => 
     {
@@ -1190,7 +1207,7 @@ export function DungeonApp()
         if (wallet.publicKey === null || wallet.signTransaction === undefined || which === null)
             return;
 
-        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("main_data_account")], DUNGEON_PROGRAM))[0];
+        let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
 
@@ -1250,17 +1267,14 @@ export function DungeonApp()
             keys: [
                 {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
                 {pubkey: program_data_key, isSigner: false, isWritable: true},
+                {pubkey: program_data_key, isSigner: false, isWritable: true},
                 {pubkey: SYSTEM_KEY, isSigner: false, isWritable: true}
             ],
             programId: DUNGEON_PROGRAM,
             data: init_data
         });
 
-        const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-        const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-        let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-        let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-        const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+        let txArgs = await get_current_blockhash(bearer_token);
 
         let transaction = new Transaction(txArgs);
         transaction.feePayer = wallet.publicKey;
@@ -1275,16 +1289,14 @@ export function DungeonApp()
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&config=true&p3=skippreflight";
-            var transaction_response = await fetch(send_url).then((res) => res.json());
-
-            let valid_response = check_json(transaction_response)
-            if (!valid_response) {
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 return;
             }
 
-            let signature = transaction_response["result"];
+            let signature = transaction_response.result;
 
             if (DEBUG) {
                 console.log("play signature: ", signature);
@@ -1301,11 +1313,11 @@ export function DungeonApp()
         check_achievements.current = true;
         setShowAchievement(false)
 
-        let post_string = DungeonCharacterEmoji[player_character] + " earned " + AchievementNames[which];
-        //if (PROD)
+        let post_string = DungeonCharacterEmoji[player_character] + " earned " + AchievementMetaData[which].name;
+        if (PROD)
             post_discord_message(post_string);
 
-    },[wallet, player_character]);
+    },[wallet, player_character, bearer_token]);
 
     const ApplyKey = useCallback( async () => 
     {
@@ -1329,12 +1341,12 @@ export function DungeonApp()
         let dungeon_key_lookup_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer], DUNGEON_PROGRAM))[0];
 
         //console.log("lookup: ", Buffer.from("key_meta"), reversed_buffer);
-        let key_meta_data = await request_key_data_from_index(dungeon_key_lookup_account);
+        let key_meta_data = await request_key_data_from_index(bearer_token, dungeon_key_lookup_account);
         
         // if we have been passed a number check the lookup account exists
         if (key_meta_data === null) {
 
-            key_meta_data = await run_keyData_GPA(parsed_key_index);
+            key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
 
             if (key_meta_data === null) {
                 setDiscountError("Key " + discount_key_index + " has not been minted");
@@ -1354,7 +1366,7 @@ export function DungeonApp()
             true // allow owner off curve
         );
 
-        let token_amount = await request_token_amount(key_token_account);
+        let token_amount = await request_token_amount(bearer_token, key_token_account);
 
         if (token_amount !== 1) {
             setDiscountError("User does not own dungeon key " + key_index.toString());
@@ -1366,7 +1378,7 @@ export function DungeonApp()
         setCurrentKeyMint(key_mint);
         setCurrentKeyIndex(key_index);
 
-    },[wallet, discount_key_index]);
+    },[wallet, discount_key_index, bearer_token]);
 
     const Reset = useCallback( async () => 
     {
@@ -1609,9 +1621,15 @@ export function DungeonApp()
                             <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                 <VStack align="center">
                                     <div className="font-face-sfpb">
+                                        
+                                        <Box borderWidth='2px'  borderColor="white" width="100%">
+                                        <Text align="center" fontSize={font_size} color="white"> Back Soon! </Text>
+                                        </Box>
+                                        {/*
                                         <Button variant='link' size='md' onClick={Play}>
                                         <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 
+                                        */}
                                     </div> 
                                     <BetSizeInput/>
 
@@ -1847,7 +1865,7 @@ export function DungeonApp()
     return (
         <>
             
-        <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance}/>
+        <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance} bearer_token={bearer_token}/>
         {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN) &&
             <AchievementsModal/>
         }
@@ -1874,13 +1892,16 @@ export function DungeonApp()
                             <HelpScreen/>
                         }
                         {screen === Screen.SHOP_SCREEN &&
-                            <ShopScreen num_xp={numXP}/>
+                            <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
                         }
                         {screen === Screen.DM_SCREEN &&
-                            <DMScreen/>
+                            <DMScreen bearer_token={bearer_token}/>
                         }
                         {screen === Screen.ACHIEVEMENT_SCREEN &&
                             <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement}/>
+                        }
+                        {screen === Screen.STATS_SCREEN &&
+                            <StatsScreen/>
                         }
                         {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) &&
                             <UnconnectedPage/>
@@ -1905,7 +1926,7 @@ export function DungeonApp()
                             <FAQScreen/>
                         }
                         {screen === Screen.SHOP_SCREEN &&
-                            <ShopScreen num_xp={numXP}/>
+                            <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
                         }
                         {screen === Screen.HELP_SCREEN &&
                             <HelpScreen/>
@@ -1913,8 +1934,11 @@ export function DungeonApp()
                         {screen === Screen.ACHIEVEMENT_SCREEN &&
                             <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
                         }
+                        {screen === Screen.STATS_SCREEN &&
+                            <StatsScreen/>
+                        }
                         {screen === Screen.DM_SCREEN &&
-                            <DMScreen/>
+                            <DMScreen bearer_token={bearer_token}/>
                         }
                         </>
                     }                    
