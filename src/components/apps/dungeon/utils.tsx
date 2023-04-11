@@ -2,7 +2,7 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
-import { network_string, SHOP_PROGRAM, DEBUG } from './constants';
+import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE} from './constants';
 import {
     Box,
 } from '@chakra-ui/react';
@@ -109,7 +109,7 @@ interface BlockHash {
 export async function get_current_blockhash(bearer : string) : Promise<BlockHash>
 {
     var body = {"id": 1, "jsonrpc": "2.0", "method": "getLatestBlockhash"};
-    const blockhash_data_result = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+    const blockhash_data_result = await postData(RPC_NODE, bearer, body);
 
     
     let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
@@ -132,7 +132,7 @@ export async function send_transaction(bearer : string, encoded_transaction : st
 {
     var body = {"id": 1, "jsonrpc": "2.0", "method": "sendTransaction", "params": [encoded_transaction]};
    
-    var response_json = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+    var response_json = await postData(RPC_NODE, bearer, body);
     let transaction_response : TransactionResponseData = response_json;
 
     let valid_json = check_json(response_json);
@@ -169,7 +169,7 @@ export async function check_signature(bearer : string, signature : string) : Pro
 
     var body = {"id": 1, "jsonrpc": "2.0", "method": "getSignatureStatuses", "params": [[signature],{"searchTransactionHistory": true}]};
    
-    var response_json = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+    var response_json = await postData(RPC_NODE, bearer, body);
     let transaction_response : SignatureResponseData = response_json;
 
     let valid_json = check_json(response_json);
@@ -244,7 +244,7 @@ export async function request_current_balance(bearer : string, pubkey : PublicKe
 
     var account_info_result;
     try {
-        account_info_result = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+        account_info_result = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -272,7 +272,7 @@ export async function request_token_amount(bearer : string, pubkey : PublicKey) 
 
     var response;
     try {
-        response  = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+        response  = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -313,7 +313,7 @@ export async function request_raw_account_data(bearer : string, pubkey : PublicK
 
     var response;
     try {
-        response = await postData("https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95", bearer, body);
+        response = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log(error);
