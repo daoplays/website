@@ -98,6 +98,8 @@ import {DMScreen} from './dm';
 import { AchievementsScreen } from './achievements';
 import {StatsScreen} from './stats';
 import { Footer } from './footer';
+import { MarketplaceScreen } from './marketplace';
+
 //import {DungeonScreen} from './dungeon';
 
 import './css/style.css';
@@ -1895,6 +1897,9 @@ export function DungeonApp()
                         {screen === Screen.SHOP_SCREEN &&
                             <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
                         }
+                        {screen === Screen.MARKETPLACE_SCREEN &&
+                            <MarketplaceScreen/>
+                        }
                         {screen === Screen.DM_SCREEN &&
                             <DMScreen bearer_token={bearer_token}/>
                         }
@@ -1928,6 +1933,9 @@ export function DungeonApp()
                         }
                         {screen === Screen.SHOP_SCREEN &&
                             <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
+                        }
+                        {screen === Screen.MARKETPLACE_SCREEN &&
+                            <MarketplaceScreen/>
                         }
                         {screen === Screen.HELP_SCREEN &&
                             <HelpScreen/>
