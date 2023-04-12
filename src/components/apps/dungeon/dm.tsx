@@ -1096,7 +1096,7 @@ export function DMScreen({bearer_token} : {bearer_token : string})
                         <Center>
                         <Box width = "100%">
                         <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_dm_mint.toString()+"?cluster=devnet"}>here</a></Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_dm_mint.toString()}>here</a></Text>
                         </div>
                         </Box>
                         </Center>
