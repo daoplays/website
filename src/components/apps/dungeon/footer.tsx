@@ -174,12 +174,12 @@ export function Footer() {
         );
     };
 
-    const ParseDiscordMessage = (message: DiscordMessage) => {
+    const ParseDiscordMessage: React.FC<DiscordMessage> = ({message,time}) => {
 
         // let message= message?.message;
-        const time = Date.parse(message?.message?.time);
+        const newTime = Date.parse(time);
         const now = new Date().getTime();
-        const distance_seconds = (now - time) / 1000;
+        const distance_seconds = (now - newTime) / 1000;
         const distance_minutes = distance_seconds / 60;
         // console.log(distance_seconds, distance_minutes);
         const display_distance =
@@ -190,7 +190,7 @@ export function Footer() {
         // console.log('display_distance', display_distance);
 
 
-        const split_message = message?.message?.message.split(" ") || [];
+        const split_message = message.split(" ") || [];
 
         const character_emoji = emoji_map.get(split_message && split_message[0]);
 
@@ -320,7 +320,9 @@ export function Footer() {
                                     <>
                                         <VStack align="left" mt="8px" ml="4px" mr="4px">
                                         {discord_messages.slice(0, 9).map((message, index) => (
-                                            <ParseDiscordMessage key={index} message={message} />
+                        
+                                            
+                                            <ParseDiscordMessage key={index} message={message.message} time={message.time} />
                                         ))}
                                         </VStack>
 
@@ -334,9 +336,13 @@ export function Footer() {
                                     }
                                     {!show_live && 
                                     <>
-                                    <VStack align="left" ml="8px" mr="8px" mt="8px" >
-                                        <ParseDiscordMessage message={discord_messages[0]}/>
-                                    </VStack>
+                                    <VStack align="left" mt="8px" ml="4px" mr="4px">
+                                        {discord_messages.slice(0, 1).map((message, index) => (
+                        
+                                            
+                                            <ParseDiscordMessage key={index} message={message.message} time={message.time} />
+                                        ))}
+                                        </VStack>
                                     <Center>
                                         <Box as='button' onClick={() => setShowLive(true)} width={"60px"}>
                                             <FontAwesomeIcon color="white" icon={solid('chevron-up')} size="lg"/>
@@ -360,11 +366,13 @@ export function Footer() {
 
                                 {show_live && 
                                 <>
-                                    <VStack align="left" width={FOOTER_WIDTH} ml="1rem" mt="1rem" mr="1rem">
-                            {discord_messages.slice(0, 9).map((message, index) => (
-                                <ParseDiscordMessage key={index} message={message} />
-                            ))}
-                                    </VStack>
+                                    <VStack align="left" mt="8px" ml="4px" mr="4px">
+                                        {discord_messages.slice(0, 9).map((message, index) => (
+                        
+                                            
+                                            <ParseDiscordMessage key={index} message={message.message} time={message.time} />
+                                        ))}
+                                        </VStack>
                                 <Center>
                                     <Box as='button' onClick={() => setShowLive(false)} width={"60px"}>
                                         <FontAwesomeIcon color="white" icon={solid('chevron-down')} size="lg"/>
@@ -374,9 +382,13 @@ export function Footer() {
                                 }
                                 {!show_live && 
                                 <>
-                                <VStack align="left" width={FOOTER_WIDTH} ml="1rem" mt="1rem" mr="1rem">
-                                    <ParseDiscordMessage message={discord_messages[0]}/>
-                                </VStack>
+                                <VStack align="left" mt="8px" ml="4px" mr="4px">
+                                        {discord_messages.slice(0, 1).map((message, index) => (
+                        
+                                            
+                                            <ParseDiscordMessage key={index} message={message.message} time={message.time} />
+                                        ))}
+                                        </VStack>
                                 <Center>
                                     <Box as='button' onClick={() => setShowLive(true)} width={"60px"}>
                                         <FontAwesomeIcon color="white" icon={solid('chevron-up')} size="lg"/>
