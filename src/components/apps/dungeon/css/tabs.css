@@ -1,0 +1,30 @@
+.custom-tab {
+    background-color: black !important;
+    color: white !important;
+    font-family: "SFPixelate" !important;
+    border: none !important;
+    border-top-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+    margin-bottom: 5px !important;
+}
+
+.custom-tab.nav-link {
+    background-color: black !important;
+    color: white !important;
+    border: none !important;
+    border-top-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+    margin-bottom: 5px !important;
+}
+  
+.custom-tab.active {
+    background-color: #000 !important;
+    color: white !important;
+    font-family: "SFPixelate" !important;
+    border: white !important;
+    border-top-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+    border-bottom: 5px !important;
+    margin-bottom: 5px !important;
+    text-decoration: underline !important;
+}

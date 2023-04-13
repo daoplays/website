@@ -12,7 +12,7 @@ export function OddsScreen()
 {
     return(
         <>
-        <Center>
+        <Center marginBottom="5rem">
         <Box width = "80%">
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 

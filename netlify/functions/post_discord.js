@@ -2,8 +2,8 @@ const axios = require("axios");
 
 exports.handler = async function (event, context) {
 
-    console.log(event);
-    console.log(context);
+    //console.log(event);
+    //console.log(context);
 
     let baseURL = "https://discord.com/api/channels/1086998476245700739/messages"
     let bot_key = "Bot " + process.env.DISCORD_DUNGEON_BOT;
@@ -24,7 +24,7 @@ exports.handler = async function (event, context) {
 
             const res = await axios.post(baseURL, data, config);
 
-            console.log("RESPONSE RECEIVED: ", res.data);
+            console.log("DISCORD POST RESPONSE RECEIVED");
             return {
                 statusCode: 200,
                 body: JSON.stringify(res.data),
@@ -33,7 +33,7 @@ exports.handler = async function (event, context) {
         else if (method === "get") {
             const res = await axios.get(baseURL, config);
 
-            console.log("RESPONSE RECEIVED: ", res.data);
+            console.log("DISCORD GET RESPONSE RECEIVED");
             return {
                 statusCode: 200,
                 body: JSON.stringify(res.data),

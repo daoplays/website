@@ -21,13 +21,13 @@ import {
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
-import { DUNGEON_FONT_SIZE, network_string, PROD ,
+import { DUNGEON_FONT_SIZE, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
     METAPLEX_META, SYSTEM_KEY, FOUNDER_1_KEY, FOUNDER_2_KEY, DM_PROGRAM, SHOP_PROGRAM, KeyType, DEBUG} from './constants';
 
 import bs58 from "bs58";
 
-import { request_raw_account_data, bignum_to_num, request_token_amount, check_json, request_DM_Manager_data, request_DM_data, serialise_DM_Mint_instruction, serialise_basic_instruction, request_DM_User_data, run_keyData_GPA} from './utils';
+import { request_raw_account_data, bignum_to_num, request_token_amount, request_DM_Manager_data, request_DM_data, serialise_DM_Mint_instruction, serialise_basic_instruction, request_DM_User_data, run_keyData_GPA, get_current_blockhash, send_transaction} from './utils';
 
 
 import {
@@ -66,7 +66,7 @@ const enum MemberStatus {
     
 }
 
-export function DMScreen()
+export function DMScreen({bearer_token} : {bearer_token : string})
 {
     const wallet = useWallet();
 
@@ -113,7 +113,7 @@ export function DMScreen()
         try {
 
             //console.log("request meta data");
-            let raw_meta_data = await request_raw_account_data(current_dm_nft_meta.current);
+            let raw_meta_data = await request_raw_account_data(bearer_token, current_dm_nft_meta.current);
 
             if (raw_meta_data === null) {
                 return;
@@ -136,7 +136,7 @@ export function DMScreen()
         }
             
 
-    }, []);
+    }, [bearer_token]);
 
     // interval for checking new DM NFT
     useEffect(() => {
@@ -172,7 +172,7 @@ export function DMScreen()
 
             let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
 
-            let dm_data = await request_DM_Manager_data(program_data_key);
+            let dm_data = await request_DM_Manager_data(bearer_token, program_data_key);
 
             // if the shop hasn't been set up yet just return
             if (dm_data === null){
@@ -210,7 +210,7 @@ export function DMScreen()
 
             let dm_user_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], DM_PROGRAM))[0];
 
-            let user_data = await request_DM_User_data(dm_user_account);
+            let user_data = await request_DM_User_data(bearer_token, dm_user_account);
 
             if (user_data !== null) {
 
@@ -237,7 +237,7 @@ export function DMScreen()
 
             let dm_data_account = (PublicKey.findProgramAddressSync([Buffer.from("dm_data"), Buffer.from(dm_name)], DM_PROGRAM))[0];
 
-            let data = await request_DM_data(dm_data_account);
+            let data = await request_DM_data(bearer_token, dm_data_account);
 
             if (data === null) {
                 check_dm_data.current = false;
@@ -254,7 +254,7 @@ export function DMScreen()
             }           
         }
 
-    }, [wallet, dm_fees_raised, dm_name, dm_index, current_fees, keys_burnt]);
+    }, [wallet, dm_fees_raised, dm_name, dm_index, current_fees, keys_burnt, bearer_token]);
 
     // interval for checking state
     useEffect(() => {
@@ -298,7 +298,7 @@ export function DMScreen()
             return;
 
         // get the mint of the key index
-        let key_meta_data = await run_keyData_GPA(parsed_key_index);
+        let key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
 
 
         if (key_meta_data === null) {
@@ -326,7 +326,7 @@ export function DMScreen()
         );
 
         // check the user actually owns the token
-        let token_amount = await request_token_amount(nft_account_key);
+        let token_amount = await request_token_amount(bearer_token, nft_account_key);
 
         if (token_amount === 0) {
             setBurnError("Applicant does not own Key " + parsed_key_index);
@@ -363,11 +363,7 @@ export function DMScreen()
             data: burn_token_data
         });
 
-        const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-        const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-        let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-        let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-        const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+        let txArgs = await get_current_blockhash(bearer_token);
 
         let transaction = new Transaction(txArgs);
         transaction.feePayer = wallet.publicKey;
@@ -379,19 +375,18 @@ export function DMScreen()
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;//+"&config=true&p3=skippreflight";
-            let transaction_response = await fetch(send_url).then((res) => res.json());
-
-            let valid_response = check_json(transaction_response)
-
-            if (!valid_response) {
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 return;
             }
 
+            let signature = transaction_response.result;
+
+          
             if (DEBUG)
                 console.log(transaction_response);
-            let signature = transaction_response["result"];
 
             if (DEBUG)
                 console.log("sig: ", signature);
@@ -406,7 +401,7 @@ export function DMScreen()
         return;
         
 
-    },[wallet, burn_key_index]);
+    },[wallet, burn_key_index, bearer_token]);
    
 
     const Mint = useCallback( async () => 
@@ -507,11 +502,7 @@ export function DMScreen()
                 data: init_data
             });
 
-            const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-            const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-            let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-            let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-            const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+            let txArgs = await get_current_blockhash(bearer_token);
 
             let transaction = new Transaction(txArgs);
             transaction.feePayer = wallet.publicKey;
@@ -527,20 +518,13 @@ export function DMScreen()
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
-                let transaction_response = await fetch(send_url).then((res) => res.json());
-
-                let valid_response = check_json(transaction_response)
-
-                if (!valid_response) {
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+                if (transaction_response.result === "INVALID") {
                     console.log(transaction_response)
                     return;
                 }
-
-                //console.log(transaction_response);
-                //let signature = transaction_response["result"];
-                //console.log("sig: ", signature);
-     
+    
             } catch(error) {
                 console.log(error);
                 return;
@@ -551,7 +535,7 @@ export function DMScreen()
             return;
         
 
-    },[wallet, dm_name]);
+    },[wallet, dm_name, bearer_token]);
 
     const GetFees = useCallback( async () => 
     {
@@ -603,11 +587,7 @@ export function DMScreen()
         });
 
 
-        const blockhash_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getLatestBlockhash&p1=`;
-        const blockhash_data_result = await fetch(blockhash_url).then((res) => res.json());
-        let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-        let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
-        const txArgs = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+        let txArgs = await get_current_blockhash(bearer_token);
 
         let transaction = new Transaction(txArgs);
         transaction.feePayer = wallet.publicKey;
@@ -619,20 +599,12 @@ export function DMScreen()
         try {
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
-
-            const send_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=sendTransaction&p1=`+encoded_transaction;
-            let transaction_response = await fetch(send_url).then((res) => res.json());
-
-            let valid_response = check_json(transaction_response)
-
-            if (!valid_response) {
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 return;
             }
-
-            //console.log(transaction_response);
-            //let signature = transaction_response["result"];
-            //console.log("sig: ", signature);
     
         } catch(error) {
             console.log(error);
@@ -644,7 +616,7 @@ export function DMScreen()
         return;
         
 
-    },[wallet, dm_name, dm_mint]);
+    },[wallet, dm_name, dm_mint, bearer_token]);
 
     const CheckMemberStatus = useCallback( async () => 
     {
@@ -661,7 +633,7 @@ export function DMScreen()
 
         let dm_data_account = (PublicKey.findProgramAddressSync([Buffer.from("dm_data"), Buffer.from(dm_name)], DM_PROGRAM))[0];
 
-        let dm_data = await request_DM_data(dm_data_account);
+        let dm_data = await request_DM_data(bearer_token, dm_data_account);
 
         if (dm_data === null) {
             setDMError("There is no DM by this name on our records");
@@ -676,7 +648,7 @@ export function DMScreen()
             true // allow owner off curve
         );
 
-        let token_amount = await request_token_amount(dm_token_account);
+        let token_amount = await request_token_amount(bearer_token, dm_token_account);
 
         if (token_amount !== 1) {
             setDMError("I know DM " + dm_name + " well, and you are not them");
@@ -694,7 +666,7 @@ export function DMScreen()
         setMemberStatus(MemberStatus.member);
 
 
-    },[wallet, dm_name]);
+    },[wallet, dm_name, bearer_token]);
 
     const CheckApplicantStatus = useCallback( async () => 
     {
@@ -709,7 +681,7 @@ export function DMScreen()
             true // allow owner off curve
         );
 
-        let token_amount = await request_token_amount(whitelist_account_key);
+        let token_amount = await request_token_amount(bearer_token, whitelist_account_key);
 
         if (token_amount > 0) {
             setMemberStatus(MemberStatus.whitelisted);
@@ -719,7 +691,7 @@ export function DMScreen()
         setMemberStatus(MemberStatus.applicant);
 
 
-    },[wallet]);
+    },[wallet, bearer_token]);
 
     function FoundersDialogue()
     {
@@ -1124,7 +1096,7 @@ export function DMScreen()
                         <Center>
                         <Box width = "100%">
                         <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_dm_mint.toString()+"?cluster=devnet"}>here</a></Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_dm_mint.toString()}>here</a></Text>
                         </div>
                         </Box>
                         </Center>

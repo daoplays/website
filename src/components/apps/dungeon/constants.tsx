@@ -1,6 +1,9 @@
 import { isMobile } from "react-device-detect";
 import { PublicKey} from '@solana/web3.js';
 
+const DEV_RPC_NODE = "https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95";
+const PROD_RPC_NODE = "https://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
+
 //pyth oracles
 export const PYTH_BTC_DEV = new PublicKey('HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J');   
 export const PYTH_ETH_DEV = new PublicKey('EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw');   
@@ -20,6 +23,9 @@ export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4uk
 
 export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHyWXxPJ');
 
+// account seeds
+export const MAIN_ACCOUNT_SEED = "house_account";
+
 
 // set font size
 export var DEFAULT_FONT_SIZE = "30px"
@@ -34,8 +40,10 @@ export const PROD = true;
 export const DEBUG = false;
 
 export var network_string = "devnet";
+export var RPC_NODE = DEV_RPC_NODE;
 if (PROD) {
     network_string = "mainnet"
+    RPC_NODE = PROD_RPC_NODE;
 }
 
 export const enum Screen {
@@ -48,6 +56,7 @@ export const enum Screen {
     SHOP_SCREEN = 6,
     DM_SCREEN = 7,
     ACHIEVEMENT_SCREEN = 8,
+    STATS_SCREEN = 9
 }
 
 export const enum KeyType {

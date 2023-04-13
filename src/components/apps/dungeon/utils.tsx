@@ -2,7 +2,7 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
-import { network_string, SHOP_PROGRAM, DEBUG } from './constants';
+import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE} from './constants';
 import {
     Box,
 } from '@chakra-ui/react';
@@ -13,6 +13,28 @@ import bs58 from "bs58";
 import {
     WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
+
+export async function get_JWT_token() : Promise<any | null>
+{
+   
+    const token_url = `/.netlify/functions/jwt`;
+
+    var token_result;
+    try {
+        token_result = await fetch(token_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return null;
+    }
+
+    if (DEBUG)
+        console.log(token_result);
+
+
+    return token_result
+}
+
 
 export function WalletConnected() 
 {
@@ -25,6 +47,21 @@ export function WalletConnected()
     );
 }
 
+// Example POST method implementation:
+async function postData(url = "", bearer = "", data = {}) {
+    // Default options are marked with *
+    const response = await fetch(url, {
+      method: "POST", // *GET, POST, PUT, DELETE, etc.
+      headers: {
+        'Accept': 'application/json', 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${bearer}`
+      },
+      body: JSON.stringify(data), // body data type must match "Content-Type" header
+    });
+    return response.json(); // parses JSON response into native JavaScript objects
+}
+
 
 export function uInt16ToLEBytes(num : number) : Buffer {
 
@@ -33,7 +70,6 @@ export function uInt16ToLEBytes(num : number) : Buffer {
    
     return bytes
  }
-
 
 interface BasicReply {
     id : number;
@@ -46,15 +82,107 @@ export function check_json(json_response : BasicReply) : boolean
 {
 
     if (json_response.result === undefined) {
-        if (json_response.result !== undefined) {
+        if (json_response.error !== undefined) {
             console.log(json_response.error)
             
         }
         return  false;
     }
 
+    if (json_response.result === null)
+        return false;
+
     return true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Transactions ///////////////////////// /////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+interface BlockHash {
+   blockhash : string;
+   lastValidBlockHeight : number;
+}
+
+export async function get_current_blockhash(bearer : string) : Promise<BlockHash>
+{
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getLatestBlockhash"};
+    const blockhash_data_result = await postData(RPC_NODE, bearer, body);
+
+    
+    let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+    let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+
+    let hash_data : BlockHash = { blockhash: blockhash, lastValidBlockHeight: last_valid};
+
+    return hash_data;
+
+}
+
+interface TransactionResponseData {
+    id : number;
+    jsonrpc : string;
+    result : string;
+}
+
+
+export async function send_transaction(bearer : string, encoded_transaction : string) : Promise <TransactionResponseData>
+{
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "sendTransaction", "params": [encoded_transaction]};
+   
+    var response_json = await postData(RPC_NODE, bearer, body);
+    let transaction_response : TransactionResponseData = response_json;
+
+    let valid_json = check_json(response_json);
+
+    if (valid_json)
+        return transaction_response;
+
+    transaction_response.result = "INVALID"
+    return transaction_response;
+
+    
+}
+
+interface SignatureResponseData {
+    id : number;
+    jsonrpc : string;
+    result: {
+        context: {
+            apiVersion : string;
+            slot : number;
+        };
+        value : [{
+            confirmationStatus : string;
+            confirmations : number;
+            err : string | null;
+            slot : number;
+        }];
+    } | null;
+}
+
+
+export async function check_signature(bearer : string, signature : string) : Promise <SignatureResponseData | null>
+{
+
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getSignatureStatuses", "params": [[signature],{"searchTransactionHistory": true}]};
+   
+    var response_json = await postData(RPC_NODE, bearer, body);
+    let transaction_response : SignatureResponseData = response_json;
+
+    let valid_json = check_json(response_json);
+
+    if (valid_json)
+        return transaction_response;
+
+    
+    return null;
+
+    
+}
+
 
 interface AccountData {
     id : number;
@@ -94,6 +222,7 @@ interface TokenBalanceData {
 
 
 
+
 class InstructionNoArgs {
     constructor(
       readonly instruction: number
@@ -108,14 +237,14 @@ class InstructionNoArgs {
     )
 }
 
-
-export async function request_current_balance(pubkey : PublicKey) : Promise<number>
+export async function request_current_balance(bearer : string, pubkey : PublicKey) : Promise<number>
 {
-    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+"&config=true&encoding=base64&commitment=confirmed";
+
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getAccountInfo", "params": [pubkey.toString(), {"encoding": "base64", "commitment": "confirmed"}]};
 
     var account_info_result;
     try {
-        account_info_result = await fetch(account_info_url).then((res) => res.json());
+        account_info_result = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -137,13 +266,13 @@ export async function request_current_balance(pubkey : PublicKey) : Promise<numb
     return current_balance;
 
 }
-export async function request_token_amount(pubkey : PublicKey) : Promise<number>
+export async function request_token_amount(bearer : string, pubkey : PublicKey) : Promise<number>
 {
-    const url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getTokenAccountBalance&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getTokenAccountBalance", "params": [pubkey.toString(), {"encoding": "base64", "commitment": "confirmed"}]};
 
     var response;
     try {
-        response  = await fetch(url).then((res) => res.json());
+        response  = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -174,13 +303,17 @@ export async function request_token_amount(pubkey : PublicKey) : Promise<number>
     return token_amount;
 }
 
-export async function request_raw_account_data(pubkey : PublicKey) : Promise<Buffer | null>
+
+
+
+
+export async function request_raw_account_data(bearer : string, pubkey : PublicKey) : Promise<Buffer | null>
 {
-    const account_info_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getAccountInfo&p1=`+pubkey.toString()+`&config=true&encoding=base64&commitment=confirmed`;
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getAccountInfo", "params": [pubkey.toString(), {"encoding": "base64", "commitment": "confirmed"}]};
 
     var response;
     try {
-        response  = await fetch(account_info_url).then((res) => res.json());
+        response = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log(error);
@@ -420,10 +553,10 @@ class DungeonClaimAchievementInstruction {
     )
 }
 
-export async function request_player_account_data(pubkey : PublicKey) : Promise<PlayerData | null>
+export async function request_player_account_data(bearer : string, pubkey : PublicKey) : Promise<PlayerData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -434,10 +567,10 @@ export async function request_player_account_data(pubkey : PublicKey) : Promise<
     return data;
 }
 
-export async function request_player_achievement_data(pubkey : PublicKey) : Promise<AchievementData | null>
+export async function request_player_achievement_data(bearer : string, pubkey : PublicKey) : Promise<AchievementData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -546,10 +679,10 @@ class ShopUserData {
     )
 }
 
-export async function request_key_data_from_mint(pubkey : PublicKey) : Promise<KeyDataFromMint | null>
+export async function request_key_data_from_mint(bearer : string, pubkey : PublicKey) : Promise<KeyDataFromMint | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -560,10 +693,10 @@ export async function request_key_data_from_mint(pubkey : PublicKey) : Promise<K
     return data;
 }
 
-export async function request_key_data_from_index(pubkey : PublicKey) : Promise<KeyDataFromIndex | null>
+export async function request_key_data_from_index(bearer : string, pubkey : PublicKey) : Promise<KeyDataFromIndex | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer ,pubkey);
 
     if (account_data === null) {
         return null;
@@ -574,10 +707,10 @@ export async function request_key_data_from_index(pubkey : PublicKey) : Promise<
     return data;
 }
 
-export async function request_shop_data(pubkey : PublicKey) : Promise<ShopData | null>
+export async function request_shop_data(bearer : string, pubkey : PublicKey) : Promise<ShopData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -589,10 +722,10 @@ export async function request_shop_data(pubkey : PublicKey) : Promise<ShopData |
 }
 
 
-export async function request_shop_user_data(pubkey : PublicKey) : Promise<ShopUserData | null>
+export async function request_shop_user_data(bearer : string, pubkey : PublicKey) : Promise<ShopUserData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -603,13 +736,13 @@ export async function request_shop_user_data(pubkey : PublicKey) : Promise<ShopU
     return data;
 }
 
-export async function run_keyData_GPA(key_index : number) : Promise<KeyDataFromMint | null>
+export async function run_keyData_GPA(bearer : string, key_index : number) : Promise<KeyDataFromMint | null>
 {
     let index_buffer = uInt16ToLEBytes(key_index);
 
 
     let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {
@@ -738,10 +871,10 @@ export function serialise_DM_Mint_instruction(instruction : number, name : strin
     return buf;
 }
 
-export async function request_DM_Manager_data(pubkey : PublicKey) : Promise<DMManagerData | null>
+export async function request_DM_Manager_data(bearer : string, pubkey : PublicKey) : Promise<DMManagerData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -752,10 +885,10 @@ export async function request_DM_Manager_data(pubkey : PublicKey) : Promise<DMMa
     return data;
 }
 
-export async function request_DM_data(pubkey : PublicKey) : Promise<DMData | null>
+export async function request_DM_data(bearer : string, pubkey : PublicKey) : Promise<DMData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;
@@ -766,10 +899,10 @@ export async function request_DM_data(pubkey : PublicKey) : Promise<DMData | nul
     return data;
 }
 
-export async function request_DM_User_data(pubkey : PublicKey) : Promise<DMUserData | null>
+export async function request_DM_User_data(bearer : string, pubkey : PublicKey) : Promise<DMUserData | null>
 {
  
-    let account_data = await request_raw_account_data(pubkey);
+    let account_data = await request_raw_account_data(bearer, pubkey);
 
     if (account_data === null) {
         return null;

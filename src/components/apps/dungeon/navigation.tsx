@@ -40,7 +40,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 
 export function Navigation(
-    {setScreen, check_sol_balance} : {setScreen: React.Dispatch<SetStateAction<number>>, check_sol_balance : React.MutableRefObject<boolean>}
+    {setScreen, check_sol_balance, bearer_token} : {setScreen: React.Dispatch<SetStateAction<number>>, check_sol_balance : React.MutableRefObject<boolean>, bearer_token : string}
 ) {
 
     const wallet = useWallet();
@@ -62,7 +62,7 @@ export function Navigation(
         if (check_sol_balance.current === false)
             return;
 
-        let current_balance = await request_current_balance(wallet.publicKey);
+        let current_balance = await request_current_balance(bearer_token, wallet.publicKey);
 
         //console.log("balance ", current_balance);
         if (current_balance !== balance) {
@@ -71,7 +71,7 @@ export function Navigation(
 
         setBalance(current_balance);
 
-    },[wallet, balance, check_sol_balance]);
+    },[wallet, balance, check_sol_balance, bearer_token]);
 
 
   // Use the useEffect hook to cleanup the interval when the component unmounts
@@ -149,13 +149,20 @@ export function Navigation(
         
     },[setScreen]);
 
+    const ShowStats = useCallback( async () => 
+    {
+            setScreen(Screen.STATS_SCREEN);
+            return;
+        
+    },[setScreen]);
+
     function DesktopNavigation() {
 
         return (
         <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <HStack>
                 {wallet.publicKey !== null &&
-                        <Box width="50%">
+                        <Box width="40%">
                             <HStack>
                                 <WalletConnected />
                                 <div className="font-face-sfpb">
@@ -172,9 +179,9 @@ export function Navigation(
                         
                     }
                 {wallet.publicKey === null &&
-                    <Box width="50%"></Box>
+                    <Box width="40%"></Box>
                 }
-                <Box width="50%">
+                <Box width="60%">
                     <HStack spacing="5%">
                         <Button variant='link' size='md' onClick={ShowHome}>
                             <div className="font-face-sfpb">
@@ -194,6 +201,11 @@ export function Navigation(
                         <Button variant='link' size='md' onClick={ShowAchievements}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Achievements </Text>      
+                            </div> 
+                        </Button>
+                        <Button variant='link' size='md' onClick={ShowStats}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize='16px'  color="white"> Stats </Text>      
                             </div> 
                         </Button>
                         <Button variant='link' size='md' onClick={ShowOdds}>
