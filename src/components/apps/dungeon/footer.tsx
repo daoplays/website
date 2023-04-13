@@ -46,7 +46,7 @@ import { DUNGEON_FONT_SIZE} from './constants';
 
 interface DefeatedEnemyInterface {
     characterEmoji: string | undefined;
-    enemyEmoji: any;
+    enemyEmoji: string | undefined;
     level: string | undefined;
     display_distance: string | null;
 }
