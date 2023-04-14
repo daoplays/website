@@ -16,7 +16,7 @@ import {
   import {
     useWallet,
 } from '@solana/wallet-adapter-react';
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 
 import bs58 from "bs58";
 import BN from 'bn.js'
@@ -69,6 +69,12 @@ const enum RPSMove {
     scissors = 3
 }
 
+const game_status : string[] = [
+    "Open",
+    "In Progress",
+    "Complete"
+]
+
 export function ArenaScreen({bearer_token} : {bearer_token : string})
 {
     const wallet = useWallet();
@@ -79,7 +85,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const [my_games, setMyGames] = useState<GameData[]>([]);
     const [active_game, setActiveGame] = useState<GameData | null>(null);
 
-    const [bet_size, setBetSize] = useState<number>(0);
+    const [bet_size_string, setBetSizeString] = useState<string>("");
+
     const [show_new_game, setShowNewGame] = useState<boolean>(false);
     const check_arena = useRef<boolean>(true);
 
@@ -93,7 +100,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log(list)
 
         let waiting_list = list.filter(function (game) {
-            return game.status === 0;
+            return game.status === 0 && wallet.publicKey !== null && (!game.player_one.equals(wallet.publicKey) && !game.player_two.equals(wallet.publicKey));
         });
         setWaitingGames(waiting_list);
 
@@ -101,7 +108,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         let my_games = list.filter(function (game) {
-            return game.status > 0 && wallet.publicKey !== null && (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey));
+            return wallet.publicKey !== null && (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey));
         });
         setMyGames(my_games);
 
@@ -138,6 +145,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <tr>
                         <th>Game</th>
                         <th>Bet Size</th>
+                        <th>Status</th>
                         <th>
                         <Box as='button' onClick={() => check_games()}>
                         <FontAwesomeIcon color="white"icon={solid("arrows-rotate")} size="lg"/>
@@ -160,12 +168,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const ArenaGameCard = ({game, index} : {game : GameData, index : number}) => {
 
         console.log(index, game);
-        let bet_size : number = bignum_to_num(game.bet_size);
+        let bet_size : number = bignum_to_num(game.bet_size) / LAMPORTS_PER_SOL;
         console.log("index", index, "price", bet_size);
         return (
             <tr>
                 <td >RPS Game</td>
                 <td >{bet_size}</td>
+                <td >{game_status[game.status]}</td>
                 <td>
                     {wallet.publicKey === null ?
                         <Box as='button' borderWidth='2px' borderColor="white"   width="60px">
@@ -173,10 +182,16 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         </Box>
                     :
                         (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey)) ?
-
-                            <Box as='button' onClick={() => {setActiveGame(game);  setActiveTab("active_game")}} borderWidth='2px' borderColor="white"   width="60px">
-                                <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
-                            </Box>
+                            <Center>
+                            <HStack >
+                                <Box as='button' onClick={() => {setActiveGame(game);  setActiveTab("active_game")}} borderWidth='2px' borderColor="white"   width="70px">
+                                    <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
+                                </Box>
+                                <Box as='button' onClick={() => CancelGameOnArena(index)}>
+                                    <FontAwesomeIcon icon={solid("trash")} style={{color: "#ea1a1a",}} />
+                                </Box>
+                            </HStack>
+                            </Center>
 
                         :
                             <Box as='button' onClick={() => JoinGameOnArena(index)} borderWidth='2px' borderColor="white"   width="60px">
@@ -188,6 +203,70 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             
         );
     }
+
+    const CancelGameOnArena = useCallback( async (index : number) => 
+    {
+       
+        if (wallet.publicKey === null || wallet.signTransaction === undefined)
+            return;
+
+        
+        let desired_game = my_games[index];
+        let seed_bytes = uInt32ToLEBytes(desired_game.seed);
+        let player_one = desired_game.player_one;
+
+        let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
+        let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+        let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+
+        const instruction_data = serialise_basic_instruction(ArenaInstruction.cancel_game);
+
+        var account_vector  = [
+            {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+            {pubkey: game_data_account, isSigner: false, isWritable: true},
+            {pubkey: game_sol_account, isSigner: false, isWritable: true},
+
+            {pubkey: arena_account, isSigner: false, isWritable: true},
+
+            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+        ];
+
+
+        const list_instruction = new TransactionInstruction({
+            keys: account_vector,
+            programId: ARENA_PROGRAM,
+            data: instruction_data
+        });
+
+        let txArgs = await get_current_blockhash(bearer_token);
+
+        let transaction = new Transaction(txArgs);
+        transaction.feePayer = wallet.publicKey;
+
+
+        transaction.add(list_instruction);
+
+        try {
+            let signed_transaction = await wallet.signTransaction(transaction);
+            const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
+                console.log(transaction_response)
+                return;
+            }
+
+
+        } catch(error) {
+            console.log(error);
+            return;
+        }
+
+ 
+
+    },[wallet, my_games, bearer_token]);
+
 
     const JoinGameOnArena = useCallback( async (index : number) => 
     {
@@ -269,7 +348,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log("game_data_account: ", game_data_account.toString());
         console.log("sol_data_account: ", sol_data_account.toString());
 
-        let bet_size_bn = new BN(bet_size);
+        let bet_size = Number(bet_size_string);
+        console.log(bet_size);
+
+        if(bet_size < 0.05)
+            return;
+
+        let bet_size_bn = new BN(bet_size * LAMPORTS_PER_SOL);
         const instruction_data = serialise_Arena_CreateGame_instruction(ArenaInstruction.create_game, bet_size_bn, seed);
 
         var account_vector  = [
@@ -314,7 +399,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
  
 
-    },[wallet, bet_size, bearer_token]);
+    },[wallet, bet_size_string, bearer_token]);
 
     const TakeMoveInGame = useCallback( async (move : number) => 
     {
@@ -445,15 +530,15 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             </Box>
                             <Box width="50%">
                               <NumberInput
-                                id="desired_price"
+                                id="desired_betsize"
                                 ref={BetSizeRef}
                                 fontSize={DUNGEON_FONT_SIZE}
                                 color="white"
                                 size="lg"
                                 onChange={(valueString) => {
-                                  setBetSize(Number(valueString));
+                                    setBetSizeString(valueString);
                                 }}
-                                value={bet_size > 0 ? bet_size.toString() : ""}
+                                value={bet_size_string}
                                 precision={3}
                                 borderColor="white"
                                 min={0.05}
