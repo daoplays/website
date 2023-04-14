@@ -40,25 +40,94 @@ import hallway from "./images/Hallway.gif"
 
 import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction} from './utils';
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message} from './utils';
 
-import {DisplayEnemy, DisplayPlayer, DungeonEnemy, DungeonCharacter, DungeonStatus} from './dungeon_state';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import Container from 'react-bootstrap/Container';
 
+
+//enemies
+import assassin from "./images/Assassin.gif"
+import blue_slime from "./images/Blue_Slime.gif"
+import boulder from "./images/Boulder.png"
+import carnivine from "./images/Carnivine.gif"
+import dungeon_master from "./images/Dungeon_Master.gif"
+import elves from "./images/Elves.gif"
+import giant_blue_slime from "./images/Giant_Blue_Slime.gif"
+import giant_green_slime from "./images/Giant_Green_Slime.gif"
+import giant_rat from "./images/Giant_Rat.gif"
+import giant_spider from "./images/Giant_Spider.gif"
+import goblins from "./images/Goblins.gif"
+import green_slime from "./images/Green_Slime.gif"
+import mimic from "./images/Mimic.gif"
+import orc from "./images/Orc.gif"
+import shade from "./images/Shade.gif"
+import skeleton_knight from "./images/Skelly_Knight.gif"
+import skeletons from "./images/Skellies.gif"
+import skeleton_wizard from "./images/Skelly_Wiz.gif"
+import floor_spikes from "./images/Spikes.png"
+import werewolf from "./images/Werewolf.gif"
+
+import closed_chest from "./images/chest_closed.png"
+import open_chest from "./images/chest_open.png"
+import bones from "./images/Bones.png"
+import green_slime_corpse from "./images/slime_corpse.png"
+import blue_slime_corpse from "./images/Blue_Slime_Corpse.png"
+import spider_corpse from "./images/Spider_Corpse.png"
+import carnivine_corpse from "./images/Vine_Corpse.png"
+import werewolf_corpse from "./images/Wolf_Corpse.png"
+import shade_corpse from "./images/Shade_Corpse.png"
+
+//characters
+import knight from "./images/Knight.gif"
+import ranger from "./images/Ranger.gif"
+import wizard from "./images/Wizard.gif"
+import corpse from "./images/Corpse.png"
+
 import './css/table.css';
 import './css/fonts.css';
 import './css/tabs.css';
+
+
+const GoldEmoji : string = "<a:Gold:1086961346492510298>";
+
+const ArenaCharacterEmoji : string[] = [
+    "<a:Knight:1070460855575126116>",
+    "<a:Ranger:1070471404425842688>",
+    "<a:Wizard:1070471413829472287>",
+    "<a:Assassin:1082340379204014170>",
+    "<a:BlueSlime:1082339378573086821>",
+    "<:Boulder:1070460848155410432>",
+    "<a:Carnivine:1080810978347855952>",
+    "<a:DM:1082380987465465968>",
+    "<a:Elves:1070460851317907466>",
+    "<a:GiantSlimeBlue:1082339381060313098>",
+    "<a:GiantSlimeGreen:1082339382624780370>",
+    "<a:GiantRat:1082339379445502023>",
+    "<a:GiantSpider:1082339383740473406>",
+    "<a:Goblins:1070460853436030997>",
+    "<a:GreenSlime:1082339385502093402>",
+    "<a:Mimic:1086994090543022131>",
+    "<a:Orc:1070471402496462858>",
+    "<a:Shade:1082342760947925072>",
+    "<a:SkellyKnight:1070471408523677747>",
+    "<a:Skellies:1070471406887907338>",
+    "<a:SkellyWiz:1070471409622585394>",
+    "<:Spikes:1070471412084654080>",
+    "<a:Werewolf:1082339387557289994>",
+]
+
 
 const enum ArenaInstruction {
     init = 0,
     create_game = 1,
     join_game = 2,
     cancel_game = 3,
-    take_move = 4
+    take_move = 4,
+    claim_reward = 5
 }
 
 
@@ -67,6 +136,44 @@ const enum RPSMove {
     rock = 1,
     paper = 2,
     scissors = 3
+}
+
+const enum PlayerCharacter {
+    Knight = 0,
+    Ranger,
+    Wizard,
+    Assassin,
+    BlueSlime,
+    BoulderTrap,
+    Carnivine,
+    DM,
+    Elves,
+    GiantBlueSlime,
+    GiantGreenSlime,
+    GiantRat,
+    GiantSpider,
+    Goblins,
+    GreenSlime,
+    Mimic,
+    Orc,
+    Shade,
+    SkeletonKnight,
+    Skeletons,
+    SkeletonWizard,
+    SpikeTrap,
+    Werewolf
+}
+
+const enum ArenaStatus {
+    alive = 0,
+    dead = 1,
+    waiting = 2
+}
+
+const enum GameStatus {
+    waiting = 0,
+    in_progress = 1,
+    completed = 2
 }
 
 const game_status : string[] = [
@@ -172,7 +279,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log("index", index, "price", bet_size);
         return (
             <tr>
-                <td >RPS Game</td>
+                <td >RPS</td>
                 <td >{bet_size}</td>
                 <td >{game_status[game.status]}</td>
                 <td>
@@ -266,6 +373,77 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
  
 
     },[wallet, my_games, bearer_token]);
+
+    const ClaimReward = useCallback( async () => 
+    {
+       
+        if (wallet.publicKey === null || wallet.signTransaction === undefined || active_game === null)
+            return;
+
+        
+       
+        let seed_bytes = uInt32ToLEBytes(active_game.seed);
+        let player_one = active_game.player_one;
+
+        let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
+        let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+        let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+
+        const instruction_data = serialise_basic_instruction(ArenaInstruction.claim_reward);
+
+        var account_vector  = [
+            {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+            {pubkey: game_data_account, isSigner: false, isWritable: true},
+            {pubkey: game_sol_account, isSigner: false, isWritable: true},
+
+            {pubkey: arena_account, isSigner: false, isWritable: true},
+
+            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+        ];
+
+
+        const list_instruction = new TransactionInstruction({
+            keys: account_vector,
+            programId: ARENA_PROGRAM,
+            data: instruction_data
+        });
+
+        let txArgs = await get_current_blockhash(bearer_token);
+
+        let transaction = new Transaction(txArgs);
+        transaction.feePayer = wallet.publicKey;
+
+
+        transaction.add(list_instruction);
+
+        try {
+            let signed_transaction = await wallet.signTransaction(transaction);
+            const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+            //var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            //if (transaction_response.result === "INVALID") {
+            //    console.log(transaction_response)
+            //    return;
+            //}
+
+            let player_emoji = ArenaCharacterEmoji[active_game.player_one_character];
+            if (active_game.player_two.equals(wallet.publicKey)) {
+                player_emoji = ArenaCharacterEmoji[active_game.player_two_character];
+            }
+            let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
+            console.log(post_string);
+            //post_discord_message(post_string);
+
+
+        } catch(error) {
+            console.log(error);
+            return;
+        }
+
+ 
+
+    },[wallet, active_game, bearer_token]);
 
 
     const JoinGameOnArena = useCallback( async (index : number) => 
@@ -453,6 +631,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 return;
             }
 
+
+
         } catch(error) {
             console.log(error);
             return;
@@ -574,9 +754,135 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             )
         }
 
+    
+    const DisplayPlayer = ({player_character, player_status} : {player_character : PlayerCharacter, player_status : ArenaStatus}) => {
+
+
+        if (player_status === ArenaStatus.dead) {
+                // for the traps we don't return anything
+                if (player_character === PlayerCharacter.BoulderTrap) {
+                    return(<></>);
+                }
+                if (player_character === PlayerCharacter.SpikeTrap) {
+                    return(<></>);
+                }
+
+                if (player_character === PlayerCharacter.Mimic) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={open_chest} width="10000" alt={""}/> );
+                }
+
+                if (player_character === PlayerCharacter.GreenSlime || player_character === PlayerCharacter.GiantGreenSlime) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={green_slime_corpse} width="10000" alt={""}/> );
+                }
+
+                if (player_character === PlayerCharacter.BlueSlime || player_character === PlayerCharacter.GiantBlueSlime) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={blue_slime_corpse} width="10000" alt={""}/> );
+                }
+
+                if (player_character === PlayerCharacter.Werewolf) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={werewolf_corpse} width="10000" alt={""}/> );
+                }
+
+                if (player_character === PlayerCharacter.Carnivine) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={carnivine_corpse} width="10000" alt={""}/> );
+                }
+
+                if (player_character === PlayerCharacter.Shade) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={shade_corpse} width="10000" alt={""}/> );
+                }
+
+                if (player_character === PlayerCharacter.GiantSpider) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={spider_corpse} width="10000" alt={""}/> );
+                }
+
+                if (player_character === PlayerCharacter.Skeletons) {
+                    return ( <img style={{"imageRendering":"pixelated"}} src={bones} width="10000" alt={""}/> );
+                }
+
+                return ( <img style={{"imageRendering":"pixelated"}} src={corpse} width="10000" alt={""}/> );
+        }
+
+        if (player_character === PlayerCharacter.Knight){
+            return ( <img style={{"imageRendering":"pixelated"}} src={knight} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Ranger){
+            return ( <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Wizard){
+            return ( <img style={{"imageRendering":"pixelated"}} src={wizard} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Assassin) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={assassin} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.BlueSlime) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={blue_slime} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Carnivine) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={carnivine} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.DM) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={dungeon_master} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Elves) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={elves} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.GiantBlueSlime) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={giant_blue_slime} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.GiantGreenSlime) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={giant_green_slime} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.GiantRat) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={giant_rat} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.GiantSpider) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={giant_spider} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Goblins) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={goblins} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.GreenSlime) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={green_slime} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Mimic) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={closed_chest} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Orc) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={orc} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Shade) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={shade} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.SkeletonKnight) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_knight} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Skeletons) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={skeletons} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.SkeletonWizard) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_wizard} width="10000" alt={""}/> );
+        }
+        if (player_character === PlayerCharacter.Werewolf) {
+            return ( <img style={{"imageRendering":"pixelated"}} src={werewolf} width="10000" alt={""}/> );
+        }
+
+        // for the traps we don't return anything
+        if (player_character === PlayerCharacter.BoulderTrap) {
+            return(<></>);
+        }
+        if (player_character === PlayerCharacter.SpikeTrap) {
+            return(<></>);
+        }
+
+        return(<></>);
+    }
+
+
+
+
     function ActiveGame() {
 
-        if (active_game === null) {
+        if (active_game === null || wallet.publicKey === null) {
             return(
                 <div className="font-face-sfpb">
                     <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
@@ -584,6 +890,19 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     </Text>
                 </div>
             );
+        }
+
+        console.log("p1 ", active_game.player_one_status, " p2 ", active_game.player_two_status);
+
+        let is_winner = false;
+        
+        if (active_game.status === GameStatus.completed) {
+            if (active_game.player_one.equals(wallet.publicKey) && active_game.player_one_status == ArenaStatus.alive) {
+                is_winner = true;
+            }
+            if (active_game.player_two.equals(wallet.publicKey) && active_game.player_two_status == ArenaStatus.alive) {
+                is_winner = true;
+            }
         }
 
         return(
@@ -602,9 +921,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <HStack>
             
                         <Box width="30%"></Box>            
-                        <Box width="15%"> <DisplayPlayer player_state={DungeonStatus.alive} player_character={DungeonCharacter.knight} current_enemy={DungeonEnemy.GreenSlime}/></Box>  
+                        <Box width="15%"> <DisplayPlayer player_character={active_game.player_one_character} player_status={active_game.player_one_status} /></Box>  
                         <Box width="10%"></Box> 
-                        <Box width="15%"> <DisplayEnemy player_state={DungeonStatus.alive} enemy_state={DungeonStatus.alive} current_enemy={DungeonEnemy.GreenSlime}/> </Box>  
+                        <Box width="15%"> <DisplayPlayer player_character={active_game.player_two_character} player_status={active_game.player_two_status} /> </Box>  
                         <Box width="30%"></Box> 
     
                     </HStack>
@@ -612,6 +931,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <Box width="10%"></Box> 
                 </HStack>
             </VStack>
+
+            {active_game.status === GameStatus.in_progress &&
             <Center>
 
                 <HStack>
@@ -629,6 +950,15 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     </Box>
                 </HStack>
             </Center>
+            }
+            {active_game.status === GameStatus.completed && is_winner && 
+
+                <Center>
+                    <Box  as="button" onClick={() => ClaimReward()} borderWidth="2px"  borderColor="white"  width="200px">
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Get Reward </Text>
+                    </Box>
+                </Center>
+            }
 
             </>
 

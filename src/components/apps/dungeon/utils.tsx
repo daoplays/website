@@ -1073,26 +1073,36 @@ export function serialise_Marketplace_buy_instruction(instruction : number, quan
 
 export class GameData {
     constructor(
-      readonly bet_size: bignum,   
-      readonly player_one: PublicKey,
-      readonly player_two: PublicKey,
-      readonly player_one_move: number,
-      readonly player_two_move: number,
-      readonly status: number,
-      readonly seed: number
+        readonly num_interactions: number,   
+        readonly bet_size: bignum,   
+        readonly player_one: PublicKey,
+        readonly player_two: PublicKey,
+        readonly player_one_move: number,
+        readonly player_two_move: number,
+        readonly player_one_character: number,
+        readonly player_two_character: number,
+        readonly player_one_status: number,
+        readonly player_two_status: number,
+        readonly status: number,
+        readonly seed: number
     ) {}
   
     static readonly struct = new BeetStruct<GameData>(
       [
+        ['num_interactions', u16],
         ['bet_size', u64],
         ['player_one', publicKey],
         ['player_two', publicKey],
         ['player_one_move', u8],
         ['player_two_move', u8],
+        ['player_one_character', u8],
+        ['player_two_character', u8],
+        ['player_one_status', u8],
+        ['player_two_status', u8],
         ['status', u8],
         ['seed', u32]
       ],
-      (args) => new GameData(args.bet_size!, args.player_one!, args.player_two!, args.player_one_move!, args.player_two_move!, args.status!, args.seed!),
+      (args) => new GameData(args.num_interactions!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
       'GameData'
     )
 }
@@ -1103,7 +1113,7 @@ export async function run_arena_free_game_GPA(bearer : string) : Promise<GameDat
 
 
     //let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=79`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=85`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {
