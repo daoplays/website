@@ -177,6 +177,25 @@ export function Footer() {
             );
         }
 
+        if (split_message[5] === "arena") {
+            let string_bit = split_message.slice(1,6).join(" ");
+            return(
+                <HStack>
+                    <Box width="80%">
+                        <HStack>
+                            <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                            <Text fontSize={DUNGEON_FONT_SIZE} color="white">{string_bit}</Text>
+                            <img src={gold_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                        </HStack>
+                    </Box>
+                    <Box width="20%">
+                    <Text fontSize={FOOTER_TIME_FONT_SIZE} color="grey">{display_distance} ago</Text>
+                    </Box>
+
+                </HStack>
+            );
+        }
+
         // defeated enemy
 
         if (split_message.length === 6) {
