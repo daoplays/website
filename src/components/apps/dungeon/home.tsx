@@ -99,6 +99,7 @@ import { AchievementsScreen } from './achievements';
 import {StatsScreen} from './stats';
 import { Footer } from './footer';
 import { MarketplaceScreen } from './marketplace';
+import { ArenaScreen } from './arena';
 
 //import {DungeonScreen} from './dungeon';
 
@@ -1885,6 +1886,9 @@ export function DungeonApp()
                     
                     {!wallet.publicKey && 
                     <>
+                        {screen === Screen.ARENA_SCREEN &&
+                            <ArenaScreen bearer_token={bearer_token}/>
+                        }
                         {screen === Screen.ODDS_SCREEN &&
                             <OddsScreen/>
                         }
@@ -1898,7 +1902,7 @@ export function DungeonApp()
                             <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
                         }
                         {screen === Screen.MARKETPLACE_SCREEN &&
-                            <MarketplaceScreen/>
+                            <MarketplaceScreen bearer_token={bearer_token}/>
                         }
                         {screen === Screen.DM_SCREEN &&
                             <DMScreen bearer_token={bearer_token}/>
@@ -1925,6 +1929,9 @@ export function DungeonApp()
                         {screen === Screen.DEATH_SCREEN &&
                             <DeathScreen/>
                         }
+                        {screen === Screen.ARENA_SCREEN &&
+                            <ArenaScreen bearer_token={bearer_token}/>
+                        }
                         {screen === Screen.ODDS_SCREEN &&
                             <OddsScreen/>
                         }
@@ -1935,7 +1942,7 @@ export function DungeonApp()
                             <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
                         }
                         {screen === Screen.MARKETPLACE_SCREEN &&
-                            <MarketplaceScreen/>
+                            <MarketplaceScreen bearer_token={bearer_token}/>
                         }
                         {screen === Screen.HELP_SCREEN &&
                             <HelpScreen/>

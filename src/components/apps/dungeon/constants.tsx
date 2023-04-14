@@ -23,6 +23,10 @@ export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4uk
 
 export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHyWXxPJ');
 
+export const MARKETPLACE_PROGRAM = new PublicKey('EQwTJXUcpLmY2zLe4vbgKEHhGJuhoFTNUYkjjAi2mgVx');
+export const ARENA_PROGRAM = new PublicKey('EeFJHv9TmcqDxdn8TiiKfJdFkwrRr2ZESYNa4cPtokuy');
+
+
 // account seeds
 export const MAIN_ACCOUNT_SEED = "house_account";
 
@@ -58,6 +62,7 @@ export const enum Screen {
     ACHIEVEMENT_SCREEN = 8,
     STATS_SCREEN = 9,
     MARKETPLACE_SCREEN = 10,
+    ARENA_SCREEN = 11
 }
 
 export const enum KeyType {
