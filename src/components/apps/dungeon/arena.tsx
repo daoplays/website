@@ -138,6 +138,13 @@ const enum RPSMove {
     scissors = 3
 }
 
+const rps_move : string[] = [
+    "None",
+    "Rock",
+    "Paper",
+    "Scissors"
+]
+
 const enum PlayerCharacter {
     Knight = 0,
     Ranger,
@@ -995,6 +1002,16 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             }
         }
 
+        let player_move = RPSMove.none;
+        
+        if (active_game.player_one.equals(wallet.publicKey)) {
+            player_move = active_game.player_one_move;
+        }
+        if (active_game.player_two.equals(wallet.publicKey)) {
+            player_move = active_game.player_two_move;
+        }
+        
+
         return(
             <>
             <VStack width="100%">
@@ -1026,12 +1043,18 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             <Center width="100%">
                 <VStack width="100%" alignItems="center">
 
-                    {active_game.status === GameStatus.draw 
-                    ?
+                    {active_game.status === GameStatus.draw &&
+                
                         <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It's a Draw! Play again.</Text>
-                    :
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move to play</Text>
+                    
+                    
                     }
+                    {player_move === RPSMove.none &&
+                    
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move to play</Text>
+                    }
+                     {player_move === RPSMove.none 
+                     ?
                     <HStack>
 
                         <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.rock)} borderWidth="2px"  borderColor="white"  width="200px">
@@ -1046,6 +1069,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Scissors </Text>
                         </Box>
                     </HStack>
+                    :
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Move Sent: {rps_move[player_move]}</Text>
+                    }
                 </VStack>
             </Center>
             }
