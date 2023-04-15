@@ -1,5 +1,5 @@
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, bignum, bool } from '@metaplex-foundation/beet'
+import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, i64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
 import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE, MARKETPLACE_PROGRAM, ARENA_PROGRAM} from './constants';
@@ -1073,6 +1073,8 @@ export function serialise_Marketplace_buy_instruction(instruction : number, quan
 
 export class GameData {
     constructor(
+        readonly game_id: bignum,
+        readonly last_interaction: bignum,
         readonly num_interactions: number,   
         readonly bet_size: bignum,   
         readonly player_one: PublicKey,
@@ -1089,6 +1091,8 @@ export class GameData {
   
     static readonly struct = new BeetStruct<GameData>(
       [
+        ['game_id', u64],
+        ['last_interaction', i64],
         ['num_interactions', u16],
         ['bet_size', u64],
         ['player_one', publicKey],
@@ -1102,7 +1106,7 @@ export class GameData {
         ['status', u8],
         ['seed', u32]
       ],
-      (args) => new GameData(args.num_interactions!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
+      (args) => new GameData(args.game_id!, args.last_interaction!, args.num_interactions!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
       'GameData'
     )
 }
@@ -1113,7 +1117,7 @@ export async function run_arena_free_game_GPA(bearer : string) : Promise<GameDat
 
 
     //let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=85`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=101`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {

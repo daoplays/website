@@ -38,7 +38,7 @@ import {
 import hallway from "./images/Hallway.gif"
 
 
-import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY} from './constants';
+import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM} from './constants';
 
 import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message} from './utils';
 
@@ -52,7 +52,7 @@ import Container from 'react-bootstrap/Container';
 //enemies
 import assassin from "./images/Assassin.gif"
 import blue_slime from "./images/Blue_Slime.gif"
-import boulder from "./images/Boulder.png"
+//import boulder from "./images/Boulder.png"
 import carnivine from "./images/Carnivine.gif"
 import dungeon_master from "./images/Dungeon_Master.gif"
 import elves from "./images/Elves.gif"
@@ -62,13 +62,13 @@ import giant_rat from "./images/Giant_Rat.gif"
 import giant_spider from "./images/Giant_Spider.gif"
 import goblins from "./images/Goblins.gif"
 import green_slime from "./images/Green_Slime.gif"
-import mimic from "./images/Mimic.gif"
+//import mimic from "./images/Mimic.gif"
 import orc from "./images/Orc.gif"
 import shade from "./images/Shade.gif"
 import skeleton_knight from "./images/Skelly_Knight.gif"
 import skeletons from "./images/Skellies.gif"
 import skeleton_wizard from "./images/Skelly_Wiz.gif"
-import floor_spikes from "./images/Spikes.png"
+//import floor_spikes from "./images/Spikes.png"
 import werewolf from "./images/Werewolf.gif"
 
 import closed_chest from "./images/chest_closed.png"
@@ -173,12 +173,14 @@ const enum ArenaStatus {
 const enum GameStatus {
     waiting = 0,
     in_progress = 1,
-    completed = 2
+    draw = 2,
+    completed = 3
 }
 
 const game_status : string[] = [
     "Open",
     "In Progress",
+    "Draw",
     "Complete"
 ]
 
@@ -198,10 +200,17 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const check_arena = useRef<boolean>(true);
 
     const BetSizeRef = useRef<HTMLInputElement>(null);
+    const game_interval = useRef<number | null>(null);
+
 
     const check_games = useCallback(async() => 
     {
         
+        if (check_arena.current === false && (activeTab !== "active_game" || active_game === null)) {
+            return;
+        }
+
+        console.log("update games");
 
         let list = await run_arena_free_game_GPA(bearer_token);
         console.log(list)
@@ -219,9 +228,38 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         });
         setMyGames(my_games);
 
+        let new_active_game = list.filter(function (game) {
+            return (active_game !== null && bignum_to_num(game.game_id) === bignum_to_num(active_game.game_id));
+        });
+
+        if (new_active_game.length > 0) {
+            setActiveGame(new_active_game[0]);
+            console.log("found active game: ", new_active_game[0]);
+        }
+
         check_arena.current = false;
 
-    }, [bearer_token, wallet]);
+    }, [bearer_token, wallet, activeTab, active_game]);
+
+    // interval for checking state
+    useEffect(() => {
+
+        if (game_interval.current === null) {
+            game_interval.current = window.setInterval(check_games, 5000);
+        }
+        else{
+            window.clearInterval(game_interval.current);
+            game_interval.current = null;
+            
+        }
+        // here's the cleanup function
+        return () => {
+            if (game_interval.current !== null) {
+                window.clearInterval(game_interval.current);
+                game_interval.current = null;
+            }
+        };
+    }, [check_games]);
 
     useEffect(() => 
     {
@@ -254,7 +292,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <th>Bet Size</th>
                         <th>Status</th>
                         <th>
-                        <Box as='button' onClick={() => check_games()}>
+                        <Box as='button' onClick={() => {check_arena.current = true; check_games()}}>
                         <FontAwesomeIcon color="white"icon={solid("arrows-rotate")} size="lg"/>
                         </Box>
                         </th>
@@ -388,6 +426,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
         let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let fees_account = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
 
         const instruction_data = serialise_basic_instruction(ArenaInstruction.claim_reward);
 
@@ -395,6 +434,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
             {pubkey: game_data_account, isSigner: false, isWritable: true},
             {pubkey: game_sol_account, isSigner: false, isWritable: true},
+            {pubkey: fees_account, isSigner: false, isWritable: true},
 
             {pubkey: arena_account, isSigner: false, isWritable: true},
 
@@ -420,12 +460,12 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             let signed_transaction = await wallet.signTransaction(transaction);
             const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-            //var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
             
-            //if (transaction_response.result === "INVALID") {
-            //    console.log(transaction_response)
-            //    return;
-            //}
+            if (transaction_response.result === "INVALID") {
+                console.log(transaction_response)
+                return;
+            }
 
             let player_emoji = ArenaCharacterEmoji[active_game.player_one_character];
             if (active_game.player_two.equals(wallet.publicKey)) {
@@ -433,7 +473,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             }
             let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
             console.log(post_string);
-            //post_discord_message(post_string);
+            if (PROD)
+                post_discord_message(post_string);
+
+            setActiveGame(null);
 
 
         } catch(error) {
@@ -897,10 +940,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let is_winner = false;
         
         if (active_game.status === GameStatus.completed) {
-            if (active_game.player_one.equals(wallet.publicKey) && active_game.player_one_status == ArenaStatus.alive) {
+            if (active_game.player_one.equals(wallet.publicKey) && active_game.player_one_status === ArenaStatus.alive) {
                 is_winner = true;
             }
-            if (active_game.player_two.equals(wallet.publicKey) && active_game.player_two_status == ArenaStatus.alive) {
+            if (active_game.player_two.equals(wallet.publicKey) && active_game.player_two_status === ArenaStatus.alive) {
                 is_winner = true;
             }
         }
@@ -923,7 +966,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <Box width="30%"></Box>            
                         <Box width="15%"> <DisplayPlayer player_character={active_game.player_one_character} player_status={active_game.player_one_status} /></Box>  
                         <Box width="10%"></Box> 
-                        <Box width="15%"> <DisplayPlayer player_character={active_game.player_two_character} player_status={active_game.player_two_status} /> </Box>  
+                        <Box width="15%" visibility={active_game.status === 0 ? "hidden" : "visible"}> <DisplayPlayer player_character={active_game.player_two_character} player_status={active_game.player_two_status} /> </Box>  
                         <Box width="30%"></Box> 
     
                     </HStack>
@@ -959,6 +1002,16 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     </Box>
                 </Center>
             }
+
+            {active_game.status === GameStatus.completed && !is_winner && 
+
+            <Center>
+                <Box  width="200px">
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You Lost </Text>
+                </Box>
+            </Center>
+            }
+
 
             </>
 
