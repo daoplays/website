@@ -33,7 +33,7 @@ import {
   import FocusLock from 'react-focus-lock';
   import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-  import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
+import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 
 import hallway from "./images/Hallway.gif"
 
@@ -202,6 +202,53 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const BetSizeRef = useRef<HTMLInputElement>(null);
     const game_interval = useRef<number | null>(null);
 
+    //const ws = useRef<WebSocket | null>(null);
+    //const ws_id = useRef<number | null>(null);
+
+
+/*
+    useEffect(() => {
+
+        if (active_game === null) {
+            if (ws_id.current !== null) {
+                let message = `{"id":1,"jsonrpc":"2.0","method": "accountUnsubscribe", "params": [` + ws_id.current + `]}`
+                ws.current?.send(message);
+
+            }
+            return;
+        }
+
+        
+        console.log("setup websocket for active game");
+        let seed_bytes = uInt32ToLEBytes(active_game.seed);
+
+        let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+
+        let message = `{"id":1,"jsonrpc":"2.0","method":"accountSubscribe","params":["` + game_data_account.toString() + `",{"encoding": "jsonParsed"}]}`
+
+        console.log(message);
+
+        if (ws.current === null || ws.current.CLOSED)
+            ws.current = new WebSocket(DEV_WSS_NODE);
+
+
+        ws.current.onopen = () => {ws.current?.send(message); console.log("ws opened")};
+        ws.current.onclose = () => {ws_id.current = null; console.log("ws closed")};
+
+        ws.current.onmessage = (event) => {
+            if (ws_id.current === null) {
+                ws_id.current = event.data["result"];
+            }
+            console.log("got message", event.data);
+        };
+    
+     
+        return () => {
+            ws.current?.close();
+        };
+
+    }, [active_game, bearer_token]);
+*/
 
     const check_games = useCallback(async() => 
     {
@@ -950,7 +997,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         return(
             <>
-            <VStack>
+            <VStack width="100%">
                 <HStack mb = "2%" mt="1%">
                     <Box width="10%"></Box>         
                     <Box  style={{
@@ -975,23 +1022,31 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 </HStack>
             </VStack>
 
-            {active_game.status === GameStatus.in_progress &&
-            <Center>
+            {(active_game.status === GameStatus.in_progress || active_game.status === GameStatus.draw) &&
+            <Center width="100%">
+                <VStack width="100%" alignItems="center">
 
-                <HStack>
+                    {active_game.status === GameStatus.draw 
+                    ?
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It's a Draw! Play again.</Text>
+                    :
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move to play</Text>
+                    }
+                    <HStack>
 
-                    <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.rock)} borderWidth="2px"  borderColor="white"  width="200px">
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Rock </Text>
-                    </Box>
+                        <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.rock)} borderWidth="2px"  borderColor="white"  width="200px">
+                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Rock </Text>
+                        </Box>
 
-                    <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.paper)} borderWidth="2px"  borderColor="white"  width="200px">
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Paper </Text>
-                    </Box>
+                        <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.paper)} borderWidth="2px"  borderColor="white"  width="200px">
+                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Paper </Text>
+                        </Box>
 
-                    <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.scissors)} borderWidth="2px"  borderColor="white"  width="200px">
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Scissors </Text>
-                    </Box>
-                </HStack>
+                        <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.scissors)} borderWidth="2px"  borderColor="white"  width="200px">
+                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Scissors </Text>
+                        </Box>
+                    </HStack>
+                </VStack>
             </Center>
             }
             {active_game.status === GameStatus.completed && is_winner && 
