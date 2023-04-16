@@ -931,24 +931,25 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 </Box>
                 </HStack>
                 <HStack>
+                    <img src={goblins_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={boulder_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={mimic_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={skeletons_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={floor_spikes_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={carnivine_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={giant_green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={werewolf_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                 </HStack>
                 <HStack>
+                    <img src={werewolf_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={elves_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={giant_blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={orc_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={skeleton_knight_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={skeleton_wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={assassin_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                 </HStack>
                 <HStack>
+                    <img src={assassin_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={dungeon_master_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                     <img src={shade_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
                 </HStack>
@@ -1244,10 +1245,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let is_winner = false;
         
         if (active_game.status === GameStatus.completed) {
-            if (active_game.player_one.equals(wallet.publicKey) && active_game.player_one_status === ArenaStatus.alive) {
+            if (is_player_one && active_game.player_one_status === ArenaStatus.alive) {
                 is_winner = true;
             }
-            if (active_game.player_two.equals(wallet.publicKey) && active_game.player_two_status === ArenaStatus.alive) {
+            if (!is_player_one && active_game.player_two_status === ArenaStatus.alive) {
                 is_winner = true;
             }
         }
