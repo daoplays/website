@@ -1503,10 +1503,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         <Container className="centered">
 
         <Tabs
-            className="custom-tab" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
+            className="custom-tab justify-content-center" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
         >
-            <Tab eventKey="game_list" title="GAME LIST" tabClassName="custom-tab">
-                <Center width="80%" marginBottom="5rem">
+            <Tab eventKey="game_list" title="GAME LIST" tabClassName="custom-tab justify-content-center">
+                
+                <Center width="100%" marginBottom="5rem">
                     <VStack width="100%" alignItems="left">
                         <ListNewGame/>
                         <GameTable game_list={waiting_games}/>
@@ -1515,8 +1516,24 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             
             </Tab>
             <Tab eventKey="my_games" title="MY GAMES" tabClassName="custom-tab">
-            <Center width="80%" marginBottom="5rem">
-                    <GameTable game_list={my_games}/>
+            <Center width="100%" marginBottom="5rem">
+                <VStack width="100%" alignItems="left">
+                <Box
+                    as="button"
+                    borderWidth="2px"
+                    borderColor="white"
+                    width="250px"
+                    visibility="hidden"
+                  >
+                    <div className="font-face-sfpb">
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                      Create New Game
+                    </Text>
+                    </div>
+                  </Box>
+                  <GameTable game_list={my_games}/>
+
+                </VStack>
                 </Center>
             </Tab> 
         </Tabs>
