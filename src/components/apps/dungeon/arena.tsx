@@ -621,6 +621,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         setProcessingTransaction(false);
 
+        // if we get this far just set the joined game to the active one
+        setActiveGame(desired_game);
+        setActiveTab("active_game")
+
 
     },[wallet, waiting_games, bearer_token]);
 
@@ -948,7 +952,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                     setBetSizeString(valueString);
                                 }}
                                 value={bet_size_string}
-                                precision={3}
                                 borderColor="white"
                                 min={0.05}
                               >
@@ -1273,6 +1276,12 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You have been defeated </Text>
                 </Box>
             </Center>
+            }
+
+            {active_game.status === 0 &&
+            
+                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Waiting for challenger to arrive in the arena..</Text>
+            
             }
 
 
