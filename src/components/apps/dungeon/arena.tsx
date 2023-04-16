@@ -114,7 +114,7 @@ import wizard_emoji from "./emojis/Wizard.gif"
 import './css/table.css';
 import './css/fonts.css';
 import './css/tabs.css';
-
+import './css/containers.css'
 
 const GoldEmoji : string = "<a:Gold:1086961346492510298>";
 
@@ -232,6 +232,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const [bet_size_string, setBetSizeString] = useState<string>("");
 
     const [show_new_game, setShowNewGame] = useState<boolean>(false);
+    const [show_join_game, setShowJoinGame] = useState<boolean>(false);
+
     const check_arena = useRef<boolean>(true);
 
     const BetSizeRef = useRef<HTMLInputElement>(null);
@@ -294,7 +296,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const check_games = useCallback(async() => 
     {
         console.log("in check games")
-        if (check_arena.current === false && (activeTab !== "active_game" || active_game === null)) {
+        if (check_arena.current === false && active_game === null) {
             return;
         }
 
@@ -327,7 +329,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         check_arena.current = false;
 
-    }, [bearer_token, wallet, activeTab, active_game]);
+    }, [bearer_token, wallet, active_game]);
 
     // interval for checking state
     useEffect(() => {
@@ -417,7 +419,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey)) ?
                             <Center>
                             <HStack >
-                                <Box as='button' onClick={() => {setActiveGame(game);  setActiveTab("active_game")}} borderWidth='2px' borderColor="white"   width="70px">
+                                <Box as='button' onClick={() => {setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="70px">
                                     <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
                                 </Box>
                                 <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => CancelGameOnArena(index)}>
@@ -427,9 +429,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             </Center>
 
                         :
-                            <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => JoinGameOnArena(index)} borderWidth='2px' borderColor="white"   width="60px">
-                                    <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Join</Text>
-                            </Box>
+                        
+                            <JoinGamePopOver index={index}/>
+                        
                     }
                 </td>
             </tr>
@@ -649,8 +651,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         // if we get this far just set the joined game to the active one
         setActiveGame(desired_game);
-        setActiveTab("active_game")
-
 
     },[wallet, waiting_games, bearer_token, chosen_character]);
 
@@ -957,6 +957,76 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         );
     }
 
+    function JoinGamePopOver({index} : {index : number}) {
+
+  
+        return (
+            <>
+            <div style={{ margin: 0 }}>
+              <Popover
+                returnFocusOnClose={false}
+                isOpen={show_join_game}
+                onClose={() => setShowJoinGame(false)}
+                placement="bottom"
+                closeOnBlur={false}
+              >
+                <PopoverTrigger>
+                  <Box
+                    as="button"
+                    onClick={() => setShowJoinGame(true)}
+                    borderWidth="2px"
+                    borderColor="white"
+                    width="60px"
+                  >
+                    <div className="font-face-sfpb">
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                      Join
+                    </Text>
+                    </div>
+                  </Box>
+                </PopoverTrigger>
+                <PopoverContent backgroundColor={"black"}>
+                  <div className="font-face-sfpb" color="white">
+                    <PopoverHeader
+                      style={{ borderBottomWidth: 0 }}
+                      fontSize={DUNGEON_FONT_SIZE}
+                      color="white"
+                      fontWeight="semibold"
+                      ml="2rem"
+                      mr="2rem"
+                    >
+                      Character Select
+                    </PopoverHeader>
+                  </div>
+                  <PopoverArrow />
+                  <PopoverCloseButton ml="1rem" color="white" />
+                  <PopoverBody>
+                    <FocusLock returnFocus persistentFocus={false}>
+                      <div className="font-face-sfpb">
+                        <VStack align="center" spacing="10px">
+                          <CharacterSelect/>
+                          <Box
+                            as="button"
+                            borderWidth="2px"
+                            borderColor="white"
+                            width="120px"
+                          >
+                            <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => JoinGameOnArena(index)} fontSize={DUNGEON_FONT_SIZE} color="white">
+                              Let's Go!
+                            </Text>
+                          </Box>
+                        </VStack>
+                      </div>
+                    </FocusLock>
+                  </PopoverBody>
+                </PopoverContent>
+              </Popover>
+            </div>
+            </>
+            )
+        }
+
+
     function ListNewGame() {
 
   
@@ -1225,11 +1295,30 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         if (active_game === null || wallet.publicKey === null) {
             return(
-                <div className="font-face-sfpb">
-                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                        No Active Game
-                    </Text>
-                </div>
+                <VStack width="100%" mb="5rem">
+                <HStack width="100%" mb = "2%" mt="1%">
+                    <Box width="10%"></Box>         
+                    <Box  style={{
+                        backgroundImage: `url(${hallway})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        imageRendering: "pixelated"
+    
+                    } } width="80%">
+                    <HStack>
+            
+                        <Box width="30%"></Box>            
+                        <Box width="15%" visibility="hidden"> <DisplayPlayer player_character={0} player_status={0} is_player_one={true}/></Box>  
+                        <Box width="10%"></Box> 
+                        <Box width="15%" visibility="hidden"> <DisplayPlayer player_character={0} player_status={0} is_player_one={false}/> </Box>  
+                        <Box width="30%"></Box> 
+    
+                    </HStack>
+                    </Box>
+                    <Box width="10%"></Box> 
+                </HStack>
+            </VStack>
             );
         }
 
@@ -1289,6 +1378,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         return(
             <>
+            <Box width="100%" mb="5rem">
             <VStack width="100%">
                 <HStack width="100%" mb = "2%" mt="1%">
                     <Box width="10%"></Box>         
@@ -1397,7 +1487,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Waiting for challenger to arrive in the arena..</Text>
             
             }
-
+            </Box>
 
             </>
 
@@ -1406,33 +1496,33 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     return(
         
+    <VStack width="100%" alignItems="center">
 
+        <ActiveGame/>
 
-    <Container>
-    <Tabs
-        className="custom-tab" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
-    >
-        <Tab eventKey="game_list" title="GAME LIST" tabClassName="custom-tab">
+        <Container className="centered">
+
+        <Tabs
+            className="custom-tab" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
+        >
+            <Tab eventKey="game_list" title="GAME LIST" tabClassName="custom-tab">
+                <Center width="80%" marginBottom="5rem">
+                    <VStack width="100%" alignItems="left">
+                        <ListNewGame/>
+                        <GameTable game_list={waiting_games}/>
+                    </VStack>
+                </Center>
+            
+            </Tab>
+            <Tab eventKey="my_games" title="MY GAMES" tabClassName="custom-tab">
             <Center width="80%" marginBottom="5rem">
-                <VStack width="100%" alignItems="left">
-                    <ListNewGame/>
-                    <GameTable game_list={waiting_games}/>
-                </VStack>
-            </Center>
-           
-        </Tab>
-        <Tab eventKey="my_games" title="MY GAMES" tabClassName="custom-tab">
-        <Center width="80%" marginBottom="5rem">
-                <GameTable game_list={my_games}/>
-            </Center>
-        </Tab> 
-        
-        <Tab eventKey="active_game" title="ACTIVE GAME" tabClassName="custom-tab">
-            <ActiveGame/>
-        </Tab>     
-        
-    </Tabs>
-    </Container>
+                    <GameTable game_list={my_games}/>
+                </Center>
+            </Tab> 
+        </Tabs>
+        </Container>
+    </VStack>
+
     );
 
 }

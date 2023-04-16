@@ -156,13 +156,6 @@ export function Navigation(
         
     },[setScreen]);
 
-    const ShowMarketplace = useCallback( async () => 
-    {
-            setScreen(Screen.MARKETPLACE_SCREEN);
-            return;
-        
-    },[setScreen]);
-
     const ShowArena = useCallback( async () => 
     {
             setScreen(Screen.ARENA_SCREEN);
@@ -215,11 +208,6 @@ export function Navigation(
                         <Button variant='link' size='md' onClick={ShowShop}>
                             <div className="font-face-sfpb">
                                 <Text fontSize='16px'  color="white"> Shop </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowMarketplace}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Market </Text>      
                             </div> 
                         </Button>
                         <Button variant='link' size='md' onClick={ShowAchievements}>
