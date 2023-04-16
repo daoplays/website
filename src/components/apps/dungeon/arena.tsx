@@ -35,13 +35,12 @@ import {
 
 import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 
-import hallway from "./images/Hallway.gif"
+import hallway from "./images/Arena1.gif"
 
 
-import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM} from './constants';
+import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message} from './utils';
-
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction} from './utils';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -127,7 +126,8 @@ const enum ArenaInstruction {
     join_game = 2,
     cancel_game = 3,
     take_move = 4,
-    claim_reward = 5
+    reveal_move = 5,
+    claim_reward = 6
 }
 
 
@@ -180,13 +180,15 @@ const enum ArenaStatus {
 const enum GameStatus {
     waiting = 0,
     in_progress = 1,
-    draw = 2,
-    completed = 3
+    in_reveal = 2,
+    draw = 3,
+    completed = 4
 }
 
 const game_status : string[] = [
     "Open",
     "In Progress",
+    "In Reveal",
     "Draw",
     "Complete"
 ]
@@ -209,12 +211,17 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const BetSizeRef = useRef<HTMLInputElement>(null);
     const game_interval = useRef<number | null>(null);
 
-    //const ws = useRef<WebSocket | null>(null);
-    //const ws_id = useRef<number | null>(null);
+    const use_websocket = useRef<boolean>(false);
+    const ws = useRef<WebSocket | null>(null);
+    const ws_id = useRef<number | null>(null);
+
+    const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
 
 
-/*
     useEffect(() => {
+
+        if (use_websocket.current === false)
+            return;
 
         if (active_game === null) {
             if (ws_id.current !== null) {
@@ -224,8 +231,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             }
             return;
         }
-
-        
+ 
         console.log("setup websocket for active game");
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
 
@@ -235,8 +241,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         console.log(message);
 
-        if (ws.current === null || ws.current.CLOSED)
+        if (ws.current === null || ws.current.CLOSED) {
             ws.current = new WebSocket(DEV_WSS_NODE);
+        }
 
 
         ws.current.onopen = () => {ws.current?.send(message); console.log("ws opened")};
@@ -253,13 +260,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         return () => {
             ws.current?.close();
         };
+        
 
     }, [active_game, bearer_token]);
-*/
+
 
     const check_games = useCallback(async() => 
     {
-        
+        console.log("in check games")
         if (check_arena.current === false && (activeTab !== "active_game" || active_game === null)) {
             return;
         }
@@ -267,7 +275,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log("update games");
 
         let list = await run_arena_free_game_GPA(bearer_token);
-        console.log(list)
+        //console.log(list)
 
         let waiting_list = list.filter(function (game) {
             return game.status === 0 && wallet.publicKey !== null && (!game.player_one.equals(wallet.publicKey) && !game.player_two.equals(wallet.publicKey));
@@ -386,14 +394,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                 <Box as='button' onClick={() => {setActiveGame(game);  setActiveTab("active_game")}} borderWidth='2px' borderColor="white"   width="70px">
                                     <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
                                 </Box>
-                                <Box as='button' onClick={() => CancelGameOnArena(index)}>
+                                <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => CancelGameOnArena(index)}>
                                     <FontAwesomeIcon icon={solid("trash")} style={{color: "#ea1a1a",}} />
                                 </Box>
                             </HStack>
                             </Center>
 
                         :
-                            <Box as='button' onClick={() => JoinGameOnArena(index)} borderWidth='2px' borderColor="white"   width="60px">
+                            <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => JoinGameOnArena(index)} borderWidth='2px' borderColor="white"   width="60px">
                                     <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Join</Text>
                             </Box>
                     }
@@ -409,7 +417,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
 
-        
+        setProcessingTransaction(true);
         let desired_game = my_games[index];
         let seed_bytes = uInt32ToLEBytes(desired_game.seed);
         let player_one = desired_game.player_one;
@@ -453,16 +461,19 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
+                setProcessingTransaction(false);
                 return;
             }
 
 
         } catch(error) {
             console.log(error);
+            setProcessingTransaction(false);
             return;
         }
 
- 
+        setProcessingTransaction(false);
+
 
     },[wallet, my_games, bearer_token]);
 
@@ -472,7 +483,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (wallet.publicKey === null || wallet.signTransaction === undefined || active_game === null)
             return;
 
-        
+            setProcessingTransaction(true);
+
        
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
         let player_one = active_game.player_one;
@@ -518,6 +530,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
+                setProcessingTransaction(false);
                 return;
             }
 
@@ -535,10 +548,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         } catch(error) {
             console.log(error);
+            setProcessingTransaction(false);
             return;
         }
 
- 
+        setProcessingTransaction(false);
 
     },[wallet, active_game, bearer_token]);
 
@@ -549,7 +563,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
 
-        
+        setProcessingTransaction(true);
+
         let desired_game = waiting_games[index];
         let seed_bytes = uInt32ToLEBytes(desired_game.seed);
         let player_one = desired_game.player_one;
@@ -593,16 +608,19 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
+                setProcessingTransaction(false);
                 return;
             }
 
 
         } catch(error) {
             console.log(error);
+            setProcessingTransaction(false);
             return;
         }
 
- 
+        setProcessingTransaction(false);
+
 
     },[wallet, waiting_games, bearer_token]);
 
@@ -611,6 +629,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
        
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
+
+        setProcessingTransaction(true);
 
         let seed = (Math.random()*1e9);
         console.log("seed", seed);
@@ -664,33 +684,51 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
+                setProcessingTransaction(false);
                 return;
             }
 
         } catch(error) {
             console.log(error);
+            setProcessingTransaction(false);
             return;
         }
 
- 
+        setProcessingTransaction(false);
 
     },[wallet, bet_size_string, bearer_token]);
 
-    const TakeMoveInGame = useCallback( async (move : number) => 
+    const RevealMoveInGame = useCallback( async () => 
     {
        
         if (wallet.publicKey === null || wallet.signTransaction === undefined || active_game === null)
             return;
 
+        setProcessingTransaction(true);
+
         console.log(active_game);
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
+
+        console.log("sending reveal move to DB");
+        const db_url = `/.netlify/functions/post_to_db?method=Reveal&game_id=`+active_game.game_id;
+        const send_result = await fetch(db_url).then((res) => res.json());
+        console.log("Reveal send : ", send_result);
+
+        if (send_result["statusCode"] !== 200) {
+            console.log("Error getting moves from DB")
+            setProcessingTransaction(false);
+            return;
+        }
+
+        let message_body = JSON.parse(send_result["body"])
+        console.log(message_body)
+
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
         let sol_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
 
-
-        const instruction_data = serialise_Arena_Move_instruction(ArenaInstruction.take_move, move);
+        const instruction_data = serialise_Arena_Reveal_instruction(ArenaInstruction.reveal_move, message_body["move_0"], message_body["salt_0"], message_body["move_1"], message_body["salt_1"]);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -725,6 +763,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
+                setProcessingTransaction(false);
                 return;
             }
 
@@ -732,10 +771,103 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         } catch(error) {
             console.log(error);
+            setProcessingTransaction(false);
             return;
         }
 
- 
+        setProcessingTransaction(false);
+
+
+    },[wallet, active_game, bearer_token]);
+
+    const TakeMoveInGame = useCallback( async (move : number) => 
+    {
+       
+        if (wallet.publicKey === null || wallet.signTransaction === undefined || active_game === null)
+            return;
+
+        setProcessingTransaction(true);
+
+        console.log(active_game);
+        let seed_bytes = uInt32ToLEBytes(active_game.seed);
+
+        let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
+        let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+        let sol_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+
+        let player_id;
+        if (active_game.player_one.equals(wallet.publicKey)) {
+            player_id = 0;
+        }
+        if (active_game.player_two.equals(wallet.publicKey)) {
+            player_id = 1;
+        }
+
+
+        console.log("sending move to DB as player", player_id);
+        const db_url = `/.netlify/functions/post_to_db?method=Insert&game_id=`+active_game.game_id+"&player_id=" + player_id + "&move="+ move + "&round="+ active_game.num_round;
+        const send_result = await fetch(db_url).then((res) => res.json());
+        console.log("Move send : ", send_result);
+
+        if (send_result["statusCode"] !== 200) {
+            console.log("Error sending move to DB")
+            setProcessingTransaction(false);
+            return;
+        }
+
+        let message_body = JSON.parse(send_result["body"])
+        console.log(message_body)
+
+        let hash_array = message_body["hash"];
+        console.log(hash_array)
+        const instruction_data = serialise_Arena_Move_instruction(ArenaInstruction.take_move, hash_array);
+
+        var account_vector  = [
+            {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+            {pubkey: game_data_account, isSigner: false, isWritable: true},
+            {pubkey: sol_data_account, isSigner: false, isWritable: true},
+
+            {pubkey: arena_account, isSigner: false, isWritable: true},
+        
+            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+        ];
+
+
+        const list_instruction = new TransactionInstruction({
+            keys: account_vector,
+            programId: ARENA_PROGRAM,
+            data: instruction_data
+        });
+
+        let txArgs = await get_current_blockhash(bearer_token);
+
+        let transaction = new Transaction(txArgs);
+        transaction.feePayer = wallet.publicKey;
+
+
+        transaction.add(list_instruction);
+
+        try {
+            let signed_transaction = await wallet.signTransaction(transaction);
+            const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
+                console.log(transaction_response)
+                setProcessingTransaction(false);
+                return;
+            }
+
+
+
+        } catch(error) {
+            console.log(error);
+            setProcessingTransaction(false);
+            return;
+        }
+
+        setProcessingTransaction(false);
 
     },[wallet, active_game, bearer_token]);
 
@@ -836,7 +968,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             borderColor="white"
                             width="120px"
                           >
-                            <Text align="center" onClick={ListGameOnArena} fontSize={DUNGEON_FONT_SIZE} color="white">
+                            <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : ListGameOnArena} fontSize={DUNGEON_FONT_SIZE} color="white">
                               CREATE
                             </Text>
                           </Box>
@@ -990,7 +1122,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
         console.log("p1 ", active_game.player_one_status, " p2 ", active_game.player_two_status);
+        console.log("p1 ", active_game.player_one.toString(), " p2 ", active_game.player_two.toString());
 
+       
         let is_winner = false;
         
         if (active_game.status === GameStatus.completed) {
@@ -1010,12 +1144,36 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (active_game.player_two.equals(wallet.publicKey)) {
             player_move = active_game.player_two_move;
         }
+
+        let player_sent_encrypted_move = false;
+        let opponent_sent_encrypted_move = false;
+        let sum_player_one_encrypted_move = 0;
+        let sum_player_two_encrypted_move = 0;
+
+        for (let i in active_game.player_one_encrypted_move) {
+            sum_player_one_encrypted_move += active_game.player_one_encrypted_move[i];
+        }
+
+        for (let i in active_game.player_two_encrypted_move) {
+            sum_player_two_encrypted_move += active_game.player_two_encrypted_move[i];
+        }
+
+        if (active_game.player_one.equals(wallet.publicKey)) {
+            player_sent_encrypted_move = sum_player_one_encrypted_move > 0;
+            opponent_sent_encrypted_move = sum_player_two_encrypted_move > 0;
+
+        }
+        if (active_game.player_two.equals(wallet.publicKey)) {
+            player_sent_encrypted_move = sum_player_two_encrypted_move > 0;
+            opponent_sent_encrypted_move = sum_player_one_encrypted_move > 0;
+        }
         
+        console.log("sum of encrypted data:", sum_player_one_encrypted_move, sum_player_two_encrypted_move);
 
         return(
             <>
             <VStack width="100%">
-                <HStack mb = "2%" mt="1%">
+                <HStack width="100%" mb = "2%" mt="1%">
                     <Box width="10%"></Box>         
                     <Box  style={{
                         backgroundImage: `url(${hallway})`,
@@ -1049,38 +1207,62 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     
                     
                     }
-                    {player_move === RPSMove.none &&
-                    
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move to play</Text>
+                    {!player_sent_encrypted_move  && opponent_sent_encrypted_move &&
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Opponent has chosen their move!  How will you respond?</Text>
                     }
-                     {player_move === RPSMove.none 
+                    {
+                        !player_sent_encrypted_move  && !opponent_sent_encrypted_move &&
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move</Text>
+
+                    }
+                     {!player_sent_encrypted_move 
                      ?
                     <HStack>
 
-                        <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.rock)} borderWidth="2px"  borderColor="white"  width="200px">
+                        <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)} borderWidth="2px"  borderColor="white"  width="200px">
                             <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Rock </Text>
                         </Box>
 
-                        <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.paper)} borderWidth="2px"  borderColor="white"  width="200px">
+                        <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.paper)} borderWidth="2px"  borderColor="white"  width="200px">
                             <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Paper </Text>
                         </Box>
 
-                        <Box  as="button" onClick={() => TakeMoveInGame(RPSMove.scissors)} borderWidth="2px"  borderColor="white"  width="200px">
+                        <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.scissors)} borderWidth="2px"  borderColor="white"  width="200px">
                             <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Scissors </Text>
                         </Box>
                     </HStack>
                     :
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Move Sent: {rps_move[player_move]}</Text>
+                    player_move === RPSMove.none
+                    ?
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Your move has been sent to the arena.. waiting for your opponent</Text>
+                    :
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Decrypted Move Sent: {rps_move[player_move]}</Text>
                     }
+                </VStack>
+            </Center>
+            }
+            {active_game.status === GameStatus.in_reveal && 
+
+            <Center>
+                <VStack>
+                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> All moves have been submitted! Let's end this. </Text>
+
+                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => RevealMoveInGame()} borderWidth="2px"  borderColor="white"  width="200px">
+                    
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Reveal </Text>
+                </Box>
                 </VStack>
             </Center>
             }
             {active_game.status === GameStatus.completed && is_winner && 
 
                 <Center>
-                    <Box  as="button" onClick={() => ClaimReward()} borderWidth="2px"  borderColor="white"  width="200px">
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Get Reward </Text>
+                    <VStack>
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You are victorious! </Text>
+                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ClaimReward()} borderWidth="2px"  borderColor="white"  width="200px">
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Claim Reward </Text>
                     </Box>
+                    </VStack>
                 </Center>
             }
 
@@ -1088,7 +1270,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
             <Center>
                 <Box  width="200px">
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You Lost </Text>
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You have been defeated </Text>
                 </Box>
             </Center>
             }

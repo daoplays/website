@@ -1076,9 +1076,12 @@ export class GameData {
         readonly game_id: bignum,
         readonly last_interaction: bignum,
         readonly num_interactions: number,   
+        readonly num_round: number,   
         readonly bet_size: bignum,   
         readonly player_one: PublicKey,
         readonly player_two: PublicKey,
+        readonly player_one_encrypted_move: number[],
+        readonly player_two_encrypted_move: number[],
         readonly player_one_move: number,
         readonly player_two_move: number,
         readonly player_one_character: number,
@@ -1094,9 +1097,12 @@ export class GameData {
         ['game_id', u64],
         ['last_interaction', i64],
         ['num_interactions', u16],
+        ['num_round', u8],
         ['bet_size', u64],
         ['player_one', publicKey],
         ['player_two', publicKey],
+        ['player_one_encrypted_move', uniformFixedSizeArray(u8, 32)],
+        ['player_two_encrypted_move', uniformFixedSizeArray(u8, 32)],
         ['player_one_move', u8],
         ['player_two_move', u8],
         ['player_one_character', u8],
@@ -1106,7 +1112,7 @@ export class GameData {
         ['status', u8],
         ['seed', u32]
       ],
-      (args) => new GameData(args.game_id!, args.last_interaction!, args.num_interactions!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
+      (args) => new GameData(args.game_id!, args.last_interaction!, args.num_interactions!, args.num_round!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_encrypted_move!, args.player_two_encrypted_move!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
       'GameData'
     )
 }
@@ -1117,7 +1123,7 @@ export async function run_arena_free_game_GPA(bearer : string) : Promise<GameDat
 
 
     //let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=101`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=166`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {
@@ -1163,16 +1169,39 @@ class Arena_CreateGame_Instruction {
 class Arena_Move_Instruction {
     constructor(
         readonly instruction: number,
-        readonly move: number
+        readonly move: number[]
     ) {}
   
     static readonly struct = new BeetStruct<Arena_Move_Instruction>(
       [
         ['instruction', u8],
-        ['move', u8]
+        ['move', uniformFixedSizeArray(u8, 32)]
       ],
       (args) => new Arena_Move_Instruction(args.instruction!, args.move!),
       'Arena_Move_Instruction'
+    )
+}
+
+class Arena_Reveal_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly move_one: number,
+        readonly salt_one: string,
+        readonly move_two: number,
+        readonly salt_two: string,
+
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<Arena_Reveal_Instruction>(
+      [
+        ['instruction', u8],
+        ['move_one', u8],
+        ['salt_one', utf8String],
+        ['move_two', u8],
+        ['salt_two', utf8String]
+      ],
+      (args) => new Arena_Reveal_Instruction(args.instruction!, args.move_one!, args.salt_one!, args.move_two!, args.salt_two!),
+      'Arena_Reveal_Instruction'
     )
 }
 
@@ -1186,11 +1215,20 @@ export function serialise_Arena_CreateGame_instruction(instruction : number, bid
     return buf;
 }
 
-export function serialise_Arena_Move_instruction(instruction : number, move : number) : Buffer
+export function serialise_Arena_Move_instruction(instruction : number, move : number[]) : Buffer
 {
 
     const data = new Arena_Move_Instruction(instruction, move);
     const [buf] = Arena_Move_Instruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_Arena_Reveal_instruction(instruction : number, move_one : number, salt_one : string, move_two : number, salt_two : string) : Buffer
+{
+
+    const data = new Arena_Reveal_Instruction(instruction, move_one, salt_one, move_two, salt_two);
+    const [buf] = Arena_Reveal_Instruction.struct.serialize(data);
 
     return buf;
 }

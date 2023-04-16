@@ -2,7 +2,7 @@ import { isMobile } from "react-device-detect";
 import { PublicKey} from '@solana/web3.js';
 
 const DEV_RPC_NODE = "https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95";
-//export const DEV_WSS_NODE = "wss://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95";
+export const DEV_WSS_NODE = "wss://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95";
 
 const PROD_RPC_NODE = "https://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
 
@@ -26,7 +26,7 @@ export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4uk
 export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHyWXxPJ');
 
 export const MARKETPLACE_PROGRAM = new PublicKey('EQwTJXUcpLmY2zLe4vbgKEHhGJuhoFTNUYkjjAi2mgVx');
-export const ARENA_PROGRAM = new PublicKey('EeFJHv9TmcqDxdn8TiiKfJdFkwrRr2ZESYNa4cPtokuy');
+export const ARENA_PROGRAM = new PublicKey('3VhncqPFsFqfg5wPskJn1UsM9fYTcXJV2x7vDBQiVJc3');
 
 
 // account seeds
