@@ -1152,17 +1152,35 @@ class Arena_CreateGame_Instruction {
     constructor(
         readonly instruction: number,
         readonly bid_size: bignum,
-        readonly seed: number
+        readonly seed: number,
+        readonly character: number
     ) {}
   
     static readonly struct = new BeetStruct<Arena_CreateGame_Instruction>(
       [
         ['instruction', u8],
         ['bid_size', u64],
-        ['seed', u32]
+        ['seed', u32],
+        ['character', u8]
       ],
-      (args) => new Arena_CreateGame_Instruction(args.instruction!, args.bid_size!, args.seed!),
+      (args) => new Arena_CreateGame_Instruction(args.instruction!, args.bid_size!, args.seed!, args.character!),
       'Arena_CreateGame_Instruction'
+    )
+}
+
+class Arena_JoinGame_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly character: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<Arena_JoinGame_Instruction>(
+      [
+        ['instruction', u8],
+        ['character', u8]
+      ],
+      (args) => new Arena_JoinGame_Instruction(args.instruction!, args.character!),
+      'Arena_JoinGame_Instruction'
     )
 }
 
@@ -1206,11 +1224,20 @@ class Arena_Reveal_Instruction {
 }
 
 
-export function serialise_Arena_CreateGame_instruction(instruction : number, bid_size : bignum, seed : number) : Buffer
+export function serialise_Arena_CreateGame_instruction(instruction : number, bid_size : bignum, seed : number, character : number) : Buffer
 {
 
-    const data = new Arena_CreateGame_Instruction(instruction, bid_size, seed);
+    const data = new Arena_CreateGame_Instruction(instruction, bid_size, seed, character);
     const [buf] = Arena_CreateGame_Instruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_Arena_JoinGame_instruction(instruction : number, character : number) : Buffer
+{
+
+    const data = new Arena_JoinGame_Instruction(instruction, character);
+    const [buf] = Arena_JoinGame_Instruction.struct.serialize(data);
 
     return buf;
 }

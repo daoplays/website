@@ -40,7 +40,7 @@ import hallway from "./images/Arena1.gif"
 
 import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction} from './utils';
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction} from './utils';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -85,6 +85,31 @@ import knight from "./images/Knight.gif"
 import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
+
+import assassin_emoji from "./emojis/Assassin.gif"
+import blue_slime_emoji from "./emojis/BlueSlime.gif"
+import boulder_emoji from "./emojis/Boulder.png"
+import carnivine_emoji from "./emojis/Carnivine.gif"
+import dungeon_master_emoji from "./emojis/DungeonMaster.gif"
+import elves_emoji from "./emojis/Elves.gif"
+import giant_blue_slime_emoji from "./emojis/GiantBlueSlime.gif"
+import giant_green_slime_emoji from "./emojis/GiantGreenSlime.gif"
+import giant_rat_emoji from "./emojis/GiantRat.gif"
+import giant_spider_emoji from "./emojis/GiantSpider.gif"
+import goblins_emoji from "./emojis/Goblin.gif"
+import green_slime_emoji from "./emojis/GreenSlime.gif"
+import mimic_emoji from "./emojis/Mimic.gif"
+import orc_emoji from "./emojis/Orc.gif"
+import shade_emoji from "./emojis/Shade.gif"
+import skeleton_knight_emoji from "./emojis/SkellyKnight.gif"
+import skeletons_emoji from "./emojis/Skellies.gif"
+import skeleton_wizard_emoji from "./emojis/SkellyWiz.gif"
+import floor_spikes_emoji from "./emojis/Spikes.png"
+import werewolf_emoji from "./emojis/Werewolf.gif"
+
+import knight_emoji from "./emojis/Knight.gif"
+import ranger_emoji from "./emojis/Ranger.gif"
+import wizard_emoji from "./emojis/Wizard.gif"
 
 import './css/table.css';
 import './css/fonts.css';
@@ -198,6 +223,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const wallet = useWallet();
 
     const [activeTab, setActiveTab] = useState<any>("game_list");
+    const [chosen_character, setChosenCharacter] = useState<PlayerCharacter>(PlayerCharacter.Knight);
 
     const [waiting_games, setWaitingGames] = useState<GameData[]>([]);
     const [my_games, setMyGames] = useState<GameData[]>([]);
@@ -573,7 +599,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
         let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
 
-        const instruction_data = serialise_basic_instruction(ArenaInstruction.join_game);
+        const instruction_data = serialise_Arena_JoinGame_instruction(ArenaInstruction.join_game, chosen_character);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -626,7 +652,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         setActiveTab("active_game")
 
 
-    },[wallet, waiting_games, bearer_token]);
+    },[wallet, waiting_games, bearer_token, chosen_character]);
 
     const ListGameOnArena = useCallback( async () => 
     {
@@ -654,7 +680,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         let bet_size_bn = new BN(bet_size * LAMPORTS_PER_SOL);
-        const instruction_data = serialise_Arena_CreateGame_instruction(ArenaInstruction.create_game, bet_size_bn, seed);
+        const instruction_data = serialise_Arena_CreateGame_instruction(ArenaInstruction.create_game, bet_size_bn, seed, chosen_character);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -699,8 +725,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
         setProcessingTransaction(false);
+        setShowNewGame(false);
 
-    },[wallet, bet_size_string, bearer_token]);
+    },[wallet, bet_size_string, bearer_token, chosen_character]);
 
     const RevealMoveInGame = useCallback( async () => 
     {
@@ -875,6 +902,60 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     },[wallet, active_game, bearer_token]);
 
+
+    function CharacterSelect() {
+
+        let EMOJI_SIZE = 32
+
+        return(
+            <VStack align={"center"}>
+
+                <HStack>
+                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.Knight)} borderWidth= {chosen_character === PlayerCharacter.Knight ? "1px" : "0px"} borderColor="white">
+                    <img src={knight_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                </Box>
+                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.Ranger)} borderWidth= {chosen_character === PlayerCharacter.Ranger ? "1px" : "0px"} borderColor="white">
+                    <img src={ranger_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}} />
+                </Box>
+                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.Wizard)} borderWidth= {chosen_character === PlayerCharacter.Wizard ? "1px" : "0px"} borderColor="white">
+                    <img src={wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                </Box>
+                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.GreenSlime)} borderWidth= {chosen_character === PlayerCharacter.GreenSlime ? "1px" : "0px"} borderColor="white">
+                    <img src={green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                </Box>
+                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.GiantRat)} borderWidth= {chosen_character === PlayerCharacter.GiantRat ? "1px" : "0px"} borderColor="white">
+                    <img src={giant_rat_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                </Box>
+                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.GiantSpider)} borderWidth= {chosen_character === PlayerCharacter.GiantSpider ? "1px" : "0px"} borderColor="white">
+                    <img src={giant_spider_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                </Box>
+                </HStack>
+                <HStack>
+                    <img src={boulder_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={mimic_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={skeletons_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={floor_spikes_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={carnivine_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={giant_green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={werewolf_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                </HStack>
+                <HStack>
+                    <img src={blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={elves_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={giant_blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={orc_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={skeleton_knight_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={skeleton_wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={assassin_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                </HStack>
+                <HStack>
+                    <img src={dungeon_master_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <img src={shade_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                </HStack>
+            </VStack>
+        );
+    }
+
     function ListNewGame() {
 
   
@@ -922,7 +1003,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                   <PopoverBody>
                     <FocusLock returnFocus persistentFocus={false}>
                       <div className="font-face-sfpb">
-                        <VStack align="center">
+                        <VStack align="center" spacing="10px">
                           <HStack width="80%" align={"left"}>
                             <Box width="50%">
                               <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
@@ -965,6 +1046,12 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                               </NumberInput>
                             </Box>
                           </HStack>
+                          <Box width="80%">
+                              <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
+                                Character Select:
+                              </Text>
+                            </Box>
+                          <CharacterSelect/>
                           <Box
                             as="button"
                             borderWidth="2px"
@@ -987,9 +1074,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
     
-    const DisplayPlayer = ({player_character, player_status} : {player_character : PlayerCharacter, player_status : ArenaStatus}) => {
+    const DisplayPlayer = ({player_character, player_status, is_player_one} : {player_character : PlayerCharacter, player_status : ArenaStatus, is_player_one : boolean}) => {
 
-
+        let transform;
         if (player_status === ArenaStatus.dead) {
                 // for the traps we don't return anything
                 if (player_character === PlayerCharacter.BoulderTrap) {
@@ -1035,67 +1122,88 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
         if (player_character === PlayerCharacter.Knight){
-            return ( <img style={{"imageRendering":"pixelated"}} src={knight} width="10000" alt={""}/> );
+            transform = !is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={knight} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Ranger){
-            return ( <img style={{"imageRendering":"pixelated"}} src={ranger} width="10000" alt={""}/> );
+            transform = !is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={ranger} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Wizard){
-            return ( <img style={{"imageRendering":"pixelated"}} src={wizard} width="10000" alt={""}/> );
+            transform = !is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={wizard} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Assassin) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={assassin} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={assassin} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.BlueSlime) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={blue_slime} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={blue_slime} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Carnivine) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={carnivine} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={carnivine} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.DM) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={dungeon_master} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={dungeon_master} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Elves) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={elves} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={elves} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.GiantBlueSlime) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={giant_blue_slime} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={giant_blue_slime} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.GiantGreenSlime) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={giant_green_slime} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={giant_green_slime} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.GiantRat) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={giant_rat} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={giant_rat} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.GiantSpider) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={giant_spider} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={giant_spider} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Goblins) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={goblins} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={goblins} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.GreenSlime) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={green_slime} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={green_slime} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Mimic) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={closed_chest} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={closed_chest} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Orc) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={orc} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={orc} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Shade) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={shade} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={shade} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.SkeletonKnight) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_knight} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={skeleton_knight} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Skeletons) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={skeletons} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={skeletons} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.SkeletonWizard) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={skeleton_wizard} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={skeleton_wizard} width="10000" alt={""}/> );
         }
         if (player_character === PlayerCharacter.Werewolf) {
-            return ( <img style={{"imageRendering":"pixelated"}} src={werewolf} width="10000" alt={""}/> );
+            transform = is_player_one ? "scaleX(-1)" : "scaleX(1)";
+            return ( <img style={{"imageRendering":"pixelated", "transform": transform}} src={werewolf} width="10000" alt={""}/> );
         }
 
         // for the traps we don't return anything
@@ -1128,6 +1236,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log("p1 ", active_game.player_one.toString(), " p2 ", active_game.player_two.toString());
 
        
+        let is_player_one : boolean = true;
+        if (active_game.player_two.equals(wallet.publicKey)) {
+            is_player_one = false;
+        }
+
         let is_winner = false;
         
         if (active_game.status === GameStatus.completed) {
@@ -1189,9 +1302,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <HStack>
             
                         <Box width="30%"></Box>            
-                        <Box width="15%"> <DisplayPlayer player_character={active_game.player_one_character} player_status={active_game.player_one_status} /></Box>  
+                        <Box width="15%"> <DisplayPlayer player_character={active_game.player_one_character} player_status={active_game.player_one_status} is_player_one={true}/></Box>  
                         <Box width="10%"></Box> 
-                        <Box width="15%" visibility={active_game.status === 0 ? "hidden" : "visible"}> <DisplayPlayer player_character={active_game.player_two_character} player_status={active_game.player_two_status} /> </Box>  
+                        <Box width="15%" visibility={active_game.status === 0 ? "hidden" : "visible"}> <DisplayPlayer player_character={active_game.player_two_character} player_status={active_game.player_two_status} is_player_one={false}/> </Box>  
                         <Box width="30%"></Box> 
     
                     </HStack>
