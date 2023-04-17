@@ -270,6 +270,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const [show_new_game, setShowNewGame] = useState<boolean>(false);
     const [show_join_game, setShowJoinGame] = useState<boolean>(false);
+    const join_index = useRef<number>(0);
 
     const check_arena = useRef<boolean>(true);
 
@@ -487,9 +488,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const ArenaGameCard = ({game, index} : {game : GameData, index : number}) => {
 
-        console.log(index, game);
+        //console.log(index, game);
         let bet_size : number = bignum_to_num(game.bet_size) / LAMPORTS_PER_SOL;
-        console.log("index", index, "price", bet_size);
+        //console.log("index", index, "price", bet_size);
 
         let EMOJI_SIZE=32;
 
@@ -1069,7 +1070,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             <div style={{ margin: 0 }}>
               <Popover
                 returnFocusOnClose={false}
-                isOpen={show_join_game}
+                isOpen={show_join_game && index === join_index.current}
                 onClose={() => setShowJoinGame(false)}
                 placement="bottom"
                 closeOnBlur={false}
@@ -1077,10 +1078,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <PopoverTrigger>
                   <Box
                     as="button"
-                    onClick={() => setShowJoinGame(true)}
+                    onClick={() => {console.log("clicked", index); join_index.current = index; setShowJoinGame(true)}}
                     borderWidth="2px"
                     borderColor="white"
                     width="60px"
+                    visibility={(!show_join_game || index !== join_index.current) ? "visible" : "hidden"}
                   >
                     <div className="font-face-sfpb">
                     <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
@@ -1102,7 +1104,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                       Character Select
                     </PopoverHeader>
                   </div>
-                  <PopoverArrow />
+                  <PopoverArrow/>
                   <PopoverCloseButton ml="1rem" color="white" />
                   <PopoverBody>
                     <FocusLock returnFocus persistentFocus={false}>
@@ -1152,6 +1154,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     borderWidth="2px"
                     borderColor="white"
                     width="250px"
+                    visibility={!show_new_game ? "visible" : "hidden"}
                   >
                     <div className="font-face-sfpb">
                     <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
