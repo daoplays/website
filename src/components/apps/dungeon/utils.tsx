@@ -1074,6 +1074,7 @@ export function serialise_Marketplace_buy_instruction(instruction : number, quan
 export class GameData {
     constructor(
         readonly game_id: bignum,
+        readonly game_speed: number,
         readonly last_interaction: bignum,
         readonly num_interactions: number,   
         readonly num_round: number,   
@@ -1095,6 +1096,7 @@ export class GameData {
     static readonly struct = new BeetStruct<GameData>(
       [
         ['game_id', u64],
+        ['game_speed', u8],
         ['last_interaction', i64],
         ['num_interactions', u16],
         ['num_round', u8],
@@ -1112,9 +1114,23 @@ export class GameData {
         ['status', u8],
         ['seed', u32]
       ],
-      (args) => new GameData(args.game_id!, args.last_interaction!, args.num_interactions!, args.num_round!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_encrypted_move!, args.player_two_encrypted_move!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
+      (args) => new GameData(args.game_id!, args.game_speed!, args.last_interaction!, args.num_interactions!, args.num_round!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_encrypted_move!, args.player_two_encrypted_move!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
       'GameData'
     )
+}
+
+export async function request_arena_game_data(bearer : string, pubkey : PublicKey) : Promise<GameData | null>
+{
+ 
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = GameData.struct.deserialize(account_data);
+
+    return data;
 }
 
 export async function run_arena_free_game_GPA(bearer : string) : Promise<GameData[]>
@@ -1123,7 +1139,7 @@ export async function run_arena_free_game_GPA(bearer : string) : Promise<GameDat
 
 
     //let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=166`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=167`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {
@@ -1153,7 +1169,8 @@ class Arena_CreateGame_Instruction {
         readonly instruction: number,
         readonly bid_size: bignum,
         readonly seed: number,
-        readonly character: number
+        readonly character: number,
+        readonly game_speed: number
     ) {}
   
     static readonly struct = new BeetStruct<Arena_CreateGame_Instruction>(
@@ -1161,9 +1178,11 @@ class Arena_CreateGame_Instruction {
         ['instruction', u8],
         ['bid_size', u64],
         ['seed', u32],
-        ['character', u8]
+        ['character', u8],
+        ['game_speed', u8]
+
       ],
-      (args) => new Arena_CreateGame_Instruction(args.instruction!, args.bid_size!, args.seed!, args.character!),
+      (args) => new Arena_CreateGame_Instruction(args.instruction!, args.bid_size!, args.seed!, args.character!, args.game_speed!),
       'Arena_CreateGame_Instruction'
     )
 }
@@ -1224,10 +1243,10 @@ class Arena_Reveal_Instruction {
 }
 
 
-export function serialise_Arena_CreateGame_instruction(instruction : number, bid_size : bignum, seed : number, character : number) : Buffer
+export function serialise_Arena_CreateGame_instruction(instruction : number, bid_size : bignum, seed : number, character : number, game_speed : number) : Buffer
 {
 
-    const data = new Arena_CreateGame_Instruction(instruction, bid_size, seed, character);
+    const data = new Arena_CreateGame_Instruction(instruction, bid_size, seed, character, game_speed);
     const [buf] = Arena_CreateGame_Instruction.struct.serialize(data);
 
     return buf;

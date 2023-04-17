@@ -12,6 +12,7 @@ import {
     NumberInput,
     NumberInputField
   } from '@chakra-ui/react'
+  import { Tooltip } from '@chakra-ui/react'
 
   import {
     useWallet,
@@ -40,7 +41,7 @@ import hallway from "./images/Arena1.gif"
 
 import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction} from './utils';
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, request_arena_game_data} from './utils';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -144,7 +145,6 @@ const ArenaCharacterEmoji : string[] = [
     "<a:Werewolf:1082339387557289994>",
 ]
 
-
 const enum ArenaInstruction {
     init = 0,
     create_game = 1,
@@ -196,6 +196,38 @@ const enum PlayerCharacter {
     Werewolf
 }
 
+
+const player_emoji_map = new Map([
+    // enemies
+    [PlayerCharacter.Assassin, assassin_emoji],
+    [PlayerCharacter.BlueSlime, blue_slime_emoji],
+    [PlayerCharacter.BoulderTrap, boulder_emoji],
+    [PlayerCharacter.Carnivine, carnivine_emoji],
+    [PlayerCharacter.DM, dungeon_master_emoji],
+    [PlayerCharacter.Elves, elves_emoji],
+    [PlayerCharacter.GiantBlueSlime, giant_blue_slime_emoji],
+    [PlayerCharacter.GiantGreenSlime, giant_green_slime_emoji],
+    [PlayerCharacter.GiantRat, giant_rat_emoji],
+    [PlayerCharacter.GiantSpider, giant_spider_emoji],
+    [PlayerCharacter.Goblins, goblins_emoji],
+    [PlayerCharacter.GreenSlime, green_slime_emoji],
+    [PlayerCharacter.Mimic, mimic_emoji],
+    [PlayerCharacter.Orc, orc_emoji],
+    [PlayerCharacter.Shade, shade_emoji],
+    [PlayerCharacter.SkeletonKnight, skeleton_knight_emoji],
+    [PlayerCharacter.Skeletons, skeletons_emoji],
+    [PlayerCharacter.SkeletonWizard, skeleton_wizard_emoji],
+    [PlayerCharacter.SpikeTrap, floor_spikes_emoji],
+    [PlayerCharacter.Werewolf, werewolf_emoji],
+
+    // characters
+    [PlayerCharacter.Knight, knight_emoji],
+    [PlayerCharacter.Ranger, ranger_emoji],
+    [PlayerCharacter.Wizard, wizard_emoji]
+  ]);
+
+
+
 const enum ArenaStatus {
     alive = 0,
     dead = 1,
@@ -208,6 +240,11 @@ const enum GameStatus {
     in_reveal = 2,
     draw = 3,
     completed = 4
+}
+
+const enum GameSpeed {
+    fast = 0,
+    slow = 1
 }
 
 const game_status : string[] = [
@@ -224,12 +261,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const [activeTab, setActiveTab] = useState<any>("game_list");
     const [chosen_character, setChosenCharacter] = useState<PlayerCharacter>(PlayerCharacter.Knight);
+    const [chosen_speed, setChosenSpeed] = useState<GameSpeed>(GameSpeed.slow);
 
     const [waiting_games, setWaitingGames] = useState<GameData[]>([]);
     const [my_games, setMyGames] = useState<GameData[]>([]);
     const [active_game, setActiveGame] = useState<GameData | null>(null);
 
-    const [bet_size_string, setBetSizeString] = useState<string>("");
+    const [bet_size_string, setBetSizeString] = useState<string>("0.05");
 
     const [show_new_game, setShowNewGame] = useState<boolean>(false);
     const [show_join_game, setShowJoinGame] = useState<boolean>(false);
@@ -239,18 +277,55 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const BetSizeRef = useRef<HTMLInputElement>(null);
     const game_interval = useRef<number | null>(null);
 
-    const use_websocket = useRef<boolean>(false);
+    const use_websocket = useRef<boolean>(true);
     const ws = useRef<WebSocket | null>(null);
     const ws_id = useRef<number | null>(null);
 
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
 
+    const check_active_game = useCallback(async() => 
+    {
+        console.log("in check games")
+        if (active_game === null) {
+            return;
+        }
+
+        let seed_bytes = uInt32ToLEBytes(active_game.seed);
+        let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+
+
+        let game_data = await request_arena_game_data(bearer_token, game_data_account);
+
+        if (game_data === null) {
+            console.log("error getting active game data");
+            return;
+        }
+
+        let new_game_id = game_data.game_id;
+
+        if (bignum_to_num(new_game_id) !== bignum_to_num(active_game.game_id)) {
+            console.log("active game has changed since requesting data");
+            return;
+        }
+
+        let new_game_interactions = game_data.num_interactions;
+
+        if (new_game_interactions <= game_data.num_interactions) {
+            console.log("no change in game state for active game");
+            return;
+        }
+
+        setActiveGame(game_data);
+
+    }, [bearer_token, active_game]);
+
 
     useEffect(() => {
 
-        if (use_websocket.current === false)
+        if (use_websocket.current === false || DEV_WSS_NODE === undefined)
             return;
 
+        console.log(DEV_WSS_NODE)
         if (active_game === null) {
             if (ws_id.current !== null) {
                 let message = `{"id":1,"jsonrpc":"2.0","method": "accountUnsubscribe", "params": [` + ws_id.current + `]}`
@@ -265,6 +340,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
 
+
         let message = `{"id":1,"jsonrpc":"2.0","method":"accountSubscribe","params":["` + game_data_account.toString() + `",{"encoding": "jsonParsed"}]}`
 
         console.log(message);
@@ -274,12 +350,16 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
 
-        ws.current.onopen = () => {ws.current?.send(message); console.log("ws opened")};
+        // when the websocket connects, send our request, and then in one second (hopefully long enough )
+        ws.current.onopen = () => {ws.current?.send(message); console.log("ws opened");};
         ws.current.onclose = () => {ws_id.current = null; console.log("ws closed")};
 
         ws.current.onmessage = (event) => {
+
+            // the first message will be the subscription id, once we have that get the current state of the game as we will be tracking and updates from then on via the subscription
             if (ws_id.current === null) {
                 ws_id.current = event.data["result"];
+                check_active_game();
             }
             console.log("got message", event.data);
         };
@@ -290,13 +370,16 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         };
         
 
-    }, [active_game, bearer_token]);
+    }, [active_game, check_active_game]);
+
+
+
 
 
     const check_games = useCallback(async() => 
     {
         console.log("in check games")
-        if (check_arena.current === false && active_game === null) {
+        if (check_arena.current === false) {
             return;
         }
 
@@ -317,19 +400,20 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return wallet.publicKey !== null && (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey));
         });
         setMyGames(my_games);
-
+/*
         let new_active_game = list.filter(function (game) {
             return (active_game !== null && bignum_to_num(game.game_id) === bignum_to_num(active_game.game_id));
         });
 
         if (new_active_game.length > 0) {
+            
             setActiveGame(new_active_game[0]);
             console.log("found active game: ", new_active_game[0]);
         }
-
+*/
         check_arena.current = false;
 
-    }, [bearer_token, wallet, active_game]);
+    }, [bearer_token, wallet]);
 
     // interval for checking state
     useEffect(() => {
@@ -380,6 +464,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <tr>
                         <th>Game</th>
                         <th>Bet Size</th>
+                        <th>Speed</th>
+                        <th>Match</th>
                         <th>Status</th>
                         <th>
                         <Box as='button' onClick={() => {check_arena.current = true; check_games()}}>
@@ -405,10 +491,29 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log(index, game);
         let bet_size : number = bignum_to_num(game.bet_size) / LAMPORTS_PER_SOL;
         console.log("index", index, "price", bet_size);
+
+        let EMOJI_SIZE=32;
+
         return (
             <tr>
                 <td >RPS</td>
                 <td >{bet_size}</td>
+                <td>{game.game_speed === GameSpeed.fast ? "Fast" : "Slow"}</td>
+                <td>
+                    <Center>
+                    <HStack>
+                    <img src={player_emoji_map.get(game.player_one_character)} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+                    <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">vs</Text>
+                    {game.status === GameStatus.waiting ?
+                        <img src={player_emoji_map.get(game.player_two_character)} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, visibility: "hidden"}}/>
+                    :
+                    <img src={player_emoji_map.get(game.player_two_character)} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+
+                    }
+
+                    </HStack>
+                    </Center>
+                </td>
                 <td >{game_status[game.status]}</td>
                 <td>
                     {wallet.publicKey === null ?
@@ -680,7 +785,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         let bet_size_bn = new BN(bet_size * LAMPORTS_PER_SOL);
-        const instruction_data = serialise_Arena_CreateGame_instruction(ArenaInstruction.create_game, bet_size_bn, seed, chosen_character);
+        const instruction_data = serialise_Arena_CreateGame_instruction(ArenaInstruction.create_game, bet_size_bn, seed, chosen_character, chosen_speed);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -727,7 +832,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         setProcessingTransaction(false);
         setShowNewGame(false);
 
-    },[wallet, bet_size_string, bearer_token, chosen_character]);
+    },[wallet, bet_size_string, bearer_token, chosen_character, chosen_speed]);
 
     const RevealMoveInGame = useCallback( async () => 
     {
@@ -1075,7 +1180,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <FocusLock returnFocus persistentFocus={false}>
                       <div className="font-face-sfpb">
                         <VStack align="center" spacing="10px">
-                          <HStack width="80%" align={"left"}>
+                          <HStack width="80%" align={"center"}>
                             <Box width="50%">
                               <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
                                 Game:
@@ -1087,7 +1192,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                               </Text>
                             </Box>
                           </HStack>
-                          <HStack width="80%" align={"left"}>
+                          <HStack width="80%" align={"center"}>
                             <Box width="50%">
                               <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
                                 Bet Size:
@@ -1116,6 +1221,42 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                 />
                               </NumberInput>
                             </Box>
+                          </HStack>
+                          <HStack width="80%" align={"center"}>
+                            <Box  width="50%">
+                                <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
+                                    Speed:
+                                </Text>
+                            </Box>
+                            <Box
+                                as="button"
+                                borderWidth="2px"
+                                borderColor={chosen_speed === GameSpeed.slow ? "white" : "black"}
+                                width="80px"
+                                height={35}
+                                onClick={() => setChosenSpeed(GameSpeed.slow)} 
+                           
+                            >
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                              Slow
+                            </Text>
+                          </Box>
+                          
+                          <Box
+                            as="button"
+                            borderWidth="2px"
+                            borderColor={chosen_speed === GameSpeed.fast ? "white" : "black"}
+                            width="80px"
+                            height={35}
+                            onClick={() => setChosenSpeed(GameSpeed.fast)} 
+
+                          >
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                              Fast
+                            </Text>
+
+                          </Box>
+                          
                           </HStack>
                           <Box width="80%">
                               <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
@@ -1496,7 +1637,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     return(
         
-    <VStack width="100%" alignItems="center">
+    <VStack width="100%" alignItems="center" mb="10rem">
 
         <ActiveGame/>
 
