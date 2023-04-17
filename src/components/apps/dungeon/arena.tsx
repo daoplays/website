@@ -12,7 +12,6 @@ import {
     NumberInput,
     NumberInputField
   } from '@chakra-ui/react'
-  import { Tooltip } from '@chakra-ui/react'
 
   import {
     useWallet,
