@@ -341,7 +341,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
 
 
-        let message = `{"id":1,"jsonrpc":"2.0","method":"accountSubscribe","params":["` + game_data_account.toString() + `",{"encoding": "jsonParsed"}]}`
+        let message = `{"id":1,"jsonrpc":"2.0","method":"accountSubscribe","params":["` + game_data_account.toString() + `",{"encoding": "jsonParsed", "commitment": "confirmed"}]}`
 
         console.log(message);
 
@@ -356,12 +356,44 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         ws.current.onmessage = (event) => {
 
+            let result = JSON.parse(event.data);
+            console.log(result)
+            console.log("result id: ", result["id"], result["id"] === 1)
             // the first message will be the subscription id, once we have that get the current state of the game as we will be tracking and updates from then on via the subscription
-            if (ws_id.current === null) {
-                ws_id.current = event.data["result"];
+            if (result["id"] !== undefined && result["id"] === 1) {
+                console.log("have sub event");
+                // if ws_id isn't null something bad has happened
+                if (ws_id.current !== null)
+                    console.log("ws_id isn't null on sub event");
+                
+                console.log("have new subscription id")
+                ws_id.current = result["result"];
+
+                // now we know we are connected, get the most recent state to make sure we havn't missed anything
                 check_active_game();
+                
             }
-            console.log("got message", event.data);
+
+            console.log("got message", result);
+
+
+            // if we have a subscription field check against ws_id
+            if (result["params"] !== undefined) {
+                let event_sub = result["params"]["subscription"];
+                if (event_sub !== ws_id.current) {
+                    console.log("id of message doesn't equal current ws_id, skipping")
+                    return;
+                }
+                let event_data = result["params"]["result"]["value"]["data"][0];
+
+                console.log("have event data", event_data);
+                let account_data = Buffer.from(event_data, "base64");
+
+                const [data] = GameData.struct.deserialize(account_data);
+                setActiveGame(data);
+                console.log(data);
+
+            }
         };
     
      
