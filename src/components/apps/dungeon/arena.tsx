@@ -38,9 +38,9 @@ import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- im
 import hallway from "./images/Arena1.gif"
 
 
-import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE} from './constants';
+import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE, DEBUG} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction} from './utils';
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature} from './utils';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -344,6 +344,74 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
 
+    // refs for checking signatures
+    const signature_interval = useRef<number | null>(null);
+    const current_signature = useRef<string | null>(null);
+    const signature_check_count = useRef<number>(0);
+    const [transaction_failed, setTransactionFailed] = useState<boolean>(false);
+
+
+    const CheckArenaSignature = useCallback(async() =>
+    {
+        
+        if (current_signature.current === null)
+            return;
+
+        let signature_response = await check_signature(bearer_token, current_signature.current);
+
+        if (signature_response === null) {
+            return;
+        }
+
+        //console.log(signature_response);
+        let confirmation = signature_response.result?.value[0];
+        
+        if (confirmation !== null) {
+
+            if (confirmation?.err !== null) {
+                console.log("error: ", confirmation?.err);
+                setTransactionFailed(true);
+            }
+            else {
+                setTransactionFailed(false);
+            }
+
+            current_signature.current = null;
+            signature_check_count.current = 0;
+            setProcessingTransaction(false);
+        }
+        else {
+            signature_check_count.current += 1;
+        }
+        if (signature_check_count.current >= 10) {
+            setTransactionFailed(true);
+            setProcessingTransaction(false);
+            current_signature.current = null;
+            signature_check_count.current = 0;
+        }
+
+    }, [bearer_token]);
+
+    // interval for checking signatures
+    useEffect(() => {
+
+        if (signature_interval.current === null) {
+            signature_interval.current = window.setInterval(CheckArenaSignature, 1000);
+        }
+        else{
+            window.clearInterval(signature_interval.current);
+            signature_interval.current = null;
+            
+        }
+        // here's the cleanup function
+        return () => {
+            if (signature_interval.current !== null) {
+            window.clearInterval(signature_interval.current);
+            signature_interval.current = null;
+            }
+        };
+    }, [CheckArenaSignature]);
+
 
     function get_game_key(game : GameData) : PublicKey {
 
@@ -395,7 +463,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return entry.key.equals(key);
         });
 
-        console.log("update list: ", game_entry);
+        console.log("update list: ", game_entry, game);
         let copy = my_games;
         // if this is length 0 then we just need to add it
         if (game_entry.length === 0) {
@@ -409,6 +477,12 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             my_games_map.current.push(new_entry);
 
 
+            return;
+        }
+
+        // only update the copy if the recieved state is later
+        if (game.num_interactions <= copy[game_entry[0].index].num_interactions) {
+            console.log("message has older state than current version");
             return;
         }
 
@@ -440,7 +514,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         const [data] = GameData.struct.deserialize(account_data);
         update_game_on_list(pubkey, data);
-        console.log(data);
 
         
 
@@ -757,7 +830,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey)) ?
                             <Center>
                             <HStack >
-                                <Box as='button' onClick={() => {setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="70px">
+                                <Box as='button' onClick={() => {console.log("view", game); setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="70px">
                                     <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
                                 </Box>
                                 <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => CancelGameOnArena(index)}>
@@ -784,6 +857,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         setProcessingTransaction(true);
+        setTransactionFailed(false);
         let desired_game = my_games[index];
         let seed_bytes = uInt32ToLEBytes(desired_game.seed);
         let player_one = desired_game.player_one;
@@ -828,8 +902,18 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
+                setTransactionFailed(true);
                 return;
             }
+
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("cancelplay signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
 
 
         } catch(error) {
@@ -837,9 +921,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             setProcessingTransaction(false);
             return;
         }
-
-        setProcessingTransaction(false);
-
 
     },[wallet, my_games, bearer_token]);
 
@@ -849,8 +930,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (wallet.publicKey === null || wallet.signTransaction === undefined || active_game === null)
             return;
 
-            setProcessingTransaction(true);
-
+        setProcessingTransaction(true);
+        setTransactionFailed(false);
        
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
         let player_one = active_game.player_one;
@@ -897,9 +978,18 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
+                setTransactionFailed(true);
                 return;
             }
 
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("claim play signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
           
 
 
@@ -922,8 +1012,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         await remove_game_from_list(game_data_account);
 
 
-        setProcessingTransaction(false);
-
     },[wallet, active_game, bearer_token, remove_game_from_list, ]);
 
 
@@ -934,6 +1022,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         setProcessingTransaction(true);
+        setTransactionFailed(false);
 
         let desired_game = waiting_games[index];
         let seed_bytes = uInt32ToLEBytes(desired_game.seed);
@@ -979,17 +1068,24 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
+                setTransactionFailed(true);
                 return;
             }
 
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("join signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
 
         } catch(error) {
             console.log(error);
             setProcessingTransaction(false);
             return;
         }
-
-        setProcessingTransaction(false);
 
         // if we get this far just set the joined game to the active one
         setActiveGame(desired_game);
@@ -1003,6 +1099,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         setProcessingTransaction(true);
+        setTransactionFailed(false);
 
         let seed = (Math.random()*1e9);
         console.log("seed", seed);
@@ -1057,8 +1154,18 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
+                setTransactionFailed(true);
                 return;
             }
+
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("list signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
 
         } catch(error) {
             console.log(error);
@@ -1066,7 +1173,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
         }
 
-        setProcessingTransaction(false);
         setShowNewGame(false);
 
     },[wallet, bet_size_string, bearer_token, chosen_character, chosen_speed]);
@@ -1078,6 +1184,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         setProcessingTransaction(true);
+        setTransactionFailed(false);
 
         console.log(active_game);
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
@@ -1137,8 +1244,18 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
+                setTransactionFailed(true);
                 return;
             }
+
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("reveal signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
 
 
 
@@ -1147,9 +1264,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             setProcessingTransaction(false);
             return;
         }
-
-        setProcessingTransaction(false);
-
 
     },[wallet, active_game, bearer_token]);
 
@@ -1160,6 +1274,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
 
         setProcessingTransaction(true);
+        setTransactionFailed(false);
 
         console.log(active_game);
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
@@ -1229,9 +1344,18 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             if (transaction_response.result === "INVALID") {
                 console.log(transaction_response)
                 setProcessingTransaction(false);
+                setTransactionFailed(true);
                 return;
             }
 
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("move signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
 
 
         } catch(error) {
@@ -1239,8 +1363,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             setProcessingTransaction(false);
             return;
         }
-
-        setProcessingTransaction(false);
 
     },[wallet, active_game, bearer_token]);
 
@@ -1757,7 +1879,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             </VStack>
 
             <Center width="100%" height="150px">
-
+                { transaction_failed &&
+                    <div className="font-face-sfpb">
+                        <Center>
+                                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="red">Transaction Failed. <br/>Please Try Again.</Text>
+                        </Center>
+                    </div>
+                }
             </Center>
             </Box>
             );
@@ -1846,6 +1974,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             </VStack>
 
             <Center width="100%" height="150px">
+            
             {(active_game.status === GameStatus.in_progress || active_game.status === GameStatus.draw) &&
                 <VStack width="100%" alignItems="center">
 
@@ -1866,7 +1995,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                      {!player_sent_encrypted_move 
                      ?
                     <Center width="100%">
-                        <ArenaButtons character={active_game.player_one_character}/>
+                        <ArenaButtons character={is_player_one ? active_game.player_one_character : active_game.player_two_character}/>
                     </Center>
               
                     :
@@ -1925,7 +2054,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     <VStack width="100%" alignItems="center" mb="10rem">
 
         <ActiveGame/>
-
+        { transaction_failed &&
+            <Box width="100%">
+            <div className="font-face-sfpb">
+                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="red">Transaction Failed. <br/>Please Try Again.</Text>
+            </div>
+            </Box>
+        }
         <Container className="centered">
 
         <Tabs
