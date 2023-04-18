@@ -113,9 +113,53 @@ import wizard_emoji from "./emojis/Wizard.gif"
 
 
 // arena move icons
+import acid_move from "./arena_images/Acid.png"
+import arrow_move from "./arena_images/Arrow.png"
+import barrier_move from "./arena_images/Barrier.png"
+//import battleaxe_move from "./arena_images/Battleaxe.png"
+import bite_move from "./arena_images/Bite.png"
+//import bonk_move from "./arena_images/Bonk.png"
+//import charm_move from "./arena_images/Charm.png"
+import claws_move from "./arena_images/Claws.png"
+//import curse_move from "./arena_images/Curse.png"
+import dagger_move from "./arena_images/Dagger.png"
+import disease_move from "./arena_images/Disease.png"
+import dodge_move from "./arena_images/Dodge.png"
+import firebolt_move from "./arena_images/FireBolt.png"
+//import freeze_move from "./arena_images/Freeze.png"
+//import graspinghand_move from "./arena_images/GraspingHand.png"
+//import hypnosis_move from "./arena_images/Hypnosis.png"
+//import icicles_move from "./arena_images/Icicles.png"
+//import jaggedbone_move from "./arena_images/JaggedBone.png"
+///import kick_move from "./arena_images/Kick.png"
+import lightning_move from "./arena_images/Lightning.png"
+//import magicarrow_move from "./arena_images/MagicArrow.png"
+//import multiply_move from "./arena_images/Multiply.png"
+//import music_move from "./arena_images/Music.png"
+//import net_move from "./arena_images/Net.png"
+//import pocketsand_move from "./arena_images/PocketSand.png"
+//import poisondagger_move from "./arena_images/PoisonDagger.png"
+//import radiance_move from "./arena_images/Radiance.png"
+import ratswarm_move from "./arena_images/RatSwarm.png"
+//import rock_move from "./arena_images/Rock.png"
+//import roll_move from "./arena_images/Roll.png"
+//import scythe_move from "./arena_images/Scythe.png"
+//import shadowbolt_move from "./arena_images/ShadowBolt.png"
 import shield_move from "./arena_images/Shield.png"
+//import shroom_move from "./arena_images/Shroom.png"
+//import sleep_move from "./arena_images/Sleep.png"
+import slimejump_move from "./arena_images/SlimeJump.png"
+//import spores_move from "./arena_images/Spores.png"
+//import stomp_move from "./arena_images/Stomp.png"
 import sword_move from "./arena_images/Sword.png"
-import shout_move from "./arena_images/Voice.png"
+//import throwingknives_move from "./arena_images/ThrowingKnives.png"
+//import trident_move from "./arena_images/Trident.png"
+import venom_move from "./arena_images/Venom.png"
+import voice_move from "./arena_images/Voice.png"
+//import ward_move from "./arena_images/Ward.png"
+//import warhammer_move from "./arena_images/Warhammer.png"
+import web_move from "./arena_images/Web.png"
+
 
 import './css/table.css';
 import './css/fonts.css';
@@ -269,7 +313,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 {
     const wallet = useWallet();
 
-    const [activeTab, setActiveTab] = useState<any>("game_list");
+    const [activeTab, setActiveTab] = useState<any>("my_games");
     const [chosen_character, setChosenCharacter] = useState<PlayerCharacter>(PlayerCharacter.Knight);
     const [chosen_speed, setChosenSpeed] = useState<GameSpeed>(GameSpeed.slow);
 
@@ -1624,14 +1668,70 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         return(<></>);
     }
 
+    function ArenaButtons({character} : {character : PlayerCharacter}) 
+    {
+        let rock_img;
+        let paper_img;
+        let scissors_img;
+        if (character === PlayerCharacter.Knight) {
+            rock_img = shield_move;
+            paper_img = voice_move;
+            scissors_img = sword_move;
+        }
 
+        if (character === PlayerCharacter.Ranger) {
+            rock_img = dodge_move;
+            paper_img = arrow_move;
+            scissors_img = dagger_move;
+        }
+
+        if (character === PlayerCharacter.Wizard) {
+            rock_img = barrier_move;
+            paper_img = lightning_move;
+            scissors_img = firebolt_move;
+        }
+
+        if (character === PlayerCharacter.GreenSlime) {
+            rock_img = dodge_move;
+            paper_img = slimejump_move;
+            scissors_img = acid_move;
+        }
+
+        if (character === PlayerCharacter.GiantRat) {
+            rock_img = ratswarm_move;
+            paper_img = disease_move;
+            scissors_img = claws_move;
+        }
+
+        if (character === PlayerCharacter.GiantSpider) {
+            rock_img = web_move;
+            paper_img = venom_move;
+            scissors_img = bite_move;
+        }
+
+        return (
+            <HStack spacing="1rem">
+                <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)}>
+                    <img style={{"imageRendering":"pixelated"}} src={rock_img} width="100" alt={""}/>
+                </Box>
+                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.paper)}>
+                    <img style={{"imageRendering":"pixelated"}} src={paper_img} width="100" alt={""} />
+                </Box>
+                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.scissors)}>
+                    <img style={{"imageRendering":"pixelated"}} src={scissors_img} width="100" alt={""} />
+                </Box>
+            </HStack>
+        );
+    }
 
 
     function ActiveGame() {
 
         if (active_game === null || wallet.publicKey === null) {
             return(
-                <VStack width="100%" mb="5rem">
+                <Box width="100%" mb="1em">
+
+                <VStack width="100%">
                 <HStack width="100%" mb = "2%" mt="1%">
                     <Box width="10%"></Box>         
                     <Box  style={{
@@ -1655,6 +1755,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <Box width="10%"></Box> 
                 </HStack>
             </VStack>
+
+            <Center width="100%" height="150px">
+
+            </Center>
+            </Box>
             );
         }
 
@@ -1714,7 +1819,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         return(
             <>
-            <Box width="100%" mb="5rem">
+            <Box width="100%" mb="1rem">
             <VStack width="100%">
                 <HStack width="100%" mb = "2%" mt="1%">
                     <Box width="10%"></Box>         
@@ -1740,8 +1845,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 </HStack>
             </VStack>
 
+            <Center width="100%" height="150px">
             {(active_game.status === GameStatus.in_progress || active_game.status === GameStatus.draw) &&
-            <Center width="100%">
                 <VStack width="100%" alignItems="center">
 
                     {active_game.status === GameStatus.draw &&
@@ -1761,17 +1866,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                      {!player_sent_encrypted_move 
                      ?
                     <Center width="100%">
-                    <HStack spacing="1rem">
-                                <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)}>
-                                    <img style={{"imageRendering":"pixelated"}} src={shield_move} width="100" alt={""}/>
-                                </Box>
-                                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.paper)}>
-                                    <img style={{"imageRendering":"pixelated"}} src={shout_move} width="100" alt={""} />
-                                </Box>
-                                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.scissors)}>
-                                    <img style={{"imageRendering":"pixelated"}} src={sword_move} width="100" alt={""} />
-                                </Box>
-                    </HStack>
+                        <ArenaButtons character={active_game.player_one_character}/>
                     </Center>
               
                     :
@@ -1782,11 +1877,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Decrypted Move Sent: {rps_move[player_move]}</Text>
                     }
                 </VStack>
-            </Center>
             }
             {active_game.status === GameStatus.in_reveal && 
 
-            <Center>
                 <VStack>
                 <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> All moves have been submitted! Let's end this. </Text>
 
@@ -1795,34 +1888,31 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Reveal </Text>
                 </Box>
                 </VStack>
-            </Center>
             }
             {active_game.status === GameStatus.completed && is_winner && 
 
-                <Center>
                     <VStack>
                     <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You are victorious! </Text>
                     <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ClaimReward()} borderWidth="2px"  borderColor="white"  width="200px">
                         <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Claim Reward </Text>
                     </Box>
                     </VStack>
-                </Center>
             }
 
             {active_game.status === GameStatus.completed && !is_winner && 
 
-            <Center>
                 <Box  width="200px">
                     <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You have been defeated </Text>
                 </Box>
-            </Center>
             }
 
             {active_game.status === 0 &&
-            
+
                 <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Waiting for challenger to arrive in the arena..</Text>
-            
+
             }
+            </Center>
+
             </Box>
 
             </>
