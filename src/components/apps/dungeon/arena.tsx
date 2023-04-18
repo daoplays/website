@@ -40,7 +40,7 @@ import hallway from "./images/Arena1.gif"
 
 import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, request_arena_game_data} from './utils';
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction} from './utils';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -110,6 +110,12 @@ import werewolf_emoji from "./emojis/Werewolf.gif"
 import knight_emoji from "./emojis/Knight.gif"
 import ranger_emoji from "./emojis/Ranger.gif"
 import wizard_emoji from "./emojis/Wizard.gif"
+
+
+// arena move icons
+import shield_move from "./arena_images/Shield.png"
+import sword_move from "./arena_images/Sword.png"
+import shout_move from "./arena_images/Voice.png"
 
 import './css/table.css';
 import './css/fonts.css';
@@ -254,6 +260,11 @@ const game_status : string[] = [
     "Complete"
 ]
 
+interface GameMap {
+    key : PublicKey;
+    index : number;
+}
+
 export function ArenaScreen({bearer_token} : {bearer_token : string})
 {
     const wallet = useWallet();
@@ -277,135 +288,268 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const BetSizeRef = useRef<HTMLInputElement>(null);
     const game_interval = useRef<number | null>(null);
 
+    const my_games_map = useRef<GameMap[]>([]);
+
+
     const use_websocket = useRef<boolean>(true);
-    const ws = useRef<WebSocket | null>(null);
-    const ws_id = useRef<number | null>(null);
+    const ws_p1 = useRef<WebSocket | null>(null);
+    const ws_p1_id = useRef<number | null>(null);
+
+    const ws_p2 = useRef<WebSocket | null>(null);
+    const ws_p2_id = useRef<number | null>(null);
 
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
 
-    const check_active_game = useCallback(async() => 
+
+    function get_game_key(game : GameData) : PublicKey {
+
+        let seed_bytes = uInt32ToLEBytes(game.seed);
+        let game_data_account = (PublicKey.findProgramAddressSync([game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+
+        return game_data_account;
+    }
+
+    const remove_game_from_list = useCallback(async(key: PublicKey) =>
     {
-        console.log("in check games")
-        if (active_game === null) {
+        console.log("in remove game");
+        let game_entry = my_games_map.current.filter(function (entry) {
+            return entry.key.equals(key);
+        });
+
+        console.log("remove list: ", game_entry);
+        // if this is length 0 then we dont need to remove anything
+        if (game_entry.length === 0) {
+            console.log("game doesn't exist in games map")
             return;
         }
 
-        let seed_bytes = uInt32ToLEBytes(active_game.seed);
-        let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+        // if this game was the active game then update that too
+        if (active_game !== null && bignum_to_num(active_game.game_id) === bignum_to_num(my_games[game_entry[0].index].game_id)) {
+            console.log("set active game to null");
+            setActiveGame(null);
+        }
+
+        //make a copy of my_game and remove it from the list
+        let copy = my_games;
+        copy.splice(game_entry[0].index, 1);
+
+        console.log(my_games);
+        console.log(copy);
+        setMyGames(copy);
+
+        // we also need to remove it from the games map
+        my_games_map.current.splice(game_entry[0].index, 1);
 
 
-        let game_data = await request_arena_game_data(bearer_token, game_data_account);
+    }, [my_games, active_game]);
 
-        if (game_data === null) {
-            console.log("error getting active game data");
+    const update_game_on_list = useCallback((key: PublicKey, game: GameData) =>
+    {
+        console.log("in update game");
+        let game_entry = my_games_map.current.filter(function (entry) {
+            console.log("compare", key.toString(), entry.key.toString())
+            return entry.key.equals(key);
+        });
+
+        console.log("update list: ", game_entry);
+        let copy = my_games;
+        // if this is length 0 then we just need to add it
+        if (game_entry.length === 0) {
+            console.log("game doesn't exist in games map");
+            copy.push(game);
+            setMyGames(copy);
+            setActiveGame(game);
+
+            // we also need to add it to the games map
+            let new_entry : GameMap = {key: key, index : my_games_map.current.length}
+            my_games_map.current.push(new_entry);
+
+
             return;
         }
 
-        let new_game_id = game_data.game_id;
+        console.log("update copy");
+        //  otherwise just update the state of the game
+        copy[game_entry[0].index] = game;
+        setMyGames(copy);
 
-        if (bignum_to_num(new_game_id) !== bignum_to_num(active_game.game_id)) {
-            console.log("active game has changed since requesting data");
-            return;
+        // if this game was the active game then update that too
+        console.log("active game: ", active_game)
+        if (active_game !== null && bignum_to_num(active_game.game_id) === bignum_to_num(game.game_id)) {
+            console.log("update active game");
+            setActiveGame(game);
         }
 
-        let new_game_interactions = game_data.num_interactions;
+    }, [my_games, active_game]);
 
-        if (new_game_interactions <= game_data.num_interactions) {
-            console.log("no change in game state for active game");
+
+    const check_result = useCallback(async(result : any) => 
+    {
+
+        // if we have a subscription field check against ws_id
+        let pubkey = new PublicKey(result["params"]["result"]["value"]["pubkey"]);  
+
+        let event_data = result["params"]["result"]["value"]["account"]["data"][0];
+
+        console.log("have event data", event_data);
+        let account_data = Buffer.from(event_data, "base64");
+
+        const [data] = GameData.struct.deserialize(account_data);
+        update_game_on_list(pubkey, data);
+        console.log(data);
+
+        
+
+    }, [update_game_on_list]);
+
+    // ws_p1 subscription handler
+    useEffect(() => {
+
+        if (use_websocket.current === false || DEV_WSS_NODE === undefined || wallet === null)
             return;
+
+        console.log(DEV_WSS_NODE)
+
+        // if the gamelist has changed we will need to reregister
+        if (ws_p1_id.current !== null) {
+            console.log("unsubscribe from existing method");
+            let message = `{"id":1,"jsonrpc":"2.0","method": "programUnsubscribe", "params": [` + ws_p1_id.current + `]}`
+            ws_p1.current?.send(message);
+
+        }
+ 
+        console.log("setup websocket for active game");
+        let pubkey_bytes = wallet.publicKey?.toString();
+       
+        let message = `{"id":1,"jsonrpc":"2.0","method": "programSubscribe","params":["` + ARENA_PROGRAM + `",{"encoding": "jsonParsed", "commitment": "confirmed", "filters": [{"dataSize": 167}, {"memcmp" : {"offset" : 28, "bytes" : "` + pubkey_bytes + `"}}]}]}`;
+ 
+        console.log((message));
+
+        if (ws_p1.current === null || ws_p1.current.CLOSED) {
+            ws_p1.current = new WebSocket(DEV_WSS_NODE);
         }
 
-        setActiveGame(game_data);
 
-    }, [bearer_token, active_game]);
+        // when the websocket connects, send our request, and then in one second (hopefully long enough )
+        ws_p1.current.onopen = () => {ws_p1.current?.send(message); console.log("ws opened");};
+        ws_p1.current.onclose = () => {ws_p1_id.current = null; console.log("ws closed")};
+     
+        return () => {
+            ws_p1.current?.close();
+        };
 
+    }, [wallet]);    
+    
 
+    
     useEffect(() => {
 
         if (use_websocket.current === false || DEV_WSS_NODE === undefined)
             return;
 
         console.log(DEV_WSS_NODE)
-        if (active_game === null) {
-            if (ws_id.current !== null) {
-                let message = `{"id":1,"jsonrpc":"2.0","method": "accountUnsubscribe", "params": [` + ws_id.current + `]}`
-                ws.current?.send(message);
 
-            }
-            return;
+        // if the gamelist has changed we will need to reregister
+        if (ws_p2_id.current !== null) {
+            console.log("unsubscribe p2 from existing method");
+            let message = `{"id":1,"jsonrpc":"2.0","method": "programUnsubscribe", "params": [` + ws_p2_id.current + `]}`
+            ws_p1.current?.send(message);
+
         }
  
         console.log("setup websocket for active game");
-        let seed_bytes = uInt32ToLEBytes(active_game.seed);
+        let pubkey_bytes = wallet.publicKey?.toString();
 
-        let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-
-
-        let message = `{"id":1,"jsonrpc":"2.0","method":"accountSubscribe","params":["` + game_data_account.toString() + `",{"encoding": "jsonParsed", "commitment": "confirmed"}]}`
-
+        let message = `{"id":1,"jsonrpc":"2.0","method": "programSubscribe","params":["` + ARENA_PROGRAM + `",{"encoding": "jsonParsed", "commitment": "confirmed", "filters": [{"dataSize": 167}, {"memcmp" : {"offset" : 60, "bytes" : "` + pubkey_bytes + `"}}]}]}`;
+ 
         console.log(message);
 
-        if (ws.current === null || ws.current.CLOSED) {
-            ws.current = new WebSocket(DEV_WSS_NODE);
+        if (ws_p2.current === null || ws_p2.current.CLOSED) {
+            ws_p2.current = new WebSocket(DEV_WSS_NODE);
         }
 
 
         // when the websocket connects, send our request, and then in one second (hopefully long enough )
-        ws.current.onopen = () => {ws.current?.send(message); console.log("ws opened");};
-        ws.current.onclose = () => {ws_id.current = null; console.log("ws closed")};
+        ws_p2.current.onopen = () => {ws_p2.current?.send(message); console.log("ws opened");};
+        ws_p2.current.onclose = () => {ws_p2_id.current = null; console.log("ws closed")};
+     
+        return () => {
+            ws_p2.current?.close();
+        };
 
-        ws.current.onmessage = (event) => {
+    }, [wallet]);
+    
+
+    useEffect(() => {
+
+        if (ws_p1.current === null)
+            return;
+
+        ws_p1.current.onmessage = (event) => {
 
             let result = JSON.parse(event.data);
+            
             console.log(result)
-            console.log("result id: ", result["id"], result["id"] === 1)
             // the first message will be the subscription id, once we have that get the current state of the game as we will be tracking and updates from then on via the subscription
             if (result["id"] !== undefined && result["id"] === 1) {
-                console.log("have sub event");
-                // if ws_id isn't null something bad has happened
-                if (ws_id.current !== null)
-                    console.log("ws_id isn't null on sub event");
-                
-                console.log("have new subscription id")
-                ws_id.current = result["result"];
+                console.log("have new subscription id for p1", result["result"])
+                ws_p1_id.current = result["result"];
 
-                // now we know we are connected, get the most recent state to make sure we havn't missed anything
-                check_active_game();
-                
+                return;
             }
 
             console.log("got message", result);
 
+            if (result["params"] === undefined)
+                return;
 
-            // if we have a subscription field check against ws_id
-            if (result["params"] !== undefined) {
-                let event_sub = result["params"]["subscription"];
-                if (event_sub !== ws_id.current) {
-                    console.log("id of message doesn't equal current ws_id, skipping")
-                    return;
-                }
-                let event_data = result["params"]["result"]["value"]["data"][0];
-
-                console.log("have event data", event_data);
-                let account_data = Buffer.from(event_data, "base64");
-
-                const [data] = GameData.struct.deserialize(account_data);
-                setActiveGame(data);
-                console.log(data);
-
+            let event_sub = result["params"]["subscription"];
+            if (event_sub !== ws_p1_id.current) {
+                console.log("id of message doesn't equal current ws_id, skipping")
+                return;
             }
+
+            check_result(result);
+
         };
-    
-     
-        return () => {
-            ws.current?.close();
+
+    }, [check_result]);
+
+
+    useEffect(() => {
+
+        if (ws_p2.current === null)
+            return;
+
+        ws_p2.current.onmessage = (event) => {
+
+            let result = JSON.parse(event.data);
+            
+            console.log(result)
+            // the first message will be the subscription id, once we have that get the current state of the game as we will be tracking and updates from then on via the subscription
+            if (result["id"] !== undefined && result["id"] === 1) {
+                console.log("have new subscription id for p2", result["result"])
+                ws_p2_id.current = result["result"];
+
+                return;
+            }
+
+            console.log("got message", result);
+
+            if (result["params"] === undefined)
+                return;
+
+            let event_sub = result["params"]["subscription"];
+            if (event_sub !== ws_p2_id.current) {
+                console.log("id of message doesn't equal current ws_id, skipping")
+                return;
+            }
+
+            check_result(result);
+
         };
-        
 
-    }, [active_game, check_active_game]);
-
-
-
+    }, [check_result]);
 
 
     const check_games = useCallback(async() => 
@@ -431,7 +575,17 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let my_games = list.filter(function (game) {
             return wallet.publicKey !== null && (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey));
         });
+
+
         setMyGames(my_games);
+
+        my_games_map.current = []
+        for (let i = 0; i < my_games.length; i++) {
+            let game_key = get_game_key(my_games[i])
+            let new_entry : GameMap = {key: game_key, index : i}
+            my_games_map.current.push(new_entry);
+        }
+
 /*
         let new_active_game = list.filter(function (game) {
             return (active_game !== null && bignum_to_num(game.game_id) === bignum_to_num(active_game.game_id));
@@ -488,6 +642,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     }
 
     const GameTable = ({game_list} : {game_list : GameData[]}) => {
+
+        console.log("In game table with list:");
+        console.log(game_list);
         return(
             <Box width = "100%">
                 <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
@@ -699,16 +856,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 return;
             }
 
-            let player_emoji = ArenaCharacterEmoji[active_game.player_one_character];
-            if (active_game.player_two.equals(wallet.publicKey)) {
-                player_emoji = ArenaCharacterEmoji[active_game.player_two_character];
-            }
-            let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
-            console.log(post_string);
-            if (PROD)
-                post_discord_message(post_string);
-
-            setActiveGame(null);
+          
 
 
         } catch(error) {
@@ -717,9 +865,22 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
         }
 
+        let player_emoji = ArenaCharacterEmoji[active_game.player_one_character];
+        if (active_game.player_two.equals(wallet.publicKey)) {
+            player_emoji = ArenaCharacterEmoji[active_game.player_two_character];
+        }
+        let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
+        console.log(post_string);
+        if (PROD)
+            post_discord_message(post_string);
+
+        setActiveGame(null);
+        await remove_game_from_list(game_data_account);
+
+
         setProcessingTransaction(false);
 
-    },[wallet, active_game, bearer_token]);
+    },[wallet, active_game, bearer_token, remove_game_from_list, ]);
 
 
     const JoinGameOnArena = useCallback( async (index : number) => 
@@ -1149,7 +1310,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             borderColor="white"
                             width="120px"
                           >
-                            <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => JoinGameOnArena(index)} fontSize={DUNGEON_FONT_SIZE} color="white">
+                            <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => {JoinGameOnArena(index); setShowJoinGame(false)}} fontSize={DUNGEON_FONT_SIZE} color="white">
                               Let's Go!
                             </Text>
                           </Box>
@@ -1599,20 +1760,20 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     }
                      {!player_sent_encrypted_move 
                      ?
-                    <HStack>
-
-                        <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)} borderWidth="2px"  borderColor="white"  width="200px">
-                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Rock </Text>
-                        </Box>
-
-                        <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.paper)} borderWidth="2px"  borderColor="white"  width="200px">
-                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Paper </Text>
-                        </Box>
-
-                        <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.scissors)} borderWidth="2px"  borderColor="white"  width="200px">
-                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Scissors </Text>
-                        </Box>
+                    <Center width="100%">
+                    <HStack spacing="1rem">
+                                <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)}>
+                                    <img style={{"imageRendering":"pixelated"}} src={shield_move} width="100" alt={""}/>
+                                </Box>
+                                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.paper)}>
+                                    <img style={{"imageRendering":"pixelated"}} src={shout_move} width="100" alt={""} />
+                                </Box>
+                                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.scissors)}>
+                                    <img style={{"imageRendering":"pixelated"}} src={sword_move} width="100" alt={""} />
+                                </Box>
                     </HStack>
+                    </Center>
+              
                     :
                     player_move === RPSMove.none
                     ?
@@ -1684,7 +1845,19 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 
                 <Center width="100%" marginBottom="5rem">
                     <VStack width="100%" alignItems="left">
-                        <ListNewGame/>
+                        <Box
+                        as="button"
+                        borderWidth="2px"
+                        borderColor="white"
+                        width="250px"
+                        visibility="hidden"
+                    >
+                        <div className="font-face-sfpb">
+                        <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                        Create New Game
+                        </Text>
+                        </div>
+                    </Box>
                         <GameTable game_list={waiting_games}/>
                     </VStack>
                 </Center>
@@ -1693,19 +1866,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             <Tab eventKey="my_games" title="MY GAMES" tabClassName="custom-tab">
             <Center width="100%" marginBottom="5rem">
                 <VStack width="100%" alignItems="left">
-                <Box
-                    as="button"
-                    borderWidth="2px"
-                    borderColor="white"
-                    width="250px"
-                    visibility="hidden"
-                  >
-                    <div className="font-face-sfpb">
-                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                      Create New Game
-                    </Text>
-                    </div>
-                  </Box>
+                    <ListNewGame/>
+
                   <GameTable game_list={my_games}/>
 
                 </VStack>
