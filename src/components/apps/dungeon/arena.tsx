@@ -21,17 +21,7 @@ import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from
 import bs58 from "bs58";
 import BN from 'bn.js'
 
-import {
-    Popover,
-    PopoverTrigger,
-    PopoverContent,
-    PopoverHeader,
-    PopoverBody,
-    PopoverArrow,
-    PopoverCloseButton,
-  } from '@chakra-ui/react'
-  import FocusLock from 'react-focus-lock';
-  import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 
@@ -40,12 +30,13 @@ import hallway from "./images/Arena1.gif"
 
 import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE, DEBUG} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature} from './utils';
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data} from './utils';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import Container from 'react-bootstrap/Container';
+import Modal from 'react-bootstrap/Modal';
 
 
 //enemies
@@ -527,8 +518,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log(DEV_WSS_NODE)
 
         // if the gamelist has changed we will need to reregister
-        if (ws_p1_id.current !== null) {
-            console.log("unsubscribe from existing method");
+        if (ws_p1_id.current !== null && !(ws_p1.current?.CLOSING || ws_p1.current?.CLOSED)) {
+            console.log("unsubscribe p1 from existing method");
             let message = `{"id":1,"jsonrpc":"2.0","method": "programUnsubscribe", "params": [` + ws_p1_id.current + `]}`
             ws_p1.current?.send(message);
 
@@ -553,7 +544,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         return () => {
             ws_p1.current?.close();
         };
-
+ 
     }, [wallet]);    
     
 
@@ -566,14 +557,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log(DEV_WSS_NODE)
 
         // if the gamelist has changed we will need to reregister
-        if (ws_p2_id.current !== null) {
+        if (ws_p2_id.current !== null && !(ws_p2.current?.CLOSING || ws_p2.current?.CLOSED)) {
             console.log("unsubscribe p2 from existing method");
             let message = `{"id":1,"jsonrpc":"2.0","method": "programUnsubscribe", "params": [` + ws_p2_id.current + `]}`
-            ws_p1.current?.send(message);
+            ws_p2.current?.send(message);
 
         }
  
-        console.log("setup websocket for active game");
+        console.log("setup p2 websocket for active game");
         let pubkey_bytes = wallet.publicKey?.toString();
 
         let message = `{"id":1,"jsonrpc":"2.0","method": "programSubscribe","params":["` + ARENA_PROGRAM + `",{"encoding": "jsonParsed", "commitment": "confirmed", "filters": [{"dataSize": 167}, {"memcmp" : {"offset" : 60, "bytes" : "` + pubkey_bytes + `"}}]}]}`;
@@ -1122,6 +1113,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         // if we get this far just set the joined game to the active one
         setActiveGame(desired_game);
+        setActiveTab("my_games");
+
+        // and remove it from the waiting list
+        let copy = [...waiting_games];
+        copy.splice(index, 1);
+        setWaitingGames(copy);
+
 
     },[wallet, waiting_games, bearer_token, chosen_character]);
 
@@ -1324,6 +1322,34 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             player_id = 1;
         }
 
+        // before sending the move to the DB just check this player doesn't have a move on chain.  This shouldn't happen but just in case...
+       let game_data = await request_arena_game_data(bearer_token, game_data_account);
+
+       // this game should definitely exist, so if it doesn't something has gone wrong
+       if (game_data === null) {
+            console.log("game data not accesible for valid game");
+            setTransactionFailed(true);
+            setProcessingTransaction(false);
+            return;
+       }
+
+       // we check if an existing encrypted move is present for this player
+        let sum_player_one_encrypted_move = 0;
+        let sum_player_two_encrypted_move = 0;
+
+        for (let i in active_game.player_one_encrypted_move) {
+            sum_player_one_encrypted_move += active_game.player_one_encrypted_move[i];
+        }
+
+        for (let i in active_game.player_two_encrypted_move) {
+            sum_player_two_encrypted_move += active_game.player_two_encrypted_move[i];
+        }
+
+        if ((player_id === 0 && sum_player_one_encrypted_move > 0) || (player_id === 1 && sum_player_two_encrypted_move > 0)) {
+            console.log("player has already submitted a move for this game");
+            return;
+        }
+
 
         console.log("sending move to DB as player", player_id);
         const db_url = `/.netlify/functions/post_to_db?method=Insert&game_id=`+active_game.game_id+"&player_id=" + player_id + "&move="+ move + "&round="+ active_game.num_round;
@@ -1399,56 +1425,64 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     },[wallet, active_game, bearer_token]);
 
+    function OneCharacter({character, unlocked} : {character : PlayerCharacter, unlocked : boolean})
+    {
+        let EMOJI_SIZE = 32
+
+        if (!unlocked) {
+
+            return (
+                <Box>
+                        <img src={player_emoji_map.get(character)}  width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                </Box>
+            );
+        }
+
+        return (
+            <Box as="button" onClick={() => setChosenCharacter(character)} borderWidth= {chosen_character === character ? "1px" : "0px"} borderColor="white">
+                    <img src={player_emoji_map.get(character)} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
+            </Box>
+        );
+
+    }
 
     function CharacterSelect() {
-
-        let EMOJI_SIZE = 32
 
         return(
             <VStack align={"center"}>
 
                 <HStack>
-                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.Knight)} borderWidth= {chosen_character === PlayerCharacter.Knight ? "1px" : "0px"} borderColor="white">
-                    <img src={knight_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                </Box>
-                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.Ranger)} borderWidth= {chosen_character === PlayerCharacter.Ranger ? "1px" : "0px"} borderColor="white">
-                    <img src={ranger_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}} />
-                </Box>
-                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.Wizard)} borderWidth= {chosen_character === PlayerCharacter.Wizard ? "1px" : "0px"} borderColor="white">
-                    <img src={wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                </Box>
-                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.GreenSlime)} borderWidth= {chosen_character === PlayerCharacter.GreenSlime ? "1px" : "0px"} borderColor="white">
-                    <img src={green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                </Box>
-                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.GiantRat)} borderWidth= {chosen_character === PlayerCharacter.GiantRat ? "1px" : "0px"} borderColor="white">
-                    <img src={giant_rat_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                </Box>
-                <Box as="button" onClick={() => setChosenCharacter(PlayerCharacter.GiantSpider)} borderWidth= {chosen_character === PlayerCharacter.GiantSpider ? "1px" : "0px"} borderColor="white">
-                    <img src={giant_spider_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                </Box>
+                    <OneCharacter character={PlayerCharacter.Knight} unlocked={true}/>
+                    <OneCharacter character={PlayerCharacter.Ranger} unlocked={true}/>
+                    <OneCharacter character={PlayerCharacter.Wizard} unlocked={true}/>
+
+                    <OneCharacter character={PlayerCharacter.GreenSlime} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.GiantRat} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.GiantSpider} unlocked={false} />
+                </HStack>
+
+                <HStack>
+                    <OneCharacter character={PlayerCharacter.Goblins} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.BoulderTrap} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.Mimic} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.Skeletons} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.SpikeTrap} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.Carnivine} unlocked={false} />
+                    <OneCharacter character={PlayerCharacter.GiantGreenSlime} unlocked={false} />
                 </HStack>
                 <HStack>
-                    <img src={goblins_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={boulder_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={mimic_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={skeletons_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={floor_spikes_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={carnivine_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={giant_green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <OneCharacter character={PlayerCharacter.Werewolf} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.BlueSlime} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.Elves} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.GiantBlueSlime} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.Orc} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.SkeletonKnight} unlocked={false} />
+                    <OneCharacter character={PlayerCharacter.SkeletonWizard} unlocked={false} />
                 </HStack>
                 <HStack>
-                    <img src={werewolf_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={elves_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={giant_blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={orc_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={skeleton_knight_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={skeleton_wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                </HStack>
-                <HStack>
-                    <img src={assassin_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={dungeon_master_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
-                    <img src={shade_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, filter: 'grayscale(1)'}}/>
+                    <OneCharacter character={PlayerCharacter.Assassin} unlocked={false}/>
+                    <OneCharacter character={PlayerCharacter.DM} unlocked={false} />
+                    <OneCharacter character={PlayerCharacter.Shade} unlocked={false} />
                 </HStack>
             </VStack>
         );
@@ -1458,17 +1492,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
   
         return (
-            <>
-            <div style={{ margin: 0 }}>
-              <Popover
-                returnFocusOnClose={false}
-                isOpen={show_join_game && index === join_index.current}
-                onClose={() => setShowJoinGame(false)}
-                placement="bottom"
-                closeOnBlur={false}
-              >
-                <PopoverTrigger>
-                  <Box
+           
+            <Box
                     as="button"
                     onClick={() => {console.log("clicked", index); join_index.current = index; setShowJoinGame(true)}}
                     borderWidth="2px"
@@ -1482,97 +1507,73 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     </Text>
                     </div>
                   </Box>
-                </PopoverTrigger>
-                <PopoverContent backgroundColor={"black"}>
-                  <div className="font-face-sfpb" color="white">
-                    <PopoverHeader
-                      style={{ borderBottomWidth: 0 }}
-                      fontSize={DUNGEON_FONT_SIZE}
-                      color="white"
-                      fontWeight="semibold"
-                      ml="2rem"
-                      mr="2rem"
-                    >
-                      Character Select
-                    </PopoverHeader>
-                  </div>
-                  <PopoverArrow/>
-                  <PopoverCloseButton ml="1rem" color="white" />
-                  <PopoverBody>
-                    <FocusLock returnFocus persistentFocus={false}>
-                      <div className="font-face-sfpb">
-                        <VStack align="center" spacing="10px">
-                          <CharacterSelect/>
-                          <Box
-                            as="button"
-                            borderWidth="2px"
-                            borderColor="white"
-                            width="120px"
-                          >
-                            <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => {JoinGameOnArena(index); setShowJoinGame(false)}} fontSize={DUNGEON_FONT_SIZE} color="white">
-                              Let's Go!
-                            </Text>
-                          </Box>
-                        </VStack>
-                      </div>
-                    </FocusLock>
-                  </PopoverBody>
-                </PopoverContent>
-              </Popover>
-            </div>
-            </>
             )
         }
 
+    function JoinGameModal() {
 
-    function ListNewGame() {
+        const handleClose = () => {setShowJoinGame(false)};
 
-  
+
         return (
             <>
-            <div style={{ marginTop: "1rem" }}></div>
-            <div style={{ margin: 0 }}>
-              <Popover
-                returnFocusOnClose={false}
-                isOpen={show_new_game}
-                onClose={() => setShowNewGame(false)}
-                placement="bottom"
-                closeOnBlur={false}
-              >
-                <PopoverTrigger>
-                  <Box
-                    as="button"
-                    onClick={() => setShowNewGame(true)}
-                    borderWidth="2px"
-                    borderColor="white"
-                    width="250px"
-                    visibility={!show_new_game ? "visible" : "hidden"}
-                  >
+            
+            <Modal centered show={show_join_game} animation={false} onHide={handleClose} >
+            <div className="font-face-sfpb">
+                <Modal.Header style={{backgroundColor: "black"}}  closeButton>
+                
+                    <Modal.Title  style={{"fontSize":30, "color":"white", "fontWeight":'semibold'}}>Character Select</Modal.Title>
+                
+                </Modal.Header>
+                </div>
+                <div className="font-face-sfpb text-center">
+                
+                    <Modal.Body style={{"backgroundColor": "black", "fontSize":20, "color":"white", "fontWeight":'semibold'}}>                            
+                            <CharacterSelect/>
+                    </Modal.Body>
+                
+                </div>
+                
+                <Modal.Footer style={{alignItems: "center", justifyContent: "center","backgroundColor": "black"}} >
                     <div className="font-face-sfpb">
-                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                      Create New Game
-                    </Text>
+                    <Box
+                        as="button"
+                        borderWidth="2px"
+                        borderColor="white"
+                        width="120px"
+                        >
+                        <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => {JoinGameOnArena(join_index.current); setShowJoinGame(false)}}  fontSize={DUNGEON_FONT_SIZE} color="white">
+                            Let's Go!
+                        </Text>
+                    </Box>
                     </div>
-                  </Box>
-                </PopoverTrigger>
-                <PopoverContent backgroundColor={"black"}>
-                  <div className="font-face-sfpb" color="white">
-                    <PopoverHeader
-                      style={{ borderBottomWidth: 0 }}
-                      fontSize={DUNGEON_FONT_SIZE}
-                      color="white"
-                      fontWeight="semibold"
-                      ml="2rem"
-                      mr="2rem"
-                    >
-                      Enter Game Details
-                    </PopoverHeader>
-                  </div>
-                  <PopoverArrow />
-                  <PopoverCloseButton ml="1rem" color="white" />
-                  <PopoverBody>
-                    <FocusLock returnFocus persistentFocus={false}>
-                      <div className="font-face-sfpb">
+                </Modal.Footer>
+            </Modal>
+            </>
+        );
+    }
+    
+    
+    function NewGameModal() {
+    
+        const handleClose = () => {setShowNewGame(false)};
+
+
+        return (
+            <>
+            
+            <Modal centered show={show_new_game} animation={false} onHide={handleClose} >
+            <div className="font-face-sfpb">
+                <Modal.Header style={{backgroundColor: "black"}}  closeButton>
+                
+                    <Modal.Title  style={{"fontSize":30, "color":"white", "fontWeight":'semibold'}}>Enter Game Details</Modal.Title>
+                
+                </Modal.Header>
+                </div>
+                <div className="font-face-sfpb text-center">
+                
+                    <Modal.Body style={{"backgroundColor": "black", "fontSize":20, "color":"white", "fontWeight":'semibold'}}>
+                    
                         <VStack align="center" spacing="10px">
                           <HStack width="80%" align={"center"}>
                             <Box width="50%">
@@ -1611,7 +1612,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                   paddingTop="1rem"
                                   paddingBottom="1rem"
                                   borderColor="white"
-                                  autoFocus={false}
+                                  autoFocus={true}
                                 />
                               </NumberInput>
                             </Box>
@@ -1658,22 +1659,53 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                               </Text>
                             </Box>
                           <CharacterSelect/>
-                          <Box
-                            as="button"
-                            borderWidth="2px"
-                            borderColor="white"
-                            width="120px"
-                          >
-                            <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : ListGameOnArena} fontSize={DUNGEON_FONT_SIZE} color="white">
-                              CREATE
-                            </Text>
-                          </Box>
                         </VStack>
-                      </div>
-                    </FocusLock>
-                  </PopoverBody>
-                </PopoverContent>
-              </Popover>
+                    </Modal.Body>
+                
+                </div>
+                
+                <Modal.Footer style={{alignItems: "center", justifyContent: "center","backgroundColor": "black"}} >
+                    <div className="font-face-sfpb">
+                    <Box
+                        as="button"
+                        borderWidth="2px"
+                        borderColor="white"
+                        width="120px"
+                        >
+                        <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : ListGameOnArena} fontSize={DUNGEON_FONT_SIZE} color="white">
+                            CREATE
+                        </Text>
+                    </Box>
+                    </div>
+                </Modal.Footer>
+            </Modal>
+            </>
+        );
+    }
+
+
+    function ListNewGame() {
+
+  
+        return (
+            <>
+            <div style={{ marginTop: "1rem" }}></div>
+            <div style={{ margin: 0 }}>
+
+                  <Box
+                    as="button"
+                    onClick={() => setShowNewGame(true)}
+                    borderWidth="2px"
+                    borderColor="white"
+                    width="250px"
+                    visibility={!show_new_game ? "visible" : "hidden"}
+                  >
+                    <div className="font-face-sfpb">
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                      Create New Game
+                    </Text>
+                    </div>
+                  </Box>
             </div>
             </>
             )
@@ -2084,6 +2116,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     return(
         
+    <>
+    <NewGameModal/>
+    <JoinGameModal/>
     <VStack width="100%" alignItems="center" mb="10rem">
 
         <ActiveGame/>
@@ -2134,6 +2169,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         </Tabs>
         </Container>
     </VStack>
+    </>
 
     );
 
