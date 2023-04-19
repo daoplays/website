@@ -100,6 +100,11 @@ import {StatsScreen} from './stats';
 import { Footer } from './footer';
 //import {DungeonScreen} from './dungeon';
 
+import wagerSelect from './sounds/Wager_Select.mp3'
+import classSelect from './sounds/Class_Select.mp3'
+import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
+
+
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
@@ -124,7 +129,9 @@ const enum AccountStatus {
 
 const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
-
+const wagerSelectAudio = new Audio(wagerSelect)
+const classSelectAudio = new Audio(classSelect)
+const dungeonTileAudio = new Audio(dungeonTile)
 
 const enum BetSize {
     SolanaBet1 = 0,
@@ -167,6 +174,8 @@ export function DungeonApp()
 
 
     const handleBetChange = (selected : BetSize) => {
+        
+        wagerSelectAudio.play()
         setBetSize(selected);
         setBetValue(BetSizeValues[selected])
     }
@@ -249,6 +258,7 @@ export function DungeonApp()
 
     const OpenDiscountError = useCallback( async () => 
     {
+        
         setShowDiscountError(true);
     },[]);
 
@@ -256,6 +266,7 @@ export function DungeonApp()
 
 
         const handleSelectChange = (selected: SelectValue) => {
+
             let selected_bet = selected as BetValueObject;
             setSelectValue(selected_bet);
             setBetSize(selected_bet.value);
@@ -976,6 +987,8 @@ export function DungeonApp()
 
     const Play = useCallback( async () => 
     {
+        //here
+        dungeonTileAudio.play()
         setTransactionFailed(false);
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
@@ -1424,16 +1437,19 @@ export function DungeonApp()
 
     const SelectKnight = useCallback( async () => 
     {
+        classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.knight);
     },[]);
 
     const SelectRanger = useCallback( async () => 
     {
+        classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.ranger);
     },[]);
 
     const SelectWizard = useCallback( async () => 
     {
+        classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.wizard);
     },[]);
 

@@ -257,7 +257,7 @@ export async function request_current_balance(bearer : string, pubkey : PublicKe
     }
 
     if (account_info_result["result"]["value"] == null || account_info_result["result"]["value"]["lamports"] == null) {
-        console.log("Error getting lamports for ", pubkey.toString());
+        // console.log("Error getting lamports for ", pubkey.toString());
         return 0;
     }
 

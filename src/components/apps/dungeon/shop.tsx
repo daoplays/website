@@ -513,7 +513,8 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                 </>
                 }
 
-                {wallet.publicKey && 
+                {
+                wallet.publicKey && 
                 <>
                 <Box width="80%" >
                     <div className="font-face-sfpb">
