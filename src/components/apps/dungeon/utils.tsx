@@ -138,7 +138,7 @@ interface TransactionResponseData {
 
 export async function send_transaction(bearer : string, encoded_transaction : string) : Promise <TransactionResponseData>
 {
-    var body = {"id": 1, "jsonrpc": "2.0", "method": "sendTransaction", "params": [encoded_transaction]};
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "sendTransaction", "params": [encoded_transaction, {"skipPreflight": true}]};
    
     var response_json = await postData(RPC_NODE, bearer, body);
     let transaction_response : TransactionResponseData = response_json;

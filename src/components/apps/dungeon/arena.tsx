@@ -350,6 +350,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const signature_check_count = useRef<number>(0);
     const [transaction_failed, setTransactionFailed] = useState<boolean>(false);
 
+    useEffect(() => {
+
+        console.log("games have updated");
+
+    }, [active_game, my_games, waiting_games]);
 
     const CheckArenaSignature = useCallback(async() =>
     {
@@ -442,7 +447,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
         //make a copy of my_game and remove it from the list
-        let copy = my_games;
+        let copy = [...my_games];
         copy.splice(game_entry[0].index, 1);
 
         console.log(my_games);
@@ -455,8 +460,19 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     }, [my_games, active_game]);
 
-    const update_game_on_list = useCallback((key: PublicKey, game: GameData) =>
+    const check_result = useCallback(async(result : any) => 
     {
+
+        // if we have a subscription field check against ws_id
+        let key = new PublicKey(result["params"]["result"]["value"]["pubkey"]);  
+
+        let event_data = result["params"]["result"]["value"]["account"]["data"][0];
+
+        console.log("have event data", event_data);
+        let account_data = Buffer.from(event_data, "base64");
+
+        const [game] = GameData.struct.deserialize(account_data);
+
         console.log("in update game");
         let game_entry = my_games_map.current.filter(function (entry) {
             console.log("compare", key.toString(), entry.key.toString())
@@ -464,7 +480,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         });
 
         console.log("update list: ", game_entry, game);
-        let copy = my_games;
+        let copy = [...my_games];
         // if this is length 0 then we just need to add it
         if (game_entry.length === 0) {
             console.log("game doesn't exist in games map");
@@ -487,8 +503,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
         console.log("update copy");
+        let updated_entry = {...copy[game_entry[0].index]}
         //  otherwise just update the state of the game
-        copy[game_entry[0].index] = game;
+        updated_entry = game;
+        copy[game_entry[0].index] = updated_entry;
         setMyGames(copy);
 
         // if this game was the active game then update that too
@@ -499,25 +517,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
     }, [my_games, active_game]);
-
-
-    const check_result = useCallback(async(result : any) => 
-    {
-
-        // if we have a subscription field check against ws_id
-        let pubkey = new PublicKey(result["params"]["result"]["value"]["pubkey"]);  
-
-        let event_data = result["params"]["result"]["value"]["account"]["data"][0];
-
-        console.log("have event data", event_data);
-        let account_data = Buffer.from(event_data, "base64");
-
-        const [data] = GameData.struct.deserialize(account_data);
-        update_game_on_list(pubkey, data);
-
-        
-
-    }, [update_game_on_list]);
 
     // ws_p1 subscription handler
     useEffect(() => {
@@ -626,7 +625,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 return;
             }
 
-            check_result(result);
+            check_result(result)
+
 
         };
 
@@ -758,10 +758,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         );
     }
 
-    const GameTable = ({game_list} : {game_list : GameData[]}) => {
+    const GameTable = () => {
 
         console.log("In game table with list:");
-        console.log(game_list);
+        console.log(waiting_games);
         return(
             <Box width = "100%">
                 <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
@@ -783,7 +783,40 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <tbody style={{
                             backgroundColor: 'black'
                         }}>
-                            <Listings game_list={game_list}/>
+                            <Listings game_list={waiting_games}/>
+                        </tbody>
+                    </Table>
+                </div>
+            </Box>
+        );
+    }
+
+    const MyGameTable = () => {
+
+        console.log("In game table with list:");
+        console.log(my_games);
+        return(
+            <Box width = "100%">
+                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                    <Table className="custom-centered-table">
+                        <thead>
+                        <tr>
+                        <th>Game</th>
+                        <th>Bet Size</th>
+                        <th>Speed</th>
+                        <th>Match</th>
+                        <th>Status</th>
+                        <th>
+                        <Box as='button' onClick={() => {check_arena.current = true; check_games()}}>
+                        <FontAwesomeIcon color="white"icon={solid("arrows-rotate")} size="lg"/>
+                        </Box>
+                        </th>
+                        </tr>
+                        </thead>
+                        <tbody style={{
+                            backgroundColor: 'black'
+                        }}>
+                            <Listings game_list={my_games}/>
                         </tbody>
                     </Table>
                 </div>
@@ -2083,7 +2116,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         </Text>
                         </div>
                     </Box>
-                        <GameTable game_list={waiting_games}/>
+                        <GameTable/>
                     </VStack>
                 </Center>
             
@@ -2093,7 +2126,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <VStack width="100%" alignItems="left">
                     <ListNewGame/>
 
-                  <GameTable game_list={my_games}/>
+                  <MyGameTable/>
 
                 </VStack>
                 </Center>
