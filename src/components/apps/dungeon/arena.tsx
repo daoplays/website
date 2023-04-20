@@ -17,6 +17,7 @@ import {
     useWallet,
 } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { isMobile } from "react-device-detect";
 
 import bs58 from "bs58";
 import BN from 'bn.js'
@@ -28,9 +29,11 @@ import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- im
 import hallway from "./images/Arena1.gif"
 
 
-import { DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE, DEBUG} from './constants';
+import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE, DEBUG, EMOJI_SIZE} from './constants';
 
 import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data} from './utils';
+
+import {PlayerCharacter, player_emoji_map, WaitingForPlayerText} from './arena_state';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -76,31 +79,6 @@ import knight from "./images/Knight.gif"
 import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
-
-import assassin_emoji from "./emojis/Assassin.gif"
-import blue_slime_emoji from "./emojis/BlueSlime.gif"
-import boulder_emoji from "./emojis/Boulder.png"
-import carnivine_emoji from "./emojis/Carnivine.gif"
-import dungeon_master_emoji from "./emojis/DungeonMaster.gif"
-import elves_emoji from "./emojis/Elves.gif"
-import giant_blue_slime_emoji from "./emojis/GiantBlueSlime.gif"
-import giant_green_slime_emoji from "./emojis/GiantGreenSlime.gif"
-import giant_rat_emoji from "./emojis/GiantRat.gif"
-import giant_spider_emoji from "./emojis/GiantSpider.gif"
-import goblins_emoji from "./emojis/Goblin.gif"
-import green_slime_emoji from "./emojis/GreenSlime.gif"
-import mimic_emoji from "./emojis/Mimic.gif"
-import orc_emoji from "./emojis/Orc.gif"
-import shade_emoji from "./emojis/Shade.gif"
-import skeleton_knight_emoji from "./emojis/SkellyKnight.gif"
-import skeletons_emoji from "./emojis/Skellies.gif"
-import skeleton_wizard_emoji from "./emojis/SkellyWiz.gif"
-import floor_spikes_emoji from "./emojis/Spikes.png"
-import werewolf_emoji from "./emojis/Werewolf.gif"
-
-import knight_emoji from "./emojis/Knight.gif"
-import ranger_emoji from "./emojis/Ranger.gif"
-import wizard_emoji from "./emojis/Wizard.gif"
 
 
 // arena move icons
@@ -210,62 +188,6 @@ const rps_move : string[] = [
     "Scissors"
 ]
 
-const enum PlayerCharacter {
-    Knight = 0,
-    Ranger,
-    Wizard,
-    Assassin,
-    BlueSlime,
-    BoulderTrap,
-    Carnivine,
-    DM,
-    Elves,
-    GiantBlueSlime,
-    GiantGreenSlime,
-    GiantRat,
-    GiantSpider,
-    Goblins,
-    GreenSlime,
-    Mimic,
-    Orc,
-    Shade,
-    SkeletonKnight,
-    Skeletons,
-    SkeletonWizard,
-    SpikeTrap,
-    Werewolf
-}
-
-
-const player_emoji_map = new Map([
-    // enemies
-    [PlayerCharacter.Assassin, assassin_emoji],
-    [PlayerCharacter.BlueSlime, blue_slime_emoji],
-    [PlayerCharacter.BoulderTrap, boulder_emoji],
-    [PlayerCharacter.Carnivine, carnivine_emoji],
-    [PlayerCharacter.DM, dungeon_master_emoji],
-    [PlayerCharacter.Elves, elves_emoji],
-    [PlayerCharacter.GiantBlueSlime, giant_blue_slime_emoji],
-    [PlayerCharacter.GiantGreenSlime, giant_green_slime_emoji],
-    [PlayerCharacter.GiantRat, giant_rat_emoji],
-    [PlayerCharacter.GiantSpider, giant_spider_emoji],
-    [PlayerCharacter.Goblins, goblins_emoji],
-    [PlayerCharacter.GreenSlime, green_slime_emoji],
-    [PlayerCharacter.Mimic, mimic_emoji],
-    [PlayerCharacter.Orc, orc_emoji],
-    [PlayerCharacter.Shade, shade_emoji],
-    [PlayerCharacter.SkeletonKnight, skeleton_knight_emoji],
-    [PlayerCharacter.Skeletons, skeletons_emoji],
-    [PlayerCharacter.SkeletonWizard, skeleton_wizard_emoji],
-    [PlayerCharacter.SpikeTrap, floor_spikes_emoji],
-    [PlayerCharacter.Werewolf, werewolf_emoji],
-
-    // characters
-    [PlayerCharacter.Knight, knight_emoji],
-    [PlayerCharacter.Ranger, ranger_emoji],
-    [PlayerCharacter.Wizard, wizard_emoji]
-  ]);
-
 
 
 const enum ArenaStatus {
@@ -289,8 +211,8 @@ const enum GameSpeed {
 
 const game_status : string[] = [
     "Open",
-    "In Progress",
-    "In Reveal",
+    "Choose",
+    "Fight",
     "Draw",
     "Complete"
 ]
@@ -324,6 +246,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const game_interval = useRef<number | null>(null);
 
     const my_games_map = useRef<GameMap[]>([]);
+    const waiting_games_map = useRef<GameMap[]>([]);
 
 
     const use_websocket = useRef<boolean>(true);
@@ -457,6 +380,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         // if we have a subscription field check against ws_id
         let key = new PublicKey(result["params"]["result"]["value"]["pubkey"]);  
 
+ 
         let event_data = result["params"]["result"]["value"]["account"]["data"][0];
 
         console.log("have event data", event_data);
@@ -677,6 +601,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         });
         setWaitingGames(waiting_list);
 
+        waiting_games_map.current = [];
+        for (let i = 0; i < waiting_list.length; i++) {
+            let game_key = get_game_key(waiting_list[i])
+            let new_entry : GameMap = {key: game_key, index : i}
+            waiting_games_map.current.push(new_entry);
+        }
+
+
         if (wallet.publicKey === null)
             return;
 
@@ -760,7 +692,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <thead>
                         <tr>
                         <th>Game</th>
-                        <th>Bet Size</th>
+                        <th>Bet</th>
                         <th>Speed</th>
                         <th>Match</th>
                         <th>Status</th>
@@ -793,7 +725,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         <thead>
                         <tr>
                         <th>Game</th>
-                        <th>Bet Size</th>
+                        <th>Bet</th>
                         <th>Speed</th>
                         <th>Match</th>
                         <th>Status</th>
@@ -822,8 +754,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let bet_size : number = bignum_to_num(game.bet_size) / LAMPORTS_PER_SOL;
         //console.log("index", index, "price", bet_size);
 
-        let EMOJI_SIZE=32;
-
         return (
             <tr>
                 <td >RPS</td>
@@ -847,14 +777,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <td >{game_status[game.status]}</td>
                 <td>
                     {wallet.publicKey === null ?
-                        <Box as='button' borderWidth='2px' borderColor="white"   width="60px">
+                        <Box as='button' borderWidth='2px' borderColor="white"   width="40px">
                             <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Join</Text>
                         </Box>
                     :
                         (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey)) ?
                             <Center>
                             <HStack >
-                                <Box as='button' onClick={() => {console.log("view", game); setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="70px">
+                                <Box as='button' onClick={() => {console.log("view", game); setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="40px">
                                     <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
                                 </Box>
                                 <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => CancelGameOnArena(index)}>
@@ -1427,8 +1357,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     function OneCharacter({character, unlocked} : {character : PlayerCharacter, unlocked : boolean})
     {
-        let EMOJI_SIZE = 32
-
         if (!unlocked) {
 
             return (
@@ -1522,13 +1450,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             <div className="font-face-sfpb">
                 <Modal.Header style={{backgroundColor: "black"}}  closeButton>
                 
-                    <Modal.Title  style={{"fontSize":30, "color":"white", "fontWeight":'semibold'}}>Character Select</Modal.Title>
+                    <Modal.Title  style={{"fontSize":DEFAULT_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>Character Select</Modal.Title>
                 
                 </Modal.Header>
                 </div>
                 <div className="font-face-sfpb text-center">
                 
-                    <Modal.Body style={{"backgroundColor": "black", "fontSize":20, "color":"white", "fontWeight":'semibold'}}>                            
+                    <Modal.Body style={{"backgroundColor": "black", "fontSize":DUNGEON_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>                            
                             <CharacterSelect/>
                     </Modal.Body>
                 
@@ -1540,10 +1468,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         as="button"
                         borderWidth="2px"
                         borderColor="white"
-                        width="120px"
+                        width="60px"
                         >
                         <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => {JoinGameOnArena(join_index.current); setShowJoinGame(false)}}  fontSize={DUNGEON_FONT_SIZE} color="white">
-                            Let's Go!
+                            Join
                         </Text>
                     </Box>
                     </div>
@@ -1566,13 +1494,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             <div className="font-face-sfpb">
                 <Modal.Header style={{backgroundColor: "black"}}  closeButton>
                 
-                    <Modal.Title  style={{"fontSize":30, "color":"white", "fontWeight":'semibold'}}>Enter Game Details</Modal.Title>
+                    <Modal.Title  style={{"fontSize":DEFAULT_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>Enter Game Details</Modal.Title>
                 
                 </Modal.Header>
                 </div>
                 <div className="font-face-sfpb text-center">
                 
-                    <Modal.Body style={{"backgroundColor": "black", "fontSize":20, "color":"white", "fontWeight":'semibold'}}>
+                    <Modal.Body style={{"backgroundColor": "black", "fontSize":DUNGEON_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>
                     
                         <VStack align="center" spacing="10px">
                           <HStack width="80%" align={"center"}>
@@ -1627,10 +1555,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                 as="button"
                                 borderWidth="2px"
                                 borderColor={chosen_speed === GameSpeed.slow ? "white" : "black"}
-                                width="80px"
+                                width="50px"
                                 height={35}
-                                onClick={() => setChosenSpeed(GameSpeed.slow)} 
-                           
+                                onClick={() => setChosenSpeed(GameSpeed.slow)}                           
                             >
                             <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
                               Slow
@@ -1641,7 +1568,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             as="button"
                             borderWidth="2px"
                             borderColor={chosen_speed === GameSpeed.fast ? "white" : "black"}
-                            width="80px"
+                            width="50px"
                             height={35}
                             onClick={() => setChosenSpeed(GameSpeed.fast)} 
 
@@ -1697,7 +1624,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     onClick={() => setShowNewGame(true)}
                     borderWidth="2px"
                     borderColor="white"
-                    width="250px"
+                    width="200px"
                     visibility={!show_new_game ? "visible" : "hidden"}
                   >
                     <div className="font-face-sfpb">
@@ -1857,6 +1784,12 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     function ArenaButtons({character} : {character : PlayerCharacter}) 
     {
+
+        let button_size = "100";
+        if (isMobile) {
+            button_size = "50";
+
+        }
         let rock_img;
         let paper_img;
         let scissors_img;
@@ -1899,13 +1832,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         return (
             <HStack spacing="1rem">
                 <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)}>
-                    <img style={{"imageRendering":"pixelated"}} src={rock_img} width="100" alt={""}/>
+                    <img style={{"imageRendering":"pixelated"}} src={rock_img} width={button_size} alt={""}/>
                 </Box>
                 <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.paper)}>
-                    <img style={{"imageRendering":"pixelated"}} src={paper_img} width="100" alt={""} />
+                    <img style={{"imageRendering":"pixelated"}} src={paper_img} width={button_size} alt={""} />
                 </Box>
                 <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.scissors)}>
-                    <img style={{"imageRendering":"pixelated"}} src={scissors_img} width="100" alt={""} />
+                    <img style={{"imageRendering":"pixelated"}} src={scissors_img} width={button_size} alt={""} />
                 </Box>
             </HStack>
         );
@@ -2074,12 +2007,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             }
             {active_game.status === GameStatus.in_reveal && 
 
-                <VStack>
-                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> All moves have been submitted! Let's end this. </Text>
-
-                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => RevealMoveInGame()} borderWidth="2px"  borderColor="white"  width="200px">
+                <VStack width="80%">
                     
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Reveal </Text>
+                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like both our combatants are ready to go, show us what you've got! </Text>
+
+                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => RevealMoveInGame()} borderWidth="2px"  borderColor="white"  width="100px">
+                    
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Fight </Text>
                 </Box>
                 </VStack>
             }
@@ -2087,7 +2021,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
                     <VStack>
                     <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You are victorious! </Text>
-                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ClaimReward()} borderWidth="2px"  borderColor="white"  width="200px">
+                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ClaimReward()} borderWidth="2px"  borderColor="white"  width="110px">
                         <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Claim Reward </Text>
                     </Box>
                     </VStack>
@@ -2102,7 +2036,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
             {active_game.status === 0 &&
 
-                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Waiting for challenger to arrive in the arena..</Text>
+               
+                <WaitingForPlayerText player_character={active_game.player_one_character}  game_id={bignum_to_num(active_game.game_id)}/>
 
             }
             </Center>
@@ -2134,7 +2069,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         <Tabs
             className="custom-tab justify-content-center" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
         >
-            <Tab eventKey="game_list" title="GAME LIST" tabClassName="custom-tab justify-content-center">
+            <Tab eventKey="game_list" title="LOBBIES" tabClassName="custom-tab justify-content-center">
                 
                 <Center width="100%" marginBottom="5rem">
                     <VStack width="100%" alignItems="left">
@@ -2142,7 +2077,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         as="button"
                         borderWidth="2px"
                         borderColor="white"
-                        width="250px"
+                        width="200px"
                         visibility="hidden"
                     >
                         <div className="font-face-sfpb">
@@ -2161,7 +2096,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <VStack width="100%" alignItems="left">
                     <ListNewGame/>
 
-                  <MyGameTable/>
+                    <MyGameTable/>
 
                 </VStack>
                 </Center>

@@ -55,6 +55,8 @@ import bs58 from "bs58";
 
 
 import dungeon_title from "./images/Dungeon_Logo.png"
+import arena_title from "./images/Arena_Logo.png"
+
 import large_door from "./images/Large_Door.gif"
 import hallway from "./images/Hallway.gif"
 import hallway2 from "./images/Hallway2.gif"
@@ -1420,7 +1422,7 @@ export function DungeonApp()
 
         return (
             <Box bg='black'>
-                <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="500" alt={""}/>
+                <img style={{"imageRendering":"pixelated"}} src={screen === Screen.ARENA_SCREEN ? arena_title : dungeon_title} width="500" alt={""}/>
             </Box>
         )
     }

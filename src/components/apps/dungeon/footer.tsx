@@ -85,7 +85,7 @@ var EMOJI_SIZE = 20
 var FOOTER_WIDTH: string = "420px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
-    EMOJI_SIZE = 24
+    EMOJI_SIZE = 20
     FOOTER_WIDTH = "350px"
 }
   

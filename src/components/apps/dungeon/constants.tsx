@@ -36,10 +36,13 @@ export const MAIN_ACCOUNT_SEED = "house_account";
 // set font size
 export var DEFAULT_FONT_SIZE = "30px"
 export var DUNGEON_FONT_SIZE = "12px"
+export var EMOJI_SIZE = 24
+
 
 if (isMobile) {
     DEFAULT_FONT_SIZE = "15px"
     DUNGEON_FONT_SIZE = "10px"
+    EMOJI_SIZE = 20
 }
 
 export const PROD = false;
