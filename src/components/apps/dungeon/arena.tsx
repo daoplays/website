@@ -985,8 +985,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             {pubkey: game_sol_account, isSigner: false, isWritable: true},
             {pubkey: fees_account, isSigner: false, isWritable: true},
 
-            {pubkey: arena_account, isSigner: false, isWritable: true},
+            {pubkey: arena_account, isSigner: false, isWritable: true},           
 
+            {pubkey: DM_PROGRAM, isSigner: false, isWritable: false},
             {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
         ];
 
