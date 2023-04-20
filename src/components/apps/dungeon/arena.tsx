@@ -33,7 +33,7 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD,
 
 import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data} from './utils';
 
-import {PlayerCharacter, player_emoji_map, WaitingForPlayerText} from './arena_state';
+import {PlayerCharacter, player_emoji_map, WaitingForPlayerText, DrawText} from './arena_state';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -170,7 +170,8 @@ const enum ArenaInstruction {
     cancel_game = 3,
     take_move = 4,
     reveal_move = 5,
-    claim_reward = 6
+    claim_reward = 6,
+    forfeit = 7,
 }
 
 
@@ -180,14 +181,6 @@ const enum RPSMove {
     paper = 2,
     scissors = 3
 }
-
-const rps_move : string[] = [
-    "None",
-    "Rock",
-    "Paper",
-    "Scissors"
-]
-
 
 
 const enum ArenaStatus {
@@ -244,6 +237,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const BetSizeRef = useRef<HTMLInputElement>(null);
     const game_interval = useRef<number | null>(null);
+    const [time, setTime] = useState<number>(0);
 
     const my_games_map = useRef<GameMap[]>([]);
     const waiting_games_map = useRef<GameMap[]>([]);
@@ -587,6 +581,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const check_games = useCallback(async() => 
     {
         console.log("in check games")
+
+        // update the time here
+        setTime(Date.now()/1000)
         if (check_arena.current === false) {
             return;
         }
@@ -750,9 +747,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const ArenaGameCard = ({game, index} : {game : GameData, index : number}) => {
 
-        //console.log(index, game);
         let bet_size : number = bignum_to_num(game.bet_size) / LAMPORTS_PER_SOL;
-        //console.log("index", index, "price", bet_size);
+        let time_limit : number = (game.game_speed === GameSpeed.fast ? 1.05 : 1440.05)
+        let time_passed : number = (time - bignum_to_num(game.last_interaction))/60;
+        let forfeit : boolean = (time_passed > time_limit && game.status === GameStatus.in_progress && JSON.stringify(game.player_one_encrypted_move) !== JSON.stringify(game.player_two_encrypted_move));
+        console.log(index, bignum_to_num(game.last_interaction), time, (time - bignum_to_num(game.last_interaction))/60, time_limit, JSON.stringify(game.player_one_encrypted_move) !== JSON.stringify(game.player_two_encrypted_move));
 
         return (
             <tr>
@@ -774,7 +773,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     </HStack>
                     </Center>
                 </td>
-                <td >{game_status[game.status]}</td>
+                <td >{!forfeit ? game_status[game.status] : "Forfeit"}</td>
                 <td>
                     {wallet.publicKey === null ?
                         <Box as='button' borderWidth='2px' borderColor="white"   width="40px">
@@ -787,9 +786,15 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                 <Box as='button' onClick={() => {console.log("view", game); setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="40px">
                                     <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
                                 </Box>
-                                <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => CancelGameOnArena(index)}>
-                                    <FontAwesomeIcon icon={solid("trash")} style={{color: "#ea1a1a",}} />
-                                </Box>
+                                {game.status === GameStatus.waiting ?
+                                    <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => CancelGameOnArena(index)}>
+                                        <FontAwesomeIcon icon={solid("trash")} style={{color: "#ea1a1a",}} />
+                                    </Box>
+                                :
+                                    <Box as='button' visibility="hidden">
+                                            <FontAwesomeIcon icon={solid("trash")} style={{color: "#ea1a1a",}} />
+                                    </Box>
+                                }
                             </HStack>
                             </Center>
 
@@ -876,7 +881,84 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
         }
 
-    },[wallet, my_games, bearer_token]);
+        await remove_game_from_list(game_data_account);
+
+    },[wallet, my_games, bearer_token, remove_game_from_list]);
+
+    const ForfeitGameOnArena = useCallback( async () => 
+    {
+       
+        if (wallet.publicKey === null || wallet.signTransaction === undefined || active_game === null)
+            return;
+
+        setProcessingTransaction(true);
+        setTransactionFailed(false);
+
+        let seed_bytes = uInt32ToLEBytes(active_game.seed);
+        let player_one = active_game.player_one;
+
+        let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
+        let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
+        let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+
+        const instruction_data = serialise_basic_instruction(ArenaInstruction.forfeit);
+
+        var account_vector  = [
+            {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+            {pubkey: game_data_account, isSigner: false, isWritable: true},
+            {pubkey: game_sol_account, isSigner: false, isWritable: true},
+
+            {pubkey: arena_account, isSigner: false, isWritable: true},
+
+            {pubkey: SYSTEM_KEY, isSigner: false, isWritable: false}
+        ];
+
+
+        const list_instruction = new TransactionInstruction({
+            keys: account_vector,
+            programId: ARENA_PROGRAM,
+            data: instruction_data
+        });
+
+        let txArgs = await get_current_blockhash(bearer_token);
+
+        let transaction = new Transaction(txArgs);
+        transaction.feePayer = wallet.publicKey;
+
+
+        transaction.add(list_instruction);
+
+        try {
+            let signed_transaction = await wallet.signTransaction(transaction);
+            const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+            if (transaction_response.result === "INVALID") {
+                console.log(transaction_response)
+                setProcessingTransaction(false);
+                setTransactionFailed(true);
+                return;
+            }
+
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("forfeit signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
+
+
+        } catch(error) {
+            console.log(error);
+            setProcessingTransaction(false);
+            return;
+        }
+
+    },[wallet, bearer_token, active_game]);
+
 
     const ClaimReward = useCallback( async () => 
     {
@@ -1551,33 +1633,41 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                     Speed:
                                 </Text>
                             </Box>
-                            <Box
-                                as="button"
-                                borderWidth="2px"
-                                borderColor={chosen_speed === GameSpeed.slow ? "white" : "black"}
-                                width="50px"
-                                height={35}
-                                onClick={() => setChosenSpeed(GameSpeed.slow)}                           
-                            >
-                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                              Slow
-                            </Text>
-                          </Box>
-                          
-                          <Box
-                            as="button"
-                            borderWidth="2px"
-                            borderColor={chosen_speed === GameSpeed.fast ? "white" : "black"}
-                            width="50px"
-                            height={35}
-                            onClick={() => setChosenSpeed(GameSpeed.fast)} 
 
-                          >
-                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                              Fast
-                            </Text>
+                            <VStack width="30%" align="left">
+                                <HStack width="100%">
+                                    <Box
+                                        as="button"
+                                        borderWidth="2px"
+                                        borderColor={chosen_speed === GameSpeed.slow ? "white" : "black"}
+                                        width="50px"
+                                        height={35}
+                                        onClick={() => setChosenSpeed(GameSpeed.slow)}                           
+                                    >
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Slow</Text>
+                                    </Box>
+                                
+                                    <Box
+                                        as="button"
+                                        borderWidth="2px"
+                                        borderColor={chosen_speed === GameSpeed.fast ? "white" : "black"}
+                                        width="50px"
+                                        height={35}
+                                        onClick={() => setChosenSpeed(GameSpeed.fast)} 
 
-                          </Box>
+                                    >
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Fast</Text>
+
+                                    </Box>
+                                </HStack>
+                                <Box width="150%">
+                                {chosen_speed === GameSpeed.slow ? 
+                                <Text color="grey" fontSize="10px">Players have one day to make a move</Text>
+                                :
+                                <Text color="grey" fontSize="10px">Players have one minute to make a move</Text>
+                                }
+                                </Box>
+                          </VStack>
                           
                           </HStack>
                           <Box width="80%">
@@ -1877,17 +1967,15 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             </VStack>
 
             <Center width="100%" height="150px">
-                { transaction_failed &&
-                    <div className="font-face-sfpb">
-                        <Center>
-                                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="red">Transaction Failed. <br/>Please Try Again.</Text>
-                        </Center>
-                    </div>
-                }
+
             </Center>
             </Box>
             );
         }
+
+        let time_limit : number = (active_game.game_speed === GameSpeed.fast ? 1.05 : 1440.05)
+        let time_passed : number = (time - bignum_to_num(active_game.last_interaction))/60;
+        let forfeit : boolean = (time_passed > time_limit && active_game.status === GameStatus.in_progress);
 
         console.log("p1 ", active_game.player_one_status, " p2 ", active_game.player_two_status);
         console.log("p1 ", active_game.player_one.toString(), " p2 ", active_game.player_two.toString());
@@ -1907,15 +1995,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             if (!is_player_one && active_game.player_two_status === ArenaStatus.alive) {
                 is_winner = true;
             }
-        }
-
-        let player_move = RPSMove.none;
-        
-        if (active_game.player_one.equals(wallet.publicKey)) {
-            player_move = active_game.player_one_move;
-        }
-        if (active_game.player_two.equals(wallet.publicKey)) {
-            player_move = active_game.player_two_move;
         }
 
         let player_sent_encrypted_move = false;
@@ -1978,30 +2057,35 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
                     {active_game.status === GameStatus.draw &&
                 
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It's a Draw! Play again.</Text>
+                        <DrawText character_one={active_game.player_one_character} character_two={active_game.player_two_character} move={active_game.player_one_move} />
                     
                     
                     }
-                    {!player_sent_encrypted_move  && opponent_sent_encrypted_move &&
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Opponent has chosen their move!  How will you respond?</Text>
+                    {(player_sent_encrypted_move  !== opponent_sent_encrypted_move) && !forfeit &&
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like one of our fighters is ready to go, but the other needs a bit more time.  The crowd is getting impatient so let's hope there's some action soon!</Text>
                     }
                     {
-                        !player_sent_encrypted_move  && !opponent_sent_encrypted_move &&
+                        !player_sent_encrypted_move &&
                         <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move</Text>
 
                     }
-                     {!player_sent_encrypted_move 
-                     ?
+                     {!player_sent_encrypted_move &&
+                     
                     <Center width="100%">
                         <ArenaButtons character={is_player_one ? active_game.player_one_character : active_game.player_two_character}/>
                     </Center>
-              
-                    :
-                    player_move === RPSMove.none
-                    ?
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Your move has been sent to the arena.. waiting for your opponent</Text>
-                    :
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Decrypted Move Sent: {rps_move[player_move]}</Text>
+                   
+                    }
+                    {player_sent_encrypted_move && forfeit &&
+                        <VStack width="80%">
+                        
+                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Your opponent is playing the pacifist, take them down! </Text>
+            
+                            <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()} borderWidth="2px"  borderColor="white"  width="100px">
+                                
+                                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> {active_game.game_speed === GameSpeed.slow ? "Execute" : "Attack"} </Text>
+                            </Box>
+                        </VStack>
                     }
                 </VStack>
             }

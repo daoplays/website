@@ -94,7 +94,7 @@ export const player_emoji_map = new Map([
 
 
 const ArenaWelcomeText : string[] = [
-    "It's looking like another scorching day here in Limaren, but our first combatant doesn't seem to be bothered by the heat. THey are ", 
+    "It's looking like another scorching day here in Limaren, but our first combatant doesn't seem to be bothered by the heat. They are ", 
     "Given who our first combatant is this promises to be another action packed fight here in the Limaren arena. It's none other than "
    
 ];
@@ -106,7 +106,7 @@ const PlayerIntro : string[][] = [
     //ranger
     ["a Ranger from the forests of Lamore, a people that are renowned for their skills with the bow, so i'm excited to see what they have to offer today!"],
     //wizard
-    [" a powerful Wizard from the hallowed halls of Versinct University, looking to put their combat magic to the test."],
+    ["a powerful Wizard from the hallowed halls of Versinct University, looking to put their combat magic to the test."],
 
     // assassin
     [],
@@ -149,6 +149,63 @@ const PlayerIntro : string[][] = [
     //werewolf
     []
 ]
+
+const PlayerOneText : string[][] = [
+
+    //knight
+    ["The Knight raises their shield and charges in", "The Knight lets out a fearsome battlecry as they seek to break the will of their opponent before the fight even starts", "The Knight immediately lunges with their sword"],
+    //ranger
+    ["The Ranger darts from side to side while closing the gap", "The Ranger immediately pulls up their bow and takes aim", "The Ranger dashes forwards with dagger in hand"],
+    //wizard
+    ["Energy crackles around the Wizard as they raise a magical barrier in front of them and march forwards", "Lightning fills the arena as the Wizard makes their first move", "The Wizard raises their hand a blast of fire streaks towards their opponent"]
+]
+/*
+const PlayerTwoWinText : string[][] = [
+
+    //knight
+    [" but their opponent easily blocks with their shield, and counter-strikes with one deadly swing of their sword", "The Knight lets out a fearsome battlecry as they seek to break the will of their opponent before the fight even starts", "The Knight immediately lunges with their sword"],
+    //ranger
+    [" but their opponent is too fast and dodges out of the way, before ending the fight with a volley of arrows.", "The Ranger immediately pulls up their bow and takes aim", "The Ranger dashes forwards with dagger in hand"],
+    //wizard
+    [" but their opponent just chuckles quietly and raises an impenetrable magical barrier that gives them plenty of time to cast the finishing spell.", "Lightning fills the arena as the Wizard makes their first move", "The Wizard raises their hand a blast of fire streaks towards their oppnent"]
+
+]
+
+const PlayerTwoLoseText : string[][] = [
+
+    //knight
+    ["but their opponent raises their shield to meet them", "The Knight lets out a fearsome battlecry as they seek to break the will of their opponent before the fight even starts", "The Knight immediately lunges with their sword"],
+    //ranger
+    ["The Ranger darts from side to side while closing the gap", "The Ranger immediately pulls up their bow and takes aim", "The Ranger dashes forwards with dagger in hand"],
+    //wizard
+    ["Energy crackles around the Wizard as they raise a magical barrier in front of them", "Lightning fills the arena as the Wizard makes their first move", "The Wizard raises their hand a blast of fire streaks towards their oppnent"]
+
+]
+*/
+const PlayerTwoDrawText : string[][] = [
+
+    //knight
+    [" but their opponent drives their shield into the ground and braces for the attack.", " but their opponent bellows in response and stops them in their tracks.", " but their opponent leaps in with a quick strike to interrupt them."],
+    //ranger
+    [" but their opponent is too quick and dodges out of the way.", " but their opponent fires off a quick shot to interrupt their attack.", " but their opponent quickly throws their dagger and stops their attack"],
+    //wizard
+    [" but their opponent creates an impenetrable shield to protect themselves from harm.", " but their opponent raises a great storm in the arena that knocks them down before they can finish.", " but their opponent traps them in a ring of fire, forcing them to stop their attack to escape."]
+
+]
+
+
+export const DrawText = ({character_one, character_two, move} : {character_one : PlayerCharacter, character_two : PlayerCharacter, move : number}) => {
+
+    console.log("draw text", character_one, character_two, move)
+   let draw_text = PlayerOneText[character_one][move - 1] + " " + PlayerTwoDrawText[character_two][move - 1] + "  It looks like this fight is going to go on for another round!";
+    return(
+        <Box width="80%">
+            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{draw_text}</Text> 
+        </Box> 
+    );
+    
+
+}
 
 
 export const WaitingForPlayerText = ({player_character, game_id} : {player_character : PlayerCharacter, game_id : number}) => {
