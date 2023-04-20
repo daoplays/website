@@ -150,39 +150,42 @@ const PlayerIntro : string[][] = [
     []
 ]
 
-const PlayerOneText : string[][] = [
+const PlayerStartText : string[][] = [
 
     //knight
-    ["The Knight raises their shield and charges in", "The Knight lets out a fearsome battlecry as they seek to break the will of their opponent before the fight even starts", "The Knight immediately lunges with their sword"],
+    ["The Knight raises their shield and charges in", "The Knight lets out a fearsome battle-cry as they seek to break the will of their opponent before the fight even starts", "The Knight immediately lunges with their sword"],
     //ranger
     ["The Ranger darts from side to side while closing the gap", "The Ranger immediately pulls up their bow and takes aim", "The Ranger dashes forwards with dagger in hand"],
     //wizard
-    ["Energy crackles around the Wizard as they raise a magical barrier in front of them and march forwards", "Lightning fills the arena as the Wizard makes their first move", "The Wizard raises their hand a blast of fire streaks towards their opponent"]
+    ["Energy crackles around the Wizard as they raise a magical barrier in front of them and march forwards", "Lightning fills the arena as the Wizard makes their first move", "The Wizard raises their hand and a blast of fire streaks towards their opponent"]
 ]
-/*
-const PlayerTwoWinText : string[][] = [
+
+
+const PlayerResponseText : string[][] = [
 
     //knight
-    [" but their opponent easily blocks with their shield, and counter-strikes with one deadly swing of their sword", "The Knight lets out a fearsome battlecry as they seek to break the will of their opponent before the fight even starts", "The Knight immediately lunges with their sword"],
+    [" but they are too slow in their heavy armour", " but it seems to have no effect", " but they are too slow in their heavy armour"],
     //ranger
-    [" but their opponent is too fast and dodges out of the way, before ending the fight with a volley of arrows.", "The Ranger immediately pulls up their bow and takes aim", "The Ranger dashes forwards with dagger in hand"],
+    [" but there is a pattern in their movement", " but their shot goes wide", " but they fail to land a hit"],
     //wizard
-    [" but their opponent just chuckles quietly and raises an impenetrable magical barrier that gives them plenty of time to cast the finishing spell.", "Lightning fills the arena as the Wizard makes their first move", "The Wizard raises their hand a blast of fire streaks towards their oppnent"]
+    [" but the spell suddenly fails", " but the lightning strike misses its mark", " but streaks meters past their head"]
 
 ]
 
-const PlayerTwoLoseText : string[][] = [
+
+const PlayerWinText : string[][] = [
 
     //knight
-    ["but their opponent raises their shield to meet them", "The Knight lets out a fearsome battlecry as they seek to break the will of their opponent before the fight even starts", "The Knight immediately lunges with their sword"],
+    [" and their opponent knocks them off balance with their shield before landing a killing blow with their sword.", " and their opponent lets out a bellowing war-cry before rushing in for the kill.", " and their opponent cleaves off their head with one swing of their blade"],
     //ranger
-    ["The Ranger darts from side to side while closing the gap", "The Ranger immediately pulls up their bow and takes aim", "The Ranger dashes forwards with dagger in hand"],
+    [" and their opponent dodges out of the way, before ending the fight with a volley of arrows.", " and their opponent's arrow strikes with deadly precision.", " and their opponent weaves past their defenses to slash their throat."],
     //wizard
-    ["Energy crackles around the Wizard as they raise a magical barrier in front of them", "Lightning fills the arena as the Wizard makes their first move", "The Wizard raises their hand a blast of fire streaks towards their oppnent"]
+    [" and their opponent just chuckles quietly while raising an impenetrable magical barrier that gives them plenty of time to cast the finishing spell.", " and their opponent calls on the elements to bring down a deadly storm.", " and their opponent rains fire from the heavens to burn them to a crisp."]
 
 ]
-*/
-const PlayerTwoDrawText : string[][] = [
+
+
+const PlayerDrawText : string[][] = [
 
     //knight
     [" but their opponent drives their shield into the ground and braces for the attack.", " but their opponent bellows in response and stops them in their tracks.", " but their opponent leaps in with a quick strike to interrupt them."],
@@ -194,10 +197,32 @@ const PlayerTwoDrawText : string[][] = [
 ]
 
 
+export const GameOverText = ({character_one, character_two, move_one, move_two, player_one_wins} : {character_one : PlayerCharacter, character_two : PlayerCharacter, move_one : number, move_two : number, player_one_wins : boolean}) => {
+
+    if (player_one_wins) {
+        let text = PlayerStartText[character_two][move_two - 1] + PlayerResponseText[character_two][move_two - 1] + PlayerWinText[character_one][move_one - 1];
+
+        return(
+            <Box width="80%">
+            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{text}</Text> 
+            </Box>
+        );
+    }
+
+    let text = PlayerStartText[character_one][move_one - 1] + PlayerResponseText[character_one][move_one - 1] + PlayerWinText[character_two][move_two - 1];
+    return(
+        <Box width="80%">
+            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{text}</Text> 
+        </Box> 
+    );
+    
+
+}
+
 export const DrawText = ({character_one, character_two, move} : {character_one : PlayerCharacter, character_two : PlayerCharacter, move : number}) => {
 
     console.log("draw text", character_one, character_two, move)
-   let draw_text = PlayerOneText[character_one][move - 1] + " " + PlayerTwoDrawText[character_two][move - 1] + "  It looks like this fight is going to go on for another round!";
+   let draw_text = PlayerStartText[character_one][move - 1] + " " + PlayerDrawText[character_two][move - 1] + "  It looks like this fight is going to go on for another round!";
     return(
         <Box width="80%">
             <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{draw_text}</Text> 

@@ -33,7 +33,7 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD,
 
 import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data} from './utils';
 
-import {PlayerCharacter, player_emoji_map, WaitingForPlayerText, DrawText} from './arena_state';
+import {PlayerCharacter, player_emoji_map, WaitingForPlayerText, DrawText, GameOverText} from './arena_state';
 
 import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
@@ -2110,7 +2110,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             {active_game.status === GameStatus.completed && is_winner && 
 
                     <VStack>
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You are victorious! </Text>
+                    <GameOverText character_one={active_game.player_one_character} character_two={active_game.player_two_character} move_one={active_game.player_one_move} move_two={active_game.player_two_move} player_one_wins={active_game.player_one_status === ArenaStatus.alive}/>
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You are victorious!</Text>
+
                     <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ClaimReward()} borderWidth="2px"  borderColor="white"  width="110px">
                         <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Claim Reward </Text>
                     </Box>
@@ -2119,9 +2121,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
             {active_game.status === GameStatus.completed && !is_winner && 
 
-                <Box  width="200px">
+                <VStack width="100%">
+                    <GameOverText character_one={active_game.player_one_character} character_two={active_game.player_two_character} move_one={active_game.player_one_move} move_two={active_game.player_two_move} player_one_wins={active_game.player_one_status === ArenaStatus.alive}/>
+
                     <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You have been defeated </Text>
-                </Box>
+                </VStack>
             }
 
             {active_game.status === 0 &&
