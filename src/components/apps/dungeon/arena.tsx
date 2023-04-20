@@ -362,8 +362,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         console.log(copy);
         setMyGames(copy);
 
-        // we also need to remove it from the games map
-        my_games_map.current.splice(game_entry[0].index, 1);
+        // we also need to update my_games_map so everything can be reindexed
+        my_games_map.current = []
+        for (let i = 0; i < copy.length; i++) {
+            let game_key = get_game_key(copy[i])
+            let new_entry : GameMap = {key: game_key, index : i}
+            my_games_map.current.push(new_entry);
+        }
 
 
     }, [my_games, active_game]);
