@@ -2095,9 +2095,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Your opponent is playing the pacifist, take them down! </Text>
             
                             <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()} borderWidth="2px"  borderColor="white"  width="100px">
-                                
                                 <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> {active_game.game_speed === GameSpeed.slow ? "Execute" : "Attack"} </Text>
                             </Box>
+                            {active_game.game_speed === GameSpeed.slow ?
+                                <Text className="font-face-sfpb"  color="grey" fontSize="10px">You will land a killing blow, winning the game immediately.</Text>
+                            :
+                                <Text className="font-face-sfpb"  color="grey" fontSize="10px">You will make a random move for your opponent and end the game, one way or the other.</Text>
+
+                            }
                         </VStack>
                     }
                 </VStack>
@@ -2106,12 +2111,12 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
                 <VStack width="80%">
                     
-                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like both our combatants are ready to go, show us what you've got! </Text>
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like both our combatants are ready to go, show us what you've got! </Text>
 
-                <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => RevealMoveInGame()} borderWidth="2px"  borderColor="white"  width="100px">
-                    
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Fight </Text>
-                </Box>
+                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => RevealMoveInGame()} borderWidth="2px"  borderColor="white"  width="100px">
+                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Fight </Text>
+                    </Box>
+
                 </VStack>
             }
             {active_game.status === GameStatus.completed && is_winner && 
