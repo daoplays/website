@@ -1027,7 +1027,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (active_game.player_two.equals(wallet.publicKey)) {
             player_emoji = ArenaCharacterEmoji[active_game.player_two_character];
         }
-        let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
+        let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) * 2 / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
 
         if (PROD)
             post_discord_message(post_string);
