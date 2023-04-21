@@ -1674,7 +1674,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                 {chosen_speed === GameSpeed.slow ? 
                                 <Text color="grey" fontSize="10px">Players have one day to make a move</Text>
                                 :
-                                <Text color="grey" fontSize="10px">Players have one minute to make a move</Text>
+                                <Text color="grey" fontSize="10px">Players have two minutes to make a move</Text>
                                 }
                                 </Box>
                           </VStack>
