@@ -1885,7 +1885,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         return(<></>);
     }
 
-    function ArenaButtons({character} : {character : PlayerCharacter}) 
+    function ArenaButtons({character, forfeit} : {character : PlayerCharacter, forfeit : boolean}) 
     {
 
         let button_size = "100";
@@ -1930,6 +1930,22 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             rock_img = web_move;
             paper_img = venom_move;
             scissors_img = bite_move;
+        }
+
+        if (forfeit) {
+            return (
+                <HStack spacing="1rem">
+                    <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
+                        <img style={{"imageRendering":"pixelated"}} src={rock_img} width={button_size} alt={""}/>
+                    </Box>
+                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
+                        <img style={{"imageRendering":"pixelated"}} src={paper_img} width={button_size} alt={""} />
+                    </Box>
+                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
+                        <img style={{"imageRendering":"pixelated"}} src={scissors_img} width={button_size} alt={""} />
+                    </Box>
+                </HStack>
+            );
         }
 
         return (
@@ -2085,7 +2101,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                      {!player_sent_encrypted_move &&
                      
                     <Center width="100%">
-                        <ArenaButtons character={is_player_one ? active_game.player_one_character : active_game.player_two_character}/>
+                        <ArenaButtons character={is_player_one ? active_game.player_one_character : active_game.player_two_character} forfeit={false}/>
                     </Center>
                    
                     }
@@ -2094,9 +2110,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         
                             <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Your opponent is playing the pacifist, take them down! </Text>
             
-                            <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()} borderWidth="2px"  borderColor="white"  width="100px">
-                                <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> {active_game.game_speed === GameSpeed.slow ? "Execute" : "Attack"} </Text>
-                            </Box>
+                            <Center width="100%">
+                                <ArenaButtons character={is_player_one ? active_game.player_one_character : active_game.player_two_character} forfeit={true}/>
+                            </Center>
                             {active_game.game_speed === GameSpeed.slow ?
                                 <Text className="font-face-sfpb"  color="grey" fontSize="10px">You will land a killing blow, winning the game immediately.</Text>
                             :
