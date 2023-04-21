@@ -1671,6 +1671,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 
                 <Modal.Footer style={{alignItems: "center", justifyContent: "center","backgroundColor": "black"}} >
                     <div className="font-face-sfpb">
+                        <VStack>
                     <Box
                         as="button"
                         borderWidth="2px"
@@ -1681,6 +1682,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             CREATE
                         </Text>
                     </Box>
+                    <Text color="grey" fontSize="10px">Game account costs will be returned at the end of the game</Text>
+                    </VStack>
                     </div>
                 </Modal.Footer>
             </Modal>
