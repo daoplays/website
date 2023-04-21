@@ -199,6 +199,10 @@ const PlayerDrawText : string[][] = [
 
 export const GameOverText = ({character_one, character_two, move_one, move_two, player_one_wins} : {character_one : PlayerCharacter, character_two : PlayerCharacter, move_one : number, move_two : number, player_one_wins : boolean}) => {
 
+    if (move_one === 0 || move_two === 0)
+    {
+        return(<></>);
+    }
     if (player_one_wins) {
         let text = PlayerStartText[character_two][move_two - 1] + PlayerResponseText[character_two][move_two - 1] + PlayerWinText[character_one][move_two - 1];
 
