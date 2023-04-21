@@ -1934,17 +1934,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         if (forfeit) {
             return (
-                <HStack spacing="1rem">
-                    <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
-                        <img style={{"imageRendering":"pixelated"}} src={rock_img} width={button_size} alt={""}/>
-                    </Box>
-                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
-                        <img style={{"imageRendering":"pixelated"}} src={paper_img} width={button_size} alt={""} />
-                    </Box>
-                    <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
-                        <img style={{"imageRendering":"pixelated"}} src={scissors_img} width={button_size} alt={""} />
-                    </Box>
-                </HStack>
+                <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
+                    <img style={{"imageRendering":"pixelated"}} src={corpse} width={button_size} alt={""}/>
+                </Box>
             );
         }
 
@@ -2002,7 +1994,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             );
         }
 
-        let time_limit : number = (active_game.game_speed === GameSpeed.fast ? 1.05 : 1440.05)
+        let time_limit : number = (active_game.game_speed === GameSpeed.fast ? 2.05 : 1440.05)
         let time_passed : number = (time - bignum_to_num(active_game.last_interaction))/60;
         let forfeit : boolean = (time_passed > time_limit && active_game.status === GameStatus.in_progress);
 
@@ -2113,12 +2105,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                             <Center width="100%">
                                 <ArenaButtons character={is_player_one ? active_game.player_one_character : active_game.player_two_character} forfeit={true}/>
                             </Center>
-                            {active_game.game_speed === GameSpeed.slow ?
-                                <Text className="font-face-sfpb"  color="grey" fontSize="10px">You will land a killing blow, winning the game immediately.</Text>
-                            :
-                                <Text className="font-face-sfpb"  color="grey" fontSize="10px">You will make a random move for your opponent and end the game, one way or the other.</Text>
+                            <Text className="font-face-sfpb"  color="grey" fontSize="10px">You will land a killing blow, winning the game immediately.</Text>
 
-                            }
                         </VStack>
                     }
                 </VStack>
@@ -2156,11 +2144,23 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 </VStack>
             }
 
-            {active_game.status === 0 &&
+            {active_game.status === GameStatus.waiting &&
 
-               
-                <WaitingForPlayerText player_character={active_game.player_one_character}  game_id={bignum_to_num(active_game.game_id)}/>
+               <VStack>
+                {!player_sent_encrypted_move &&
+                    <WaitingForPlayerText player_character={active_game.player_one_character}  game_id={bignum_to_num(active_game.game_id)}/>
+                }
 
+                {is_player_one && !player_sent_encrypted_move &&
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move</Text>
+                }
+                {is_player_one && !player_sent_encrypted_move &&
+                    <ArenaButtons character={active_game.player_one_character} forfeit={false}/>
+                }
+                {is_player_one && player_sent_encrypted_move &&
+                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like our first combatant is ready to go.  The crowd is getting impatient so let's hope their opponent shows up soon!</Text>
+                }
+                </VStack>
             }
             </Center>
 
