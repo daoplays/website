@@ -1056,6 +1056,28 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
         let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
 
+        // check if the game is still free
+       let game_data = await request_arena_game_data(bearer_token, game_data_account);
+
+       // this game should definitely exist, so if it doesn't something has gone wrong
+       if (game_data === null) {
+            console.log("game already over");
+            setProcessingTransaction(false);
+            check_arena.current = true; 
+            check_games();
+            return;
+       }
+
+       if (desired_game.status !== GameStatus.waiting) {
+            console.log("Game is already full");
+            check_arena.current = true; 
+            check_games();
+            setProcessingTransaction(false);
+
+            return;
+       }
+
+
         const instruction_data = serialise_Arena_JoinGame_instruction(ArenaInstruction.join_game, chosen_character);
 
         var account_vector  = [
@@ -1121,7 +1143,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         setWaitingGames(copy);
 
 
-    },[wallet, waiting_games, bearer_token, chosen_character]);
+    },[wallet, waiting_games, bearer_token, chosen_character, check_games]);
 
     const ListGameOnArena = useCallback( async () => 
     {
