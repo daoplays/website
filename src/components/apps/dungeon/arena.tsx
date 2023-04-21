@@ -29,7 +29,7 @@ import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- im
 import hallway from "./images/Arena1.gif"
 
 
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, DEV_WSS_NODE, DEBUG, EMOJI_SIZE} from './constants';
+import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE} from './constants';
 
 import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data} from './utils';
 
@@ -260,7 +260,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     useEffect(() => {
 
-        console.log("games have updated");
+        if(DEBUG)
+            console.log("games have updated");
 
     }, [active_game, my_games, waiting_games]);
 
@@ -336,12 +337,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const remove_game_from_list = useCallback(async(key: PublicKey) =>
     {
-        console.log("in remove game");
+        if(DEBUG)
+            console.log("in remove game");
         let game_entry = my_games_map.current.filter(function (entry) {
             return entry.key.equals(key);
         });
 
-        console.log("remove list: ", game_entry);
+        if(DEBUG)
+            console.log("remove list: ", game_entry);
         // if this is length 0 then we dont need to remove anything
         if (game_entry.length === 0) {
             console.log("game doesn't exist in games map")
@@ -358,8 +361,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let copy = [...my_games];
         copy.splice(game_entry[0].index, 1);
 
-        console.log(my_games);
-        console.log(copy);
+        if(DEBUG) {
+            console.log(my_games);
+            console.log(copy);
+        }
         setMyGames(copy);
 
         // we also need to update my_games_map so everything can be reindexed
@@ -382,22 +387,21 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
  
         let event_data = result["params"]["result"]["value"]["account"]["data"][0];
 
-        console.log("have event data", event_data);
+        if(DEBUG)
+            console.log("have event data", event_data);
         let account_data = Buffer.from(event_data, "base64");
 
         const [game] = GameData.struct.deserialize(account_data);
 
-        console.log("in update game");
         let game_entry = my_games_map.current.filter(function (entry) {
-            console.log("compare", key.toString(), entry.key.toString())
             return entry.key.equals(key);
         });
 
-        console.log("update list: ", game_entry, game);
+        if(DEBUG)
+            console.log("update list: ", game_entry, game);
         let copy = [...my_games];
         // if this is length 0 then we just need to add it
         if (game_entry.length === 0) {
-            console.log("game doesn't exist in games map");
             copy.push(game);
             setMyGames(copy);
             setActiveGame(game);
@@ -416,7 +420,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
         }
 
-        console.log("update copy");
         let updated_entry = {...copy[game_entry[0].index]}
         //  otherwise just update the state of the game
         updated_entry = game;
@@ -424,9 +427,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         setMyGames(copy);
 
         // if this game was the active game then update that too
-        console.log("active game: ", active_game)
+        if(DEBUG)
+            console.log("active game: ", active_game)
+
         if (active_game !== null && bignum_to_num(active_game.game_id) === bignum_to_num(game.game_id)) {
-            console.log("update active game");
             setActiveGame(game);
         }
 
@@ -435,10 +439,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     // ws_p1 subscription handler
     useEffect(() => {
 
-        if (use_websocket.current === false || DEV_WSS_NODE === undefined || wallet === null)
+        if (use_websocket.current === false || WSS_NODE === undefined || wallet === null)
             return;
 
-        console.log(DEV_WSS_NODE)
 
         // if the gamelist has changed we will need to reregister
         if (ws_p1_id.current !== null && !(ws_p1.current?.CLOSING || ws_p1.current?.CLOSED)) {
@@ -448,15 +451,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         }
  
-        console.log("setup websocket for active game");
         let pubkey_bytes = wallet.publicKey?.toString();
        
-        let message = `{"id":1,"jsonrpc":"2.0","method": "programSubscribe","params":["` + ARENA_PROGRAM + `",{"encoding": "jsonParsed", "commitment": "confirmed", "filters": [{"dataSize": 167}, {"memcmp" : {"offset" : 28, "bytes" : "` + pubkey_bytes + `"}}]}]}`;
+        let message = `{"id":1,"jsonrpc":"2.0","method": "programSubscribe","params":["` + ARENA_PROGRAM + `",{"encoding": "jsonParsed", "commitment": "confirmed", "filters": [{"dataSize": 205}, {"memcmp" : {"offset" : 28, "bytes" : "` + pubkey_bytes + `"}}]}]}`;
  
-        console.log((message));
 
         if (ws_p1.current === null || ws_p1.current.CLOSED) {
-            ws_p1.current = new WebSocket(DEV_WSS_NODE);
+            ws_p1.current = new WebSocket(WSS_NODE);
         }
 
 
@@ -474,10 +475,9 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     
     useEffect(() => {
 
-        if (use_websocket.current === false || DEV_WSS_NODE === undefined)
+        if (use_websocket.current === false || WSS_NODE === undefined)
             return;
 
-        console.log(DEV_WSS_NODE)
 
         // if the gamelist has changed we will need to reregister
         if (ws_p2_id.current !== null && !(ws_p2.current?.CLOSING || ws_p2.current?.CLOSED)) {
@@ -487,15 +487,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         }
  
-        console.log("setup p2 websocket for active game");
         let pubkey_bytes = wallet.publicKey?.toString();
 
-        let message = `{"id":1,"jsonrpc":"2.0","method": "programSubscribe","params":["` + ARENA_PROGRAM + `",{"encoding": "jsonParsed", "commitment": "confirmed", "filters": [{"dataSize": 167}, {"memcmp" : {"offset" : 60, "bytes" : "` + pubkey_bytes + `"}}]}]}`;
+        let message = `{"id":1,"jsonrpc":"2.0","method": "programSubscribe","params":["` + ARENA_PROGRAM + `",{"encoding": "jsonParsed", "commitment": "confirmed", "filters": [{"dataSize": 205}, {"memcmp" : {"offset" : 60, "bytes" : "` + pubkey_bytes + `"}}]}]}`;
  
-        console.log(message);
 
         if (ws_p2.current === null || ws_p2.current.CLOSED) {
-            ws_p2.current = new WebSocket(DEV_WSS_NODE);
+            ws_p2.current = new WebSocket(WSS_NODE);
         }
 
 
@@ -585,7 +583,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const check_games = useCallback(async() => 
     {
-        console.log("in check games")
 
         // update the time here
         setTime(Date.now()/1000)
@@ -593,7 +590,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             return;
         }
 
-        console.log("update games");
 
         let list = await run_arena_free_game_GPA(bearer_token);
         //console.log(list)
@@ -628,17 +624,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             my_games_map.current.push(new_entry);
         }
 
-/*
-        let new_active_game = list.filter(function (game) {
-            return (active_game !== null && bignum_to_num(game.game_id) === bignum_to_num(active_game.game_id));
-        });
-
-        if (new_active_game.length > 0) {
-            
-            setActiveGame(new_active_game[0]);
-            console.log("found active game: ", new_active_game[0]);
-        }
-*/
         check_arena.current = false;
 
     }, [bearer_token, wallet]);
@@ -685,8 +670,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const GameTable = () => {
 
-        console.log("In game table with list:");
-        console.log(waiting_games);
+
         return(
             <Box width = "100%">
                 <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
@@ -718,8 +702,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
     const MyGameTable = () => {
 
-        console.log("In game table with list:");
-        console.log(my_games);
+
         return(
             <Box width = "100%">
                 <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
@@ -756,7 +739,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let time_limit : number = (game.game_speed === GameSpeed.fast ? 1.05 : 1440.05)
         let time_passed : number = (time - bignum_to_num(game.last_interaction))/60;
         let forfeit : boolean = (time_passed > time_limit && game.status === GameStatus.in_progress && JSON.stringify(game.player_one_encrypted_move) !== JSON.stringify(game.player_two_encrypted_move));
-        console.log(index, bignum_to_num(game.last_interaction), time, (time - bignum_to_num(game.last_interaction))/60, time_limit, JSON.stringify(game.player_one_encrypted_move) !== JSON.stringify(game.player_two_encrypted_move));
 
         return (
             <tr>
@@ -788,7 +770,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey)) ?
                             <Center>
                             <HStack >
-                                <Box as='button' onClick={() => {console.log("view", game); setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="40px">
+                                <Box as='button' onClick={() => {setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="40px">
                                     <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
                                 </Box>
                                 {game.status === GameStatus.waiting ?
@@ -1046,7 +1028,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             player_emoji = ArenaCharacterEmoji[active_game.player_two_character];
         }
         let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
-        console.log(post_string);
+
         if (PROD)
             post_discord_message(post_string);
 
@@ -1151,18 +1133,18 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         setTransactionFailed(false);
 
         let seed = (Math.random()*1e9);
-        console.log("seed", seed);
         let seed_bytes = uInt32ToLEBytes(seed);
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
         let sol_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
 
-        console.log("arena: ", arena_account.toString());
-        console.log("game_data_account: ", game_data_account.toString());
-        console.log("sol_data_account: ", sol_data_account.toString());
+        if(DEBUG) {
+            console.log("arena: ", arena_account.toString());
+            console.log("game_data_account: ", game_data_account.toString());
+            console.log("sol_data_account: ", sol_data_account.toString());
+        }
 
         let bet_size = Number(bet_size_string);
-        console.log(bet_size);
 
         if(bet_size < 0.05)
             return;
@@ -1235,13 +1217,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         setProcessingTransaction(true);
         setTransactionFailed(false);
 
-        console.log(active_game);
+        //console.log(active_game);
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
 
-        console.log("sending reveal move to DB");
+        //console.log("sending reveal move to DB");
         const db_url = `/.netlify/functions/post_to_db?method=Reveal&game_id=`+active_game.game_id;
         const send_result = await fetch(db_url).then((res) => res.json());
-        console.log("Reveal send : ", send_result);
+        //console.log("Reveal send : ", send_result);
 
         if (send_result["statusCode"] !== 200) {
             console.log("Error getting moves from DB")
@@ -1250,7 +1232,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
         let message_body = JSON.parse(send_result["body"])
-        console.log(message_body)
+        //console.log(message_body)
 
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
@@ -1325,7 +1307,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         setProcessingTransaction(true);
         setTransactionFailed(false);
 
-        console.log(active_game);
+       // console.log(active_game);
         let seed_bytes = uInt32ToLEBytes(active_game.seed);
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
@@ -1369,10 +1351,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
 
-        console.log("sending move to DB as player", player_id);
+        //console.log("sending move to DB as player", player_id);
         const db_url = `/.netlify/functions/post_to_db?method=Insert&game_id=`+active_game.game_id+"&player_id=" + player_id + "&move="+ move + "&round="+ active_game.num_round;
         const send_result = await fetch(db_url).then((res) => res.json());
-        console.log("Move send : ", send_result);
+        //console.log("Move send : ", send_result);
 
         if (send_result["statusCode"] !== 200) {
             console.log("Error sending move to DB")
@@ -1381,10 +1363,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         }
 
         let message_body = JSON.parse(send_result["body"])
-        console.log(message_body)
+        //console.log(message_body)
 
         let hash_array = message_body["hash"];
-        console.log(hash_array)
+        //console.log(hash_array)
         const instruction_data = serialise_Arena_Move_instruction(ArenaInstruction.take_move, hash_array);
 
         var account_vector  = [
@@ -1511,7 +1493,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
            
             <Box
                     as="button"
-                    onClick={() => {console.log("clicked", index); join_index.current = index; setShowJoinGame(true)}}
+                    onClick={() => {join_index.current = index; setShowJoinGame(true)}}
                     borderWidth="2px"
                     borderColor="white"
                     width="60px"
@@ -1983,8 +1965,8 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let time_passed : number = (time - bignum_to_num(active_game.last_interaction))/60;
         let forfeit : boolean = (time_passed > time_limit && active_game.status === GameStatus.in_progress);
 
-        console.log("p1 ", active_game.player_one_status, " p2 ", active_game.player_two_status);
-        console.log("p1 ", active_game.player_one.toString(), " p2 ", active_game.player_two.toString());
+        //console.log("p1 ", active_game.player_one_status, " p2 ", active_game.player_two_status);
+       // console.log("p1 ", active_game.player_one.toString(), " p2 ", active_game.player_two.toString());
 
        
         let is_player_one : boolean = true;
@@ -2026,7 +2008,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
             opponent_sent_encrypted_move = sum_player_one_encrypted_move > 0;
         }
         
-        console.log("sum of encrypted data:", sum_player_one_encrypted_move, sum_player_two_encrypted_move);
+        //console.log("sum of encrypted data:", sum_player_one_encrypted_move, sum_player_two_encrypted_move);
 
         return(
             <>

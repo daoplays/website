@@ -5,6 +5,7 @@ const DEV_RPC_NODE = "https://black-damp-river.solana-devnet.quiknode.pro/c5447e
 export const DEV_WSS_NODE = process.env.REACT_APP_DEVNET_WSS_URL;
 
 const PROD_RPC_NODE = "https://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
+const PROD_WSS_NODE =  "wss://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
 
 //pyth oracles
 export const PYTH_BTC_DEV = new PublicKey('HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J');   
@@ -45,14 +46,16 @@ if (isMobile) {
     EMOJI_SIZE = 20
 }
 
-export const PROD = false;
+export const PROD = true;
 export const DEBUG = false;
 
 export var network_string = "devnet";
 export var RPC_NODE = DEV_RPC_NODE;
+export var WSS_NODE = DEV_RPC_NODE;
 if (PROD) {
     network_string = "mainnet"
     RPC_NODE = PROD_RPC_NODE;
+    WSS_NODE = PROD_WSS_NODE;
 }
 
 export const enum Screen {

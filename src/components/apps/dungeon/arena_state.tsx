@@ -200,7 +200,7 @@ const PlayerDrawText : string[][] = [
 export const GameOverText = ({character_one, character_two, move_one, move_two, player_one_wins} : {character_one : PlayerCharacter, character_two : PlayerCharacter, move_one : number, move_two : number, player_one_wins : boolean}) => {
 
     if (player_one_wins) {
-        let text = PlayerStartText[character_two][move_two - 1] + PlayerResponseText[character_two][move_two - 1] + PlayerWinText[character_one][move_one - 1];
+        let text = PlayerStartText[character_two][move_two - 1] + PlayerResponseText[character_two][move_two - 1] + PlayerWinText[character_one][move_two - 1];
 
         return(
             <Box width="80%">
@@ -221,7 +221,7 @@ export const GameOverText = ({character_one, character_two, move_one, move_two, 
 
 export const DrawText = ({character_one, character_two, move} : {character_one : PlayerCharacter, character_two : PlayerCharacter, move : number}) => {
 
-    console.log("draw text", character_one, character_two, move)
+    //console.log("draw text", character_one, character_two, move)
    let draw_text = PlayerStartText[character_one][move - 1] + " " + PlayerDrawText[character_two][move - 1] + "  It looks like this fight is going to go on for another round!";
     return(
         <Box width="80%">
@@ -241,7 +241,7 @@ export const WaitingForPlayerText = ({player_character, game_id} : {player_chara
     let starting_text = ArenaWelcomeText[Math.floor(random() * ArenaWelcomeText.length)]
 
     let options : string[] = PlayerIntro[player_character];
-    console.log(starting_text, player_character, options);
+    //console.log(starting_text, player_character, options);
     let idx : number = Math.floor(random() * options.length);
     let chosen_text : string = options[idx];
 

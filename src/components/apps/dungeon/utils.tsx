@@ -1090,7 +1090,10 @@ export class GameData {
         readonly player_one_status: number,
         readonly player_two_status: number,
         readonly status: number,
-        readonly seed: number
+        readonly seed: number,
+        readonly max_rounds: number,
+        readonly round_winners: number[],
+        readonly spare_data: number[]
     ) {}
   
     static readonly struct = new BeetStruct<GameData>(
@@ -1112,9 +1115,12 @@ export class GameData {
         ['player_one_status', u8],
         ['player_two_status', u8],
         ['status', u8],
-        ['seed', u32]
+        ['seed', u32],
+        ['max_rounds', u8],
+        ['round_winners', uniformFixedSizeArray(u8, 5)],
+        ['spare_data', uniformFixedSizeArray(u8, 32)]
       ],
-      (args) => new GameData(args.game_id!, args.game_speed!, args.last_interaction!, args.num_interactions!, args.num_round!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_encrypted_move!, args.player_two_encrypted_move!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!),
+      (args) => new GameData(args.game_id!, args.game_speed!, args.last_interaction!, args.num_interactions!, args.num_round!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_encrypted_move!, args.player_two_encrypted_move!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!, args.max_rounds!, args.round_winners!, args.spare_data!),
       'GameData'
     )
 }
@@ -1139,7 +1145,7 @@ export async function run_arena_free_game_GPA(bearer : string) : Promise<GameDat
 
 
     //let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=167`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=205`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {
