@@ -2,7 +2,7 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, i64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
-import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE, MARKETPLACE_PROGRAM, ARENA_PROGRAM} from './constants';
+import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE, MARKETPLACE_PROGRAM, ARENA_PROGRAM, TEST} from './constants';
 import {
     Box,
 } from '@chakra-ui/react';
@@ -1142,10 +1142,9 @@ export async function request_arena_game_data(bearer : string, pubkey : PublicKe
 export async function run_arena_free_game_GPA(bearer : string) : Promise<GameData[]>
 {
     //let index_buffer = uInt16ToLEBytes(key_index);
-
-
+    let test_string = TEST ? "true" : "false";
     //let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=205`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&test=` + test_string  +`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=205`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
 
     var program_accounts_result;
     try {

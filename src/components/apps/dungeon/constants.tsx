@@ -4,8 +4,12 @@ import { PublicKey} from '@solana/web3.js';
 const DEV_RPC_NODE = "https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95";
 export const DEV_WSS_NODE = process.env.REACT_APP_DEVNET_WSS_URL;
 
+
 const PROD_RPC_NODE = "https://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
 const PROD_WSS_NODE =  "wss://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
+
+const PROD_TEST_WSS_NODE = process.env.REACT_APP_PROD_WSS_URL;
+const PROD_TEST_RPC_NODE = process.env.REACT_APP_PROD_RPC_URL;
 
 //pyth oracles
 export const PYTH_BTC_DEV = new PublicKey('HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J');   
@@ -47,6 +51,7 @@ if (isMobile) {
 }
 
 export const PROD = true;
+export const TEST = true;
 export const DEBUG = false;
 
 export var network_string = "devnet";
@@ -56,6 +61,11 @@ if (PROD) {
     network_string = "mainnet"
     RPC_NODE = PROD_RPC_NODE;
     WSS_NODE = PROD_WSS_NODE;
+}
+
+if (TEST && PROD_TEST_WSS_NODE !== undefined && PROD_TEST_RPC_NODE !== undefined) {
+    RPC_NODE = PROD_TEST_RPC_NODE;
+    WSS_NODE = PROD_TEST_WSS_NODE;
 }
 
 export const enum Screen {

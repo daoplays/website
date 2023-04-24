@@ -41,7 +41,6 @@ import Tabs from 'react-bootstrap/Tabs';
 import Container from 'react-bootstrap/Container';
 import Modal from 'react-bootstrap/Modal';
 
-
 //enemies
 import assassin from "./images/Assassin.gif"
 import blue_slime from "./images/Blue_Slime.gif"
@@ -128,6 +127,7 @@ import voice_move from "./arena_images/Voice.png"
 //import ward_move from "./arena_images/Ward.png"
 //import warhammer_move from "./arena_images/Warhammer.png"
 import web_move from "./arena_images/Web.png"
+import execute from "./arena_images/Execute.png"
 
 
 import './css/table.css';
@@ -1719,7 +1719,6 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
   
         return (
             <>
-            <div style={{ marginTop: "1rem" }}></div>
             <div style={{ margin: 0 }}>
 
                   <Box
@@ -1935,7 +1934,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (forfeit) {
             return (
                 <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ForfeitGameOnArena()}>
-                    <img style={{"imageRendering":"pixelated"}} src={corpse} width={button_size} alt={""}/>
+                    <img style={{"imageRendering":"pixelated"}} src={execute} width={button_size} alt={""}/>
                 </Box>
             );
         }
@@ -2171,6 +2170,29 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         );
     }
 
+    function HowToPlay()
+    {
+        return(
+            <>
+            <Box width = "80%">
+            <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                <h2 className="mt-1  font-face-sfpb" style={{fontSize: DEFAULT_FONT_SIZE}}>How to play the Arena</h2><br />
+
+                <ul>
+                    <li>Connect your Phantom Wallet. A dedicated burner wallet is recommended</li>
+                    <li>Browse and join Open "Lobbies" or create a new lobby in "My Games"</li>
+                    <li>Select and confirm your attack (Rock, Paper, Scissors) within the time allotment [Fast = 2 minutes ; Slow = 24 hours]</li>
+                    <li>Reveal to resolve the combat turn</li>
+                    <li>In the event of a Draw, submit a new attack and repeat</li>
+                    <li>If your opponent misses their time, Execute them and claim the rewards</li>
+                </ul>
+
+            </div>
+            </Box>
+            </>
+        );
+    }
+
     return(
         
     <>
@@ -2191,6 +2213,15 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         <Tabs
             className="custom-tab justify-content-center" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
         >
+            <Tab eventKey="my_games" title="MY GAMES" tabClassName="custom-tab">
+                <Center width="100%" marginBottom="5rem">
+                    <VStack width="100%" alignItems="left">
+                        <ListNewGame/>
+                        <MyGameTable/>
+                    </VStack>
+                </Center>
+            </Tab> 
+
             <Tab eventKey="game_list" title="LOBBIES" tabClassName="custom-tab justify-content-center">
                 
                 <Center width="100%" marginBottom="5rem">
@@ -2213,16 +2244,15 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 </Center>
             
             </Tab>
-            <Tab eventKey="my_games" title="MY GAMES" tabClassName="custom-tab">
-            <Center width="100%" marginBottom="5rem">
-                <VStack width="100%" alignItems="left">
-                    <ListNewGame/>
 
-                    <MyGameTable/>
-
-                </VStack>
+            <Tab eventKey="how_to_play" title="INSTRUCTIONS" tabClassName="custom-tab">
+                <Center width="100%" marginBottom="5rem">
+                    <VStack width="100%" alignItems="left">
+                        <HowToPlay/>
+                    </VStack>
                 </Center>
             </Tab> 
+
         </Tabs>
         </Container>
     </VStack>

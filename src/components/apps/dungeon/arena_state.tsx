@@ -168,7 +168,7 @@ const PlayerResponseText : string[][] = [
     //ranger
     [" but there is a pattern in their movement", " but their shot goes wide", " but they fail to land a hit"],
     //wizard
-    [" but the spell suddenly fails", " but the lightning strike misses its mark", " but streaks meters past their head"]
+    [" but the spell suddenly fails", " but the lightning strike misses its mark", " but flies meters past their head"]
 
 ]
 

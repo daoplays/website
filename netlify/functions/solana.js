@@ -17,6 +17,11 @@ exports.handler = async function (event, context) {
 
     const function_name = event.queryStringParameters.function_name;
     const network = event.queryStringParameters.network;
+    var test = false;
+    if (event.queryStringParameters.test && event.queryStringParameters.test === "true") {
+        test = true;
+    }
+
 
     var baseURL = null;
     
@@ -29,6 +34,10 @@ exports.handler = async function (event, context) {
     else {
         console.log("UNKNOWN NETWORK RECIEVED");
         return;
+    }
+
+    if (test) {
+        baseURL = process.env.REACT_APP_PROD_RPC_URL;
     }
 
     console.log(event.queryStringParameters.bearer);
