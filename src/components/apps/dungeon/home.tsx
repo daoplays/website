@@ -55,6 +55,8 @@ import bs58 from "bs58";
 
 
 import dungeon_title from "./images/Dungeon_Logo.png"
+import arena_title from "./images/Arena_Logo.png"
+
 import large_door from "./images/Large_Door.gif"
 import hallway from "./images/Hallway.gif"
 import hallway2 from "./images/Hallway2.gif"
@@ -98,6 +100,9 @@ import {DMScreen} from './dm';
 import { AchievementsScreen } from './achievements';
 import {StatsScreen} from './stats';
 import { Footer } from './footer';
+import { MarketplaceScreen } from './marketplace';
+import { ArenaScreen } from './arena';
+
 //import {DungeonScreen} from './dungeon';
 
 import './css/style.css';
@@ -1417,7 +1422,7 @@ export function DungeonApp()
 
         return (
             <Box bg='black'>
-                <img style={{"imageRendering":"pixelated"}} src={dungeon_title} width="500" alt={""}/>
+                <img style={{"imageRendering":"pixelated"}} src={screen === Screen.ARENA_SCREEN ? arena_title : dungeon_title} width="500" alt={""}/>
             </Box>
         )
     }
@@ -1674,12 +1679,12 @@ export function DungeonApp()
         <>
         <VStack>
             <Box width="100%">
-                    <HStack>
-                        <Box width="25%"></Box>  
-                        <DisplayLVL current_level={current_level}/>
-                        <Box width="30%"></Box>     
-                        <DisplayXP current_xp={numXP}/>
-                        <Box width="25%"></Box>  
+                <HStack>
+                    <Box width="25%"></Box>  
+                    <DisplayLVL current_level={current_level}/>
+                    <Box width="30%"></Box>     
+                    <DisplayXP current_xp={numXP}/>
+                    <Box width="25%"></Box>  
                 </HStack>
             </Box>
 
@@ -1883,6 +1888,9 @@ export function DungeonApp()
                     
                     {!wallet.publicKey && 
                     <>
+                        {screen === Screen.ARENA_SCREEN &&
+                            <ArenaScreen bearer_token={bearer_token}/>
+                        }
                         {screen === Screen.ODDS_SCREEN &&
                             <OddsScreen/>
                         }
@@ -1894,6 +1902,9 @@ export function DungeonApp()
                         }
                         {screen === Screen.SHOP_SCREEN &&
                             <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
+                        }
+                        {screen === Screen.MARKETPLACE_SCREEN &&
+                            <MarketplaceScreen bearer_token={bearer_token}/>
                         }
                         {screen === Screen.DM_SCREEN &&
                             <DMScreen bearer_token={bearer_token}/>
@@ -1920,6 +1931,9 @@ export function DungeonApp()
                         {screen === Screen.DEATH_SCREEN &&
                             <DeathScreen/>
                         }
+                        {screen === Screen.ARENA_SCREEN &&
+                            <ArenaScreen bearer_token={bearer_token}/>
+                        }
                         {screen === Screen.ODDS_SCREEN &&
                             <OddsScreen/>
                         }
@@ -1928,6 +1942,9 @@ export function DungeonApp()
                         }
                         {screen === Screen.SHOP_SCREEN &&
                             <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
+                        }
+                        {screen === Screen.MARKETPLACE_SCREEN &&
+                            <MarketplaceScreen bearer_token={bearer_token}/>
                         }
                         {screen === Screen.HELP_SCREEN &&
                             <HelpScreen/>

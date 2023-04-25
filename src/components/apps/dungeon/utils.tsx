@@ -1,8 +1,8 @@
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u64, bignum, bool } from '@metaplex-foundation/beet'
+import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, i64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
-import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE} from './constants';
+import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE, MARKETPLACE_PROGRAM, ARENA_PROGRAM, TEST} from './constants';
 import {
     Box,
 } from '@chakra-ui/react';
@@ -71,6 +71,14 @@ export function uInt16ToLEBytes(num : number) : Buffer {
     return bytes
  }
 
+ export function uInt32ToLEBytes(num : number) : Buffer {
+
+    const bytes = Buffer.alloc(4);
+    bytes.writeUInt32LE(num);
+   
+    return bytes
+ }
+
 interface BasicReply {
     id : number;
     jsonrpc : string;
@@ -130,7 +138,7 @@ interface TransactionResponseData {
 
 export async function send_transaction(bearer : string, encoded_transaction : string) : Promise <TransactionResponseData>
 {
-    var body = {"id": 1, "jsonrpc": "2.0", "method": "sendTransaction", "params": [encoded_transaction]};
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "sendTransaction", "params": [encoded_transaction, {"skipPreflight": true}]};
    
     var response_json = await postData(RPC_NODE, bearer, body);
     let transaction_response : TransactionResponseData = response_json;
@@ -911,6 +919,369 @@ export async function request_DM_User_data(bearer : string, pubkey : PublicKey) 
     const [data] = DMUserData.struct.deserialize(account_data);
 
     return data;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////// Marketplace Instructions and MetaData /////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export class ListingData {
+    constructor(
+      readonly item: number,   
+      readonly quantity: number,
+      readonly price: bignum,
+      readonly seller_account: PublicKey,
+      readonly seed: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<ListingData>(
+      [
+        ['item', u8],
+        ['quantity', u16],
+        ['price', u64],
+        ['seller_account', publicKey],
+        ['seed', u32]
+      ],
+      (args) => new ListingData(args.item!, args.quantity!, args.price!, args.seller_account!, args.seed!),
+      'ListingData'
+    )
+}
+
+export async function run_marketplace_GPA(bearer : string) : Promise<ListingData[]>
+{
+    //let index_buffer = uInt16ToLEBytes(key_index);
+
+
+    //let encoded_key_index = bs58.encode(index_buffer);
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+MARKETPLACE_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=47`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+
+    var program_accounts_result;
+    try {
+        program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return [];
+    }
+
+    console.log(program_accounts_result["result"]);
+
+    let result : ListingData[] = [];
+    for (let i = 0; i < program_accounts_result["result"].length; i++) {
+        console.log(program_accounts_result["result"][i]);
+        let encoded_data = program_accounts_result["result"][i]["account"]["data"][0];
+        let decoded_data = Buffer.from(encoded_data, "base64");
+        const [listing] = ListingData.struct.deserialize(decoded_data);
+        result.push(listing);
+    }
+
+    return result;
+}
+
+class Marketplace_List_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly item: number,
+        readonly quantity: number,
+        readonly price: bignum,
+        readonly seed: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<Marketplace_List_Instruction>(
+      [
+        ['instruction', u8],
+        ['item', u8],
+        ['quantity', u16],
+        ['price', u64],
+        ['seed', u32]
+      ],
+      (args) => new Marketplace_List_Instruction(args.instruction!, args.item!, args.quantity!, args.price!, args.seed!),
+      'Marketplace_List_Instruction'
+    )
+}
+/*
+class Marketplace_Update_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly quantity: number,
+        readonly price: bignum
+    ) {}
+  
+    static readonly struct = new BeetStruct<Marketplace_Update_Instruction>(
+      [
+        ['instruction', u8],
+        ['quantity', u16],
+        ['price', u64]
+      ],
+      (args) => new Marketplace_Update_Instruction(args.instruction!, args.quantity!, args.price!),
+      'Marketplace_Update_Instruction'
+    )
+}
+*/
+
+
+class Marketplace_Buy_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly quantity: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<Marketplace_Buy_Instruction>(
+      [
+        ['instruction', u8],
+        ['quantity', u16]
+      ],
+      (args) => new Marketplace_Buy_Instruction(args.instruction!, args.quantity!),
+      'Marketplace_Buy_Instruction'
+    )
+}
+
+
+
+export function serialise_Marketplace_list_instruction(instruction : number, item : number, quantity : number, price : bignum, seed : number) : Buffer
+{
+
+    const data = new Marketplace_List_Instruction(instruction, item, quantity, price, seed);
+    const [buf] = Marketplace_List_Instruction.struct.serialize(data);
+
+    return buf;
+}
+/*
+export function serialise_Marketplace_update_instruction(instruction : number, quantity : number, price : bignum) : Buffer
+{
+
+    const data = new Marketplace_Update_Instruction(instruction, quantity, price);
+    const [buf] = Marketplace_Update_Instruction.struct.serialize(data);
+
+    return buf;
+}
+*/
+export function serialise_Marketplace_buy_instruction(instruction : number, quantity : number) : Buffer
+{
+
+    const data = new Marketplace_Buy_Instruction(instruction, quantity);
+    const [buf] = Marketplace_Buy_Instruction.struct.serialize(data);
+
+    return buf;
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////// Arena Instructions and MetaData /////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export class GameData {
+    constructor(
+        readonly game_id: bignum,
+        readonly game_speed: number,
+        readonly last_interaction: bignum,
+        readonly num_interactions: number,   
+        readonly num_round: number,   
+        readonly bet_size: bignum,   
+        readonly player_one: PublicKey,
+        readonly player_two: PublicKey,
+        readonly player_one_encrypted_move: number[],
+        readonly player_two_encrypted_move: number[],
+        readonly player_one_move: number,
+        readonly player_two_move: number,
+        readonly player_one_character: number,
+        readonly player_two_character: number,
+        readonly player_one_status: number,
+        readonly player_two_status: number,
+        readonly status: number,
+        readonly seed: number,
+        readonly max_rounds: number,
+        readonly round_winners: number[],
+        readonly spare_data: number[]
+    ) {}
+  
+    static readonly struct = new BeetStruct<GameData>(
+      [
+        ['game_id', u64],
+        ['game_speed', u8],
+        ['last_interaction', i64],
+        ['num_interactions', u16],
+        ['num_round', u8],
+        ['bet_size', u64],
+        ['player_one', publicKey],
+        ['player_two', publicKey],
+        ['player_one_encrypted_move', uniformFixedSizeArray(u8, 32)],
+        ['player_two_encrypted_move', uniformFixedSizeArray(u8, 32)],
+        ['player_one_move', u8],
+        ['player_two_move', u8],
+        ['player_one_character', u8],
+        ['player_two_character', u8],
+        ['player_one_status', u8],
+        ['player_two_status', u8],
+        ['status', u8],
+        ['seed', u32],
+        ['max_rounds', u8],
+        ['round_winners', uniformFixedSizeArray(u8, 5)],
+        ['spare_data', uniformFixedSizeArray(u8, 32)]
+      ],
+      (args) => new GameData(args.game_id!, args.game_speed!, args.last_interaction!, args.num_interactions!, args.num_round!, args.bet_size!, args.player_one!, args.player_two!, args.player_one_encrypted_move!, args.player_two_encrypted_move!, args.player_one_move!, args.player_two_move!, args.player_one_character!, args.player_two_character!, args.player_one_status!, args.player_two_status!, args.status!, args.seed!, args.max_rounds!, args.round_winners!, args.spare_data!),
+      'GameData'
+    )
+}
+
+export async function request_arena_game_data(bearer : string, pubkey : PublicKey) : Promise<GameData | null>
+{
+ 
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = GameData.struct.deserialize(account_data);
+
+    return data;
+}
+
+export async function run_arena_free_game_GPA(bearer : string) : Promise<GameData[]>
+{
+    //let index_buffer = uInt16ToLEBytes(key_index);
+    let test_string = TEST ? "true" : "false";
+    //let encoded_key_index = bs58.encode(index_buffer);
+    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&test=` + test_string  +`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=205`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+
+    var program_accounts_result;
+    try {
+        program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
+    }
+    catch(error) {
+        console.log(error);
+        return [];
+    }
+
+    console.log(program_accounts_result["result"]);
+
+    let result : GameData[] = [];
+    for (let i = 0; i < program_accounts_result["result"].length; i++) {
+        //console.log(program_accounts_result["result"][i]);
+        let encoded_data = program_accounts_result["result"][i]["account"]["data"][0];
+        let decoded_data = Buffer.from(encoded_data, "base64");
+        const [game] = GameData.struct.deserialize(decoded_data);
+        result.push(game);
+    }
+
+    return result;
+}
+
+class Arena_CreateGame_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly bid_size: bignum,
+        readonly seed: number,
+        readonly character: number,
+        readonly game_speed: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<Arena_CreateGame_Instruction>(
+      [
+        ['instruction', u8],
+        ['bid_size', u64],
+        ['seed', u32],
+        ['character', u8],
+        ['game_speed', u8]
+
+      ],
+      (args) => new Arena_CreateGame_Instruction(args.instruction!, args.bid_size!, args.seed!, args.character!, args.game_speed!),
+      'Arena_CreateGame_Instruction'
+    )
+}
+
+class Arena_JoinGame_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly character: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<Arena_JoinGame_Instruction>(
+      [
+        ['instruction', u8],
+        ['character', u8]
+      ],
+      (args) => new Arena_JoinGame_Instruction(args.instruction!, args.character!),
+      'Arena_JoinGame_Instruction'
+    )
+}
+
+class Arena_Move_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly move: number[]
+    ) {}
+  
+    static readonly struct = new BeetStruct<Arena_Move_Instruction>(
+      [
+        ['instruction', u8],
+        ['move', uniformFixedSizeArray(u8, 32)]
+      ],
+      (args) => new Arena_Move_Instruction(args.instruction!, args.move!),
+      'Arena_Move_Instruction'
+    )
+}
+
+class Arena_Reveal_Instruction {
+    constructor(
+        readonly instruction: number,
+        readonly move_one: number,
+        readonly salt_one: string,
+        readonly move_two: number,
+        readonly salt_two: string,
+
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<Arena_Reveal_Instruction>(
+      [
+        ['instruction', u8],
+        ['move_one', u8],
+        ['salt_one', utf8String],
+        ['move_two', u8],
+        ['salt_two', utf8String]
+      ],
+      (args) => new Arena_Reveal_Instruction(args.instruction!, args.move_one!, args.salt_one!, args.move_two!, args.salt_two!),
+      'Arena_Reveal_Instruction'
+    )
+}
+
+
+export function serialise_Arena_CreateGame_instruction(instruction : number, bid_size : bignum, seed : number, character : number, game_speed : number) : Buffer
+{
+
+    const data = new Arena_CreateGame_Instruction(instruction, bid_size, seed, character, game_speed);
+    const [buf] = Arena_CreateGame_Instruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_Arena_JoinGame_instruction(instruction : number, character : number) : Buffer
+{
+
+    const data = new Arena_JoinGame_Instruction(instruction, character);
+    const [buf] = Arena_JoinGame_Instruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_Arena_Move_instruction(instruction : number, move : number[]) : Buffer
+{
+
+    const data = new Arena_Move_Instruction(instruction, move);
+    const [buf] = Arena_Move_Instruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_Arena_Reveal_instruction(instruction : number, move_one : number, salt_one : string, move_two : number, salt_two : string) : Buffer
+{
+
+    const data = new Arena_Reveal_Instruction(instruction, move_one, salt_one, move_two, salt_two);
+    const [buf] = Arena_Reveal_Instruction.struct.serialize(data);
+
+    return buf;
 }
 
 export function bignum_to_num(bn : bignum) : number
