@@ -2,7 +2,7 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, i64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
-import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE, MARKETPLACE_PROGRAM, ARENA_PROGRAM, TEST} from './constants';
+import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE, MARKETPLACE_PROGRAM, ARENA_PROGRAM} from './constants';
 import {
     Box,
 } from '@chakra-ui/react';
@@ -1153,7 +1153,6 @@ export async function run_arena_free_game_GPA(bearer : string) : Promise<GameDat
         return [];
     }
 
-   
     console.log(program_accounts_result["result"]);
 
     let result : GameData[] = [];
