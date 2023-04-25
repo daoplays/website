@@ -1141,20 +1141,19 @@ export async function request_arena_game_data(bearer : string, pubkey : PublicKe
 
 export async function run_arena_free_game_GPA(bearer : string) : Promise<GameData[]>
 {
-    //let index_buffer = uInt16ToLEBytes(key_index);
-    let test_string = TEST ? "true" : "false";
-    //let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&test=` + test_string  +`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+ARENA_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=205`;//&memcmp=true&offset=33&bytes=`+encoded_key_index;
+
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getProgramAccounts", "params": [ARENA_PROGRAM.toString(), {"filters": [{"dataSize" : 205}], "encoding": "base64", "commitment": "confirmed"}]};
 
     var program_accounts_result;
     try {
-        program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
+        program_accounts_result = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log(error);
         return [];
     }
 
+   
     console.log(program_accounts_result["result"]);
 
     let result : GameData[] = [];
