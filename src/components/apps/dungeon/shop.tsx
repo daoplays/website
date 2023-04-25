@@ -440,173 +440,166 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
 
     },[wallet, bearer_token]);
 
-    return(
-        <VStack alignItems="center">
-        <Box width="100%">
-                    <HStack>
-                        <Box width="65%"></Box>  
-                        <Box width="10%">
-                            <div className="font-face-sfpb">
-                                    
-                                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {num_xp}</Text>
-                                    
-                            </div>
-                        </Box>
-                        <Box width="25%"></Box>  
-                    </HStack>
-                </Box>
-        <Box width="100%">       
-            <Center>
-            
-                <VStack alignItems="center" spacing="2%">
+    const ShopText = () => {
 
-                
-
-                <HStack>
-                    <Box width="10%"></Box>         
-                    <Box  style={{
-                        backgroundImage: `url(${shop})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        imageRendering: "pixelated"
-
-                    } } width="80%">
-                        <HStack>
-                
-                            <Box width="35%"></Box> 
-                            {countdown_value !== null && countdown_value === 0 &&           
-                                <Box width="15%"> <DisplayChest visible = {true}/></Box>  
-                            }
-                            {(countdown_value === null || countdown_value > 0) &&           
-                                <Box width="15%"> <DisplayChest visible = {false}/></Box>  
-                            }
-                            <Box width="5%"></Box> 
-                            <Box width="15%" pb = "10%"><DisplayChest visible = {false}/> </Box>  
-                            <Box width="30%"></Box> 
-
-                        </HStack>
-                    </Box>
-                    <Box width="10%"></Box> 
-                </HStack>
-
-                {!wallet.publicKey &&
-                <>
-                    <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Stranger!  Connect your wallet below so we can do business.</Text>
-                    </div>
-
-                    {!isMobile &&
-                        <div className="font-face-sfpb">
-                                    <WalletMultiButton  
-                                    className="wallet-button"  
-                                    >CONNECT WALLET</WalletMultiButton>
-                        </div>
-                    }
-                     {isMobile &&
-                        <div className="font-face-sfpb">
-                                    <WalletMultiButton  
-                                    className="mobile-wallet-button"  
-                                    >CONNECT WALLET</WalletMultiButton>
-                        </div>
-                    }
-                </>
-                }
-
-                {wallet.publicKey && 
-                <>
-                <Box width="80%" >
+        return (
+            <Center width = "100%">
+                <Box width="80%">
                     <div className="font-face-sfpb">
                         {/* If they don't have the xp reqs */}
                         {countdown_value !== null && countdown_value === 0 &&
                         <>
                         {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp < xp_req &&
-                            <Center>
-                            <Box width = "100%">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP</Text>
-                            </Box>
-                            </Center>
                         }
                         {xp_req === -2 &&
-                            <Center>
-                            <Box width = "100%">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  If you're here looking for keys i'm afraid you're a bit late! There's been a rush of adventurers like you over the past days and i'm all sold out.</Text>
-                            </Box>
-                            </Center>
                         }
                         {xp_req === -1 &&
-                            <Center>
-                            <Box width = "100%">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome back Adventurer! I'm afraid you've had your fair share of keys from me.  You'll need to find someone else to trade with if you want more.</Text>
-                            </Box>
-                            </Center>
                         }
                         {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req &&
-                            <Center>
-                            <Box width = "100%">
+                            
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[user_num_keys.current]}</Text>
-                            </Box>
-                            </Center>
                         }
                         </>
                         }
 
-                        {countdown_value !== null && countdown_value > 0 &&
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
-                        }
-                        {countdown_value === null &&
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
-                        }
                     </div>
                 </Box>
-
-                <HStack alignItems="center">
- 
-                    {xp_req !== null&& num_xp !== null  && xp_req > 0 && num_xp >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
-                    <>
-                        
-                        <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
-                        
-                        <Button variant='link' size='lg' onClick={Mint}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
-                            </div> 
-                        </Button>  
-   
-                    </>
-                    }
-                    
-                </HStack>
-                </>
-                }
-
-                {which_key !== null && key_image !== null && current_mint !== null &&
-                    <>
-                    <VStack spacing="3%">
-                    <HStack alignItems="center">
-                        <Box width="15%">
-                            <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
-                        </Box>
-                                    
-                            <div className="font-face-sfpb">
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key}! </Text>
-                            </div>
-                    </HStack>
-                    <Center>
-                    <Box width = "100%">
-                    <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()+"?cluster=devnet"}>here</a></Text>
-                    </div>
-                    </Box>
-                    </Center>
-                    </VStack>
-                    </>            
-                }
-
-
-                </VStack>
             </Center>
-        </Box>
+
+
+        );
+               
+    }
+
+    return(
+        <VStack alignItems="center">
+            <Box width="100%">
+                <HStack>
+                    <Box width="65%"></Box>  
+                    <Box width="10%">
+                        <div className="font-face-sfpb">
+                                
+                                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">XP {num_xp}</Text>
+                                
+                        </div>
+                    </Box>
+                    <Box width="25%"></Box>  
+                </HStack>
+            </Box>
+
+            <Box width="100%">       
+                <Center width="100%">
+                
+                    <VStack width="100%" alignItems="center" spacing="2%">
+
+                    
+
+                        <HStack>
+                            <Box width="10%"></Box>         
+                            <Box  style={{
+                                backgroundImage: `url(${shop})`,
+                                backgroundPosition: 'center',
+                                backgroundSize: 'contain',
+                                backgroundRepeat: 'no-repeat',
+                                imageRendering: "pixelated"
+
+                            } } width="80%">
+                                <HStack>
+                        
+                                    <Box width="35%"></Box> 
+                                    {countdown_value !== null && countdown_value === 0 &&           
+                                        <Box width="15%"> <DisplayChest visible = {true}/></Box>  
+                                    }
+                                    {(countdown_value === null || countdown_value > 0) &&           
+                                        <Box width="15%"> <DisplayChest visible = {false}/></Box>  
+                                    }
+                                    <Box width="5%"></Box> 
+                                    <Box width="15%" pb = "10%"><DisplayChest visible = {false}/> </Box>  
+                                    <Box width="30%"></Box> 
+
+                                </HStack>
+                            </Box>
+                            <Box width="10%"></Box> 
+                        </HStack>
+
+                        {!wallet.publicKey &&
+                        <>
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Stranger!  Connect your wallet below so we can do business.</Text>
+                            </div>
+
+                            {!isMobile &&
+                                <div className="font-face-sfpb">
+                                            <WalletMultiButton  
+                                            className="wallet-button"  
+                                            >CONNECT WALLET</WalletMultiButton>
+                                </div>
+                            }
+                            {isMobile &&
+                                <div className="font-face-sfpb">
+                                            <WalletMultiButton  
+                                            className="mobile-wallet-button"  
+                                            >CONNECT WALLET</WalletMultiButton>
+                                </div>
+                            }
+                        </>
+                        }
+
+                        {wallet.publicKey && 
+                        <>
+                            
+                            <ShopText/>
+                            <HStack alignItems="center">
+            
+                                {xp_req !== null&& num_xp !== null  && xp_req > 0 && num_xp >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
+                                <>
+                                    
+                                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                                    
+                                    <Button variant='link' size='lg' onClick={Mint}>
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
+                                        </div> 
+                                    </Button>  
+            
+                                </>
+                                }
+                                
+                            </HStack>
+                        </>
+                        }
+
+                        {which_key !== null && key_image !== null && current_mint !== null &&
+                            <>
+                            <VStack spacing="3%">
+                            <HStack alignItems="center">
+                                <Box width="15%">
+                                    <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
+                                </Box>
+                                            
+                                    <div className="font-face-sfpb">
+                                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key}! </Text>
+                                    </div>
+                            </HStack>
+                            <Center>
+                            <Box width = "100%">
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()+"?cluster=devnet"}>here</a></Text>
+                            </div>
+                            </Box>
+                            </Center>
+                            </VStack>
+                            </>            
+                        }
+
+
+                    </VStack>
+                </Center>
+            </Box>
         </VStack>
     );
 }

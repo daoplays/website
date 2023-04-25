@@ -95,8 +95,8 @@ export const AchievementMetaData : Achievement[] = [
     {name: "Dungeon Paragon", description: "Earn 10000 XP", image: dungeon_paragon, type: 0, secret: false, percent: 0.2},
     {name: "First Blood", description: "Kill your first enemy", image: first_blood, type: 0, secret: false, percent: 92.4},
     {name: "Gotta Kill 'em All", description: "Kill 10 types of enemy", image: kill_em_all, type: 0, secret: false, percent: 4.1},
-    {name: "Rookie", description: "Kill a tier 1 boss", image: rookie, type: 0, secret: false, percent: 10.2},
-    {name: "Adventurer", description: "Kill a tier 1 boss 10 times", image: adventurer, type: 0, secret: false, percent: 5.1},
+    {name: "Rookie", description: "Kill a tier 1 boss", image: rookie, type: 0, secret: false, percent: 21.2},
+    {name: "Adventurer", description: "Kill a tier 1 boss 10 times", image: adventurer, type: 0, secret: false, percent: 7.1},
     {name: "Bat Out Of Hell", description: "Kill a tier 2 boss", image: bat_out_of_hell, type: 0, secret: false, percent: 2.3},
     {name: "Jack Of All Trades", description: "Kill a tier 2 boss with all 3 classes", image: jack_of_all_trades, type: 0, secret: false, percent: 1.2},
     {name: "Like A Boss", description: "Kill 6 different bosses", image: scrounger, type: 0, secret: false, percent: 0},
@@ -107,12 +107,12 @@ export const AchievementMetaData : Achievement[] = [
     {name: "Unlucky", description: "Suffer a 3x losing streak", image: unlucky, type: 0, secret: true, percent: 45.9},
     {name: "Cursed", description: "Suffer a 6x losing streak", image: cursed, type: 0, secret: true, percent: 5.7},
     {name: "(╯°□°）╯︵ ┻━┻", description: "Suffer a 10x losing streak", image: table_throw, type: 0, secret: true, percent: 0},
-    {name: "Cautious", description: "Escape level 1 10 times", image: cautious, type: 1, secret: false, percent: 1.3},
-    {name: "Coward", description: "Escape level 1 100 times", image: coward, type: 1, secret: false, percent: 0},
+    {name: "Cautious", description: "Escape level 1 10 times", image: cautious, type: 1, secret: false, percent: 5.3},
+    {name: "Coward", description: "Escape level 1 100 times", image: coward, type: 1, secret: false, percent: 0.3},
     {name: "Daily Dungeon I", description: "Enter the Dungeon on 5 consecutive days", image: daily_dungeon_1, type: 0, secret: false, percent: 5.4},
-    {name: "Daily Dungeon II", description: "Enter the Dungeon on 20 consecutive days", image: daily_dungeon_2, type: 0, secret: false, percent: 0},
+    {name: "Daily Dungeon II", description: "Enter the Dungeon on 20 consecutive days", image: daily_dungeon_2, type: 0, secret: false, percent: 0.3},
     {name: "Daily Dungeon III", description: "Enter the Dungeon on 100 consecutive days", image: daily_dungeon_3, type: 0, secret: false, percent: 0},
-    {name: "Once You Pop...", description: "Play 100 rounds in a day", image: once_you_pop, type: 0, secret: true, percent: 2.6},
+    {name: "Once You Pop...", description: "Play 100 rounds in a day", image: once_you_pop, type: 0, secret: true, percent: 6.6},
     {name: "Spoderman", description: "Be defeated by Spiders 100 times", image: spoderman, type: 0, secret: true, percent: 0.6},
     {name: "You Shall Not Pass!", description: "Be defeated by a Boss 50 times", image: shall_not_pass, type: 0, secret: true, percent: 1.1},
     {name: "Looter", description: "Accumulate 1000 SOL of loot", image: looter, type: 0, secret: false, percent: 0},
@@ -120,7 +120,7 @@ export const AchievementMetaData : Achievement[] = [
     {name: "Master Of None", description: "Kill a tier 2 boss with all 3 classes 10 times", image: master_of_none, type: 0, secret: false, percent: 0},
     {name: "Master Of All", description: "Kill a tier 2 boss with all 3 classes 100 times", image: master_of_all, type: 0, secret: false, percent: 0},
     {name: "Fertilizer", description: "Be defeated by Carnivines 10 times", image: fertilizer, type: 0, secret: true, percent: 0.5},
-    {name: "DM Slayer", description: "Defeat a Dungeon Master", image: dm_slayer, type: 0, secret: false, percent: 0}
+    {name: "DM Slayer", description: "Defeat a Dungeon Master", image: dm_slayer, type: 0, secret: false, percent: 0.1}
 ]
 
 export const AchievementCard = ({index, AchievementState, show_mint, ClaimAchievement} : {index : number, AchievementState: number[] | null, show_mint: boolean, ClaimAchievement: any}) => {

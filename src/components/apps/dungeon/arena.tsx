@@ -526,7 +526,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 return;
             }
 
-            console.log("got message", result);
+            //console.log("got message", result);
 
             if (result["params"] === undefined)
                 return;
@@ -554,7 +554,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
             let result = JSON.parse(event.data);
             
-            console.log(result)
+           // console.log(result)
             // the first message will be the subscription id, once we have that get the current state of the game as we will be tracking and updates from then on via the subscription
             if (result["id"] !== undefined && result["id"] === 1) {
                 console.log("have new subscription id for p2", result["result"])
@@ -563,7 +563,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 return;
             }
 
-            console.log("got message", result);
+            //console.log("got message", result);
 
             if (result["params"] === undefined)
                 return;
@@ -736,7 +736,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
     const ArenaGameCard = ({game, index} : {game : GameData, index : number}) => {
 
         let bet_size : number = bignum_to_num(game.bet_size) / LAMPORTS_PER_SOL;
-        let time_limit : number = (game.game_speed === GameSpeed.fast ? 1.05 : 1440.05)
+        let time_limit : number = (game.game_speed === GameSpeed.fast ? 2.05 : 1440.05)
         let time_passed : number = (time - bignum_to_num(game.last_interaction))/60;
         let forfeit : boolean = (time_passed > time_limit && game.status === GameStatus.in_progress && JSON.stringify(game.player_one_encrypted_move) !== JSON.stringify(game.player_two_encrypted_move));
 
@@ -810,7 +810,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-        let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let game_sol_account = (PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM))[0];
 
         const instruction_data = serialise_basic_instruction(ArenaInstruction.cancel_game);
 
@@ -886,7 +886,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-        let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let game_sol_account = (PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM))[0];
 
         const instruction_data = serialise_basic_instruction(ArenaInstruction.forfeit);
 
@@ -961,7 +961,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-        let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let game_sol_account = (PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM))[0];
         let fees_account = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
 
         const instruction_data = serialise_basic_instruction(ArenaInstruction.claim_reward);
@@ -1054,7 +1054,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-        let game_sol_account = (PublicKey.findProgramAddressSync([player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let game_sol_account = (PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM))[0];
 
         // check if the game is still free
        let game_data = await request_arena_game_data(bearer_token, game_data_account);
@@ -1158,7 +1158,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let seed_bytes = uInt32ToLEBytes(seed);
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-        let sol_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let sol_data_account = (PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM))[0];
 
         if(DEBUG) {
             console.log("arena: ", arena_account.toString());
@@ -1259,7 +1259,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-        let sol_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let sol_data_account = (PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM))[0];
 
         const instruction_data = serialise_Arena_Reveal_instruction(ArenaInstruction.reveal_move, message_body["move_0"], message_body["salt_0"], message_body["move_1"], message_body["salt_1"]);
 
@@ -1334,7 +1334,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         let arena_account = (PublicKey.findProgramAddressSync([Buffer.from("arena_account")], ARENA_PROGRAM))[0];
         let game_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("Game")], ARENA_PROGRAM))[0];
-        let sol_data_account = (PublicKey.findProgramAddressSync([active_game.player_one.toBytes(), seed_bytes, Buffer.from("SOL")], ARENA_PROGRAM))[0];
+        let sol_data_account = (PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM))[0];
 
         let player_id;
         if (active_game.player_one.equals(wallet.publicKey)) {
@@ -2179,7 +2179,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <h2 className="mt-1  font-face-sfpb" style={{fontSize: DEFAULT_FONT_SIZE}}>How to play the Arena</h2><br />
 
                 <ul>
-                    <li>Connect your Phantom Wallet. A dedicated burner wallet is recommended</li>
+                    <li>Connect your Solana Wallet. A dedicated burner wallet is recommended</li>
                     <li>Browse and join Open "Lobbies" or create a new lobby in "My Games"</li>
                     <li>Select and confirm your attack (Rock, Paper, Scissors) within the time allotment [Fast = 2 minutes ; Slow = 24 hours]</li>
                     <li>Reveal to resolve the combat turn</li>

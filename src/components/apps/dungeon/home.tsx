@@ -1679,12 +1679,12 @@ export function DungeonApp()
         <>
         <VStack>
             <Box width="100%">
-                    <HStack>
-                        <Box width="25%"></Box>  
-                        <DisplayLVL current_level={current_level}/>
-                        <Box width="30%"></Box>     
-                        <DisplayXP current_xp={numXP}/>
-                        <Box width="25%"></Box>  
+                <HStack>
+                    <Box width="25%"></Box>  
+                    <DisplayLVL current_level={current_level}/>
+                    <Box width="30%"></Box>     
+                    <DisplayXP current_xp={numXP}/>
+                    <Box width="25%"></Box>  
                 </HStack>
             </Box>
 

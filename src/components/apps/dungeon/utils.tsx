@@ -1159,7 +1159,7 @@ export async function run_arena_free_game_GPA(bearer : string) : Promise<GameDat
 
     let result : GameData[] = [];
     for (let i = 0; i < program_accounts_result["result"].length; i++) {
-        console.log(program_accounts_result["result"][i]);
+        //console.log(program_accounts_result["result"][i]);
         let encoded_data = program_accounts_result["result"][i]["account"]["data"][0];
         let decoded_data = Buffer.from(encoded_data, "base64");
         const [game] = GameData.struct.deserialize(decoded_data);
