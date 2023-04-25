@@ -36,9 +36,9 @@ exports.handler = async function (event, context) {
         return;
     }
 
-    if (test) {
-        baseURL = process.env.REACT_APP_PROD_RPC_URL;
-    }
+    //if (test) {
+     //   baseURL = process.env.REACT_APP_PROD_RPC_URL;
+    //}
 
     console.log(event.queryStringParameters.bearer);
     let config = {
