@@ -71,7 +71,8 @@ import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 import selector from "./images/Selector.gif"
-
+import soundOnImg from './images/Sound_On.png';
+import soundOffImg from './images/Sound_Off.png';
 
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, PROD,
@@ -108,6 +109,7 @@ import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
+import './css/home.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 // free play mint
@@ -175,7 +177,7 @@ export function DungeonApp()
 
     const handleBetChange = (selected : BetSize) => {
         
-        wagerSelectAudio.play()
+        if (!isMuted) wagerSelectAudio.play()
         setBetSize(selected);
         setBetValue(BetSizeValues[selected])
     }
@@ -240,6 +242,8 @@ export function DungeonApp()
     // discord processing
     const discord_play_message_sent = useRef<boolean>(false);
 
+    // button for processing MUTE OR UNMUTE
+    const [isMuted, setIsMuted] = useState(false);
 
 
     useEffect(() => 
@@ -351,7 +355,14 @@ export function DungeonApp()
                     ]}      
                 /> 
             }
-            </div>
+                  <div>
+                      <button onClick={toggleMute} className='mute-button'>
+                          {isMuted ? <img src={soundOffImg} alt="Sound Off" /> : <img src={soundOnImg} alt="Sound On" />}
+                      </button>
+
+                  </div>
+
+              </div>
 
           );
     }
@@ -484,6 +495,11 @@ export function DungeonApp()
           </>
         );
       }
+
+      const toggleMute = () => {
+        setIsMuted(!isMuted);
+      }
+      
 
 
     const CheckNewQuitAchievements = useCallback( async () => 
@@ -988,7 +1004,8 @@ export function DungeonApp()
     const Play = useCallback( async () => 
     {
         //here
-        dungeonTileAudio.play()
+        if (!isMuted) dungeonTileAudio.play()
+        
         setTransactionFailed(false);
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
@@ -1122,7 +1139,7 @@ export function DungeonApp()
         check_achievements.current = true;
         discord_play_message_sent.current = false;
 
-    },[wallet, player_character, current_key_index, current_key_mint, bet_size, bearer_token]);
+    },[wallet, player_character, current_key_index, current_key_mint, bet_size, bearer_token,isMuted]);
 
     const Quit = useCallback( async () => 
     {
@@ -1437,21 +1454,22 @@ export function DungeonApp()
 
     const SelectKnight = useCallback( async () => 
     {
-        classSelectAudio.play()
+        
+        if (!isMuted) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.knight);
-    },[]);
+    },[isMuted]);
 
     const SelectRanger = useCallback( async () => 
     {
-        classSelectAudio.play()
+        if (!isMuted) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.ranger);
-    },[]);
+    },[isMuted]);
 
     const SelectWizard = useCallback( async () => 
     {
-        classSelectAudio.play()
+        if (!isMuted) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.wizard);
-    },[]);
+    },[isMuted]);
 
     const CharacterSelect = () => {
 
