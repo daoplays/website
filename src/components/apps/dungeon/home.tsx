@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef, useContext } from 'react';
 import {
     ChakraProvider,
     Box,
@@ -73,8 +73,7 @@ import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
 import selector from "./images/Selector.gif"
-import soundOnImg from './images/Sound_On.png';
-import soundOffImg from './images/Sound_Off.png';
+
 
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, PROD,
@@ -109,12 +108,12 @@ import { ArenaScreen } from './arena';
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
 import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
+import { MuteContext, MuteProvider } from './mute';
 
 
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
-import './css/home.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 // free play mint
@@ -247,8 +246,8 @@ export function DungeonApp()
     // discord processing
     const discord_play_message_sent = useRef<boolean>(false);
 
-    // button for processing MUTE OR UNMUTE
-    const [isMuted, setIsMuted] = useState(false);
+    // Checking Mute state
+    const { isMuted } = useContext(MuteContext);
 
 
     useEffect(() => 
@@ -360,12 +359,7 @@ export function DungeonApp()
                     ]}      
                 /> 
             }
-                  <div>
-                      <button onClick={toggleMute} className='mute-button'>
-                          {isMuted ? <img src={soundOffImg} alt="Sound Off" /> : <img src={soundOnImg} alt="Sound On" />}
-                      </button>
-
-                  </div>
+                  
 
               </div>
 
@@ -501,9 +495,7 @@ export function DungeonApp()
         );
       }
 
-      const toggleMute = () => {
-        setIsMuted(!isMuted);
-      }
+     
       
 
 
@@ -2014,8 +2006,10 @@ function Home() {
         <ChakraProvider>
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
+                    <MuteProvider isMuted={false}>
                         <DungeonApp />
                         <Footer/>
+                    </MuteProvider>
                     </WalletModalProvider>
                 </WalletProvider>
         </ChakraProvider>

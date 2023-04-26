@@ -440,65 +440,11 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
 
     },[wallet, bearer_token]);
 
-    const ShopText = () => {
+    const ShopText = (): JSX.Element | null => {
 
-                
-
-                <HStack>
-                    <Box width="10%"></Box>         
-                    <Box  style={{
-                        backgroundImage: `url(${shop})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        imageRendering: "pixelated"
-
-                    } } width="80%">
-                        <HStack>
-                
-                            <Box width="35%"></Box> 
-                            {countdown_value !== null && countdown_value === 0 &&           
-                                <Box width="15%"> <DisplayChest visible = {true}/></Box>  
-                            }
-                            {(countdown_value === null || countdown_value > 0) &&           
-                                <Box width="15%"> <DisplayChest visible = {false}/></Box>  
-                            }
-                            <Box width="5%"></Box> 
-                            <Box width="15%" pb = "10%"><DisplayChest visible = {false}/> </Box>  
-                            <Box width="30%"></Box> 
-
-                        </HStack>
-                    </Box>
-                    <Box width="10%"></Box> 
-                </HStack>
-
-                {!wallet.publicKey &&
-                <>
-                    <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Stranger!  Connect your wallet below so we can do business.</Text>
-                    </div>
-
-                    {!isMobile &&
-                        <div className="font-face-sfpb">
-                                    <WalletMultiButton  
-                                    className="wallet-button"  
-                                    >CONNECT WALLET</WalletMultiButton>
-                        </div>
-                    }
-                     {isMobile &&
-                        <div className="font-face-sfpb">
-                                    <WalletMultiButton  
-                                    className="mobile-wallet-button"  
-                                    >CONNECT WALLET</WalletMultiButton>
-                        </div>
-                    }
-                </>
-                }
-
-                {
-                wallet.publicKey && 
-                <>
-                <Box width="80%" >
+        return (
+            <Center width = "100%">
+                <Box width="80%">
                     <div className="font-face-sfpb">
                         {/* If they don't have the xp reqs */}
                         {countdown_value !== null && countdown_value === 0 &&
@@ -522,10 +468,10 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                     </div>
                 </Box>
-                </>
+            </Center>
 
 
-                    };
+        );
                
     }
 
