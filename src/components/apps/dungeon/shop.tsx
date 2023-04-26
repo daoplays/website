@@ -22,7 +22,7 @@ import { DUNGEON_FONT_SIZE, PROD ,
 
 import bs58 from "bs58";
   
-import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction} from './utils';
+import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount} from './utils';
 
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -44,12 +44,13 @@ import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
 
-const WHITELIST_TOKEN =  new PublicKey("CisHceikLeKxYiUqgDVduw2py2GEK71FTRykXGdwf22h");
+const XP_WHITELIST_TOKEN =  new PublicKey("9dyKcWs1eUJZtJmAU81giNiLmyty4qBLZZduRwQaGw5T");
+const PREPAID_WHITELIST_TOKEN =  new PublicKey("EdxJtFgnmt6iVtfQdEfQgfpS2WfUkRUywYP5YjFyu4nR");
 
-const KEY_COLLECTION_MASTER = new PublicKey('7zanpVrB1Pboyj87t967xQF9T6eVRXrzQL3aWLMXijj5');
-const KEY_COLLECTION_META = new PublicKey('ChUHE8ZroK2WyZj8E1gjDuPkLVN4vcw6r3LqNyPRrfi1');
-const KEY_COLLECTION_MINT = new PublicKey('3fVG61sQSKnuhLymfcynpiPVESuMqMV6vd4SZ4FmjQZ8');
-const LAUNCH_DATE = new Date(Date.UTC(2024, 1, 9, 15, 0)).getTime();
+
+const KEY_COLLECTION_MASTER = new PublicKey('7hxHyqBGX2BN2cDePWn1kXCsf6ADmkgYqAFRvU54CAYJ');
+const KEY_COLLECTION_META = new PublicKey('HYBWDQeHR5P44621PT52thJbwTQBDsMGy8NwRbbK4xut');
+const KEY_COLLECTION_MINT = new PublicKey('9C7CUp5aXDcg5QbSFVJwPeXviyFD4YK6CdQzp1jg7Lcp');
 
 const enum ChestStatus {
     closed = 0,
@@ -67,6 +68,13 @@ const enum ShopInstruction {
     create_collection = 2
 }
 
+const enum CustomerStatus {
+    unknown = 0,
+    prepaid = 1,
+    other = 2
+    
+}
+
 export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_token : string})
 {
     const wallet = useWallet();
@@ -76,6 +84,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
     const [key_description, setKeyDescription] = useState<string | null>(null);
     const [key_image, setKeyImage] = useState<string | null>(null);
     const [xp_req, setXPReq] = useState<number | null>(null);
+    const [prepaid_status, setPrepaidStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -85,44 +94,28 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
     // interval for checking the key
     const key_interval = useRef<number | null>(null);
 
-
-    //const [countdown_string, setCountDownString] = useState(null);
-    const [countdown_value, setCountDown] = useState<number | null>(null);
-
     // interval for updating shop state
     const xp_interval = useRef<number | null>(null);
     const check_xp = useRef<boolean>(true);
 
-    const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
-    "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
-    "Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
+    //const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
+    //"Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
+    //"Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
 
-    const invalid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers.", 
-    "Welcome back Adventurer!  It looks like the dungeon's been putting you through your paces, but if you want to buy more keys you're going to have to stay ahead of the competition.", 
-    "Back for more eh Adventurer? I'm sure these keys are proving their worth to you, but if you want to buy a third one you're going to have to do the same for me!"];
+    //const invalid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers.", 
+    //"Welcome back Adventurer!  It looks like the dungeon's been putting you through your paces, but if you want to buy more keys you're going to have to stay ahead of the competition.", 
+    //"Back for more eh Adventurer? I'm sure these keys are proving their worth to you, but if you want to buy a third one you're going to have to do the same for me!"];
 
     const check_xp_reqs = useCallback(async() => 
     {
         
-        // just set the countdown here also
-        var now = new Date().getTime();
-        var distance = Math.max(0, LAUNCH_DATE - now);
-        setCountDown(distance);
-
-        // Time calculations for days, hours, minutes and seconds
-        //var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        //var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        //var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        //var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        //let countdown_string = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
-        //setCountDownString(countdown_string);
 
         if (!wallet.publicKey)
             return;
 
         if  (!check_xp.current)
             return;
+
 
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM))[0];
         let dungeon_key_data_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM))[0];
@@ -145,6 +138,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         if (user_keys_bought >= 3) {
             setXPReq(-1);
             check_xp.current = false;
+            setPrepaidStatus(CustomerStatus.other);
             return;
         }
       
@@ -154,6 +148,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         // if the shop hasn't been set up yet just return
         if (shop_data === null){
             check_xp.current = false;
+            setPrepaidStatus(CustomerStatus.other);
             return;
         }
         
@@ -163,6 +158,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         if (total_keys_bought >= 3500) {
             setXPReq(-2);
             check_xp.current = false;
+            setPrepaidStatus(CustomerStatus.other);
             return;
         }
 
@@ -189,6 +185,22 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         //console.log("total xp req ", total_xp_req);
         setXPReq(total_xp_req);
         check_xp.current = false;
+
+        // finally check if they have any prepaid tokens
+        let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
+            PREPAID_WHITELIST_TOKEN, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
+
+        if (token_amount > 0) {
+            setPrepaidStatus(CustomerStatus.prepaid);
+            return;
+        }
+
+        setPrepaidStatus(CustomerStatus.other);
 
     }, [wallet, user_num_keys, bearer_token]);
 
@@ -281,11 +293,6 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
     useEffect(() => 
     {
         check_xp.current = true;
-
-        // just set the countdown here also
-        var now = new Date().getTime();
-        var distance = Math.max(0, LAUNCH_DATE - now);
-        setCountDown(distance);
         
     }, []);
 
@@ -334,11 +341,18 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                 true // allow owner off curve
             );
 
-            let whitelist_account_key = await getAssociatedTokenAddress(
-                WHITELIST_TOKEN, // mint
+            let xp_whitelist_account_key = await getAssociatedTokenAddress(
+                XP_WHITELIST_TOKEN, // mint
                 wallet.publicKey, // owner
                 true // allow owner off curve
             );
+
+            let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
+                PREPAID_WHITELIST_TOKEN, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
 
             let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
@@ -376,9 +390,11 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                 account_vector.push({pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false});
             } 
 
-            account_vector.push({pubkey: WHITELIST_TOKEN, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: whitelist_account_key, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: XP_WHITELIST_TOKEN, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: xp_whitelist_account_key, isSigner: false, isWritable: true});
 
+            account_vector.push({pubkey: PREPAID_WHITELIST_TOKEN, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: prepaid_whitelist_account_key, isSigner: false, isWritable: true});
 
             
             account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
@@ -440,14 +456,53 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
 
     },[wallet, bearer_token]);
 
+
     const ShopText = () => {
 
+        if (prepaid_status === CustomerStatus.prepaid) {
+            return(
+                <Center width = "100%">
+                <Box width="80%">
+                    <div className="font-face-sfpb">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer! That's a shiny little trinket you have there... Tell you what, how about I trade you for one of my Dungeon Keys?</Text>
+                    </div>
+                </Box>
+            </Center>
+            );
+        }
+
+        if (xp_req === -1) {
+            return(
+                <Center width = "100%">
+                    <Box width="80%">
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome back Adventurer! I'm afraid you've had your fair share of keys from me.  You'll need to find someone else to trade with if you want more.</Text>
+                        </div>
+                    </Box>
+                </Center>
+            );
+        }
+
+        if (prepaid_status === CustomerStatus.other) {
+            return(
+                <Center width = "100%">
+                    <Box width="80%">
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
+                        </div>
+                    </Box>
+                </Center>
+            );
+        }
+
+        return(
+            <></>
+        );
+/*
         return (
             <Center width = "100%">
                 <Box width="80%">
                     <div className="font-face-sfpb">
-                        {/* If they don't have the xp reqs */}
-                        {countdown_value !== null && countdown_value === 0 &&
                         <>
                         {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp < xp_req &&
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP</Text>
@@ -464,15 +519,51 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                         }
                         </>
                         }
-
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
                     </div>
                 </Box>
             </Center>
-
-
         );
-               
+*/  
+    }
+
+    const ShopItems = () => {
+
+        if (prepaid_status === CustomerStatus.prepaid) {
+            return(
+                <HStack alignItems="center">          
+                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                    
+                    <Button variant='link' size='lg' onClick={Mint}>
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1 Shiny Trinket) </Text>      
+                        </div> 
+                    </Button>                
+            </HStack>
+            );
+        }
+
+        return(<></>);
+/*
+        return (
+            <HStack alignItems="center">
+            
+                {xp_req !== null&& num_xp !== null  && xp_req > 0 && num_xp >= xp_req &&
+                <>
+                    
+                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                    
+                    <Button variant='link' size='lg' onClick={Mint}>
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
+                        </div> 
+                    </Button>  
+
+                </>
+                }
+                                
+            </HStack>
+        );
+*/  
     }
 
     return(
@@ -511,12 +602,9 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                                 <HStack>
                         
                                     <Box width="35%"></Box> 
-                                    {countdown_value !== null && countdown_value === 0 &&           
-                                        <Box width="15%"> <DisplayChest visible = {true}/></Box>  
-                                    }
-                                    {(countdown_value === null || countdown_value > 0) &&           
-                                        <Box width="15%"> <DisplayChest visible = {false}/></Box>  
-                                    }
+                                    <Box width="15%"> <DisplayChest visible = {true}/></Box>  
+                                    
+                                    
                                     <Box width="5%"></Box> 
                                     <Box width="15%" pb = "10%"><DisplayChest visible = {false}/> </Box>  
                                     <Box width="30%"></Box> 
@@ -553,23 +641,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                         <>
                             
                             <ShopText/>
-                            <HStack alignItems="center">
-            
-                                {xp_req !== null&& num_xp !== null  && xp_req > 0 && num_xp >= xp_req &&  countdown_value !== null && countdown_value === 0 &&
-                                <>
-                                    
-                                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
-                                    
-                                    <Button variant='link' size='lg' onClick={Mint}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
-                                        </div> 
-                                    </Button>  
-            
-                                </>
-                                }
-                                
-                            </HStack>
+                            <ShopItems/>
                         </>
                         }
 

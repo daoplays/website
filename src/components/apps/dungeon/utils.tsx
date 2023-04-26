@@ -757,11 +757,11 @@ export async function run_keyData_GPA(bearer : string, key_index : number) : Pro
         program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
     }
     catch(error) {
-        console.log(error);
+        console.log("error with key GPA", error);
         return null;
     }
 
-    console.log(program_accounts_result["result"]);
+    console.log("key GPA result:", program_accounts_result["result"]);
 
     // this should only be of length 1
     if ( program_accounts_result["result"].length !== 1) {

@@ -1360,6 +1360,8 @@ export function DungeonApp()
         
         }
 
+        console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
+
         let key_mint = key_meta_data.key_mint;
         let key_type = key_meta_data.key_type;
         let key_index = parsed_key_index;

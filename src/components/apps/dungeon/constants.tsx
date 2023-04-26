@@ -50,13 +50,13 @@ if (isMobile) {
     EMOJI_SIZE = 20
 }
 
-export const PROD = true;
+export const PROD = false;
 export const TEST = false;
 export const DEBUG = false;
 
 export var network_string = "devnet";
 export var RPC_NODE = DEV_RPC_NODE;
-export var WSS_NODE = DEV_RPC_NODE;
+export var WSS_NODE = DEV_WSS_NODE;
 if (PROD) {
     network_string = "mainnet"
     RPC_NODE = PROD_RPC_NODE;
