@@ -5,4 +5,4 @@ build/
 .env
 # Local Netlify folder
 .netlify
-# src/components/apps/dungeon/sounds/*
+src/components/apps/dungeon/sounds/*

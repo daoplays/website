@@ -2,7 +2,14 @@ import { isMobile } from "react-device-detect";
 import { PublicKey} from '@solana/web3.js';
 
 const DEV_RPC_NODE = "https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95";
+export const DEV_WSS_NODE = process.env.REACT_APP_DEVNET_WSS_URL;
+
+
 const PROD_RPC_NODE = "https://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
+const PROD_WSS_NODE =  "wss://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
+
+const PROD_TEST_WSS_NODE = process.env.REACT_APP_PROD_WSS_URL;
+const PROD_TEST_RPC_NODE = process.env.REACT_APP_PROD_RPC_URL;
 
 //pyth oracles
 export const PYTH_BTC_DEV = new PublicKey('HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J');   
@@ -23,6 +30,10 @@ export const FOUNDER_2_KEY = new PublicKey("7oAfRLy81EwMJAXNKbZFaMTayBFoBpkua4uk
 
 export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHyWXxPJ');
 
+export const MARKETPLACE_PROGRAM = new PublicKey('EQwTJXUcpLmY2zLe4vbgKEHhGJuhoFTNUYkjjAi2mgVx');
+export const ARENA_PROGRAM = new PublicKey('3VhncqPFsFqfg5wPskJn1UsM9fYTcXJV2x7vDBQiVJc3');
+
+
 // account seeds
 export const MAIN_ACCOUNT_SEED = "house_account";
 
@@ -30,20 +41,30 @@ export const MAIN_ACCOUNT_SEED = "house_account";
 // set font size
 export var DEFAULT_FONT_SIZE = "30px"
 export var DUNGEON_FONT_SIZE = "20px"
+export var EMOJI_SIZE = 24
 
 if (isMobile) {
     DEFAULT_FONT_SIZE = "15px"
     DUNGEON_FONT_SIZE = "10px"
+    EMOJI_SIZE = 20
 }
 
 export const PROD = true;
+export const TEST = false;
 export const DEBUG = false;
 
 export var network_string = "devnet";
 export var RPC_NODE = DEV_RPC_NODE;
+export var WSS_NODE = DEV_RPC_NODE;
 if (PROD) {
     network_string = "mainnet"
     RPC_NODE = PROD_RPC_NODE;
+    WSS_NODE = PROD_WSS_NODE;
+}
+
+if (TEST && PROD_TEST_WSS_NODE !== undefined && PROD_TEST_RPC_NODE !== undefined) {
+    RPC_NODE = PROD_TEST_RPC_NODE;
+    WSS_NODE = PROD_TEST_WSS_NODE;
 }
 
 export const enum Screen {
@@ -56,7 +77,9 @@ export const enum Screen {
     SHOP_SCREEN = 6,
     DM_SCREEN = 7,
     ACHIEVEMENT_SCREEN = 8,
-    STATS_SCREEN = 9
+    STATS_SCREEN = 9,
+    MARKETPLACE_SCREEN = 10,
+    ARENA_SCREEN = 11
 }
 
 export const enum KeyType {

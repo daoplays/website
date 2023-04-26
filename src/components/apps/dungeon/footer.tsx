@@ -41,6 +41,8 @@ import gold_emoji from "./emojis/Gold.gif"
 
 import { get_discord_messages, DiscordMessage } from './utils';
 
+//  dungeon constants
+import { EMOJI_SIZE} from './constants';
 
 interface DefeatedEnemyInterface {
     characterEmoji: string | undefined;
@@ -80,14 +82,13 @@ const emoji_map = new Map([
 
 let FOOTER_TIME_FONT_SIZE = "8px"
 let FOOTER_FONT_MAIN = "12px"
-let EMOJI_SIZE = 20
 let FOOTER_WIDTH: string = "420px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
-    EMOJI_SIZE = 24
     FOOTER_WIDTH = "350px"
+    // FOOTER_FONT_SIZE = "10px"
+
 }
-  
 
 export function Footer() {
 
