@@ -997,11 +997,14 @@ export function DungeonApp()
 
     }, [set_JWT_token]);
 
+    const handleEnterBtn = ()=>{
+        if (!isMuted) dungeonTileAudio.play()
+    }
 
     const Play = useCallback( async () => 
     {
         //here
-        if (!isMuted) dungeonTileAudio.play()
+       
         
         setTransactionFailed(false);
 
@@ -1136,7 +1139,7 @@ export function DungeonApp()
         check_achievements.current = true;
         discord_play_message_sent.current = false;
 
-    },[wallet, player_character, current_key_index, current_key_mint, bet_size, bearer_token,isMuted]);
+    },[wallet, player_character, current_key_index, current_key_mint, bet_size, bearer_token]);
 
     const Quit = useCallback( async () => 
     {
@@ -1659,7 +1662,7 @@ export function DungeonApp()
                                         */}
                                         
                                         <Button variant='link' size='md' onClick={Play}>
-                                        <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
+                                        <img style={{"imageRendering":"pixelated"}} onClick={handleEnterBtn} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 
                                         
                                     </div> 
