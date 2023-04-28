@@ -364,10 +364,20 @@ export function serialise_basic_instruction(instruction : number) : Buffer
     return buf;
 }
 
-export async function post_discord_message(message : string) : Promise<null>
+export interface NewDiscordMessage {
+    message_type : string;
+    emoji_1: string;
+    emoji_2: string;
+    level: number;
+    sol_amount: number;
+    achievement_name: string;
+}
+
+
+export async function post_discord_message(message : NewDiscordMessage) : Promise<null>
 {
 
-    const account_info_url = `/.netlify/functions/post_discord?method=post&content=`+message;
+    const account_info_url = `/.netlify/functions/post_discord?method=post&message_type=` + message.message_type + `&emoji_1=` + message.emoji_1 + `&emoji_2=` + message.emoji_2 + `&level=` + message.level + `&sol_amount=` + message.sol_amount.toFixed(3) + `&achievement_name=` + message.achievement_name;
 
     var response;
     try {
@@ -452,14 +462,14 @@ class PlayerData {
     )
 }
 
-class AchievementData {
+export class AchievementData {
     constructor(
       readonly achievement_state: number[],
       readonly levels_won: number[][],
       readonly levels_quit: number[],
       readonly levels_lost: number[],
-      readonly enemies_lose: number[][],
-      readonly enemies_win: number[][],
+      readonly enemies_lose: number[],
+      readonly enemies_win: number[],
 
       readonly games_played: number,
       readonly losing_streak: number,
@@ -501,7 +511,7 @@ class AchievementData {
 
 
       ],
-      (args) => new AchievementData(args.achievement_state!, args.levels_won!, args.levels_quit!, args.levels_lost!, args.enemies_lose!, args.enemies_win!, args.games_played!, args.losing_streak!, args.winning_streak!, args.last_date_played!, args.play_streak!, args.games_played!, args.total_days_played!, args.total_lamports_claimed!, args.n_interactions!),
+      (args) => new AchievementData(args.achievement_state!, args.levels_won!, args.levels_quit!, args.levels_lost!, args.enemies_lose!, args.enemies_win!, args.games_played!, args.losing_streak!, args.winning_streak!, args.last_date_played!, args.play_streak!, args.games_played_today!, args.total_days_played!, args.total_lamports_claimed!, args.n_interactions!),
       'AchievementData'
     )
 }
