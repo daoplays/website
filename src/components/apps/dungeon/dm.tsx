@@ -40,6 +40,8 @@ import './css/fonts.css';
 import './css/wallet.css';
 import { bignum } from '@metaplex-foundation/beet';
 
+const MINT_ACTIVE = false;
+
 const WHITELIST_TOKEN =  new PublicKey("FZKeUtJYChwL6E45n6aqheyafuNUgCeUkckSkqjWgRC6");
 
 const COLLECTION_MASTER = new PublicKey('9ew9V2nskKA21LnkeigzFjb2o2Pyik3nvMjHUTz8UF5s');
@@ -994,14 +996,32 @@ export function DMScreen({bearer_token} : {bearer_token : string})
             );
         }
 
+
+
         if (DEBUG)
             console.log("Applicant: ", keys_burnt); 
             
-        if (member_status === MemberStatus.applicant && keys_burnt !== null && keys_burnt < DM_KEY_COST) {
+        if (MINT_ACTIVE && member_status === MemberStatus.applicant && keys_burnt !== null && keys_burnt < DM_KEY_COST) {
 
             return(<ApplicantsJourneyDialogue/>);
             
         }
+
+        if (!MINT_ACTIVE && member_status !== MemberStatus.whitelisted) {
+            return(
+                
+                <Box width = "100%" mb = "2rem">
+                    <Center>
+                        <Box width="100%">
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> New applications to the Guild will be accepted in the near future. </Text>
+                            </div>
+                        </Box>
+                    </Center>
+                </Box>
+            );
+        }
+
         return(
             <>
             <Box width="100%">

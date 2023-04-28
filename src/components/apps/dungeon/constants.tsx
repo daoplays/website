@@ -55,7 +55,7 @@ export const DEBUG = false;
 
 export var network_string = "devnet";
 export var RPC_NODE = DEV_RPC_NODE;
-export var WSS_NODE = DEV_RPC_NODE;
+export var WSS_NODE = DEV_WSS_NODE;
 if (PROD) {
     network_string = "mainnet"
     RPC_NODE = PROD_RPC_NODE;
@@ -88,3 +88,28 @@ export const enum KeyType {
     Gold = 2,
     Unknown = 3
 }
+
+
+export const levels : number[] = 
+[
+    0,
+    300,
+    900,
+    2700,
+    6500,
+    14000,
+    23000,
+    34000,
+    48000,
+    64000,
+    85000,
+    100000,
+    120000,
+    140000,
+    165000,
+    195000,
+    225000,
+    265000,
+    305000,
+    355000
+]
