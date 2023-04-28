@@ -926,7 +926,7 @@ export function DungeonApp()
                         emoji_2: DungeonEnemyEmoji[current_enemy],
                         level: current_level,
                         sol_amount: 0,
-                        achievement_name: ''
+                        achievement_name: ""
                         
                     };
 
@@ -1211,7 +1211,7 @@ export function DungeonApp()
             emoji_2: GoldEmoji,
             level: current_level,
             sol_amount: current_win,
-            achievement_name: ''
+            achievement_name: ""
             
         };
 
