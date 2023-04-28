@@ -31,7 +31,7 @@ import hallway from "./images/Arena1.gif"
 
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE} from './constants';
 
-import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data} from './utils';
+import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data, NewDiscordMessage} from './utils';
 
 import {PlayerCharacter, player_emoji_map, WaitingForPlayerText, DrawText, GameOverText} from './arena_state';
 
@@ -1027,10 +1027,19 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         if (active_game.player_two.equals(wallet.publicKey)) {
             player_emoji = ArenaCharacterEmoji[active_game.player_two_character];
         }
-        let post_string = player_emoji + " won " + (bignum_to_num(active_game.bet_size) * 2 / LAMPORTS_PER_SOL).toFixed(3) + " in the arena " + GoldEmoji;
+
+        const message: NewDiscordMessage = {
+            message_type: "arena",
+            emoji_1: player_emoji,
+            emoji_2: GoldEmoji,
+            level: 0,
+            sol_amount: bignum_to_num(active_game.bet_size) * 2 / LAMPORTS_PER_SOL,
+            achievement_name: ""
+            
+        };
 
         if (PROD)
-            post_discord_message(post_string);
+            post_discord_message(message);
 
         setActiveGame(null);
         await remove_game_from_list(game_data_account);
@@ -1895,22 +1904,38 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         let rock_img;
         let paper_img;
         let scissors_img;
+        let rock_name;
+        let paper_name;
+        let scissors_name;
+
         if (character === PlayerCharacter.Knight) {
             rock_img = shield_move;
             paper_img = voice_move;
             scissors_img = sword_move;
+
+            rock_name = "Shield";
+            paper_name = "Battle Cry";
+            scissors_name = "Sword";
         }
 
         if (character === PlayerCharacter.Ranger) {
             rock_img = dodge_move;
             paper_img = arrow_move;
             scissors_img = dagger_move;
+
+            rock_name = "Dodge";
+            paper_name = "Arrow";
+            scissors_name = "Dagger";
         }
 
         if (character === PlayerCharacter.Wizard) {
             rock_img = barrier_move;
             paper_img = lightning_move;
             scissors_img = firebolt_move;
+
+            rock_name = "Barrier";
+            paper_name = "Lightning Bolt";
+            scissors_name = "Fire Bolt";
         }
 
         if (character === PlayerCharacter.GreenSlime) {
@@ -1941,15 +1966,27 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         return (
             <HStack spacing="1rem">
-                <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)}>
-                    <img style={{"imageRendering":"pixelated"}} src={rock_img} width={button_size} alt={""}/>
-                </Box>
+                <VStack align="center">
+                    <Box as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.rock)}>
+                        <img style={{"imageRendering":"pixelated"}} src={rock_img} width={button_size} alt={""}/>
+                    </Box>
+                    <Text className="font-face-sfp" color="grey" fontSize="10px">(R) {rock_name}</Text>
+                </VStack>
+
+                <VStack align="center">
                 <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.paper)}>
                     <img style={{"imageRendering":"pixelated"}} src={paper_img} width={button_size} alt={""} />
                 </Box>
+                <Text className="font-face-sfp" color="grey" fontSize="10px">(P) {paper_name}</Text>
+                </VStack>
+
+                <VStack align="center">
                 <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => TakeMoveInGame(RPSMove.scissors)}>
                     <img style={{"imageRendering":"pixelated"}} src={scissors_img} width={button_size} alt={""} />
                 </Box>
+                <Text className="font-face-sfp" color="grey" fontSize="10px">(S) {scissors_name}</Text>
+                </VStack>
+
             </HStack>
         );
     }
@@ -1959,7 +1996,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         if (active_game === null || wallet.publicKey === null) {
             return(
-                <Box width="100%" mb="1em">
+                <Box width="100%" mb="3rem">
 
                 <VStack width="100%">
                 <HStack width="100%" mb = "2%" mt="1%">
@@ -2044,7 +2081,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         return(
             <>
-            <Box width="100%" mb="1rem">
+            <Box width="100%" mb="3rem">
             <VStack width="100%">
                 <HStack width="100%" mb = "2%" mt="1%">
                     <Box width="10%"></Box>         

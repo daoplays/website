@@ -15,13 +15,19 @@ import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import Container from 'react-bootstrap/Container';
 
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE } from './constants';
+//import {
+ //   useWallet
+//} from '@solana/wallet-adapter-react';
+
+import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, EMOJI_SIZE } from './constants';
+import {AchievementData} from './utils';
+import {DungeonEnemy} from './dungeon_state';
 
 import './css/table.css';
 import './css/fonts.css';
 import './css/tabs.css';
 
-/*
+
 import assassin_emoji from "./emojis/Assassin.gif"
 import blue_slime_emoji from "./emojis/BlueSlime.gif"
 import boulder_emoji from "./emojis/Boulder.png"
@@ -45,11 +51,6 @@ import werewolf_emoji from "./emojis/Werewolf.gif"
 
 
 
-var EMOJI_SIZE = 32
-if (isMobile) {
-    EMOJI_SIZE = 24
-}
-*/
 
 
 function HorizontalBar({title, x1, x2} : {title: string, x1 : number[], x2 : number[]})
@@ -158,212 +159,167 @@ function PieChart({values, labels, title} : {values : number[], labels : string[
       />
     );
 }
-/*
-function TiersPlayed()
+
+
+function wins(AchievementData : AchievementData, enemy : DungeonEnemy) : number
 {
+    return AchievementData.enemies_win[enemy] + AchievementData.enemies_win[32 + enemy] + AchievementData.enemies_win[64 + enemy];
+}
+
+function losses(AchievementData : AchievementData, enemy : DungeonEnemy) : number
+{
+    return AchievementData.enemies_lose[enemy] + AchievementData.enemies_lose[32 + enemy] + AchievementData.enemies_lose[64 + enemy];
+}
+
+function WinLoss({AchievementData, enemy} : {AchievementData : AchievementData, enemy : DungeonEnemy})
+{
+    let w : number = wins(AchievementData , enemy);
+    let l : number = losses(AchievementData, enemy);
+
+
+    return(
+            <>
+            <Text m="0" p="0" align="center">
+            <span style={{"color":"green"}}>{w}</span>
+            <span style={{"color":"white"}}> / </span>
+            <span style={{"color":"red"}}>{l}</span>
+            </Text>
+            </>
+    );
+}
+
+
+function PlayerStats({AchievementData} : {AchievementData : AchievementData | null})
+{
+
+    if (AchievementData === null)
+        return(<></>);
+
+    //console.log(AchievementData);
+    //<Text fontSize={DUNGEON_FONT_SIZE}>Name: MasterMason</Text>
+    //<Text fontSize={DUNGEON_FONT_SIZE}>Level: 2</Text>
+
+    //<Text fontSize={DUNGEON_FONT_SIZE}>Total XP: 700</Text>
     return(
         <Center>
         <Box width = "80%">
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 
-            <Table className="custom-table">
-                <thead>
-                <tr>
-                <th></th>
-                <th><img src={boulder_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={giant_rat_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={giant_spider_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={goblins_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={mimic_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={skeletons_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={floor_spikes_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                </tr>
-                </thead>
-                <tbody style={{
-                    backgroundColor: 'black'
-                }}>
-                
-                    <tr>
-                        <td>Plays</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        
-                        
-                    </tr>
-                    <tr>
-                        <td >Wins</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                    </tr>
-                    <tr>
-                        <td >%</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                    </tr>
-                </tbody>
-            </Table>
+            <Text mb="1rem" fontSize={DUNGEON_FONT_SIZE}>Summary</Text>
 
-            <Table className="custom-table">
-                <thead>
-                <tr>
-                <th></th>
-                <th><img src={carnivine_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={giant_green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={werewolf_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                </tr>
-                </thead>
-                <tbody style={{
-                    backgroundColor: 'black'
-                }}>
-                
-                    <tr>
-                        <td>Plays</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        
-                    </tr>
-                    <tr>
-                        <td >Wins</td>
-                        <td >40</td>
-                        <td >16</td>
-                        <td >10</td>
-                    </tr>
-                    <tr>
-                        <td >%</td>
-                        <td >50</td>
-                        <td >50</td>
-                        <td >50</td>
-                    </tr>
-                </tbody>
-            </Table>
+            <Text fontSize={DUNGEON_FONT_SIZE}>Total Games: {AchievementData.games_played}</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE}>Games Played Today: {AchievementData.games_played_today}</Text>
 
-            <Table className="custom-table">
-                <thead>
-                <tr>
-                <th></th>
-                <th><img src={blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={boulder_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={elves_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={giant_blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={goblins_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={mimic_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={orc_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={skeleton_knight_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={skeletons_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={skeleton_wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={floor_spikes_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                </tr>
-                </thead>
-                <tbody style={{
-                    backgroundColor: 'black'
-                }}>
-                
-                    <tr>
-                        <td>Plays</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        
-                    </tr>
-                    <tr>
-                        <td >Wins</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                    </tr>
-                    <tr>
-                        <td >%</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                    </tr>
-                </tbody>
-            </Table>
+            <Text fontSize={DUNGEON_FONT_SIZE}>Total Days Played: {AchievementData.total_days_played}</Text>
+            <Text fontSize={DUNGEON_FONT_SIZE}>Current Day Streak: {AchievementData.play_streak}</Text>
 
-            <Table className="custom-table">
-                <thead>
-                <tr>
-                <th></th>
-                <th><img src={assassin_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={dungeon_master_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                <th><img src={shade_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></th>
-                </tr>
-                </thead>
-                <tbody style={{
-                    backgroundColor: 'black'
-                }}>
-                
+
+
+
+            <VStack mt="2rem" width="100%" align="left" spacing="2rem">
+
+
+                <Text fontSize={DUNGEON_FONT_SIZE}>Minions</Text>
+                <Table className="custom-table">
+                    <thead>
                     <tr>
-                        <td>Plays</td>
-                        <td >10</td>
-                        <td >10</td>
-                        <td >10</td>
-                        
+                        <th><Center><img src={boulder_emoji} width="auto" alt={""} style={{marginLeft: "8px", maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={giant_rat_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={giant_spider_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={goblins_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={mimic_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={floor_spikes_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
                     </tr>
+                    </thead>
+                    <tbody style={{
+                        backgroundColor: 'black'
+                    }}>
+                    
+                        <tr>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.BoulderTrap}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.GiantRat}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.GiantSpider}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Goblins}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.GreenSlime}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Mimic}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.SpikeTrap}/></td>
+                            
+                            
+                            
+                        </tr>
+                    </tbody>
+                </Table>
+
+
+                <Table className="custom-table">
+                    <thead>
                     <tr>
-                        <td >Wins</td>
-                        <td >40</td>
-                        <td >16</td>
-                        <td >10</td>
+                    <th><Center><img src={blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                    <th><Center><img src={elves_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                    <th><Center><img src={giant_blue_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                    <th><Center><img src={orc_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                    <th><Center><img src={skeletons_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                    <th><Center><img src={skeleton_knight_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                    <th><Center><img src={skeleton_wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
                     </tr>
+                    </thead>
+                    <tbody style={{
+                        backgroundColor: 'black'
+                    }}>
+                    
+                        <tr>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.BlueSlime}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Elves}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.GiantBlueSlime}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Orc}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Skeletons}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.SkeletonKnight}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.SkeletonWizard}/></td>
+                            
+                        </tr>
+                    </tbody>
+                </Table>
+
+                <Text fontSize={DUNGEON_FONT_SIZE}>Bosses</Text>
+
+
+                <Table className="custom-table">
+                    <thead>
                     <tr>
-                        <td >%</td>
-                        <td >50</td>
-                        <td >50</td>
-                        <td >50</td>
+                        <th><Center><img src={carnivine_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={giant_green_slime_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={werewolf_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={assassin_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={dungeon_master_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={shade_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
                     </tr>
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody style={{
+                        backgroundColor: 'black'
+                    }}>
+                    
+                        <tr>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Carnivine}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.GiantGreenSlime}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Werewolf}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Assassin}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.DM}/></td>
+                            <td ><WinLoss AchievementData = {AchievementData} enemy = {DungeonEnemy.Shade}/></td>
+
+                            
+                        </tr>
+                    </tbody>
+                </Table>
+
+            </VStack>
+
         </div>
         </Box>
         </Center>
     );
 }
-*/
+
 function GameStats({plays, wins} : {plays : number[], wins : number[]})
 {
 
@@ -490,7 +446,7 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
     );
 }
 
-export function StatsScreen()
+export function StatsScreen({AchievementData} : {AchievementData : AchievementData | null})
 {
 
     const [activeTab, setActiveTab] = useState<any>("home");
@@ -512,6 +468,7 @@ export function StatsScreen()
     const [tier_2_losses, setTier2Losses] = useState<number>(0);
 
 
+    //const wallet = useWallet();
 
     const FetchData = useCallback( async () => 
     {
@@ -653,7 +610,7 @@ export function StatsScreen()
     
     //console.log("active tab", activeTab)
     return(
-        <Container>
+        <Container style={{"marginBottom": "5rem"}}>
         <Tabs
             className="custom-tab" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
         >
@@ -701,12 +658,12 @@ export function StatsScreen()
                 <GameStats plays={plays_data} wins ={wins_data}/>
                 
             </Tab> 
-            {/*
-            <Tab eventKey="perils" title="Perils" tabClassName="custom-tab">
-                <TiersPlayed/>
+            
+            <Tab eventKey="perils" title="PLAYER" tabClassName="custom-tab">
+                <PlayerStats AchievementData={AchievementData}/>
                 
             </Tab>     
-            */}
+            
         </Tabs>
     </Container>
     );
