@@ -476,7 +476,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             return;
         
 
-    },[wallet, bearer_token]);
+    },[wallet, bearer_token, check_sol_balance]);
 
 
     const ShopText = () => {
