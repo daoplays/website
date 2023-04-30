@@ -32,6 +32,9 @@ import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
+import ReactAudioPlayer from 'react-h5-audio-player';
+import 'react-h5-audio-player/lib/styles.css'
+
 import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
         TOKEN_PROGRAM_ID,
@@ -53,6 +56,9 @@ import {
 import BN from 'bn.js'
 import bs58 from "bs58";
 
+// import Css files
+
+import './css/home.css'
 
 import dungeon_title from "./images/Dungeon_Logo.png"
 import arena_title from "./images/Arena_Logo.png"
@@ -229,6 +235,9 @@ export function DungeonApp()
     const check_achievements = useRef<boolean>(true);
     const state_interval = useRef<number | null>(null);
 
+
+    //Music player 
+    const [audioSrc, setAudioSrc] = useState<string>('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
 
 
     //button processing
@@ -1564,7 +1573,6 @@ export function DungeonApp()
         if (isMobile) {
             font_size = "15px";
         }
-
         return (
             <>
             <Box width="100%">
@@ -1675,6 +1683,12 @@ export function DungeonApp()
                                 </VStack>
                             </Box>  
                         </HStack>
+                        <ReactAudioPlayer
+                                src={audioSrc}
+                                autoPlay={false}
+                                className='music-player'
+                                
+                            />
                         <HStack visibility={visible ? "visible" : "hidden"}>
                             <Box width="33%" mt="2rem"/>
                             <Box width="33%" mt="2rem"><CharacterSelect/></Box>

@@ -47,6 +47,7 @@
     "react-bootstrap": "^2.4.0",
     "react-device-detect": "^2.2.2",
     "react-dom": "^18.2.0",
+    "react-h5-audio-player": "^3.8.6",
     "react-icons": "^4.4.0",
     "react-mathjax": "^1.0.1",
     "react-native": "0.68",
