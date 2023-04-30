@@ -1931,7 +1931,7 @@ export function DungeonApp()
                             <HelpScreen/>
                         }
                         {screen === Screen.SHOP_SCREEN &&
-                            <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
+                            <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance}/>
                         }
                         {screen === Screen.MARKETPLACE_SCREEN &&
                             <MarketplaceScreen bearer_token={bearer_token}/>
@@ -1971,7 +1971,7 @@ export function DungeonApp()
                             <FAQScreen/>
                         }
                         {screen === Screen.SHOP_SCREEN &&
-                            <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
+                            <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance}/>
                         }
                         {screen === Screen.MARKETPLACE_SCREEN &&
                             <MarketplaceScreen bearer_token={bearer_token}/>
