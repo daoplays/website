@@ -780,7 +780,7 @@ export function DungeonApp()
                         console.log(achievement_data.n_interactions,  achievement_interations.current);
                     }
 
-                    if (achievement_data.n_interactions !== achievement_interations.current) {
+                    if (achievement_data.n_interactions >= achievement_interations.current) {
 
                         if (DEBUG) {
                             console.log("update achievement state");
