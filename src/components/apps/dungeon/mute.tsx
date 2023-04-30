@@ -10,11 +10,6 @@ interface MuteButtonProps {
   toggleMute: () => void;
 }
 
-interface MuteContextType {
-    isMuted: boolean;
-    toggleMute: () => void;
-  }
-
 export const MuteButton: FC<MuteButtonProps> = ({ isMuted, toggleMute }) => {
     return (
         <Button size='md' onClick={toggleMute} className='mute-button'>
@@ -27,7 +22,7 @@ export const MuteButton: FC<MuteButtonProps> = ({ isMuted, toggleMute }) => {
 
 
 
-export const MuteContext = createContext<MuteContextType>({
+export const MuteContext = createContext<MuteButtonProps>({
   isMuted: false,
   toggleMute: () => {},
 });

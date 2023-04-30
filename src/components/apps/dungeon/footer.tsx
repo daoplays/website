@@ -86,8 +86,6 @@ let FOOTER_WIDTH: string = "420px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
     FOOTER_WIDTH = "350px"
-    // FOOTER_FONT_SIZE = "10px"
-
 }
 
 export function Footer() {
