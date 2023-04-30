@@ -465,7 +465,7 @@ class PlayerData {
 export class AchievementData {
     constructor(
       readonly achievement_state: number[],
-      readonly levels_won: number[][],
+      readonly levels_won: number[],
       readonly levels_quit: number[],
       readonly levels_lost: number[],
       readonly enemies_lose: number[],
