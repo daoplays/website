@@ -29,7 +29,7 @@ import { solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- im
 import hallway from "./images/Arena1.gif"
 
 
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE} from './constants';
+import { DEFAULT_FONT_SIZE , ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE} from './constants';
 
 import {run_arena_free_game_GPA, GameData, bignum_to_num, get_current_blockhash, send_transaction, uInt32ToLEBytes, serialise_Arena_CreateGame_instruction, serialise_Arena_Move_instruction, serialise_basic_instruction, post_discord_message, serialise_Arena_Reveal_instruction, serialise_Arena_JoinGame_instruction, check_signature, request_arena_game_data, NewDiscordMessage} from './utils';
 
@@ -209,6 +209,8 @@ const game_status : string[] = [
     "Draw",
     "Complete"
 ]
+
+const ARENA_FONT_SIZE= '12px'
 
 interface GameMap {
     key : PublicKey;
@@ -673,7 +675,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         return(
             <Box width = "100%">
-                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                <div className="font-face-sfpb" style={{color: "white", fontSize: ARENA_FONT_SIZE}}>
                     <Table className="custom-centered-table">
                         <thead>
                         <tr>
@@ -705,7 +707,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
         return(
             <Box width = "100%">
-                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                <div className="font-face-sfpb" style={{color: "white", fontSize: ARENA_FONT_SIZE}}>
                     <Table className="custom-centered-table">
                         <thead>
                         <tr>
@@ -749,7 +751,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     <Center>
                     <HStack>
                     <img src={player_emoji_map.get(game.player_one_character)} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                    <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">vs</Text>
+                    <Text  align="center" fontSize={ARENA_FONT_SIZE} color="white">vs</Text>
                     {game.status === GameStatus.waiting ?
                         <img src={player_emoji_map.get(game.player_two_character)} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE, visibility: "hidden"}}/>
                     :
@@ -764,14 +766,14 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <td>
                     {wallet.publicKey === null ?
                         <Box as='button' borderWidth='2px' borderColor="white"   width="40px">
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Join</Text>
+                            <Text  align="center" fontSize={ARENA_FONT_SIZE} color="white">Join</Text>
                         </Box>
                     :
                         (game.player_one.equals(wallet.publicKey) || game.player_two.equals(wallet.publicKey)) ?
                             <Center>
                             <HStack >
                                 <Box as='button' onClick={() => {setActiveGame(game)}} borderWidth='2px' borderColor="white"   width="40px">
-                                    <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">View</Text>
+                                    <Text  align="center" fontSize={ARENA_FONT_SIZE} color="white">View</Text>
                                 </Box>
                                 {game.status === GameStatus.waiting ?
                                     <Box as='button' onClick={processing_transaction ? () => {console.log("already clicked")} : () => CancelGameOnArena(index)}>
@@ -1531,7 +1533,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     visibility={(!show_join_game || index !== join_index.current) ? "visible" : "hidden"}
                   >
                     <div className="font-face-sfpb">
-                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                    <Text align="center" fontSize={ARENA_FONT_SIZE} color="white">
                       Join
                     </Text>
                     </div>
@@ -1557,7 +1559,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 </div>
                 <div className="font-face-sfpb text-center">
                 
-                    <Modal.Body style={{"backgroundColor": "black", "fontSize":DUNGEON_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>                            
+                    <Modal.Body style={{"backgroundColor": "black", "fontSize":ARENA_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>                            
                             <CharacterSelect/>
                     </Modal.Body>
                 
@@ -1571,7 +1573,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         borderColor="white"
                         width="60px"
                         >
-                        <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => {JoinGameOnArena(join_index.current); setShowJoinGame(false)}}  fontSize={DUNGEON_FONT_SIZE} color="white">
+                        <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : () => {JoinGameOnArena(join_index.current); setShowJoinGame(false)}}  fontSize={ARENA_FONT_SIZE} color="white">
                             Join
                         </Text>
                     </Box>
@@ -1601,24 +1603,24 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 </div>
                 <div className="font-face-sfpb text-center">
                 
-                    <Modal.Body style={{"backgroundColor": "black", "fontSize":DUNGEON_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>
+                    <Modal.Body style={{"backgroundColor": "black", "fontSize":ARENA_FONT_SIZE, "color":"white", "fontWeight":'semibold'}}>
                     
                         <VStack align="center" spacing="10px">
                           <HStack width="80%" align={"center"}>
                             <Box width="50%">
-                              <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
+                              <Text align={"left"} fontSize={ARENA_FONT_SIZE} color="white">
                                 Game:
                               </Text>
                             </Box>
                             <Box width="50%">
-                              <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
+                              <Text align={"left"} fontSize={ARENA_FONT_SIZE} color="white">
                                 RPS
                               </Text>
                             </Box>
                           </HStack>
                           <HStack width="80%" align={"center"}>
                             <Box width="50%">
-                              <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
+                              <Text align={"left"} fontSize={ARENA_FONT_SIZE} color="white">
                                 Bet Size:
                               </Text>
                             </Box>
@@ -1626,7 +1628,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                               <NumberInput
                                 id="desired_betsize"
                                 ref={BetSizeRef}
-                                fontSize={DUNGEON_FONT_SIZE}
+                                fontSize={ARENA_FONT_SIZE}
                                 color="white"
                                 size="lg"
                                 onChange={(valueString) => {
@@ -1637,7 +1639,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                 min={0.05}
                               >
                                 <NumberInputField
-                                  height={DUNGEON_FONT_SIZE}
+                                  height={ARENA_FONT_SIZE}
                                   paddingTop="1rem"
                                   paddingBottom="1rem"
                                   borderColor="white"
@@ -1648,7 +1650,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                           </HStack>
                           <HStack width="80%" align={"center"}>
                             <Box  width="50%">
-                                <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
+                                <Text align={"left"} fontSize={ARENA_FONT_SIZE} color="white">
                                     Speed:
                                 </Text>
                             </Box>
@@ -1663,7 +1665,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                         height={35}
                                         onClick={() => setChosenSpeed(GameSpeed.slow)}                           
                                     >
-                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Slow</Text>
+                                        <Text align="center" fontSize={ARENA_FONT_SIZE} color="white">Slow</Text>
                                     </Box>
                                 
                                     <Box
@@ -1675,7 +1677,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                                         onClick={() => setChosenSpeed(GameSpeed.fast)} 
 
                                     >
-                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">Fast</Text>
+                                        <Text align="center" fontSize={ARENA_FONT_SIZE} color="white">Fast</Text>
 
                                     </Box>
                                 </HStack>
@@ -1690,7 +1692,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                           
                           </HStack>
                           <Box width="80%">
-                              <Text align={"left"} fontSize={DUNGEON_FONT_SIZE} color="white">
+                              <Text align={"left"} fontSize={ARENA_FONT_SIZE} color="white">
                                 Character Select:
                               </Text>
                             </Box>
@@ -1709,7 +1711,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         borderColor="white"
                         width="120px"
                         >
-                        <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : ListGameOnArena} fontSize={DUNGEON_FONT_SIZE} color="white">
+                        <Text align="center" onClick={processing_transaction ? () => {console.log("already clicked")} : ListGameOnArena} fontSize={ARENA_FONT_SIZE} color="white">
                             CREATE
                         </Text>
                     </Box>
@@ -1739,7 +1741,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     visibility={!show_new_game ? "visible" : "hidden"}
                   >
                     <div className="font-face-sfpb">
-                    <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                    <Text align="center" fontSize={ARENA_FONT_SIZE} color="white">
                       Create New Game
                     </Text>
                     </div>
@@ -2119,11 +2121,11 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     
                     }
                     {(player_sent_encrypted_move  !== opponent_sent_encrypted_move) && !forfeit &&
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like one of our fighters is ready to go, but the other needs a bit more time.  The crowd is getting impatient so let's hope there's some action soon!</Text>
+                        <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> It looks like one of our fighters is ready to go, but the other needs a bit more time.  The crowd is getting impatient so let's hope there's some action soon!</Text>
                     }
                     {
                         !player_sent_encrypted_move &&
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move</Text>
+                        <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> Choose your move</Text>
 
                     }
                      {!player_sent_encrypted_move &&
@@ -2136,7 +2138,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                     {player_sent_encrypted_move && forfeit &&
                         <VStack width="80%">
                         
-                            <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Your opponent is playing the pacifist, take them down! </Text>
+                            <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> Your opponent is playing the pacifist, take them down! </Text>
             
                             <Center width="100%">
                                 <ArenaButtons character={is_player_one ? active_game.player_one_character : active_game.player_two_character} forfeit={true}/>
@@ -2151,10 +2153,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
                 <VStack width="80%">
                     
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like both our combatants are ready to go, show us what you've got! </Text>
+                    <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> It looks like both our combatants are ready to go, show us what you've got! </Text>
 
                     <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => RevealMoveInGame()} borderWidth="2px"  borderColor="white"  width="100px">
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Fight </Text>
+                        <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> Fight </Text>
                     </Box>
 
                 </VStack>
@@ -2163,10 +2165,10 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
 
                     <VStack>
                     <GameOverText character_one={active_game.player_one_character} character_two={active_game.player_two_character} move_one={active_game.player_one_move} move_two={active_game.player_two_move} player_one_wins={active_game.player_one_status === ArenaStatus.alive}/>
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You are victorious!</Text>
+                    <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> You are victorious!</Text>
 
                     <Box  as="button" onClick={processing_transaction ? () => {console.log("already clicked")} : () => ClaimReward()} borderWidth="2px"  borderColor="white"  width="110px">
-                        <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Claim Reward </Text>
+                        <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> Claim Reward </Text>
                     </Box>
                     </VStack>
             }
@@ -2176,7 +2178,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 <VStack width="100%">
                     <GameOverText character_one={active_game.player_one_character} character_two={active_game.player_two_character} move_one={active_game.player_one_move} move_two={active_game.player_two_move} player_one_wins={active_game.player_one_status === ArenaStatus.alive}/>
 
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> You have been defeated </Text>
+                    <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> You have been defeated </Text>
                 </VStack>
             }
 
@@ -2188,13 +2190,13 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                 }
 
                 {is_player_one && !player_sent_encrypted_move &&
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> Choose your move</Text>
+                    <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> Choose your move</Text>
                 }
                 {is_player_one && !player_sent_encrypted_move &&
                     <ArenaButtons character={active_game.player_one_character} forfeit={false}/>
                 }
                 {is_player_one && player_sent_encrypted_move &&
-                    <Text className="font-face-sfpb" align="center" fontSize={DUNGEON_FONT_SIZE} color="white"> It looks like our first combatant is ready to go.  The crowd is getting impatient so let's hope their opponent shows up soon!</Text>
+                    <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white"> It looks like our first combatant is ready to go.  The crowd is getting impatient so let's hope their opponent shows up soon!</Text>
                 }
                 </VStack>
             }
@@ -2212,7 +2214,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         return(
             <>
             <Box width = "80%">
-            <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+            <div className="font-face-sfpb" style={{color: "white", fontSize: ARENA_FONT_SIZE}}>
                 <h2 className="mt-1  font-face-sfpb" style={{fontSize: DEFAULT_FONT_SIZE}}>How to play the Arena</h2><br />
 
                 <ul>
@@ -2241,7 +2243,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
         { transaction_failed &&
             <Box width="100%">
             <div className="font-face-sfpb">
-                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="red">Transaction Failed. <br/>Please Try Again.</Text>
+                <Text  fontSize={ARENA_FONT_SIZE} textAlign="center" color="red">Transaction Failed. <br/>Please Try Again.</Text>
             </div>
             </Box>
         }
@@ -2271,7 +2273,7 @@ export function ArenaScreen({bearer_token} : {bearer_token : string})
                         visibility="hidden"
                     >
                         <div className="font-face-sfpb">
-                        <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                        <Text align="center" fontSize={ARENA_FONT_SIZE} color="white">
                         Create New Game
                         </Text>
                         </div>
