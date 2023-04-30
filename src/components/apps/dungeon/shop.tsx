@@ -478,8 +478,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
     },[wallet, bearer_token, check_sol_balance]);
 
-
-    const ShopText = () => {
+    const ShopText = (): JSX.Element | null => {
 
         if (customer_status === CustomerStatus.prepaid) {
             return(
