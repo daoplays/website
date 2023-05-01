@@ -1687,6 +1687,10 @@ export function DungeonApp()
                                 src={audioSrc}
                                 autoPlay={false}
                                 className='music-player'
+                                customIcons={{
+                                //     volume: volumeOnIcon,
+                                // volumeMute: volumeOffIcon,
+                                }}
                                 
                             />
                         <HStack visibility={visible ? "visible" : "hidden"}>
