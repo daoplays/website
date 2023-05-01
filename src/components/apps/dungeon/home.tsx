@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef, useContext } from 'react';
 import {
     ChakraProvider,
     Box,
@@ -111,6 +111,12 @@ import { ArenaScreen } from './arena';
 
 //import {DungeonScreen} from './dungeon';
 
+import wagerSelect from './sounds/Wager_Select.mp3'
+import classSelect from './sounds/Class_Select.mp3'
+import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
+import { MuteContext, MuteProvider } from './mute';
+
+
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
@@ -135,7 +141,9 @@ const enum AccountStatus {
 
 const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
-
+const wagerSelectAudio = new Audio(wagerSelect)
+const classSelectAudio = new Audio(classSelect)
+const dungeonTileAudio = new Audio(dungeonTile)
 
 const enum BetSize {
     SolanaBet1 = 0,
@@ -178,6 +186,8 @@ export function DungeonApp()
 
 
     const handleBetChange = (selected : BetSize) => {
+        
+        if (!isMuted) wagerSelectAudio.play()
         setBetSize(selected);
         setBetValue(BetSizeValues[selected])
     }
@@ -246,6 +256,8 @@ export function DungeonApp()
     // discord processing
     const discord_play_message_sent = useRef<boolean>(false);
 
+    // Checking Mute state
+    const { isMuted } = useContext(MuteContext);
 
 
     useEffect(() => 
@@ -264,6 +276,7 @@ export function DungeonApp()
 
     const OpenDiscountError = useCallback( async () => 
     {
+        
         setShowDiscountError(true);
     },[]);
 
@@ -271,6 +284,7 @@ export function DungeonApp()
 
 
         const handleSelectChange = (selected: SelectValue) => {
+
             let selected_bet = selected as BetValueObject;
             setSelectValue(selected_bet);
             setBetSize(selected_bet.value);
@@ -355,7 +369,9 @@ export function DungeonApp()
                     ]}      
                 /> 
             }
-            </div>
+                  
+
+              </div>
 
           );
     }
@@ -488,6 +504,9 @@ export function DungeonApp()
           </>
         );
       }
+
+     
+      
 
 
     const CheckNewQuitAchievements = useCallback( async () => 
@@ -997,9 +1016,15 @@ export function DungeonApp()
 
     }, [set_JWT_token]);
 
+    const handleEnterBtn = ()=>{
+        if (!isMuted) dungeonTileAudio.play()
+    }
 
     const Play = useCallback( async () => 
     {
+        //here
+       
+        
         setTransactionFailed(false);
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
@@ -1468,18 +1493,22 @@ export function DungeonApp()
 
     const SelectKnight = useCallback( async () => 
     {
+        
+        if (!isMuted) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.knight);
-    },[]);
+    },[isMuted]);
 
     const SelectRanger = useCallback( async () => 
     {
+        if (!isMuted) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.ranger);
-    },[]);
+    },[isMuted]);
 
     const SelectWizard = useCallback( async () => 
     {
+        if (!isMuted) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.wizard);
-    },[]);
+    },[isMuted]);
 
     const CharacterSelect = () => {
 
@@ -1671,7 +1700,7 @@ export function DungeonApp()
                                         */}
                                         
                                         <Button variant='link' size='md' onClick={Play}>
-                                        <img style={{"imageRendering":"pixelated"}} src={enter_button} width={"60%"} alt={""}/>
+                                        <img style={{"imageRendering":"pixelated"}} onClick={handleEnterBtn} src={enter_button} width={"60%"} alt={""}/>
                                         </Button> 
                                         
                                     </div> 
@@ -2028,8 +2057,10 @@ function Home() {
         <ChakraProvider>
                 <WalletProvider wallets={wallets} autoConnect>
                     <WalletModalProvider>
+                    <MuteProvider isMuted={false}>
                         <DungeonApp />
                         <Footer/>
+                    </MuteProvider>
                     </WalletModalProvider>
                 </WalletProvider>
         </ChakraProvider>

@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useRef} from 'react';
+import React, { useCallback, useState, useEffect, useRef, useContext} from 'react';
 import { SetStateAction } from 'react';
 
 
@@ -28,6 +28,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { brands, solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 import {Screen} from './constants';
 
+import { MuteButton, MuteContext } from './mute';
 
 
 // dungeon utils
@@ -46,6 +47,8 @@ export function Navigation(
     const wallet = useWallet();
 
     const [balance, setBalance] = useState(0);
+
+    const { isMuted, toggleMute } = useContext(MuteContext);
 
   // This will be used to store the interval
   const intervalref = useRef<number | null>(null);
@@ -243,6 +246,7 @@ export function Navigation(
                         <a href="https://discord.gg/soldungeon">
                             <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
+                        <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
                     </HStack>
                 </Box>
                 </HStack>
@@ -277,6 +281,8 @@ export function Navigation(
                         <a href="https://discord.gg/HeKJZZEaPn">
                             <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
+
+                        <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
 
                         <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
 
