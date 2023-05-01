@@ -760,18 +760,22 @@ export async function run_keyData_GPA(bearer : string, key_index : number) : Pro
 
 
     let encoded_key_index = bs58.encode(index_buffer);
-    const program_accounts_url = `/.netlify/functions/solana?bearer=`+bearer+`&network=`+network_string+`&function_name=getProgramAccounts&p1=`+SHOP_PROGRAM.toString()+`&config=true&encoding=base64&commitment=confirmed&filters=true&data_size_filter=35&memcmp=true&offset=33&bytes=`+encoded_key_index;
+
+    var body = {"id": 1, "jsonrpc": "2.0", "method": "getProgramAccounts", "params": [SHOP_PROGRAM.toString(), {"filters": [{"dataSize" : 35}, {"memcmp": {"offset":33, "bytes": encoded_key_index}}], "encoding": "base64", "commitment": "confirmed"}]};
 
     var program_accounts_result;
     try {
-        program_accounts_result = await fetch(program_accounts_url).then((res) => res.json());
+        program_accounts_result = await postData(RPC_NODE, bearer, body);
     }
     catch(error) {
         console.log("error with key GPA", error);
+        console.log(error);
         return null;
     }
 
+
     console.log("key GPA result:", program_accounts_result["result"]);
+
 
     // this should only be of length 1
     if ( program_accounts_result["result"].length !== 1) {
