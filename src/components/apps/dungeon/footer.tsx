@@ -80,14 +80,12 @@ const emoji_map = new Map([
     ["<a:Wizard:1070471413829472287>", wizard_emoji]
   ]);
 
-var FOOTER_TIME_FONT_SIZE = "8px"
-var FOOTER_FONT_SIZE = "12px"
-var FOOTER_WIDTH: string = "420px"
+let FOOTER_TIME_FONT_SIZE = "8px"
+let FOOTER_FONT_MAIN = "12px"
+let FOOTER_WIDTH: string = "420px"
 if (isMobile) {
     FOOTER_TIME_FONT_SIZE = "8px"
     FOOTER_WIDTH = "350px"
-    FOOTER_FONT_SIZE = "10px"
-
 }
 
 export function Footer() {
@@ -151,7 +149,7 @@ export function Footer() {
                             alt=""
                             style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
                         />
-                        <Text fontSize={FOOTER_FONT_SIZE} color="white">
+                        <Text fontSize={FOOTER_FONT_MAIN} color="white">
                             defeated
                         </Text>
                         <img
@@ -160,7 +158,7 @@ export function Footer() {
                             alt=""
                             style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
                         />
-                        <Text fontSize={FOOTER_FONT_SIZE} color="white">
+                        <Text fontSize={FOOTER_FONT_MAIN} color="white">
                             in level {level}
                         </Text>
                     </HStack>
@@ -208,7 +206,7 @@ export function Footer() {
                                   alt=""
                                   style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
                               />
-                              <Text fontSize={FOOTER_FONT_SIZE} color="white">
+                              <Text fontSize={FOOTER_FONT_MAIN} color="white">
                                   {string_bit}
                               </Text>
                         </HStack>
@@ -229,7 +227,7 @@ export function Footer() {
                     <Box width="80%">
                         <HStack>
                             <img src={character_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
-                            <Text fontSize={FOOTER_FONT_SIZE} color="white">{string_bit}</Text>
+                            <Text fontSize={FOOTER_FONT_MAIN} color="white">{string_bit}</Text>
                             <img src={gold_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/>
                         </HStack>
                     </Box>
@@ -270,7 +268,7 @@ export function Footer() {
                                 alt={""}
                                 style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
                             />
-                            <Text fontSize={FOOTER_FONT_SIZE} color="white">
+                            <Text fontSize={FOOTER_FONT_MAIN} color="white">
                                 was killed by
                             </Text>
                             <img
@@ -279,7 +277,7 @@ export function Footer() {
                                 alt={""}
                                 style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
                             />
-                            <Text fontSize={FOOTER_FONT_SIZE} color="white">
+                            <Text fontSize={FOOTER_FONT_MAIN} color="white">
                                 in level {split_message[7]}
                             </Text>
                         </HStack>
@@ -307,7 +305,7 @@ export function Footer() {
                             alt={""}
                             style={{ maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE }}
                         />
-                        <Text fontSize={FOOTER_FONT_SIZE} color="white">
+                        <Text fontSize={FOOTER_FONT_MAIN} color="white">
                             {string_bit}
                         </Text>
                         <img
