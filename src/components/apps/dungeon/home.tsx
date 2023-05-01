@@ -43,7 +43,7 @@ import {
     WalletProvider,
     useWallet
 } from '@solana/wallet-adapter-react';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { PhantomWalletAdapter, SolflareWalletAdapter, BackpackWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 import {
     WalletModalProvider,
@@ -2030,6 +2030,8 @@ function Home() {
     const wallets = useMemo(() => 
     [
         new PhantomWalletAdapter(),
+        new SolflareWalletAdapter(),
+        new BackpackWalletAdapter()
     ],
     []
   );
