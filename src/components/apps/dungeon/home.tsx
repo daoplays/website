@@ -116,6 +116,10 @@ import { ArenaScreen } from './arena';
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
 import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
+import delvingDeeper from './sounds/Delving_Deeper.mp3'
+import hackNSlash from './sounds/Hack_n_Slash.mp3'
+import enterTheDungeon from './sounds/Enter_the_Dungeon.mp3'
+import dungeonCrawling from './sounds/Dungeon_Crawling.mp3'
 import { MuteContext, MuteProvider } from './mute';
 
 
@@ -248,9 +252,37 @@ export function DungeonApp()
     const state_interval = useRef<number | null>(null);
 
 
-    //Music player 
-    const [audioSrc, setAudioSrc] = useState<string>('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+    //MusicList
+    const MusicList = [
+        { src: delvingDeeper, name: 'Delving Deeper' },
+        { src: hackNSlash, name: 'Hack N Slash' },
+        { src: enterTheDungeon, name: 'Enter the Dungeon' },
+        { src: dungeonCrawling, name: 'Dungeon Crawling' },
+    ];
 
+    //Music player 
+    const [audioSrc, setAudioSrc] = useState<string>(MusicList[0].src);
+
+
+    // Handle next Music button click
+    const handleNextMusicButtonClick = () => {
+        // Find the index of the current audio source in the MusicList array
+        const currentIndex = MusicList.findIndex((item) => item.src === audioSrc);
+
+        // Set the audio source to the next item in the MusicList array
+        if (currentIndex < MusicList.length - 1) {
+            setAudioSrc(MusicList[currentIndex + 1].src);
+        } else {
+            setAudioSrc(MusicList[0].src);
+        }
+        // Automatically Play next audio on click next button
+        setTimeout(() => {
+            const audioElement = document.getElementsByTagName('audio')[0];
+            if (audioElement) {
+              audioElement.play();
+            }
+          }, 100);
+    };
 
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
@@ -1718,10 +1750,18 @@ export function DungeonApp()
                                 src={audioSrc}
                                 autoPlay={false}
                                 className='music-player'
+                                onClickNext={handleNextMusicButtonClick}
+                                onEnded={handleNextMusicButtonClick}
+                                showSkipControls={true}
                                 customIcons={{
                                 //     volume: soundOnImg,
                                 // volumeMute: soundOffImg,
                                 }}
+                                // customControlsSection={[
+                                //     <button key="next" onClick={handleNextMusicButtonClick}>
+                                //       Next
+                                //     </button>,
+                                //   ]}
                                 
                             />
                         <HStack visibility={visible ? "visible" : "hidden"}>
