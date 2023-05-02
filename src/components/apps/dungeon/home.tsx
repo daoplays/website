@@ -69,6 +69,8 @@ import hallway2 from "./images/Hallway2.gif"
 
 //buttons
 import enter_button from "./images/Enter_Button.png"
+import soundOnImg from './images/Sound_On.png';
+import soundOffImg from './images/Sound_Off.png';
 
 // shop items
 import key from "./images/Key.png"
@@ -1717,8 +1719,8 @@ export function DungeonApp()
                                 autoPlay={false}
                                 className='music-player'
                                 customIcons={{
-                                //     volume: volumeOnIcon,
-                                // volumeMute: volumeOffIcon,
+                                //     volume: soundOnImg,
+                                // volumeMute: soundOffImg,
                                 }}
                                 
                             />
