@@ -246,7 +246,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             //console.log(meta_data);
             let uri_json = await fetch(meta_data[0].data.uri).then(res => res.json());
 
-            setWhichKey(uri_json["name"]);
+            setWhichKey(meta_data[0].data.name);
             setKeyDescription(uri_json["description"]);
             setKeyImage(uri_json["image"]);
             setCurrentMint(meta_data[0].mint);
