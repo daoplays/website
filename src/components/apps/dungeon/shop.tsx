@@ -71,11 +71,12 @@ const enum ShopInstruction {
 const enum CustomerStatus {
     unknown = 0,
     prepaid = 1,
-    other = 2
+    xp_whitelist = 2,
+    other = 3
     
 }
 
-export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_token : string})
+export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp : number, bearer_token : string, check_sol_balance : React.MutableRefObject<boolean>})
 {
     const wallet = useWallet();
     const [chest_state, setChestState] = useState<ChestStatus>(ChestStatus.closed);
@@ -84,7 +85,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
     const [key_description, setKeyDescription] = useState<string | null>(null);
     const [key_image, setKeyImage] = useState<string | null>(null);
     const [xp_req, setXPReq] = useState<number | null>(null);
-    const [prepaid_status, setPrepaidStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
+    const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -98,13 +99,13 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
     const xp_interval = useRef<number | null>(null);
     const check_xp = useRef<boolean>(true);
 
-    //const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
-    //"Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
-    //"Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
+    const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
+    "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
+    "Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
 
-    //const invalid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers.", 
-    //"Welcome back Adventurer!  It looks like the dungeon's been putting you through your paces, but if you want to buy more keys you're going to have to stay ahead of the competition.", 
-    //"Back for more eh Adventurer? I'm sure these keys are proving their worth to you, but if you want to buy a third one you're going to have to do the same for me!"];
+    const invalid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers.", 
+    "Welcome back Adventurer!  It looks like the dungeon's been putting you through your paces, but if you want to buy more keys you're going to have to stay ahead of the competition.", 
+    "Back for more eh Adventurer? I'm sure these keys are proving their worth to you, but if you want to buy a third one you're going to have to do the same for me!"];
 
     const check_xp_reqs = useCallback(async() => 
     {
@@ -138,7 +139,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         if (user_keys_bought >= 3) {
             setXPReq(-1);
             check_xp.current = false;
-            setPrepaidStatus(CustomerStatus.other);
+            setCustomerStatus(CustomerStatus.other);
             return;
         }
       
@@ -148,17 +149,17 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         // if the shop hasn't been set up yet just return
         if (shop_data === null){
             check_xp.current = false;
-            setPrepaidStatus(CustomerStatus.other);
+            setCustomerStatus(CustomerStatus.other);
             return;
         }
         
         let total_keys_bought = shop_data.keys_bought;
 
         // if we have sold out there is nothing to sell
-        if (total_keys_bought >= 3500) {
+        if (total_keys_bought >= 2000) {
             setXPReq(-2);
             check_xp.current = false;
-            setPrepaidStatus(CustomerStatus.other);
+            setCustomerStatus(CustomerStatus.other);
             return;
         }
 
@@ -183,10 +184,8 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         }
 
         //console.log("total xp req ", total_xp_req);
-        setXPReq(total_xp_req);
-        check_xp.current = false;
 
-        // finally check if they have any prepaid tokens
+        // check if they have any prepaid tokens
         let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
             PREPAID_WHITELIST_TOKEN, // mint
             wallet.publicKey, // owner
@@ -196,11 +195,33 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
         let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
 
         if (token_amount > 0) {
-            setPrepaidStatus(CustomerStatus.prepaid);
+            setCustomerStatus(CustomerStatus.prepaid);
+            setXPReq(total_xp_req);
+            check_xp.current = false;    
             return;
         }
 
-        setPrepaidStatus(CustomerStatus.other);
+        // if they dont have prepaid status then check for xp whitelist
+        let xp_whitelist_account_key = await getAssociatedTokenAddress(
+            XP_WHITELIST_TOKEN, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        let xp_token_amount = await request_token_amount(bearer_token, xp_whitelist_account_key);
+
+        if (xp_token_amount > 0) {
+            setCustomerStatus(CustomerStatus.xp_whitelist);
+            setXPReq(total_xp_req);
+            check_xp.current = false;
+    
+            return;
+        }
+
+        setCustomerStatus(CustomerStatus.other);
+        setXPReq(total_xp_req);
+        check_xp.current = false;
+
 
     }, [wallet, user_num_keys, bearer_token]);
 
@@ -450,15 +471,16 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
             
             current_key.current = nft_meta_key;
             check_xp.current = true;
+            check_sol_balance.current = true;
             
             return;
         
 
-    },[wallet, bearer_token]);
+    },[wallet, bearer_token, check_sol_balance]);
 
     const ShopText = (): JSX.Element | null => {
 
-        if (prepaid_status === CustomerStatus.prepaid) {
+        if (customer_status === CustomerStatus.prepaid) {
             return(
                 <Center width = "100%">
                 <Box width="80%">
@@ -482,22 +504,18 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
             );
         }
 
-        if (prepaid_status === CustomerStatus.other) {
-            return(
+        if (customer_status === CustomerStatus.xp_whitelist || (xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req)) {
+            return (
                 <Center width = "100%">
                     <Box width="80%">
                         <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" style={{"visibility": "visible"}}>Welcome Adventurer!  We are just getting ready for our grand opening, if you come back soon we'll have some rare things on sale!</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[user_num_keys.current]}</Text>
                         </div>
                     </Box>
                 </Center>
             );
         }
 
-        return(
-            <></>
-        );
-/*
         return (
             <Center width = "100%">
                 <Box width="80%">
@@ -509,25 +527,18 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                         {xp_req === -2 &&
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  If you're here looking for keys i'm afraid you're a bit late! There's been a rush of adventurers like you over the past days and i'm all sold out.</Text>
                         }
-                        {xp_req === -1 &&
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome back Adventurer! I'm afraid you've had your fair share of keys from me.  You'll need to find someone else to trade with if you want more.</Text>
-                        }
-                        {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req &&
-                            
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[user_num_keys.current]}</Text>
-                        }
                         </>
-                        }
+                        
                     </div>
                 </Box>
             </Center>
         );
-*/  
+  
     }
 
     const ShopItems = () => {
 
-        if (prepaid_status === CustomerStatus.prepaid) {
+        if (customer_status === CustomerStatus.prepaid) {
             return(
                 <HStack alignItems="center">          
                     <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
@@ -541,28 +552,29 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
             );
         }
 
-        return(<></>);
-/*
-        return (
-            <HStack alignItems="center">
-            
-                {xp_req !== null&& num_xp !== null  && xp_req > 0 && num_xp >= xp_req &&
-                <>
-                    
-                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
-                    
-                    <Button variant='link' size='lg' onClick={Mint}>
-                        <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
-                        </div> 
-                    </Button>  
+        if (customer_status === CustomerStatus.xp_whitelist || (xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req)) {
+            return (
+                <HStack alignItems="center">
+                
+                    <>
+                        
+                        <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                        
+                        <Button variant='link' size='lg' onClick={Mint}>
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
+                            </div> 
+                        </Button>  
 
-                </>
-                }
-                                
-            </HStack>
-        );
-*/  
+                    </>
+                    
+                                    
+                </HStack>
+            );
+        }
+
+        return(<></>);
+  
     }
 
     return(
@@ -659,7 +671,7 @@ export function ShopScreen({num_xp, bearer_token} : {num_xp : number, bearer_tok
                             <Center>
                             <Box width = "100%">
                             <div className="font-face-sfpb">
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()+"?cluster=devnet"}>here</a></Text>
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()}>here</a></Text>
                             </div>
                             </Box>
                             </Center>
