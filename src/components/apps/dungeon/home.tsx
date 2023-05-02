@@ -69,8 +69,6 @@ import hallway2 from "./images/Hallway2.gif"
 
 //buttons
 import enter_button from "./images/Enter_Button.png"
-import soundOnImg from './images/Sound_On.png';
-import soundOffImg from './images/Sound_Off.png';
 
 // shop items
 import key from "./images/Key.png"
@@ -126,6 +124,7 @@ import { MuteContext, MuteProvider } from './mute';
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
+import MusicPlayer from './musicPlayer';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 // free play mint
@@ -260,29 +259,6 @@ export function DungeonApp()
         { src: dungeonCrawling, name: 'Dungeon Crawling' },
     ];
 
-    //Music player 
-    const [audioSrc, setAudioSrc] = useState<string>(MusicList[0].src);
-
-
-    // Handle next Music button click
-    const handleNextMusicButtonClick = () => {
-        // Find the index of the current audio source in the MusicList array
-        const currentIndex = MusicList.findIndex((item) => item.src === audioSrc);
-
-        // Set the audio source to the next item in the MusicList array
-        if (currentIndex < MusicList.length - 1) {
-            setAudioSrc(MusicList[currentIndex + 1].src);
-        } else {
-            setAudioSrc(MusicList[0].src);
-        }
-        // Automatically Play next audio on click next button
-        setTimeout(() => {
-            const audioElement = document.getElementsByTagName('audio')[0];
-            if (audioElement) {
-              audioElement.play();
-            }
-          }, 100);
-    };
 
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
@@ -1746,24 +1722,8 @@ export function DungeonApp()
                                 </VStack>
                             </Box>  
                         </HStack>
-                        <ReactAudioPlayer
-                                src={audioSrc}
-                                autoPlay={false}
-                                className='music-player'
-                                onClickNext={handleNextMusicButtonClick}
-                                onEnded={handleNextMusicButtonClick}
-                                showSkipControls={true}
-                                customIcons={{
-                                //     volume: soundOnImg,
-                                // volumeMute: soundOffImg,
-                                }}
-                                // customControlsSection={[
-                                //     <button key="next" onClick={handleNextMusicButtonClick}>
-                                //       Next
-                                //     </button>,
-                                //   ]}
-                                
-                            />
+                        <MusicPlayer tracks={MusicList}  />
+
                         <HStack visibility={visible ? "visible" : "hidden"}>
                             <Box width="33%" mt="2rem"/>
                             <Box width="33%" mt="2rem"><CharacterSelect/></Box>

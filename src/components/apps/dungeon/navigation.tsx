@@ -5,6 +5,7 @@ import { SetStateAction } from 'react';
 import {
     Box,
     Button,
+    Flex,
     HStack,
     Text,
     VStack
@@ -166,93 +167,72 @@ export function Navigation(
         
     },[setScreen]);
 
-    function DesktopNavigation() {
+    const NavBar = [
+        { text: 'Home', onClick: ShowHome },
+        { text: 'Arena', onClick: ShowArena },
+        { text: 'DM', onClick: ShowDM },
+        { text: 'Shop', onClick: ShowShop },
+        { text: 'Achievements', onClick: ShowAchievements },
+        { text: 'Stats', onClick: ShowStats },
+        { text: 'Odds', onClick: ShowOdds },
+        { text: 'FAQ', onClick: ShowFAQ },
+        { text: 'Help', onClick: ShowHelp },
+      ];
 
+      function DesktopNavigation() {
+        const { isOpen, onOpen, onClose } = useDisclosure();
+      
         return (
-        <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
-            <HStack>
-                {wallet.publicKey !== null &&
-                        <Box width="30%">
-                            <HStack>
-                                <WalletConnected />
-                                <div className="font-face-sfpb">
-                                    <Text fontSize='16px'  color="white">
-                                        {
-                                            balance
-                                            ? "Balance: " + balance.toFixed(3) + ' SOL'
-                                            : '                                 '
-                                        }
-                                    </Text>
-                                </div>
-                            </HStack>
-                        </Box>
-                        
-                    }
-                {wallet.publicKey === null &&
-                    <Box width="30%"></Box>
-                }
-                <Box width="65%">
-                    <HStack spacing="5%">
-                        <Button variant='link' size='md' onClick={ShowHome}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Home </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowArena}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Arena </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowDM}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> DM </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowShop}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Shop </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowAchievements}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Achievements </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowStats}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Stats </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowOdds}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Odds </Text>      
-                            </div> 
-                        </Button>
-                        <Button variant='link' size='md' onClick={ShowFAQ}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> FAQ </Text>      
-                            </div> 
-                        </Button>
-                        
-                        <Button variant='link' size='md' onClick={ShowHelp}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize='16px'  color="white"> Help </Text>      
-                            </div> 
-                        </Button>
-                        <a href="https://twitter.com/sol_dungeon">
-                            <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
-                        </a>
-
-                        <a href="https://discord.gg/soldungeon">
-                            <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
-                        </a>
-                        <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
-                    </HStack>
-                </Box>
+          <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
+            <Flex justifyContent="space-between" alignItems="center">
+              <Box width="30%" display="flex" alignItems="center">
+                {wallet.publicKey !== null && <WalletConnected />}
+                <div className="font-face-sfpb">
+                  <Text fontSize="16px" color="white">
+                    {balance
+                      ? "Balance: " + balance.toFixed(3) + " SOL"
+                      : "                                 "}
+                  </Text>
+                </div>
+              </Box>
+              <Box display="flex" mr="7%" justifyContent="flex-end">
+                <HStack spacing="29%">
+                  <a href="https://twitter.com/sol_dungeon">
+                    <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
+                  </a>
+                  <a href="https://discord.gg/soldungeon">
+                    <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
+                  </a>
+                  <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
+                  <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                 </HStack>
-            </Box>
-        )
-    }
+              </Box>
+            </Flex>
+      
+            <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+              <DrawerOverlay />
+              <DrawerContent maxWidth={"40%"}>
+                <DrawerCloseButton color="white" />
+                <DrawerBody bg="black">
+                  <VStack spacing="24px">
+                    {NavBar.map((button, index) => (
+                      <Button variant="link" key={index} size="md" onClick={button.onClick}>
+                        <div className="font-face-sfpb">
+                          <Text fontSize="16px" color="white">
+                            {button.text}
+                          </Text>
+                        </div>
+                      </Button>
+                    ))}
+                  </VStack>
+                </DrawerBody>
+              </DrawerContent>
+            </Drawer>
+          </Box>
+        );
+      }
+      
+    
 
     function MobileNavigation()  {
         const { isOpen, onOpen, onClose } = useDisclosure()
@@ -298,47 +278,13 @@ export function Navigation(
 
                             <DrawerBody bg='black'>
                                 <VStack spacing='24px'>
-                                    <Button variant='link' size='md' onClick={ShowHome}>
+                                   {NavBar.map((button,index) => (
+                                <Button variant='link' key={index} size='md' onClick={button.onClick}>
                                     <div className="font-face-sfpb">
-                                        <Text fontSize='16px'  color="white"> Home </Text>      
-                                    </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowArena}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Arena </Text>      
-                                        </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowDM}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> DM </Text>      
-                                        </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowShop}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Shop </Text>      
-                                        </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowAchievements}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Achievements </Text>      
-                                        </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowOdds}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Odds </Text>      
-                                        </div> 
-                                    </Button>
-                                    <Button variant='link' size='md' onClick={ShowFAQ}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> FAQ </Text>      
-                                        </div> 
-                                    </Button>
-                                    
-                                    <Button variant='link' size='md' onClick={ShowHelp}>
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize='16px'  color="white"> Help </Text>      
-                                        </div> 
-                                    </Button>
+                                        <Text fontSize='16px' color="white">{button.text}</Text>
+                                    </div>
+                                </Button>
+                            ))}
                                 </VStack>
                             </DrawerBody>
 
