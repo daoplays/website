@@ -23,7 +23,7 @@ import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
 import { DUNGEON_FONT_SIZE, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SYSTEM_KEY, FOUNDER_1_KEY, FOUNDER_2_KEY, DM_PROGRAM, SHOP_PROGRAM, KeyType, DEBUG} from './constants';
+    METAPLEX_META, SYSTEM_KEY, FOUNDER_1_KEY, FOUNDER_2_KEY, DM_PROGRAM, SHOP_PROGRAM, DEBUG} from './constants';
 
 import bs58 from "bs58";
 
@@ -40,14 +40,14 @@ import './css/fonts.css';
 import './css/wallet.css';
 import { bignum } from '@metaplex-foundation/beet';
 
-const MINT_ACTIVE = false;
+const MINT_ACTIVE = true;
 
 const WHITELIST_TOKEN =  new PublicKey("FZKeUtJYChwL6E45n6aqheyafuNUgCeUkckSkqjWgRC6");
 
 const COLLECTION_MASTER = new PublicKey('9ew9V2nskKA21LnkeigzFjb2o2Pyik3nvMjHUTz8UF5s');
 const COLLECTION_META = new PublicKey('9HvcyHyLQLF9gEqaHb49TaKfAMPz5UouSZWfX1ykoYCf');
 const COLLECTION_MINT = new PublicKey('CRpAfeXWUQ7Wx321DESrYzmDr5LLXnJ2rDahKndxLB7q');
-const KEY_COLLECTION_META = new PublicKey('AD1eii4mdMejHB5PpJu8mCqTEydMY82dDLFdeLVEf5uV');
+const KEY_COLLECTION_META = new PublicKey('HYBWDQeHR5P44621PT52thJbwTQBDsMGy8NwRbbK4xut');
 
 const DM_KEY_COST : number = 10;
 
@@ -95,8 +95,10 @@ export function DMScreen({bearer_token} : {bearer_token : string})
     const [dm_error, setDMError] = useState<string | null>(null);
 
     // key burning
+    const burn_key_mints = useRef<PublicKey[]>([]);
+
+    const [keys_to_burn, setKeysToBurn] = useState<number>(0);
     const [burn_key_index, setBurnKeyIndex] = useState<string>("")
-    const [burn_key_type, setBurnKeyType] = useState<KeyType>(KeyType.Unknown)
     const [burn_error, setBurnError] = useState<string | null>(null);
 
     // displaying new DM token
@@ -289,17 +291,16 @@ export function DMScreen({bearer_token} : {bearer_token : string})
 
     const Burn = useCallback( async () => 
     {
+        setBurnError("");
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
 
         let parsed_key_index = parseInt(burn_key_index);
-        //console.log("key index", discount_key_index, parsed_key_index, isNaN(parsed_key_index));
-
+        
         if (isNaN(parsed_key_index))
             return;
 
-        // get the mint of the key index
         let key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
 
 
@@ -308,21 +309,8 @@ export function DMScreen({bearer_token} : {bearer_token : string})
             return;
         }
 
-        setBurnKeyType(key_meta_data.key_type);
-
-        let nft_mint_pubkey = key_meta_data.key_mint;
-
-        let dm_user_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], DM_PROGRAM))[0];
-        let dungeon_key_data_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), nft_mint_pubkey.toBuffer()], SHOP_PROGRAM))[0];
-
-        let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
-        METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
-
-        let nft_master_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
-        METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
-
         let nft_account_key = await getAssociatedTokenAddress(
-            nft_mint_pubkey, // mint
+            key_meta_data.key_mint, // mint
             wallet.publicKey, // owner
             true // allow owner off curve
         );
@@ -335,43 +323,72 @@ export function DMScreen({bearer_token} : {bearer_token : string})
             return;
         }
 
-        const burn_token_data = serialise_basic_instruction(DMInstruction.burn_token);
 
-        var account_vector  = [
-            {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-            {pubkey: dm_user_account, isSigner: false, isWritable: true},
+        burn_key_mints.current.push(key_meta_data.key_mint);
 
-            {pubkey: nft_mint_pubkey, isSigner: false, isWritable: true},
-            {pubkey: nft_account_key, isSigner: false, isWritable: true},
-            {pubkey: nft_meta_key, isSigner: false, isWritable: true},
-            {pubkey: nft_master_key, isSigner: false, isWritable: true},
+        console.log(burn_key_mints.current.length, " adding ", key_meta_data.key_mint);
+        setKeysToBurn(burn_key_mints.current.length);
 
-            {pubkey: dungeon_key_data_account, isSigner: false, isWritable: true},
-
-
-
-        ];
-
-        account_vector.push({pubkey: KEY_COLLECTION_META, isSigner: false, isWritable: true});            
-        account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
-        account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: true});
-        account_vector.push({pubkey: METAPLEX_META, isSigner: false, isWritable: false});
-
-
-
-        const burn_token_instruction = new TransactionInstruction({
-            keys: account_vector,
-            programId: DM_PROGRAM,
-            data: burn_token_data
-        });
+        if (burn_key_mints.current.length < 5) {
+            return;
+        }
 
         let txArgs = await get_current_blockhash(bearer_token);
 
         let transaction = new Transaction(txArgs);
-        transaction.feePayer = wallet.publicKey;
+
+        for (let i = 0; i < burn_key_mints.current.length; i++) {
+
+            let nft_mint_pubkey = burn_key_mints.current[i];
+
+            let dm_user_account = (PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], DM_PROGRAM))[0];
+            let dungeon_key_data_account = (PublicKey.findProgramAddressSync([Buffer.from("key_meta"), nft_mint_pubkey.toBuffer()], SHOP_PROGRAM))[0];
+
+            let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
+
+            let nft_master_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
+
+            let nft_account_key = await getAssociatedTokenAddress(
+                nft_mint_pubkey, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            const burn_token_data = serialise_basic_instruction(DMInstruction.burn_token);
+
+            var account_vector  = [
+                {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                {pubkey: dm_user_account, isSigner: false, isWritable: true},
+
+                {pubkey: nft_mint_pubkey, isSigner: false, isWritable: true},
+                {pubkey: nft_account_key, isSigner: false, isWritable: true},
+                {pubkey: nft_meta_key, isSigner: false, isWritable: true},
+                {pubkey: nft_master_key, isSigner: false, isWritable: true},
+
+                {pubkey: dungeon_key_data_account, isSigner: false, isWritable: true},
+            ];
+
+            account_vector.push({pubkey: KEY_COLLECTION_META, isSigner: false, isWritable: true});            
+            account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: METAPLEX_META, isSigner: false, isWritable: false});
 
 
-        transaction.add(burn_token_instruction);
+
+            const burn_token_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DM_PROGRAM,
+                data: burn_token_data
+            });
+
+
+            transaction.feePayer = wallet.publicKey;
+
+
+            transaction.add(burn_token_instruction);
+        }
 
         try {
             let signed_transaction = await wallet.signTransaction(transaction);
@@ -399,11 +416,12 @@ export function DMScreen({bearer_token} : {bearer_token : string})
         }
 
         check_user_data.current = true;
+        burn_key_mints.current = [];
 
         return;
         
 
-    },[wallet, burn_key_index, bearer_token]);
+    },[wallet, burn_key_mints, bearer_token, burn_key_index]);
    
 
     const Mint = useCallback( async () => 
@@ -741,20 +759,6 @@ export function DMScreen({bearer_token} : {bearer_token : string})
         );
     }
 
-    function GetKeyName({key_type} : {key_type : KeyType}) : string
-    {
-        if (key_type === KeyType.Bronze)
-            return "A Bronze Key"
-
-        if (key_type === KeyType.Silver)
-            return "A Silver Key"
-
-        if (key_type === KeyType.Gold)
-            return "A Gold Key"
-
-        return "An Unknown Key"
-    }
-
     const ApplicantsJourneyFlavourTextArray : string[] = [
         "The path to becoming a member of the Dungeon Masters Guild is not an easy one to tread. We require great sacrifice from our applicants in order to demonstrate their zeal and commitment. Be warned, once started there is no going back.",
 
@@ -794,7 +798,6 @@ export function DMScreen({bearer_token} : {bearer_token : string})
 
     function ApplicantsJourneyDialogue()
     {
-        let key_type = GetKeyName({key_type : burn_key_type});
 
         return(
             <Box width =  "80%">
@@ -804,7 +807,7 @@ export function DMScreen({bearer_token} : {bearer_token : string})
                             <ApplicantsJourneyFlavourText keys_burnt={keys_burnt}/>
                         </div>
                         <div className="font-face-sfpb">   
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Choose your sacrifice </Text> 
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Choose your sacrifice ({keys_burnt ? Math.min(keys_burnt + 1 + keys_to_burn, 10) : 1 }/10) </Text> 
                         </div>
                         <HStack>
                             <Box width="50%">
@@ -859,14 +862,6 @@ export function DMScreen({bearer_token} : {bearer_token : string})
                                 <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {burn_error} </Text> 
                             </div>
                         </Box>
-                        }
-
-                        {burn_key_type !== null && burn_key_type !== KeyType.Unknown &&
-                            <Box width="100%">
-                                <div className="font-face-sfpb">   
-                                    <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Have Burnt: {key_type} </Text> 
-                                </div>
-                            </Box>
                         }
 
 
