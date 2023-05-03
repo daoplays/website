@@ -296,43 +296,50 @@ export function DMScreen({bearer_token} : {bearer_token : string})
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
 
-        let parsed_key_index = parseInt(burn_key_index);
-        
-        if (isNaN(parsed_key_index))
-            return;
-
-        let key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
 
 
-        if (key_meta_data === null) {
-            setBurnError("Key " + parsed_key_index + " has not been minted");
-            return;
-        }
-
-        let nft_account_key = await getAssociatedTokenAddress(
-            key_meta_data.key_mint, // mint
-            wallet.publicKey, // owner
-            true // allow owner off curve
-        );
-
-        // check the user actually owns the token
-        let token_amount = await request_token_amount(bearer_token, nft_account_key);
-
-        if (token_amount === 0) {
-            setBurnError("Applicant does not own Key " + parsed_key_index);
-            return;
-        }
-
-
-        burn_key_mints.current.push(key_meta_data.key_mint);
-
-        console.log(burn_key_mints.current.length, " adding ", key_meta_data.key_mint);
-        setKeysToBurn(burn_key_mints.current.length);
-
+        // if we have less than 5 keys try and add this one
         if (burn_key_mints.current.length < 5) {
-            return;
+
+            let parsed_key_index = parseInt(burn_key_index);
+        
+            if (isNaN(parsed_key_index))
+                return;
+    
+            let key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
+    
+    
+            if (key_meta_data === null) {
+                setBurnError("Key " + parsed_key_index + " has not been minted");
+                return;
+            }
+    
+            let nft_account_key = await getAssociatedTokenAddress(
+                key_meta_data.key_mint, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+    
+            // check the user actually owns the token
+            let token_amount = await request_token_amount(bearer_token, nft_account_key);
+    
+            if (token_amount === 0) {
+                setBurnError("Applicant does not own Key " + parsed_key_index);
+                return;
+            }
+
+            burn_key_mints.current.push(key_meta_data.key_mint);
+            //console.log(burn_key_mints.current.length, " adding ", key_meta_data.key_mint);
+            setKeysToBurn(burn_key_mints.current.length);
+            
         }
 
+        // if we are still less than 5 then leave for now
+        if (burn_key_mints.current.length !== 5) {
+            return;
+        }     
+
+        // otherwise handle the burn
         let txArgs = await get_current_blockhash(bearer_token);
 
         let transaction = new Transaction(txArgs);

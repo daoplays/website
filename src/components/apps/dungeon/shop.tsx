@@ -233,7 +233,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
         try {
 
-            console.log("request meta data");
+            //console.log("request meta data");
             let raw_meta_data = await request_raw_account_data(bearer_token, current_key.current);
 
             if (raw_meta_data === null) {
