@@ -578,7 +578,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     }
 
     return(
-        <VStack alignItems="center">
+        <VStack alignItems="center" mb = "5rem">
             <Box width="100%">
                 <HStack>
                     <Box width="65%"></Box>  
@@ -658,23 +658,23 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
                         {which_key !== null && key_image !== null && current_mint !== null &&
                             <>
-                            <VStack spacing="3%">
-                            <HStack alignItems="center">
-                                <Box width="15%">
-                                    <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
-                                </Box>
-                                            
-                                    <div className="font-face-sfpb">
-                                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key}! </Text>
-                                    </div>
-                            </HStack>
-                            <Center>
-                            <Box width = "100%">
-                            <div className="font-face-sfpb">
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()}>here</a></Text>
-                            </div>
-                            </Box>
-                            </Center>
+                            <VStack spacing="3%" alignItems="center">
+                                <HStack alignItems="center">
+                                    <Box width="15%">
+                                        <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
+                                    </Box>
+                                                
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key?.slice(0,17)}! </Text>
+                                        </div>
+                                </HStack>
+                                <Center>
+                                    <Box width = "100%">
+                                        <div className="font-face-sfpb">
+                                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()}>here</a></Text>
+                                        </div>
+                                    </Box>
+                                </Center>
                             </VStack>
                             </>            
                         }
