@@ -114,17 +114,13 @@ import { ArenaScreen } from './arena';
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
 import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
-import delvingDeeper from './sounds/Delving_Deeper.mp3'
-import hackNSlash from './sounds/Hack_n_Slash.mp3'
-import enterTheDungeon from './sounds/Enter_the_Dungeon.mp3'
-import dungeonCrawling from './sounds/Dungeon_Crawling.mp3'
+
 import { MuteContext, MuteProvider } from './mute';
 
 
 import './css/style.css';
 import './css/fonts.css';
 import './css/wallet.css';
-import MusicPlayer from './musicPlayer';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 // free play mint
@@ -251,13 +247,7 @@ export function DungeonApp()
     const state_interval = useRef<number | null>(null);
 
 
-    //MusicList
-    const MusicList = [
-        { src: delvingDeeper, name: 'Delving Deeper' },
-        { src: hackNSlash, name: 'Hack N Slash' },
-        { src: enterTheDungeon, name: 'Enter the Dungeon' },
-        { src: dungeonCrawling, name: 'Dungeon Crawling' },
-    ];
+   
 
 
     //button processing
@@ -1722,7 +1712,7 @@ export function DungeonApp()
                                 </VStack>
                             </Box>  
                         </HStack>
-                        <MusicPlayer tracks={MusicList}  />
+                        
 
                         <HStack visibility={visible ? "visible" : "hidden"}>
                             <Box width="33%" mt="2rem"/>
