@@ -331,6 +331,7 @@ export function DMScreen({bearer_token} : {bearer_token : string})
             burn_key_mints.current.push(key_meta_data.key_mint);
             //console.log(burn_key_mints.current.length, " adding ", key_meta_data.key_mint);
             setKeysToBurn(burn_key_mints.current.length);
+            setBurnKeyIndex("");
             
         }
 
