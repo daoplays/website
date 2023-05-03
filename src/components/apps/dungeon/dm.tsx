@@ -814,7 +814,7 @@ export function DMScreen({bearer_token} : {bearer_token : string})
                             <ApplicantsJourneyFlavourText keys_burnt={keys_burnt}/>
                         </div>
                         <div className="font-face-sfpb">   
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Choose your sacrifice ({keys_burnt ? Math.min(keys_burnt + 1 + keys_to_burn, 10) : 1 }/10) </Text> 
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Choose your sacrifice ({keys_burnt ? Math.min(keys_burnt + 1 + keys_to_burn, 10) : 1 + keys_to_burn }/10) </Text> 
                         </div>
                         <HStack>
                             <Box width="50%">
