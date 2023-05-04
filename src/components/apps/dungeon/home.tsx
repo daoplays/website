@@ -32,7 +32,6 @@ import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
-import ReactAudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css'
 
 import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';

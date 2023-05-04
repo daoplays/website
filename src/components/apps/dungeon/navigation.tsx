@@ -279,11 +279,12 @@ export function Navigation(
                             <DrawerBody bg='black'>
                                 <VStack spacing='24px'>
                                    {NavBar.map((button,index) => (
+                                    button.text === 'Stats' ? null : (
                                 <Button variant='link' key={index} size='md' onClick={button.onClick}>
                                     <div className="font-face-sfpb">
                                         <Text fontSize='16px' color="white">{button.text}</Text>
                                     </div>
-                                </Button>
+                                </Button>)
                             ))}
                                 </VStack>
                             </DrawerBody>
