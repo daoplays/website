@@ -226,9 +226,9 @@ export function Navigation(
                 <DrawerBody bg="black" backgroundColor="#171923" >
                   <VStack spacing="24px">
                     {NavBar.map((button, index) => (
-                      <Button variant="link"  key={index} _focus={{boxShadow: "none"}} size="md" style={addMargin(index)} onClick={button.onClick} textTransform={'uppercase'} >
+                      <Button variant="link"  key={index} size="md" style={addMargin(index)} onClick={button.onClick} sx={{outline: "none !important"}} textTransform={'uppercase'} >
                         <div className="font-face-sfpb">
-                          <Text fontSize="16px" color="white" _focus={{boxShadow: "none"}} _hover={{textDecoration: "underline"}}>
+                          <Text fontSize="16px" color="white"  _hover={{textDecoration: "underline"}}>
                             {button.text}
                           </Text>
                         </div>
