@@ -10,9 +10,10 @@ interface MusicTrack {
 
 interface MusicPlayerProps {
   tracks: MusicTrack[];
+  isOpen:boolean;
 }
 
-const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
+const MusicPlayer = ({ tracks,isOpen }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
   const [currentTrackName, setCurrentTrackName] = useState<string>(tracks[0].name);
 
@@ -47,6 +48,7 @@ const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
         onClickNext={handleNextMusicButtonClick}
         onEnded={handleNextMusicButtonClick}
         showSkipControls={true}
+        style={{ display: isOpen ? 'block' : 'none' }}
         
       />
     </>

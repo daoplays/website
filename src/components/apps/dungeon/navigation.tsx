@@ -31,6 +31,11 @@ import {Screen} from './constants';
 
 import { MuteButton, MuteContext } from './mute';
 
+import delvingDeeper from './sounds/Delving_Deeper.mp3'
+import hackNSlash from './sounds/Hack_n_Slash.mp3'
+import enterTheDungeon from './sounds/Enter_the_Dungeon.mp3'
+import dungeonCrawling from './sounds/Dungeon_Crawling.mp3'
+import MusicPlayer from './musicPlayer';
 
 // dungeon utils
 import { WalletConnected, request_current_balance} from './utils';
@@ -48,6 +53,14 @@ export function Navigation(
     const wallet = useWallet();
 
     const [balance, setBalance] = useState(0);
+
+     //MusicList
+     const MusicList = [
+        { src: delvingDeeper, name: 'Delving Deeper' },
+        { src: hackNSlash, name: 'Hack N Slash' },
+        { src: enterTheDungeon, name: 'Enter the Dungeon' },
+        { src: dungeonCrawling, name: 'Dungeon Crawling' },
+    ];
 
     const { isMuted, toggleMute } = useContext(MuteContext);
 
@@ -211,7 +224,7 @@ export function Navigation(
       
             <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
               <DrawerOverlay />
-              <DrawerContent maxWidth={"40%"}>
+              <DrawerContent maxWidth={"25%"}>
                 <DrawerCloseButton color="white" />
                 <DrawerBody bg="black">
                   <VStack spacing="24px">
@@ -228,6 +241,7 @@ export function Navigation(
                 </DrawerBody>
               </DrawerContent>
             </Drawer>
+            <MusicPlayer tracks={MusicList} isOpen={isOpen} />
           </Box>
         );
       }

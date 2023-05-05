@@ -2,17 +2,19 @@
 .music-player {
     background-color: #000000; /* Dark gray */
     color: #fff; /* White text */
-    width: 25%;
-    position: fixed;
+    right: 5%;
+    /* width: 10%; */
+    /* position: fixed;
     bottom: 0;
-    right: 0;
-    z-index: 9999; /* Make sure the player is on top of other elements */
+    right: 0; */
+    /* z-index: 9999;  */
+    /* Make sure the player is on top of other elements */
   }
   
   /* Style the audio controls */
   .music-player audio {
     width: 100%;
-    height: 20px;
+    height: 10px;
   }
   
   /* Style the play/pause button */
@@ -47,8 +49,8 @@
     display: block;
     background-color: #fff; /* White */
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 10px;
+    height: 10px;
     margin: 5px;
     color: #fff;
   }
@@ -61,3 +63,36 @@
     background-color: #fff; /* White */
   }
   
+  .rhap_progress-container{
+    display: none;
+  }
+
+  .rhap_container {
+    transform: scale(1.1);
+    width: fit-content;
+  }
+
+  .music-player .rhap_play-pause-button,
+.music-player .rhap_skip-button,
+.music-player .rhap_rewind-button,
+.music-player .rhap_forward-button {
+  /* button styles here */
+
+  transform: scale(0.5);
+}
+
+.music-player button {
+  padding: 0;
+  margin: 0;
+  /* width: 20px;
+  height: 20px; */
+}
+
+.music-player svg {
+  width: 100%;
+  height: 100%;
+}
+
+.rhap_volume-bar, .rhap_volume-indicator {
+  display: none;
+}
