@@ -222,7 +222,6 @@ export function Navigation(
             <Drawer isOpen={isOpen} placement="right" onClose={onClose} closeOnOverlayClick={true} >
               <DrawerOverlay  />
               <DrawerContent maxWidth={"25%"} maxHeight="fit-content" borderColor="white" borderWidth="2px">
-                {/* <DrawerCloseButton color="white"/> */}
                 <DrawerBody bg="black" backgroundColor="#171923" >
                   <VStack spacing="24px">
                     {NavBar.map((button, index) => (
