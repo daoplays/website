@@ -167,6 +167,16 @@ export function Navigation(
         
     },[setScreen]);
 
+    const addMargin = (index:number) => {
+      if (index === 0) {
+        return { marginTop: "1rem", _focus: { boxShadow: "none" } };
+      } else if (index === NavBar.length - 1) {
+        return { marginBottom: "1rem" };
+      } else {
+        return {};
+      }
+    };
+
     const NavBar = [
         { text: 'Home', onClick: ShowHome },
         { text: 'Arena', onClick: ShowArena },
@@ -216,9 +226,9 @@ export function Navigation(
                 <DrawerBody bg="black" backgroundColor="#171923" >
                   <VStack spacing="24px">
                     {NavBar.map((button, index) => (
-                      <Button variant="link" className='underline-on-hover' key={index} size="md" onClick={button.onClick} textTransform={'uppercase'} sx={index === 0 ? {marginTop: "1rem"} : (index === NavBar.length - 1 ? {marginBottom: "1rem"} : {})}>
+                      <Button variant="link"  key={index} _focus={{boxShadow: "none"}} size="md" style={addMargin(index)} onClick={button.onClick} textTransform={'uppercase'} >
                         <div className="font-face-sfpb">
-                          <Text fontSize="16px" color="white" _hover={{textDecoration: "underline"}}>
+                          <Text fontSize="16px" color="white" _focus={{boxShadow: "none"}} _hover={{textDecoration: "underline"}}>
                             {button.text}
                           </Text>
                         </div>
