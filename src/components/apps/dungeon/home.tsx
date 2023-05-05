@@ -32,6 +32,8 @@ import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
+import 'react-h5-audio-player/lib/styles.css'
+
 import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
         TOKEN_PROGRAM_ID,
@@ -52,6 +54,7 @@ import {
 
 import BN from 'bn.js'
 import bs58 from "bs58";
+
 
 
 import dungeon_title from "./images/Dungeon_Logo.png"
@@ -108,6 +111,7 @@ import { ArenaScreen } from './arena';
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
 import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
+
 import { MuteContext, MuteProvider } from './mute';
 
 
@@ -239,6 +243,8 @@ export function DungeonApp()
     const check_achievements = useRef<boolean>(true);
     const state_interval = useRef<number | null>(null);
 
+
+   
 
 
     //button processing
@@ -1593,7 +1599,6 @@ export function DungeonApp()
         if (isMobile) {
             font_size = "15px";
         }
-
         return (
             <>
             <Box width="100%">
@@ -1704,6 +1709,8 @@ export function DungeonApp()
                                 </VStack>
                             </Box>  
                         </HStack>
+                        
+
                         <HStack visibility={visible ? "visible" : "hidden"}>
                             <Box width="33%" mt="2rem"/>
                             <Box width="33%" mt="2rem"><CharacterSelect/></Box>

@@ -1,0 +1,63 @@
+/* Define the background color of the entire player and placement */
+.music-player {
+    background-color: #000000; /* Dark gray */
+    color: #fff; /* White text */
+    width: 25%;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: 9999; /* Make sure the player is on top of other elements */
+  }
+  
+  /* Style the audio controls */
+  .music-player audio {
+    width: 100%;
+    height: 20px;
+  }
+  
+  /* Style the play/pause button */
+  .music-player audio::-webkit-media-controls-play-button,
+  .music-player audio::-webkit-media-controls-pause-button {
+    display: block;
+    background-color: #fff; /* White */
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    margin: 5px;
+  }
+  
+  /* Style the track progress bar */
+  .music-player audio::-webkit-media-controls-timeline-container,
+  .music-player audio::-webkit-media-controls-timeline-progress-bar {
+    height: 5px;
+    background-color: #fff; /* White */
+    color: #fff;
+  }
+  
+  /* Style the volume and mute buttons */
+  .music-player audio::-webkit-media-controls-volume-slider,
+  .music-player audio::-webkit-media-controls-mute-button {
+    display: none; /* Hide the default buttons */
+    color: #fff;
+  }
+  
+  /* Style the custom volume and mute buttons */
+  .music-player .volume-button,
+  .music-player .mute-button {
+    display: block;
+    background-color: #fff; /* White */
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    margin: 5px;
+    color: #fff;
+  }
+  
+  /* Style the volume slider */
+  .music-player .volume-slider {
+    color: #fff;
+    width: 100%;
+    height: 5px;
+    background-color: #fff; /* White */
+  }
+  
