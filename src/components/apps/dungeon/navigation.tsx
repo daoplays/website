@@ -211,9 +211,9 @@ export function Navigation(
       
             <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
               <DrawerOverlay />
-              <DrawerContent maxWidth={"40%"}>
-                <DrawerCloseButton color="white" />
-                <DrawerBody bg="black">
+              <DrawerContent maxWidth={"25%"}>
+                <DrawerCloseButton color="white"/>
+                <DrawerBody bg="black" style={{marginTop: "0.8rem"}}>
                   <VStack spacing="24px">
                     {NavBar.map((button, index) => (
                       <Button variant="link" key={index} size="md" onClick={button.onClick}>
