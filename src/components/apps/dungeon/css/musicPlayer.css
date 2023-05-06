@@ -8,7 +8,8 @@
     display: block;
     background: transparent;
     height: fit-content;
-    margin-top: -2%;
+    margin-top: -3%;
+    position: absolute;
   }
   
   /* Style the audio controls */
