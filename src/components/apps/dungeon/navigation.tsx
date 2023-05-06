@@ -241,7 +241,7 @@ export function Navigation(
                 </DrawerBody>
               </DrawerContent>
             </Drawer>
-            <MusicPlayer tracks={MusicList} isOpen={isOpen} />
+            
           </Box>
         );
       }
@@ -314,8 +314,12 @@ export function Navigation(
 
     return(
         <>
+       
             {!isMobile &&
+            <>
                 <DesktopNavigation/>
+                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+            </>
             }
 
             {isMobile &&

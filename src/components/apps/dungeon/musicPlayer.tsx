@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ReactAudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 import './css/musicPlayer.css'
@@ -10,12 +10,20 @@ interface MusicTrack {
 
 interface MusicPlayerProps {
   tracks: MusicTrack[];
-  isOpen:boolean;
+  isMuted: boolean;
 }
 
-const MusicPlayer = ({ tracks,isOpen }: MusicPlayerProps) => {
+const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
-  const [currentTrackName, setCurrentTrackName] = useState<string>(tracks[0].name);
+  // const [currentTrackName, setCurrentTrackName] = useState<string>(tracks[0].name);
+
+  useEffect(() => {
+    const audioElement = document.getElementsByTagName('audio')[0];
+    if (audioElement) {
+      audioElement.pause()
+    }
+  },[isMuted])
+  
 
   const handleNextMusicButtonClick = () => {
     // Find the index of the current audio source in the tracks array
@@ -24,10 +32,10 @@ const MusicPlayer = ({ tracks,isOpen }: MusicPlayerProps) => {
     // Set the audio source to the next item in the tracks array
     if (currentIndex < tracks.length - 1) {
       setAudioSrc(tracks[currentIndex + 1].src);
-      setCurrentTrackName(tracks[currentIndex + 1].name);
+      // setCurrentTrackName(tracks[currentIndex + 1].name);
     } else {
       setAudioSrc(tracks[0].src);
-      setCurrentTrackName(tracks[0].name);
+      // setCurrentTrackName(tracks[0].name);
     }
 
     // Automatically play next audio on click next button
@@ -48,8 +56,6 @@ const MusicPlayer = ({ tracks,isOpen }: MusicPlayerProps) => {
         onClickNext={handleNextMusicButtonClick}
         onEnded={handleNextMusicButtonClick}
         showSkipControls={true}
-        style={{ display: isOpen ? 'block' : 'none' }}
-        
       />
     </>
   );

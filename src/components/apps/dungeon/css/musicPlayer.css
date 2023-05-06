@@ -1,14 +1,14 @@
 /* Define the background color of the entire player and placement */
 .music-player {
-    background-color: #000000; /* Dark gray */
     color: #fff; /* White text */
-    right: 5%;
-    /* width: 10%; */
-    /* position: fixed;
-    bottom: 0;
-    right: 0; */
-    /* z-index: 9999;  */
-    /* Make sure the player is on top of other elements */
+    position: fixed;
+    top: 0;
+    left: 42%;
+    /* transform: translateX(-50%); */
+    display: block;
+    background: transparent;
+    height: fit-content;
+    margin-top: -2%;
   }
   
   /* Style the audio controls */
