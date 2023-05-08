@@ -126,7 +126,7 @@ button[aria-label="Enable loop"] {
   .music-player .rhap_forward-button {
     /* button styles here */
   
-    transform: scale(0.5);
+    transform: scale(0.4);
   }
 
 
