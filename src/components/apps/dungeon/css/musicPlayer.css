@@ -41,6 +41,16 @@
   button[aria-label="Mute"] {
     display: none;
   }
+
+  button[aria-label="Rewind"] {
+    display: none;
+  }
+  
+
+  button[aria-label="Forward"] {
+    display: none;
+  }
+  
   
   /* Style the volume and mute buttons */
   .music-player audio::-webkit-media-controls-volume-slider,
@@ -132,15 +142,9 @@ button[aria-label="Enable loop"] {
 
   .music-player {
     top: 0;
-    left: 29%;
+    left: 38%;
     margin-top: -9%;
     position: absolute;
   }
-
-  button[aria-label="Enable loop"] {
-    display: none;
-  }
-  
-
 
 }
