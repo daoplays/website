@@ -1,0 +1,90 @@
+a.one {
+    outline: none;
+    text-decoration: none;
+    padding: 2px 1px 0;
+}
+
+a.one:link {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:visited {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:focus {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:hover {
+    color: white;
+    border-bottom: 1px solid;
+}
+
+a.one:active {
+    color: white;
+    border-bottom: 1px solid;
+}
+.rowElementsTitle{
+    width: 27%;
+}
+/* HOME PAGE */
+input[type="range"] {
+    -webkit-appearance: none;
+    background-color: white ;
+    border: 0.1px solid white;
+    border-radius: 30px;
+    cursor: pointer;
+    height: 18px;
+    margin-top: 10px;
+   
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    background-image: url('https://s2.coinmarketcap.com/static/img/coins/200x200/5426.png'); /* add the image URL */
+    background-size: cover; /* scale the image to cover the thumb */
+    width:30px;
+    border: 0.1px solid white;
+
+    height: 30px;
+    border-radius: 50%;
+  }
+@media screen and (max-width:1200px) {
+    .rowElements{
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+    .rowElementsTitle{
+    width: 60%;
+}
+}
+
+/* STATS */
+@media screen and (max-width:1200px) {
+    .responsiveGraph{
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      flex-direction: column !important;
+      width: 80% !important;
+    }
+    .responsiveGraph div{
+    }
+    .lineGraphVstack{
+      width: 100% !important;
+      margin-top: 40px !important;
+  
+    }
+    .responsivePage{
+  position: relative;
+  display: grid;
+  place-items: center ;
+    }
+  }
+
