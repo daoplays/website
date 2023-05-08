@@ -45,7 +45,7 @@ import {
     WalletProvider,
     useWallet
 } from '@solana/wallet-adapter-react';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { PhantomWalletAdapter, SolflareWalletAdapter, BackpackWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 import {
     WalletModalProvider,
@@ -807,7 +807,7 @@ export function DungeonApp()
                         console.log(achievement_data.n_interactions,  achievement_interations.current);
                     }
 
-                    if (achievement_data.n_interactions !== achievement_interations.current) {
+                    if (achievement_data.n_interactions >= achievement_interations.current) {
 
                         if (DEBUG) {
                             console.log("update achievement state");
@@ -1969,7 +1969,7 @@ export function DungeonApp()
                             <HelpScreen/>
                         }
                         {screen === Screen.SHOP_SCREEN &&
-                            <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
+                            <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance}/>
                         }
                         {screen === Screen.MARKETPLACE_SCREEN &&
                             <MarketplaceScreen bearer_token={bearer_token}/>
@@ -2009,7 +2009,7 @@ export function DungeonApp()
                             <FAQScreen/>
                         }
                         {screen === Screen.SHOP_SCREEN &&
-                            <ShopScreen num_xp={numXP} bearer_token={bearer_token}/>
+                            <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance}/>
                         }
                         {screen === Screen.MARKETPLACE_SCREEN &&
                             <MarketplaceScreen bearer_token={bearer_token}/>
@@ -2039,6 +2039,8 @@ function Home() {
     const wallets = useMemo(() => 
     [
         new PhantomWalletAdapter(),
+        new SolflareWalletAdapter(),
+        new BackpackWalletAdapter()
     ],
     []
   );

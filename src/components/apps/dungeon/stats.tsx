@@ -20,8 +20,8 @@ import Container from 'react-bootstrap/Container';
 //} from '@solana/wallet-adapter-react';
 
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, EMOJI_SIZE } from './constants';
-import {AchievementData} from './utils';
-import {DungeonEnemy} from './dungeon_state';
+import {AchievementData, bignum_to_num} from './utils';
+import {DungeonEnemy, DungeonCharacter} from './dungeon_state';
 
 import './css/table.css';
 import './css/fonts.css';
@@ -49,6 +49,9 @@ import skeleton_wizard_emoji from "./emojis/SkellyWiz.gif"
 import floor_spikes_emoji from "./emojis/Spikes.png"
 import werewolf_emoji from "./emojis/Werewolf.gif"
 
+import knight_emoji from "./emojis/Knight.gif"
+import ranger_emoji from "./emojis/Ranger.gif"
+import wizard_emoji from "./emojis/Wizard.gif"
 
 
 
@@ -188,6 +191,57 @@ function WinLoss({AchievementData, enemy} : {AchievementData : AchievementData, 
     );
 }
 
+function TotalWinLoss({AchievementData} : {AchievementData : AchievementData})
+{
+    let w : number = 0;
+    let l : number = 0;
+
+    for (let i = 0; i < 32 * 3; i++) {
+        w += AchievementData.enemies_win[i];
+        l += AchievementData.enemies_lose[i];
+    }
+
+
+
+    return(
+            <>
+            <Text align="center" fontSize={DEFAULT_FONT_SIZE} m="0" p="0">
+            <span style={{"color":"green"}}>{w}</span>
+            <span style={{"color":"white"}}> / </span>
+            <span style={{"color":"red"}}>{l}</span>
+            </Text>
+            </>
+    );
+}
+
+function CharacterWinLoss({AchievementData, player_character} : {AchievementData : AchievementData, player_character : DungeonCharacter})
+{
+    let w : number = 0;
+    let l : number = 0;
+
+    for (let i = 0 + player_character * 32; i < 32 + player_character * 32; i+=1) {
+        w += AchievementData.enemies_win[i];
+        l += AchievementData.enemies_lose[i];
+    }
+
+
+
+    return(
+            <>
+            <Text align="center" fontSize={DUNGEON_FONT_SIZE} m="0" p="0">
+            <span style={{"color":"green"}}>{w}</span>
+            <span style={{"color":"white"}}> / </span>
+            <span style={{"color":"red"}}>{l}</span>
+            </Text>
+            </>
+    );
+}
+
+function Clears(AchievementData : AchievementData) : number
+{
+    return AchievementData.levels_won[6] + AchievementData.levels_won[13] + AchievementData.levels_won[20];
+}
+
 
 function PlayerStats({AchievementData} : {AchievementData : AchievementData | null})
 {
@@ -205,15 +259,64 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
         <Box width = "80%">
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 
-            <Text mb="1rem" fontSize={DUNGEON_FONT_SIZE}>Summary</Text>
 
-            <Text fontSize={DUNGEON_FONT_SIZE}>Total Games: {AchievementData.games_played}</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE}>Games Played Today: {AchievementData.games_played_today}</Text>
+            <HStack width="100%" spacing="10%" mb = "2rem">
 
-            <Text fontSize={DUNGEON_FONT_SIZE}>Total Days Played: {AchievementData.total_days_played}</Text>
-            <Text fontSize={DUNGEON_FONT_SIZE}>Current Day Streak: {AchievementData.play_streak}</Text>
+                <VStack align="center">
+                    <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{AchievementData.play_streak}</Text>
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Daily<br/>Dungeon<br/>Streak </Text>
+                </VStack>
 
+                <VStack align="center" >
+                    <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{AchievementData.games_played_today}</Text>
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Levels<br/>Explored<br/>Today </Text>
+                </VStack>
 
+                <VStack align="center" >
+                    <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{AchievementData.games_played}</Text>
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total<br/>Levels<br/>Explored </Text>
+                </VStack>
+
+                <VStack align="center">
+                    <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{(bignum_to_num(AchievementData.total_lamports_claimed)/1e9).toFixed(3)}</Text>
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total<br/>SOL<br/>Looted </Text>
+                </VStack>
+
+                <VStack align="center">
+                    <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{Clears(AchievementData)}</Text>
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total<br/>Dungeon<br/>Clears </Text>
+                </VStack>
+
+                <VStack align="center">
+                    <TotalWinLoss AchievementData={AchievementData}/>
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total Levels<br/>Survived/Killed </Text>
+                </VStack>
+
+            </HStack>
+
+            <Text fontSize={DUNGEON_FONT_SIZE}>Levels Survived/Killed</Text>
+                <Table className="custom-table">
+                    <thead>
+                    <tr>
+                        <th><Center><img src={knight_emoji} width="auto" alt={""} style={{marginLeft: "8px", maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={ranger_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        
+                    </tr>
+                    </thead>
+                    <tbody style={{
+                        backgroundColor: 'black'
+                    }}>
+                    
+                        <tr>
+                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.knight}/></td>
+                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.ranger}/></td>
+                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.wizard}/></td>
+                            
+                        </tr>
+                    </tbody>
+                </Table>
+ 
 
 
             <VStack mt="2rem" width="100%" align="left" spacing="2rem">
