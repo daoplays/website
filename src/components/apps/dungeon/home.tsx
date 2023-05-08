@@ -55,7 +55,6 @@ import {
 import BN from 'bn.js'
 import bs58 from "bs58";
 
-// import Css files
 
 import dungeon_title from "./images/Dungeon_Logo.png"
 import arena_title from "./images/Arena_Logo.png"

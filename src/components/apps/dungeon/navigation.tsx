@@ -180,6 +180,16 @@ export function Navigation(
         
     },[setScreen]);
 
+    const addMargin = (index:number) => {
+      if (index === 0) {
+        return { marginTop: "1rem", _focus: { boxShadow: "none" } };
+      } else if (index === NavBar.length - 1) {
+        return { marginBottom: "1rem" };
+      } else {
+        return {};
+      }
+    };
+
     const NavBar = [
         { text: 'Home', onClick: ShowHome },
         { text: 'Arena', onClick: ShowArena },
@@ -222,16 +232,15 @@ export function Navigation(
               </Box>
             </Flex>
       
-            <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
-              <DrawerOverlay />
-              <DrawerContent maxWidth={"25%"}>
-                <DrawerCloseButton color="white" />
-                <DrawerBody bg="black">
+            <Drawer isOpen={isOpen} placement="right" onClose={onClose} closeOnOverlayClick={true} >
+              <DrawerOverlay  />
+              <DrawerContent maxWidth={"25%"} maxHeight="fit-content" borderColor="white" borderWidth="2px">
+                <DrawerBody bg="black" backgroundColor="#171923" >
                   <VStack spacing="24px">
                     {NavBar.map((button, index) => (
-                      <Button variant="link" key={index} size="md" onClick={button.onClick}>
+                      <Button variant="link"  key={index} size="md" style={addMargin(index)} onClick={button.onClick} sx={{outline: "none !important"}} textTransform={'uppercase'} >
                         <div className="font-face-sfpb">
-                          <Text fontSize="16px" color="white">
+                          <Text fontSize="16px" color="white"  _hover={{textDecoration: "underline"}}>
                             {button.text}
                           </Text>
                         </div>
@@ -293,11 +302,12 @@ export function Navigation(
                             <DrawerBody bg='black'>
                                 <VStack spacing='24px'>
                                    {NavBar.map((button,index) => (
+                                    button.text === 'Stats' ? null : (
                                 <Button variant='link' key={index} size='md' onClick={button.onClick}>
                                     <div className="font-face-sfpb">
                                         <Text fontSize='16px' color="white">{button.text}</Text>
                                     </div>
-                                </Button>
+                                </Button>)
                             ))}
                                 </VStack>
                             </DrawerBody>
