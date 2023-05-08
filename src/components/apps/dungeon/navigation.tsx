@@ -323,7 +323,10 @@ export function Navigation(
             }
 
             {isMobile &&
+            <>
                 <MobileNavigation/>
+                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+            </>
             }
         </>
     )
