@@ -5,6 +5,7 @@ import './css/musicPlayer.css'
 import Next from './images/Next.png';
 import Prev from './images/Prev.png';
 import Play from './images/Play.png';
+import Pause from './images/Pause.png';
 
 interface MusicTrack {
   src: string;
@@ -65,6 +66,7 @@ const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
           next: <img src={Next} alt="Next" />,
           previous: <img src={Prev} alt="Prev" />,
           play: <img src={Play} alt="Play" />,
+          pause: <img src={Pause} alt="Pause" />,
         }}
       />
     </>
