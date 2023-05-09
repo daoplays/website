@@ -8,7 +8,7 @@
     display: block;
     background: transparent;
     height: fit-content;
-    margin-top: -3%;
+    margin-top: -2.75%;
     position: absolute;
   }
   
@@ -26,7 +26,7 @@
     border-radius: 50%;
     width: 10px;
     height: 10px;
-    margin: 5px;
+    margin: 7px;
   }
   
   /* Style the track progress bar */
@@ -94,7 +94,7 @@
 .music-player .rhap_forward-button {
   /* button styles here */
 
-  transform: scale(0.5);
+  transform: scale(0.7);
 }
 
 .music-player button {
