@@ -15,7 +15,6 @@ interface MusicPlayerProps {
 
 const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
-  // const [currentTrackName, setCurrentTrackName] = useState<string>(tracks[0].name);
 
   useEffect(() => {
     const audioElement = document.getElementsByTagName('audio')[0];
@@ -32,10 +31,8 @@ const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
     // Set the audio source to the next item in the tracks array
     if (currentIndex < tracks.length - 1) {
       setAudioSrc(tracks[currentIndex + 1].src);
-      // setCurrentTrackName(tracks[currentIndex + 1].name);
     } else {
       setAudioSrc(tracks[0].src);
-      // setCurrentTrackName(tracks[0].name);
     }
 
     // Automatically play next audio on click next button
