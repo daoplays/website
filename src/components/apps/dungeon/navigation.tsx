@@ -50,12 +50,12 @@ export function Navigation(
     const [balance, setBalance] = useState(0);
 
      //MusicList
-     const MusicList = [
-        { src: delvingDeeper, name: 'Delving Deeper' },
-        { src: hackNSlash, name: 'Hack N Slash' },
-        { src: enterTheDungeon, name: 'Enter the Dungeon' },
-        { src: dungeonCrawling, name: 'Dungeon Crawling' },
-    ];
+    //  const MusicList = [
+    //     { src: delvingDeeper, name: 'Delving Deeper' },
+    //     { src: hackNSlash, name: 'Hack N Slash' },
+    //     { src: enterTheDungeon, name: 'Enter the Dungeon' },
+    //     { src: dungeonCrawling, name: 'Dungeon Crawling' },
+    // ];
 
     const { isMuted, toggleMute } = useContext(MuteContext);
 
@@ -289,9 +289,9 @@ export function Navigation(
                             <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
 
-                        <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
+                        <MuteButton  isMuted={isMuted} toggleMute={toggleMute} />
 
-                        <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
+                        <FontAwesomeIcon color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
 
                         
                         <Drawer

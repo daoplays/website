@@ -1619,10 +1619,6 @@ export function DungeonApp()
         if (isMobile) {
             font_size = "15px";
         }
-<<<<<<< HEAD
-
-=======
->>>>>>> d26720792fb37cd2c09e9dbedaf1b3cad0475a6e
         return (
             <>
             <Box width="100%">

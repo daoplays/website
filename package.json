@@ -39,35 +39,24 @@
     "bs58": "^5.0.0",
     "framer-motion": "^4.1.17",
     "history": "^5.1.0",
-<<<<<<< HEAD
     "i": "^0.3.7",
     "jsonwebtoken": "^9.0.0",
     "material-design-icons": "^3.0.1",
     "npm": "^9.6.6",
-=======
-    "jsonwebtoken": "^9.0.0",
-    "material-design-icons": "^3.0.1",
->>>>>>> d26720792fb37cd2c09e9dbedaf1b3cad0475a6e
     "plotly.js": "^2.12.1",
     "react": "^18.2.0",
     "react-app-rewired": "^2.2.1",
     "react-bootstrap": "^2.4.0",
     "react-device-detect": "^2.2.2",
     "react-dom": "^18.2.0",
-<<<<<<< HEAD
-=======
     "react-h5-audio-player": "^3.8.6",
->>>>>>> d26720792fb37cd2c09e9dbedaf1b3cad0475a6e
     "react-icons": "^4.4.0",
     "react-mathjax": "^1.0.1",
     "react-native": "0.68",
     "react-native-web": "^0.18.1",
     "react-plotly.js": "^2.6.0",
     "react-plotlyjs-ts": "^2.2.2",
-<<<<<<< HEAD
     "react-responsive": "^9.0.2",
-=======
->>>>>>> d26720792fb37cd2c09e9dbedaf1b3cad0475a6e
     "react-router-dom": "^6.0.2",
     "react-scripts": "4.0.3",
     "react-select": "^5.7.0",
