@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ReactAudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 import './css/musicPlayer.css'
+import Next from './images/Next.png';
+import Prev from './images/Prev.png';
+import Play from './images/Play.png';
+import Pause from './images/Pause.png';
 
 interface MusicTrack {
   src: string;
@@ -10,26 +14,36 @@ interface MusicTrack {
 
 interface MusicPlayerProps {
   tracks: MusicTrack[];
+  isMuted: boolean;
 }
 
-const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
+const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
-  // const [currentTrackName, setCurrentTrackName] = useState<string>(tracks[0].name);
 
-  const handleNextMusicButtonClick = () => {
+  useEffect(() => {
+    const audioElement = document.getElementsByTagName('audio')[0];
+    if (audioElement) {
+      audioElement.pause()
+    }
+  },[isMuted])
+  
+
+  const handleMusicButtonClick = (direction: 'next' | 'previous') => {
     // Find the index of the current audio source in the tracks array
     const currentIndex = tracks.findIndex((item) => item.src === audioSrc);
-
-    // Set the audio source to the next item in the tracks array
-    if (currentIndex < tracks.length - 1) {
-      setAudioSrc(tracks[currentIndex + 1].src);
-      // setCurrentTrackName(tracks[currentIndex + 1].name);
+  
+    // Calculate the index of the next or previous track
+    let nextIndex;
+    if (direction === 'next') {
+      nextIndex = currentIndex < tracks.length - 1 ? currentIndex + 1 : 0;
     } else {
-      setAudioSrc(tracks[0].src);
-      // setCurrentTrackName(tracks[0].name);
+      nextIndex = currentIndex > 0 ? currentIndex - 1 : tracks.length - 1;
     }
-
-    // Automatically play next audio on click next button
+  
+    // Set the audio source to the next or previous track
+    setAudioSrc(tracks[nextIndex].src);
+  
+    // Automatically play the next or previous audio
     setTimeout(() => {
       const audioElement = document.getElementsByTagName('audio')[0];
       if (audioElement) {
@@ -44,10 +58,16 @@ const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
         src={audioSrc}
         autoPlay={false}
         className='music-player'
-        onClickNext={handleNextMusicButtonClick}
-        onEnded={handleNextMusicButtonClick}
+        onClickNext={() => handleMusicButtonClick('next')}
+        onClickPrevious={() => handleMusicButtonClick('previous')}
+        onEnded={() => handleMusicButtonClick('next')}
         showSkipControls={true}
-        
+        customIcons={{
+          next: <img src={Next} alt="Next" />,
+          previous: <img src={Prev} alt="Prev" />,
+          play: <img src={Play} alt="Play" />,
+          pause: <img src={Pause} alt="Pause" />,
+        }}
       />
     </>
   );

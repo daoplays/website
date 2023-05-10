@@ -1,18 +1,21 @@
 /* Define the background color of the entire player and placement */
 .music-player {
-    background-color: #000000; /* Dark gray */
     color: #fff; /* White text */
-    width: 25%;
     position: fixed;
-    bottom: 0;
-    right: 0;
-    z-index: 9999; /* Make sure the player is on top of other elements */
+    top: 0;
+    left: 45%;
+    /* transform: translateX(-50%); */
+    display: block;
+    background: transparent;
+    height: fit-content;
+    margin-top: -2.75%;
+    position: absolute;
   }
   
   /* Style the audio controls */
   .music-player audio {
     width: 100%;
-    height: 20px;
+    height: 10px;
   }
   
   /* Style the play/pause button */
@@ -23,7 +26,7 @@
     border-radius: 50%;
     width: 10px;
     height: 10px;
-    margin: 5px;
+    margin: 7px;
   }
   
   /* Style the track progress bar */
@@ -33,6 +36,21 @@
     background-color: #fff; /* White */
     color: #fff;
   }
+
+  /* Hide mute button */
+  button[aria-label="Mute"] {
+    display: none;
+  }
+
+  button[aria-label="Rewind"] {
+    display: none;
+  }
+  
+
+  button[aria-label="Forward"] {
+    display: none;
+  }
+  
   
   /* Style the volume and mute buttons */
   .music-player audio::-webkit-media-controls-volume-slider,
@@ -47,8 +65,8 @@
     display: block;
     background-color: #fff; /* White */
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 10px;
+    height: 10px;
     margin: 5px;
     color: #fff;
   }
@@ -61,3 +79,72 @@
     background-color: #fff; /* White */
   }
   
+  .rhap_progress-container{
+    display: none;
+  }
+
+  .rhap_container {
+    transform: scale(1.1);
+    width: fit-content;
+  }
+
+  .music-player .rhap_play-pause-button,
+.music-player .rhap_skip-button,
+.music-player .rhap_rewind-button,
+.music-player .rhap_forward-button {
+  /* button styles here */
+
+  transform: scale(0.7);
+}
+
+.music-player button {
+  padding: 0;
+  margin: 0;
+  /* width: 20px;
+  height: 20px; */
+}
+
+.music-player svg {
+  width: 100%;
+  height: 100%;
+}
+
+.rhap_volume-bar, .rhap_volume-indicator {
+  display: none;
+}
+
+button[aria-label="Enable loop"] {
+  display: none;
+}
+
+@media only screen and (max-width: 495px) {
+  .rhap_main {
+    font-size: 14px;
+  }
+
+  .rhap_controls-section {
+    margin-top: 5px;
+  }
+
+  .rhap_volume-bar-area {
+    height: 3px;
+  }
+
+  .music-player .rhap_play-pause-button,
+  .music-player .rhap_skip-button,
+  .music-player .rhap_rewind-button,
+  .music-player .rhap_forward-button {
+    /* button styles here */
+  
+    transform: scale(0.4);
+  }
+
+
+  .music-player {
+    top: 0;
+    left: 38%;
+    margin-top: -9%;
+    position: absolute;
+  }
+
+}
