@@ -110,7 +110,10 @@ import { ArenaScreen } from './arena';
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
 import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
-
+import Retry from './sounds/Retry.mp3'
+import Torch from './sounds/Torch.mp3'
+import Escape from './sounds/Escape.mp3'
+import Game_Over from './sounds/Game_Over.mp3'
 import { MuteContext, MuteProvider } from './mute';
 
 
@@ -141,6 +144,10 @@ const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 const wagerSelectAudio = new Audio(wagerSelect)
 const classSelectAudio = new Audio(classSelect)
 const dungeonTileAudio = new Audio(dungeonTile)
+const GameOverAudio = new Audio(Game_Over)
+const EscapeAudio = new Audio(Escape)
+const TorchAudio = new Audio(Torch)
+const RetryAudio = new Audio(Retry)
 
 const enum BetSize {
     SolanaBet1 = 0,
@@ -1018,7 +1025,6 @@ export function DungeonApp()
 
     const Play = useCallback( async () => 
     {
-        //here
        
         
         setTransactionFailed(false);
@@ -1724,6 +1730,41 @@ export function DungeonApp()
     }
 
 
+    const handleExploreFurther = () => {
+        if (!isMuted) TorchAudio.play()
+        Play()
+      };
+
+
+    const handleEscape = () => {
+        if (!isMuted) EscapeAudio.play()
+        Quit()
+      };
+
+
+    const handleRetry = () => {
+        if (!isMuted) RetryAudio.play()
+        Play()
+      };
+
+
+      const handleExit = () => {
+        if (!isMuted) GameOverAudio.play()
+        ShowDeath()
+      };
+
+
+    // const handleVictoy = () => {
+    //     if (!isMuted) VictoryAudio.play()
+    //     Play()
+    //   };
+
+    // const handlePlayerDeath = () => {
+    //     if (!isMuted) PlayerDeathAudio.play()
+    //     Play()
+    //   };
+
+
     const InDungeon = () =>  {
 
         var font_size = DEFAULT_FONT_SIZE;
@@ -1795,13 +1836,13 @@ export function DungeonApp()
                         <Center>
                             <HStack alignItems="center">
                                 
-                                <Button variant='link' size='md' onClick={ShowDeath} mr="5rem">
+                                <Button variant='link' size='md' onClick={handleExit} mr="5rem">
                                     <div className="font-face-sfpb">
                                         <Text textAlign="center" fontSize={font_size} color="white">Exit</Text>
                                     </div> 
                                 </Button> 
                                 {!processing_transaction &&
-                                    <Button variant='link' size='md' onClick={Play} ml="5rem">
+                                    <Button variant='link' size='md' onClick={handleRetry} ml="5rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retry</Text>
                                         </div> 
@@ -1835,7 +1876,7 @@ export function DungeonApp()
 
                                 <HStack>
                                     {!processing_transaction &&
-                                    <Button variant='link' size='md' onClick={Quit} mr="3rem">
+                                    <Button variant='link' size='md' onClick={handleEscape} mr="3rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={font_size} color="white">Escape</Text>
                                         </div> 
@@ -1849,7 +1890,7 @@ export function DungeonApp()
                                         </Button> 
                                     }
                                     {!processing_transaction &&
-                                    <Button variant='link' size='md' onClick={Play} ml="10rem">
+                                    <Button variant='link' size='md' onClick={handleExploreFurther} ml="10rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={font_size} color="white">Explore Further</Text>
                                         </div> 
