@@ -1,3 +1,4 @@
 .mute-button img {
-    width: 30px;
+  width: 1.5rem;
+  max-width:inherit;
   }

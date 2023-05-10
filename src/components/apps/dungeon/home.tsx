@@ -36,6 +36,8 @@ import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
+import 'react-h5-audio-player/lib/styles.css'
+
 import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
         TOKEN_PROGRAM_ID,
@@ -244,6 +246,8 @@ export function DungeonApp()
     const state_interval = useRef<number | null>(null);
 
 
+   
+
 
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
@@ -368,7 +372,6 @@ export function DungeonApp()
                     </Box>
                 </HStack>
             }
-
             {isMobile &&
                     <Select 
                     placeholder={BetSizeValues[0] + ' SOL'}
@@ -1616,7 +1619,10 @@ export function DungeonApp()
         if (isMobile) {
             font_size = "15px";
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> d26720792fb37cd2c09e9dbedaf1b3cad0475a6e
         return (
             <>
             <Box width="100%">
@@ -1727,6 +1733,8 @@ export function DungeonApp()
                                 </VStack>
                             </Box>  
                         </HStack>
+                        
+
                         <HStack visibility={visible ? "visible" : "hidden"}>
                             <Box width="33%" mt="2rem"/>
                             <Box width="33%" mt="2rem"><CharacterSelect/></Box>

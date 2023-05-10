@@ -49,6 +49,14 @@ export function Navigation(
 
     const [balance, setBalance] = useState(0);
 
+     //MusicList
+     const MusicList = [
+        { src: delvingDeeper, name: 'Delving Deeper' },
+        { src: hackNSlash, name: 'Hack N Slash' },
+        { src: enterTheDungeon, name: 'Enter the Dungeon' },
+        { src: dungeonCrawling, name: 'Dungeon Crawling' },
+    ];
+
     const { isMuted, toggleMute } = useContext(MuteContext);
 
   // This will be used to store the interval
