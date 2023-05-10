@@ -8,7 +8,7 @@
     display: block;
     background: transparent;
     height: fit-content;
-    margin-top: -2.75%;
+    margin-top: -2.92%;
     position: absolute;
   }
   
@@ -84,7 +84,7 @@
   }
 
   .rhap_container {
-    transform: scale(1.1);
+    transform: scale(1.5);
     width: fit-content;
   }
 
