@@ -48,7 +48,6 @@ import knight from "./images/Knight.gif"
 import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
-import { useContext, useEffect } from 'react';
 
 export const WIN_FACTORS : number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
@@ -94,9 +93,6 @@ export const DungeonCharacterEmoji : string[] = [
     "<a:Wizard:1070471413829472287>"
 ]
 
-
-const VictoryAudio = new Audio(Victory)
-const PlayerDeathAudio = new Audio(Player_Death)
 
 
 
@@ -353,13 +349,9 @@ export const DisplayEnemyAppearsText = ({current_enemy, current_level, num_plays
 
 export const DisplayPlayerFailedText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
  
-    const { isMuted } = useContext(MuteContext);
     let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
     var random = seedrandom(seed_string);
 
-    useEffect(() => {
-        if (!isMuted) PlayerDeathAudio.play()
-    }, [isMuted])
 
     let enemy_text : string[] = DungeonPlayerDefeatedText[current_enemy];
     let idx : number = Math.floor(random() * enemy_text.length);
@@ -394,12 +386,8 @@ const EnemyDefeatedText = ({current_enemy, current_level, num_plays} : {current_
 
 export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size, num_plays} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number, num_plays : number}) => {
     
-    const { isMuted } = useContext(MuteContext);
     let current_win = WIN_FACTORS[current_level] *  bet_size;
-
-    useEffect(() => {
-        if (!isMuted) VictoryAudio.play()
-    }, [isMuted])
+    
     
     if (current_level <  7) {
         let next_win = WIN_FACTORS[current_level + 1] *  bet_size;

@@ -1754,17 +1754,6 @@ export function DungeonApp()
       };
 
 
-    // const handleVictoy = () => {
-    //     if (!isMuted) VictoryAudio.play()
-    //     Play()
-    //   };
-
-    // const handlePlayerDeath = () => {
-    //     if (!isMuted) PlayerDeathAudio.play()
-    //     Play()
-    //   };
-
-
     const InDungeon = () =>  {
 
         var font_size = DEFAULT_FONT_SIZE;
