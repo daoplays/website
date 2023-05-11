@@ -114,6 +114,8 @@ import Retry from './sounds/Retry.mp3'
 import Torch from './sounds/Torch.mp3'
 import Escape from './sounds/Escape.mp3'
 import Game_Over from './sounds/Game_Over.mp3'
+import Player_Death from './sounds/Player_Death.mp3'
+import Victory from './sounds/Victory.mp3'
 import { MuteContext, MuteProvider } from './mute';
 
 
@@ -148,6 +150,8 @@ const GameOverAudio = new Audio(Game_Over)
 const EscapeAudio = new Audio(Escape)
 const TorchAudio = new Audio(Torch)
 const RetryAudio = new Audio(Retry)
+const VictoryAudio = new Audio(Victory)
+const PlayerDeathAudio = new Audio(Player_Death)
 
 const enum BetSize {
     SolanaBet1 = 0,
@@ -939,6 +943,10 @@ export function DungeonApp()
                     }
                     setPlayerState(DungeonStatus.alive);
                     setEnemyState(DungeonStatus.dead);
+                    
+                    //Victory sound plays
+                    if (!isMuted) VictoryAudio.play()
+
                 }
                 // enemy killed player
                 else {
@@ -947,6 +955,9 @@ export function DungeonApp()
                     }
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
+
+                    //Death sound plays
+                    if (!isMuted) PlayerDeathAudio.play()
                 }
 
                 if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
@@ -971,7 +982,7 @@ export function DungeonApp()
                 return () => clearTimeout(timer);
         
 
-    }, [animateLevel, player_character, current_enemy, current_level, CheckNewPlayAchievements]);
+    }, [player_character, current_enemy, current_level, CheckNewPlayAchievements]);
 
 
     
