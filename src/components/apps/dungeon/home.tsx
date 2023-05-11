@@ -109,7 +109,7 @@ import { ArenaScreen } from './arena';
 
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
-import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
+import dungeonTile from './sounds/Open_Door.mp3'
 import Retry from './sounds/Retry.mp3'
 import Torch from './sounds/Torch.mp3'
 import Escape from './sounds/Escape.mp3'
