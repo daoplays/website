@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useRef, useContext } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef, useContext } from 'react';
 import {
     ChakraProvider,
     Box,

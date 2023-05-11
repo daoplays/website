@@ -4,10 +4,6 @@ import {
     Text,
 } from '@chakra-ui/react';
 
-import { MuteContext, MuteProvider } from './mute';
-import Victory from './sounds/Victory.mp3'
-import Player_Death from './sounds/Player_Death.mp3'
-
 //  dungeon constants
 import {DUNGEON_FONT_SIZE} from './constants';
 
