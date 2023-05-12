@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo, useRef, useContext } from 'react';
+import { useSearchParams } from "react-router-dom";
+
 import {
     ChakraProvider,
     Box,
@@ -31,6 +33,8 @@ import FocusLock from 'react-focus-lock';
 import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
+
+import 'react-h5-audio-player/lib/styles.css'
 
 import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
@@ -82,7 +86,7 @@ import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, PROD,
 
 // dungeon utils
 import { request_player_account_data, request_key_data_from_index, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction, get_JWT_token, get_current_blockhash, send_transaction, check_signature, request_current_balance, AchievementData, NewDiscordMessage} from './utils';
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction, get_JWT_token, get_current_blockhash, send_transaction, check_signature, request_current_balance, AchievementData, NewDiscordMessage, serialise_quit_instruction} from './utils';
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS, DungeonCharacterEmoji, DungeonEnemyEmoji, GoldEmoji} from './dungeon_state';
 
@@ -108,6 +112,7 @@ import { ArenaScreen } from './arena';
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
 import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
+
 import { MuteContext, MuteProvider } from './mute';
 
 
@@ -240,6 +245,11 @@ export function DungeonApp()
     const check_achievements = useRef<boolean>(true);
     const state_interval = useRef<number | null>(null);
 
+    // referall code
+    const [searchParams] = useSearchParams();
+
+
+   
 
 
     //button processing
@@ -1163,6 +1173,8 @@ export function DungeonApp()
     const Quit = useCallback( async () => 
     {
 
+        console.log("params", searchParams.get("name"), searchParams.get("bla"));
+
         setTransactionFailed(false);
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
@@ -1173,8 +1185,12 @@ export function DungeonApp()
         let dm_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
 
+        let ref_code = searchParams.get("ref");
 
-        const instruction_data = serialise_basic_instruction(DungeonInstruction.quit);
+        if (ref_code === null)
+            ref_code = "None";
+
+        const instruction_data = serialise_quit_instruction(DungeonInstruction.quit, ref_code);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
@@ -1256,7 +1272,7 @@ export function DungeonApp()
         return;
     
 
-    },[wallet, player_character, current_level, bet_size, bearer_token]);
+    },[wallet, player_character, current_level, bet_size, bearer_token, searchParams]);
 
     const ClaimAchievement = useCallback( async (which : number) => 
     {
@@ -1602,7 +1618,6 @@ export function DungeonApp()
         if (isMobile) {
             font_size = "15px";
         }
-
         return (
             <>
             <Box width="100%">
@@ -1713,6 +1728,8 @@ export function DungeonApp()
                                 </VStack>
                             </Box>  
                         </HStack>
+                        
+
                         <HStack visibility={visible ? "visible" : "hidden"}>
                             <Box width="33%" mt="2rem"/>
                             <Box width="33%" mt="2rem"><CharacterSelect/></Box>
@@ -2044,7 +2061,10 @@ function Home() {
     ],
     []
   );
-  document.body.setAttribute('style', 'background: black;');
+
+
+    document.body.setAttribute('style', 'background: black;');
+
     return (
 
         <ChakraProvider>

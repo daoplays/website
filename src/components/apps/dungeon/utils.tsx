@@ -535,6 +535,23 @@ class DungeonPlayInstruction {
     )
 }
 
+class DungeonQuitInstruction {
+    constructor(
+        readonly instruction: number,
+        readonly ref_code: string
+
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<DungeonQuitInstruction>(
+      [
+        ['instruction', u8],
+        ['ref_code', utf8String]
+      ],
+      (args) => new DungeonQuitInstruction(args.instruction!, args.ref_code!),
+      'DungeonQuitInstruction'
+    )
+}
+
 class DungeonExploreInstruction {
     constructor(
       readonly instruction: number,
@@ -605,6 +622,15 @@ export function serialise_play_instruction(instruction : number, which_character
 
     const data = new DungeonPlayInstruction(instruction, which_character, bet_size);
     const [buf] = DungeonPlayInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_quit_instruction(instruction : number, ref_code : string) : Buffer
+{
+
+    const data = new DungeonQuitInstruction(instruction, ref_code);
+    const [buf] = DungeonQuitInstruction.struct.serialize(data);
 
     return buf;
 }

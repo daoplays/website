@@ -31,6 +31,11 @@ import {Screen} from './constants';
 
 import { MuteButton, MuteContext } from './mute';
 
+import delvingDeeper from './sounds/Delving_Deeper.mp3'
+import hackNSlash from './sounds/Hack_n_Slash.mp3'
+import enterTheDungeon from './sounds/Enter_the_Dungeon.mp3'
+import dungeonCrawling from './sounds/Dungeon_Crawling.mp3'
+import MusicPlayer from './musicPlayer';
 
 // dungeon utils
 import { WalletConnected, request_current_balance} from './utils';
@@ -48,6 +53,14 @@ export function Navigation(
     const wallet = useWallet();
 
     const [balance, setBalance] = useState(0);
+
+     //MusicList
+     const MusicList = [
+        { src: delvingDeeper, name: 'Delving Deeper' },
+        { src: hackNSlash, name: 'Hack N Slash' },
+        { src: enterTheDungeon, name: 'Enter the Dungeon' },
+        { src: dungeonCrawling, name: 'Dungeon Crawling' },
+    ];
 
     const { isMuted, toggleMute } = useContext(MuteContext);
 
@@ -167,16 +180,26 @@ export function Navigation(
         
     },[setScreen]);
 
+    const addMargin = (index:number) => {
+      if (index === 0) {
+        return { marginTop: "1rem", _focus: { boxShadow: "none" } };
+      } else if (index === NavBar.length - 1) {
+        return { marginBottom: "1rem" };
+      } else {
+        return {};
+      }
+    };
+
     const NavBar = [
-        { text: 'HOME', onClick: ShowHome },
-        { text: 'ARENA', onClick: ShowArena },
+        { text: 'Home', onClick: ShowHome },
+        { text: 'Arena', onClick: ShowArena },
         { text: 'DM', onClick: ShowDM },
-        { text: 'SHOP', onClick: ShowShop },
-        { text: 'ACHIEVEMENTS', onClick: ShowAchievements },
-        { text: 'STATS', onClick: ShowStats },
-        { text: 'ODDS', onClick: ShowOdds },
+        { text: 'Shop', onClick: ShowShop },
+        { text: 'Achievements', onClick: ShowAchievements },
+        { text: 'Stats', onClick: ShowStats },
+        { text: 'Odds', onClick: ShowOdds },
         { text: 'FAQ', onClick: ShowFAQ },
-        { text: 'HELP', onClick: ShowHelp },
+        { text: 'Help', onClick: ShowHelp },
       ];
 
       function DesktopNavigation() {
@@ -209,15 +232,15 @@ export function Navigation(
               </Box>
             </Flex>
       
-            <Drawer isOpen={isOpen} placement="right" onClose={onClose}  onOverlayClick={onClose}>
-              <DrawerOverlay />
-              <DrawerContent maxHeight="360px" maxWidth={"25%"} borderColor="white" borderWidth="2px" >
-                <DrawerBody backgroundColor="#171923">
-                  <VStack mt="1rem" spacing="24px">
+            <Drawer isOpen={isOpen} placement="right" onClose={onClose} closeOnOverlayClick={true} >
+              <DrawerOverlay  />
+              <DrawerContent maxWidth={"25%"} maxHeight="fit-content" borderColor="white" borderWidth="2px">
+                <DrawerBody bg="black" backgroundColor="#171923" >
+                  <VStack spacing="24px">
                     {NavBar.map((button, index) => (
-                      <Button variant="link" key={index} size="md" onClick={button.onClick}>
+                      <Button variant="link"  key={index} size="md" style={addMargin(index)} onClick={button.onClick} sx={{outline: "none !important"}} textTransform={'uppercase'} >
                         <div className="font-face-sfpb">
-                          <Text fontSize="16px" color="white">
+                          <Text fontSize="16px" color="white"  _hover={{textDecoration: "underline"}}>
                             {button.text}
                           </Text>
                         </div>
@@ -227,6 +250,7 @@ export function Navigation(
                 </DrawerBody>
               </DrawerContent>
             </Drawer>
+            
           </Box>
         );
       }
@@ -300,12 +324,19 @@ export function Navigation(
 
     return(
         <>
+       
             {!isMobile &&
+            <>
                 <DesktopNavigation/>
+                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+            </>
             }
 
             {isMobile &&
+            <>
                 <MobileNavigation/>
+                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+            </>
             }
         </>
     )
