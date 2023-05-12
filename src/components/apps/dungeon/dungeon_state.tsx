@@ -589,7 +589,7 @@ export const DisplayLVL = ({current_level} : {current_level : number}) =>  {
             <Box width="10%">
                 <div className="font-face-sfpb">
                         
-                        <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Lvl. {current_level}</Text>
+                        <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Lvl. {current_level > 0 ? current_level : ""}</Text>
                         
                 </div>
             </Box>
