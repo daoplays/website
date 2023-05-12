@@ -1173,8 +1173,6 @@ export function DungeonApp()
     const Quit = useCallback( async () => 
     {
 
-        console.log("params", searchParams.get("name"), searchParams.get("bla"));
-
         setTransactionFailed(false);
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
             return;
