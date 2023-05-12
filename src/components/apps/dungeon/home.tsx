@@ -187,6 +187,7 @@ export function DungeonApp()
     }
 
     // these come from the blockchain
+    const current_interaction = useRef<number | null>(null);
     const [num_plays, setNumPlays] = useState<number>(-1);
     const [numXP, setNumXP] = useState<number>(0);
     const [current_level, setCurrentLevel] = useState<number>(0);
@@ -732,12 +733,14 @@ export function DungeonApp()
 
                 let current_num_plays = (new BN(player_data.num_plays)).toNumber();
 
-                if (current_num_plays <= num_plays) {
+                if (current_interaction.current !== null && current_num_plays <= current_interaction.current) {
                     if (DEBUG) {
                         console.log("num plays not increased", current_num_plays);
                     }
                     return;
                 }
+
+                current_interaction.current = current_num_plays;
 
                 if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
                     let current_bet_value_bn = new BN(player_data.current_bet_size);
@@ -747,10 +750,10 @@ export function DungeonApp()
 
                 setNumPlays(current_num_plays);
 
-                let current_num_wins = (new BN(player_data.num_wins)).toNumber();
+                let current_xp = (new BN(player_data.num_wins)).toNumber();
 
                 if (DEBUG) {
-                    console.log("in init, progress: ", player_data.in_progress, "enemy", player_data.dungeon_enemy, "alive", DungeonStatusString[player_data.player_status + 1], "num_plays", current_num_plays, "num_wins", current_num_wins);
+                    console.log("in init, progress: ", player_data.in_progress, "enemy", player_data.dungeon_enemy, "alive", DungeonStatusString[player_data.player_status + 1], "num_plays", current_num_plays, "num_xp", current_xp);
                 }
 
                 if (initial_num_plays.current ===  -1) {
@@ -761,6 +764,8 @@ export function DungeonApp()
                     return;
                 }  
 
+                check_user_state.current = false;
+
                 setWhichCharacter(player_data.player_character);
 
                 setCurrentEnemy(player_data.dungeon_enemy);
@@ -769,9 +774,8 @@ export function DungeonApp()
 
                 setCurrentStatus(current_status);
 
-                setNumXP(current_num_wins);
+                setNumXP(current_xp);
 
-                check_user_state.current = false;
                 
             } catch(error) {
                 console.log(error);
@@ -826,7 +830,7 @@ export function DungeonApp()
         }
         
 
-    }, [wallet, num_plays, bearer_token]);
+    }, [wallet, bearer_token]);
 
     // interval for checking state
     useEffect(() => {
@@ -856,6 +860,7 @@ export function DungeonApp()
         }
 
         initial_num_plays.current = -1;
+        current_interaction.current = null;
         initial_status.current = DungeonStatus.unknown;
         setTransactionFailed(false);
         setScreen(Screen.HOME_SCREEN);
@@ -884,7 +889,7 @@ export function DungeonApp()
     useEffect(() => 
         {
             if (DEBUG) {
-                console.log("in use effect, progress: ", current_level, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", num_plays, "init num plays", initial_num_plays.current);
+                console.log("in use effect, check_state: ", check_user_state.current, "level: ", current_level, "enemy", current_enemy, "currentStatus", DungeonStatusString[currentStatus], "num_plays", num_plays, "init num plays", initial_num_plays.current);
             }
       
             if (current_level === 0)
@@ -896,6 +901,10 @@ export function DungeonApp()
 
             // if we aren't alive and numplays is still initial num plays we shouldn't display the enemy
             if (num_plays > 1 && num_plays === initial_num_plays.current && data_account_status === AccountStatus.created && currentStatus !== DungeonStatus.alive)
+                return;
+
+            // if we know we are currently waiting for state to update then don't display the enemy
+            if (check_user_state.current === true)
                 return;
 
             if (DEBUG) {
@@ -915,7 +924,7 @@ export function DungeonApp()
 
     useEffect(() => 
     {
-            if (animateLevel === 0) {
+            if (animateLevel === 0 || check_user_state.current === true) {
                 return;
             }
             const timer = setTimeout(() => {
@@ -1726,7 +1735,7 @@ export function DungeonApp()
         }
 
         if (DEBUG) {
-            console.log("in dungeon: currentStatus ", DungeonStatusString[currentStatus], "player status", DungeonStatusString[player_state], "fulfilled ", current_level, "enemy state", DungeonStatusString[enemy_state], numXP);
+            console.log("in dungeon: check_state: ", check_user_state.current,  "current_state ", DungeonStatusString[currentStatus], "player_state", DungeonStatusString[player_state], "level ", current_level, "enemy", current_enemy, "enemy_state", DungeonStatusString[enemy_state]);
         }
 
         let background_image = hallway;
