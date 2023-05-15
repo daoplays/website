@@ -1,4 +1,4 @@
-import { Button, Box } from '@chakra-ui/react';
+import { Button, Box, Flex } from '@chakra-ui/react';
 import { FC, useEffect, useState } from 'react';
 import { createContext } from 'react';
 import soundOnImg from './images/Sound_On.png';
@@ -29,18 +29,20 @@ export const MuteButton: FC<MuteButtonProps> = ({ muteState, toggleMute, volume,
       break;
     case MuteState.VolumeSlider:
       content = (
-        <Box width="3rem">
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={volume}
-            onChange={e => setVolume(Number(e.target.value))}
-            style={{ width: "100%" }}
-          />
-        </Box>
-
-      );
+        <Flex direction="column" alignItems="center" className='volume-slider-flex' >
+            <img src={soundOnImg} alt="Sound On" />
+            <Box  width="2rem" height="0.5rem" marginTop="2rem">
+                <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={e => setVolume(Number(e.target.value))}
+                    style={{ width: "4rem", transform: "rotate(-90deg)" ,marginLeft: "-1rem"}}
+                />
+            </Box>
+        </Flex>
+    );
       break;
   }
 
