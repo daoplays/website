@@ -71,7 +71,6 @@ export const MuteProvider = ({ children, isMuted: initialMuted }: React.PropsWit
   const toggleMute = () => {
 
     setMuteState((prevState) => {
-      console.log(prevState)
       switch (prevState) {
         case MuteState.Unmuted:
           return MuteState.Muted;
