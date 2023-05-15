@@ -29,7 +29,7 @@ export const MuteButton: FC<MuteButtonProps> = ({ muteState, toggleMute, volume,
       break;
     case MuteState.VolumeSlider:
       content = (
-        <Box width="2rem">
+        <Box width="3rem">
           <input
             type="range"
             min="0"
