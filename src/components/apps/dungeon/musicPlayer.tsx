@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import ReactAudioPlayer from 'react-h5-audio-player';
+import { MuteContext } from './mute';
 import 'react-h5-audio-player/lib/styles.css';
 import './css/musicPlayer.css'
 import Next from './images/Next.png';
@@ -14,23 +15,28 @@ interface MusicTrack {
 
 interface MusicPlayerProps {
   tracks: MusicTrack[];
-  isMuted: boolean;
+  muteState: number;
 }
 
-const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
+
+
+const MusicPlayer = ({ tracks,muteState }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
+  const {  volume } = useContext(MuteContext);
 
   useEffect(() => {
     const audioElement = document.getElementsByTagName('audio')[0];
+    audioElement.volume=volume/100
     if (audioElement) {
       audioElement.pause()
     }
-  },[isMuted])
+  },[muteState,volume])
   
 
   const handleMusicButtonClick = (direction: 'next' | 'previous') => {
     // Find the index of the current audio source in the tracks array
     const currentIndex = tracks.findIndex((item) => item.src === audioSrc);
+    
   
     // Calculate the index of the next or previous track
     let nextIndex;
@@ -62,6 +68,7 @@ const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
         onClickPrevious={() => handleMusicButtonClick('previous')}
         onEnded={() => handleMusicButtonClick('next')}
         showSkipControls={true}
+        volume={volume/100}
         customIcons={{
           next: <img src={Next} alt="Next" />,
           previous: <img src={Prev} alt="Prev" />,

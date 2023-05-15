@@ -62,7 +62,7 @@ export function Navigation(
         { src: dungeonCrawling, name: 'Dungeon Crawling' },
     ];
 
-    const { isMuted, toggleMute } = useContext(MuteContext);
+    const { muteState } = useContext(MuteContext);
 
   // This will be used to store the interval
   const intervalref = useRef<number | null>(null);
@@ -226,7 +226,11 @@ export function Navigation(
                   <a href="https://discord.gg/soldungeon">
                     <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
                   </a>
-                  <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
+                  <MuteContext.Consumer>
+                      {({ muteState, toggleMute, volume, setVolume }) => (
+                        <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
+                      )}
+                    </MuteContext.Consumer>
                   <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                 </HStack>
               </Box>
@@ -285,7 +289,11 @@ export function Navigation(
                             <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
 
-                        <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
+                        <MuteContext.Consumer>
+                      {({ muteState, toggleMute, volume, setVolume }) => (
+                        <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
+                      )}
+                    </MuteContext.Consumer>
 
                         <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
 
@@ -328,14 +336,14 @@ export function Navigation(
             {!isMobile &&
             <>
                 <DesktopNavigation/>
-                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+                <MusicPlayer tracks={MusicList} muteState={muteState} />
             </>
             }
 
             {isMobile &&
             <>
                 <MobileNavigation/>
-                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+                <MusicPlayer tracks={MusicList} muteState={muteState} />
             </>
             }
         </>
