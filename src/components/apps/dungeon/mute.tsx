@@ -61,7 +61,7 @@ export const MuteContext = createContext<MuteButtonProps>({
 });
 
 export const MuteProvider = ({ children, isMuted: initialMuted }: React.PropsWithChildren<{ isMuted: boolean }>) => {
-  const [muteState, setMuteState] = useState(initialMuted ? MuteState.Muted : MuteState.VolumeSlider);
+  const [muteState, setMuteState] = useState(initialMuted ? MuteState.Muted : MuteState.Unmuted);
   const [volume, setVolume] = useState(50);
 
   useEffect(() => {
