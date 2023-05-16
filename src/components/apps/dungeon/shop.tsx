@@ -41,8 +41,6 @@ import musicbox_collection from "./images/MusicBoxCollection.gif"
 import lorepage_collection from "./images/LorePages.png"
 import paintings_collection from "./images/Paintings.png"
 
-import closed_chest from "./images/chest_closed.png"
-import open_chest from "./images/chest_open.png"
 import shop from "./images/ShopInside.gif"
 
 // paintings
@@ -65,16 +63,6 @@ const KEY_COLLECTION_MINT = new PublicKey('9C7CUp5aXDcg5QbSFVJwPeXviyFD4YK6CdQzp
 const MUSICBOX_COLLECTION_MASTER = new PublicKey('BvJ4QqRgs6qRAKvCSWdeMpYtJZckiwhgFu4NsJVSNm2F');
 const MUSICBOX_COLLECTION_META = new PublicKey('5BqLuUX3ujSZuRV1dmbtWDsStTg755woj9pRjpBLmtJk');
 const MUSICBOX_COLLECTION_MINT = new PublicKey('9wNxsyK7N4c5EiXkT2FmgYkQopGmBBmQKibtpo4eKVkA');
-
-const enum ChestStatus {
-    closed = 0,
-    open = 1,
-    lead = 2,
-    bronze = 3,
-    silver = 4,
-    gold = 5,
-    obsidian  = 6
-}
 
 const enum ShopInstruction {
     init = 0,
@@ -105,7 +93,6 @@ const enum Collection {
 export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp : number, bearer_token : string, check_sol_balance : React.MutableRefObject<boolean>})
 {
     const wallet = useWallet();
-    const [chest_state, setChestState] = useState<ChestStatus>(ChestStatus.closed);
     const [current_mint, setCurrentMint]  = useState<PublicKey | null>(null);
     const [which_key, setWhichKey] = useState<string | null>(null);
     const [key_description, setKeyDescription] = useState<string | null>(null);
@@ -277,7 +264,6 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             setKeyDescription(uri_json["description"]);
             setKeyImage(uri_json["image"]);
             setCurrentMint(meta_data[0].mint);
-            setChestState(ChestStatus.closed);
 
             current_key.current = null;
         
@@ -345,15 +331,6 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     }, []);
 
 
-    const DisplayChest = ({visible} : {visible : boolean}) => {
-
-        if (chest_state === ChestStatus.closed) {
-            return ( <img style={{"imageRendering":"pixelated", "visibility": visible ? "visible" : "hidden"}} src={closed_chest} width="10000" alt={""}/> );
-        }
-
-        return ( <img style={{"imageRendering":"pixelated", "visibility":  visible ? "visible" : "hidden"}} src={open_chest} width="10000" alt={""}/> );
-               
-    }
 
     const MintFromCollection = useCallback( async () => 
     {
@@ -473,7 +450,6 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             setKeyDescription(null);
             setKeyImage(null);
        
-            setChestState(ChestStatus.open);
 
             const nft_mint_keypair = Keypair.generate();
             var nft_mint_pubkey = nft_mint_keypair.publicKey;
