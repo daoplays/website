@@ -234,7 +234,9 @@ export function DungeonApp()
     const [player_character, setWhichCharacter] = useState<DungeonCharacter>(DungeonCharacter.knight);
     const [enemy_state, setEnemyState] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [player_state, setPlayerState] = useState<DungeonStatus>(DungeonStatus.unknown);
-    const [animateLevel, setAnimateLevel] = useState<number>(0);
+    
+    // animateLevel becomes a useRef
+    const animateLevel = useRef(0);
 
     // refs to hold initial status
     const initial_num_plays = useRef<number>(-1);
@@ -921,68 +923,80 @@ export function DungeonApp()
             setEnemyState(DungeonStatus.alive);
             setPlayerState(DungeonStatus.alive);
             if (currentStatus === DungeonStatus.alive) {
-                setAnimateLevel(1);
+                animateLevel.current=1
             }
             else {
-                setAnimateLevel(2);
+                animateLevel.current=2
             }
 
         }, [num_plays, current_level, current_enemy, currentStatus, data_account_status, screen]);
 
-    useEffect(() => 
-    {
-            if (animateLevel === 0) {
+        
+        
+        // New function to handle animation
+        const handleAnimation = useCallback((level:number) => {
+            if (level === 0) {
                 return;
             }
             const timer = setTimeout(() => {
-
-                // player killed enemy
-                if (animateLevel === 1) {
+                if (level === 1) {
                     if (DEBUG) {
                         console.log("player killed enemy");
                     }
                     setPlayerState(DungeonStatus.alive);
                     setEnemyState(DungeonStatus.dead);
-                    
+        
                     //Victory sound plays
-                    if (!isMuted) VictoryAudio.play()
 
-                }
-                // enemy killed player
-                else {
+                    if (!isMuted) {
+                        try {
+                            // VictoryAudio.play()
+                        } catch (error) {
+                          console.log("Failed to play audio");
+                        }
+                      }
+        
+                } else {
                     if (DEBUG) {
                         console.log("enemy killed player")
                     }
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
 
-                    //Death sound plays
-                    if (!isMuted) PlayerDeathAudio.play()
+                    if (!isMuted) {
+                        try {
+                        //   PlayerDeathAudio.play()
+                        } catch (error) {
+                          console.log("Failed to play audio");
+                        }
+                      }
                 }
-
+        
                 if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
-
                     const message: NewDiscordMessage = {
-                        message_type: animateLevel === 1 ? "defeated" : "killed_by",
+                        message_type: level === 1 ? "defeated" : "killed_by",
                         emoji_1: DungeonCharacterEmoji[player_character],
                         emoji_2: DungeonEnemyEmoji[current_enemy],
                         level: current_level,
                         sol_amount: 0,
                         achievement_name: ""
-                        
                     };
-
+        
                     post_discord_message(message);
                     discord_play_message_sent.current = true;
                 }
-
-                setAnimateLevel(0);
-                CheckNewPlayAchievements()
-                }, 5000);
-                return () => clearTimeout(timer);
         
-
-    }, [player_character, current_enemy, current_level, CheckNewPlayAchievements]);
+                animateLevel.current = 0;
+                CheckNewPlayAchievements()
+            }, 5000);
+        
+            return () => clearTimeout(timer);
+        },[isMuted, current_level, player_character, current_enemy, CheckNewPlayAchievements])
+        
+        // Replace the previous useEffect with this one
+        useEffect(() => {
+            handleAnimation(animateLevel.current);
+        }, [handleAnimation]);
 
 
     
