@@ -14,6 +14,7 @@ import Table from 'react-bootstrap/Table';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import Container from 'react-bootstrap/Container';
+import { useMediaQuery } from 'react-responsive'
 
 //import {
  //   useWallet
@@ -53,11 +54,15 @@ import knight_emoji from "./emojis/Knight.gif"
 import ranger_emoji from "./emojis/Ranger.gif"
 import wizard_emoji from "./emojis/Wizard.gif"
 
-
+import "../dungeon/css/style.css"
 
 
 function HorizontalBar({title, x1, x2} : {title: string, x1 : number[], x2 : number[]})
 {
+
+    const isMobile = useMediaQuery({ query: '(max-width: 500px)' })
+    const isTab = useMediaQuery({ query: '(max-width: 900px)' })
+
     var trace1 = {
         x: x1,
         //y: ['giraffes'],
@@ -91,7 +96,7 @@ function HorizontalBar({title, x1, x2} : {title: string, x1 : number[], x2 : num
       
       var layout = {
         height: 300,
-        width: 500,
+        width: isMobile ? 340: isTab ? 500 : 500,
         title: title,
         barmode: 'stack',
         showlegend: false,
@@ -102,7 +107,7 @@ function HorizontalBar({title, x1, x2} : {title: string, x1 : number[], x2 : num
         },
         font: {
             family: 'SFPixelate',
-            size: 18,
+            size: isMobile ? 10: isTab ? 18 : 18,
             color: 'white'
           },
           yaxis: {
@@ -126,6 +131,10 @@ function HorizontalBar({title, x1, x2} : {title: string, x1 : number[], x2 : num
 
 function PieChart({values, labels, title} : {values : number[], labels : string[], title : string})
 {
+
+    const isMobile = useMediaQuery({ query: '(max-width: 500px)' })
+    const isTab = useMediaQuery({ query: '(max-width: 900px)' })
+
     if (values.length === 0)
         return(<></>);
 
@@ -143,14 +152,14 @@ function PieChart({values, labels, title} : {values : number[], labels : string[
     }];
 
     var layout = {
-        height: 400,
-        width: 500,
+        height: isMobile ? 300: isTab ? 400 : 400,
+        width: isMobile ? 300: isTab ? 500 : 500,
         title: title,
         plot_bgcolor:"black",
         paper_bgcolor:"black",
         font: {
             family: 'SFPixelate',
-            size: 18,
+            size: isMobile ? 10: isTab ? 18 : 18,
             color: 'white'
           }
         
@@ -246,6 +255,8 @@ function Clears(AchievementData : AchievementData) : number
 function PlayerStats({AchievementData} : {AchievementData : AchievementData | null})
 {
 
+    const isMobile = useMediaQuery({ query: '(max-width: 500px)' })
+
     if (AchievementData === null)
         return(<></>);
 
@@ -255,11 +266,11 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
 
     //<Text fontSize={DUNGEON_FONT_SIZE}>Total XP: 700</Text>
     return(
-        <Center>
-        <Box width = "80%">
+        <Center width = "100%">
+        <Box width = "100%">
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 
-
+        {!isMobile &&
             <HStack width="100%" spacing="10%" mb = "2rem">
 
                 <VStack align="center">
@@ -293,6 +304,57 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
                 </VStack>
 
             </HStack>
+        }
+
+        {isMobile &&
+            <Center>
+                <HStack spacing="1rem" mb="2rem">
+                    <VStack align="center">
+                        <VStack align="center">
+                            <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{AchievementData.play_streak}</Text>
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Daily Dungeon<br/>Streak </Text>
+                        </VStack>
+
+                        <VStack align="center">
+                            <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{(bignum_to_num(AchievementData.total_lamports_claimed)/1e9).toFixed(3)}</Text>
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total SOL<br/>Looted </Text>
+                        </VStack>
+                    </VStack>
+
+                    <VStack align="center">
+
+                        <VStack align="center" >
+                            <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{AchievementData.games_played_today}</Text>
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Levels Explored<br/>Today </Text>
+                        </VStack>
+
+                                                
+                        <VStack align="center">
+                            <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{Clears(AchievementData)}</Text>
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total Dungeon<br/>Clears </Text>
+                        </VStack>
+
+
+                    </VStack>
+                    
+                    <VStack align="center">
+
+                        <VStack align="center" >
+                            <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{AchievementData.games_played}</Text>
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total Levels<br/>Explored </Text>
+                        </VStack>
+
+
+                        <VStack align="center">
+                            <TotalWinLoss AchievementData={AchievementData}/>
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total Levels<br/>Survived/Killed </Text>
+                        </VStack>
+
+                    </VStack>
+
+                </HStack>
+            </Center>
+        }
 
             <Text fontSize={DUNGEON_FONT_SIZE}>Levels Survived/Killed</Text>
                 <Table className="custom-table">
@@ -426,6 +488,9 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
 function GameStats({plays, wins} : {plays : number[], wins : number[]})
 {
 
+    const isMobile = useMediaQuery({ query: '(max-width: 500px)' })
+
+
     if (plays.length === 0)
         return(<></>);
 
@@ -435,16 +500,19 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
     let tier_2_plays = plays[3] + plays[4] + plays[5] + plays[6];
     let tier_2_wins = wins[3] + wins[4] + wins[5] + wins[6];
 
+    let decimals = 3;
+    if (isMobile)
+        decimals = 2;
 
     return(
         <Center marginBottom="5rem">
-        <Box width = "80%">
+        <Box width = {isMobile ? "95%" : "80%"}>
         <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
 
             <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Per Level Play Statistics</h2><br />
 
 
-            <Table className="custom-table">
+            <Table className="custom-centered-table">
                 <thead>
                 <tr>
                     <th>Level</th>
@@ -485,19 +553,19 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
                     </tr>
                     <tr>
                         <td >%</td>
-                        <td >{(wins[0] / plays[0]).toFixed(3)}</td>
-                        <td >{(wins[1] / plays[1]).toFixed(3)}</td>
-                        <td >{(wins[2] / plays[2]).toFixed(3)}</td>
-                        <td >{(wins[3] / plays[3]).toFixed(3)}</td>
-                        <td >{(wins[4] / plays[4]).toFixed(3)}</td>
-                        <td >{(wins[5] / plays[5]).toFixed(3)}</td>
-                        <td >{(wins[6] / plays[6]).toFixed(3)}</td>
+                        <td >{(wins[0] / plays[0]).toFixed(decimals)}</td>
+                        <td >{(wins[1] / plays[1]).toFixed(decimals)}</td>
+                        <td >{(wins[2] / plays[2]).toFixed(decimals)}</td>
+                        <td >{(wins[3] / plays[3]).toFixed(decimals)}</td>
+                        <td >{(wins[4] / plays[4]).toFixed(decimals)}</td>
+                        <td >{(wins[5] / plays[5]).toFixed(decimals)}</td>
+                        <td >{(wins[6] / plays[6]).toFixed(decimals)}</td>
                     </tr>
                     <tr>
-                        <td >Expected %</td>
-                        <td >0.666</td>
-                        <td >0.666</td>
-                        <td >0.666</td>
+                        <td >Expec. %</td>
+                        <td >0.66</td>
+                        <td >0.66</td>
+                        <td >0.66</td>
                         <td >0.5</td>
                         <td >0.5</td>
                         <td >0.5</td>
@@ -509,7 +577,7 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
             <h2 className="mt-5" style={{fontSize: DEFAULT_FONT_SIZE}}>Per Tier Play Statistics</h2><br />
 
 
-            <Table className="custom-table">
+            <Table className="custom-centered-table">
                 <thead>
                 <tr>
                     <th>Tier</th>
@@ -533,12 +601,12 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
                     </tr>
                     <tr>
                         <td >%</td>
-                        <td >{(tier_1_wins / tier_1_plays).toFixed(3)}</td>
-                        <td >{(tier_2_wins / tier_2_plays).toFixed(3)}</td>
+                        <td >{(tier_1_wins / tier_1_plays).toFixed(decimals)}</td>
+                        <td >{(tier_2_wins / tier_2_plays).toFixed(decimals)}</td>
                     </tr>
                     <tr>
-                        <td >Expected %</td>
-                        <td >0.666</td>
+                        <td >Expec. %</td>
+                        <td >0.66</td>
                         <td >0.5</td>
                     </tr>
                 </tbody>
@@ -642,7 +710,10 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
     function LongPlot({title, x_data, y_data, y2_data} : {title : string, x_data : string[], y_data : number[],  y2_data : number[]})
     {
 
-          var trace1 = {
+        const isMobile = useMediaQuery({ query: '(max-width: 500px)' })
+        const isTab = useMediaQuery({ query: '(max-width: 900px)' })
+
+        var trace1 = {
             x: x_data,
             y: y_data,
             type: 'scatter',
@@ -651,9 +722,9 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
                 color: 'rgb(126,165,248)',
                 width: 2
             }
-          };
+        };
           
-          var trace2 = {
+        var trace2 = {
             x: x_data,
             y: y2_data,
             yaxis: 'y2',
@@ -664,21 +735,21 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
                 color: 'rgb(167,251,93)',
                 width: 2
             }
-          };
+        };
           
           var data = [trace1, trace2];
           
 
           var layout = {
-            height: 400,
-            width: 1000,
+            height: isMobile ? 400: isTab ? 400 : 400,
+            width: isMobile ? 350: isTab ? 500 : 1000,
             title: title,
             plot_bgcolor:"black",
             paper_bgcolor:"black",
             showlegend: false,
             font: {
                 family: 'SFPixelate',
-                size: 18,
+                size: isMobile ? 10: isTab ? 18 : 18,
                 color: 'white'
               },
             xaxis: {
@@ -713,16 +784,17 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
     
     //console.log("active tab", activeTab)
     return(
-        <Container style={{"marginBottom": "5rem"}}>
+        <Container className='responsivePage' style={{"marginBottom": "5rem"}}>
         <Tabs
             className="custom-tab" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}
         >
             <Tab eventKey="home" title="OVERVIEW" tabClassName="custom-tab">
 
-                <Center>
-                    <HStack>
+                <Center className='responsivePage'>
+                    <HStack className='responsiveGraph' >
+
                         <LongPlot title="Dungeons & Degens Daily Data" x_data={dates} y_data={volume_data} y2_data={user_data}/>
-                        <VStack alignItems="left">
+                        <VStack className='lineGraphVstack' alignItems="left">
                             <Box width = "100%" mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
                                 <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
                                 <Text align="center">Total Plays  <br/> {total_plays}</Text>
@@ -741,20 +813,19 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
                         </VStack>
                     </HStack>
                 </Center>
-                <Center>
-                    <HStack>
+                <Center  className='responsivePage'>
+                    <HStack className='responsiveGraph' >
                         <PieChart values={character_data} labels={["Knight", "Ranger", "Wizard"]} title="Character Choices"/>
                         <PieChart values={betsize_data} labels={["0.05", "0.1", "0.25"]} title="Bet Size Choices"/>
                     </HStack>
                 </Center>
 
-                <Center>
-                    <HStack>
-                <HorizontalBar title="Tier 1 W/L" x1={[tier_1_wins]} x2={[tier_1_losses]}/>
-                <HorizontalBar title="Tier 2 W/L" x1={[tier_2_wins]} x2={[tier_2_losses]}/>
+                <Center  className='responsivePage'>
+                    <HStack  className='responsiveGraph' >
+                        <HorizontalBar title="Tier 1 W/L" x1={[tier_1_wins]} x2={[tier_1_losses]}/>
+                        <HorizontalBar title="Tier 2 W/L" x1={[tier_2_wins]} x2={[tier_2_losses]}/>
 
-                </HStack>
-
+                    </HStack>
                 </Center>
             </Tab>
             <Tab eventKey="games" title="GAMES" tabClassName="custom-tab">

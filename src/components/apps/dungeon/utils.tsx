@@ -657,6 +657,25 @@ export function serialise_claim_achievement_instruction(instruction : number, ac
 /////////////////////// Key Shop Instructions and MetaData /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class ShopMintFromCollectionInstruction {
+    constructor(
+        readonly instruction: number,
+        readonly which_collection: number,
+        readonly which_from_collection: number
+
+    ) {}
+  
+    static readonly struct = new BeetStruct<ShopMintFromCollectionInstruction>(
+      [
+        ['instruction', u8],
+        ['which_collection', u8],
+        ['which_from_collection', u8]
+
+      ],
+      (args) => new ShopMintFromCollectionInstruction(args.instruction!, args.which_collection!, args.which_from_collection!),
+      'ShopMintFromCollectionInstruction'
+    )
+}
 
 export class KeyDataFromMint {
     constructor(
@@ -823,6 +842,15 @@ export async function run_keyData_GPA(bearer : string, key_index : number) : Pro
     }
 
     return data
+}
+
+export function serialise_mint_from_collection_instruction(instruction : number, which_collection : number, which_from_collection : number) : Buffer
+{
+
+    const data = new ShopMintFromCollectionInstruction(instruction, which_collection, which_from_collection);
+    const [buf] = ShopMintFromCollectionInstruction.struct.serialize(data);
+
+    return buf;
 }
 
 

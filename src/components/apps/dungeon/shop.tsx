@@ -22,7 +22,7 @@ import { DUNGEON_FONT_SIZE, PROD ,
 
 import bs58 from "bs58";
   
-import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount} from './utils';
+import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount, serialise_mint_from_collection_instruction} from './utils';
 
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -36,9 +36,18 @@ import {
 
 // shop items
 import key from "./images/Key.png"
+import keyring from "./images/Keyring.gif"
+import musicbox_collection from "./images/MusicBoxCollection.gif"
+import lorepage_collection from "./images/LorePages.png"
+import paintings_collection from "./images/Paintings.png"
+
 import closed_chest from "./images/chest_closed.png"
 import open_chest from "./images/chest_open.png"
-import shop from "./images/ShopBuild.gif"
+import shop from "./images/ShopInside.gif"
+
+// paintings
+import tower_of_dur from "./shop_items/TowerOfDur.png"
+
 
 import './css/style.css';
 import './css/fonts.css';
@@ -51,6 +60,11 @@ const PREPAID_WHITELIST_TOKEN =  new PublicKey("EdxJtFgnmt6iVtfQdEfQgfpS2WfUkRUy
 const KEY_COLLECTION_MASTER = new PublicKey('7hxHyqBGX2BN2cDePWn1kXCsf6ADmkgYqAFRvU54CAYJ');
 const KEY_COLLECTION_META = new PublicKey('HYBWDQeHR5P44621PT52thJbwTQBDsMGy8NwRbbK4xut');
 const KEY_COLLECTION_MINT = new PublicKey('9C7CUp5aXDcg5QbSFVJwPeXviyFD4YK6CdQzp1jg7Lcp');
+
+
+const MUSICBOX_COLLECTION_MASTER = new PublicKey('BvJ4QqRgs6qRAKvCSWdeMpYtJZckiwhgFu4NsJVSNm2F');
+const MUSICBOX_COLLECTION_META = new PublicKey('5BqLuUX3ujSZuRV1dmbtWDsStTg755woj9pRjpBLmtJk');
+const MUSICBOX_COLLECTION_MINT = new PublicKey('9wNxsyK7N4c5EiXkT2FmgYkQopGmBBmQKibtpo4eKVkA');
 
 const enum ChestStatus {
     closed = 0,
@@ -65,7 +79,9 @@ const enum ChestStatus {
 const enum ShopInstruction {
     init = 0,
     create_token = 1,
-    create_collection = 2
+    create_achievement = 2,
+    create_collection = 3,
+    mint_from_collection = 4
 }
 
 const enum CustomerStatus {
@@ -73,6 +89,16 @@ const enum CustomerStatus {
     prepaid = 1,
     xp_whitelist = 2,
     other = 3
+    
+}
+
+const enum Collection {
+    DungeonKeys = 0,
+    Achievements = 1,
+    MusicBoxes = 2,
+    Paintings = 3,
+    LorePages = 4,
+    None = 5
     
 }
 
@@ -86,6 +112,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     const [key_image, setKeyImage] = useState<string | null>(null);
     const [xp_req, setXPReq] = useState<number | null>(null);
     const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
+    const [which_collection, setWhichCollection] = useState<Collection>(Collection.None);
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -99,12 +126,12 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     const xp_interval = useRef<number | null>(null);
     const check_xp = useRef<boolean>(true);
 
-    const valid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
-    "Welcome back Adventurer! I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
+    const valid_shop_text = ["I see you've noticed my magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!", 
+    "I'm glad someone in this bleak world still recognizes quality merchandise when they see it! If it's another key you're after, go right ahead.", 
     "Back again eh Adventurer? Well go ahead and see what else you can find in my chest of keys, third times a charm!"];
 
-    const invalid_shop_text = ["Welcome Adventurer!  Unfortunately the shop isn't quite ready yet, but I do have this magnificent chest of keys.. Sadly for you though I only trade with more seasoned adventurers.", 
-    "Welcome back Adventurer!  It looks like the dungeon's been putting you through your paces, but if you want to buy more keys you're going to have to stay ahead of the competition.", 
+    const invalid_shop_text = ["Sadly for you I only trade with more seasoned adventurers.", 
+    "It looks like the dungeon's been putting you through your paces, but if you want to buy more keys you're going to have to stay ahead of the competition.", 
     "Back for more eh Adventurer? I'm sure these keys are proving their worth to you, but if you want to buy a third one you're going to have to do the same for me!"];
 
     const check_xp_reqs = useCallback(async() => 
@@ -328,6 +355,112 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                
     }
 
+    const MintFromCollection = useCallback( async () => 
+    {
+
+            if (wallet.publicKey === null || wallet.signTransaction === undefined)
+                return;
+
+
+            const nft_mint_keypair = Keypair.generate();
+            var nft_mint_pubkey = nft_mint_keypair.publicKey;
+            
+            let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("music_boxes")], SHOP_PROGRAM))[0];
+
+            let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
+
+            let nft_master_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
+            METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")], METAPLEX_META))[0];
+
+            let nft_account_key = await getAssociatedTokenAddress(
+                nft_mint_pubkey, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+
+            let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
+
+            const create_token_data = serialise_mint_from_collection_instruction(ShopInstruction.mint_from_collection, which_collection, 0);
+            const init_data = serialise_basic_instruction(ShopInstruction.init);
+
+            var account_vector  = [
+                {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+
+                {pubkey: nft_mint_pubkey, isSigner: true, isWritable: true},
+                {pubkey: nft_account_key, isSigner: false, isWritable: true},
+                {pubkey: nft_meta_key, isSigner: false, isWritable: true},
+                {pubkey: nft_master_key, isSigner: false, isWritable: true},
+
+                {pubkey: player_data_key, isSigner: false, isWritable: true},
+                {pubkey: program_data_key, isSigner: false, isWritable: true},
+
+            ];
+
+            account_vector.push({pubkey: MUSICBOX_COLLECTION_MINT, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: MUSICBOX_COLLECTION_META, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: MUSICBOX_COLLECTION_MASTER, isSigner: false, isWritable: true});
+            
+            account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+            account_vector.push({pubkey: SYSTEM_KEY, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: METAPLEX_META, isSigner: false, isWritable: false});
+
+
+
+            const create_token_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: SHOP_PROGRAM,
+                data: create_token_data
+            });
+
+            const init_instruction = new TransactionInstruction({
+                keys: [
+                    {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
+                    {pubkey: program_data_key, isSigner: false, isWritable: true},
+                    {pubkey: SYSTEM_KEY, isSigner: false, isWritable: true}
+                ],
+                programId: SHOP_PROGRAM,
+                data: init_data
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+
+            transaction.add(create_token_instruction);
+            transaction.add(init_instruction);
+
+            transaction.partialSign(nft_mint_keypair);
+
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response)
+                    return;
+                }
+     
+            } catch(error) {
+                console.log(error);
+                return;
+            }
+
+            
+            //current_key.current = nft_meta_key;
+            check_xp.current = true;
+            check_sol_balance.current = true;
+            
+            return;
+        
+
+    },[wallet, bearer_token, check_sol_balance, which_collection]);
 
 
     const Mint = useCallback( async () => 
@@ -478,14 +611,14 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
     },[wallet, bearer_token, check_sol_balance]);
 
-    const ShopText = (): JSX.Element | null => {
+    const KeyText = (): JSX.Element | null => {
 
         if (customer_status === CustomerStatus.prepaid) {
             return(
                 <Center width = "100%">
                 <Box width="80%">
                     <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer! That's a shiny little trinket you have there... Tell you what, how about I trade you for one of my Dungeon Keys?</Text>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">That's a shiny little trinket you have there... Tell you what, how about I trade you for one of my Dungeon Keys?</Text>
                     </div>
                 </Box>
             </Center>
@@ -497,7 +630,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                 <Center width = "100%">
                     <Box width="80%">
                         <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome back Adventurer! I'm afraid you've had your fair share of keys from me.  You'll need to find someone else to trade with if you want more.</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">I'm afraid you've had your fair share of keys from me.  You'll need to find someone else to trade with if you want more.</Text>
                         </div>
                     </Box>
                 </Center>
@@ -525,7 +658,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP</Text>
                         }
                         {xp_req === -2 &&
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer!  If you're here looking for keys i'm afraid you're a bit late! There's been a rush of adventurers like you over the past days and i'm all sold out.</Text>
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">If you're here looking for keys i'm afraid you're a bit late! There's been a rush of adventurers like you over the past days and i'm all sold out.</Text>
                         }
                         </>
                         
@@ -535,6 +668,106 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
         );
   
     }
+
+    const MusicText = (): JSX.Element | null => {
+
+        return(
+            <Center width = "100%">
+            <Box width="80%">
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb = "1rem">These are music boxes from across the land of Limare.  Each one plays its own special tune. </Text>
+
+                <VStack>
+                    
+                    <video width="150" height="150"  controls controlsList="nodownload">
+                        <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/EnterTheDungeon.mp4" type="video/mp4"/>
+                        Your browser does not support the video tag.
+                    </video>
+                    <Box as="button" disabled={num_xp < 1100 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection()}}>
+                        <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Enter The Dungeon</Text>
+                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: 100</Text>
+                        <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+
+                    </Box>
+                </VStack>
+            </Box>
+        </Center>
+        );
+    }
+    const LoreText = (): JSX.Element | null => {
+
+        return(
+            <Center width = "100%">
+            <Box width="80%">
+                <div className="font-face-sfpb">
+                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Unfortunately my contact at the Great Library was attacked by bandits recently... Hopefully these will be back in stock soon </Text>
+                </div>
+            </Box>
+        </Center>
+        );
+    }
+    const PaintingText = (): JSX.Element | null => {
+
+        return(
+            <Center width = "100%">
+                <Box width="80%">
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb = "1rem">Paintings drawn by a traveling artist I know well.  Each displays a landmark vista or personality from the land of Limare.</Text>
+
+                    <VStack>
+                        
+                        <img style={{"imageRendering":"pixelated"}} src={tower_of_dur} width="150" alt={""}/>
+                        <Box as="button" disabled={num_xp < 1100 ? true : false} onClick={() => {setWhichCollection(Collection.Paintings); MintFromCollection()}}>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Tower of Dur</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: 100</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 2000 ? "2000 XP required" : "1000 Gold"} </Text>
+
+                        </Box>
+                    </VStack>
+                </Box>
+            </Center>
+        );
+    }
+
+    const ShopText = (): JSX.Element | null => {
+
+        if (which_collection === Collection.None) {
+            return(
+                <Center width = "100%">
+                <Box width="80%">
+                    <div className="font-face-sfpb">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Welcome Adventurer! Take your time and look around, i'm sure you'll find something of interest in here</Text>
+                    </div>
+                </Box>
+            </Center>
+            );
+        }
+
+        if (which_collection === Collection.DungeonKeys) {
+            return(
+                <KeyText/>
+            );
+        }
+
+        if (which_collection === Collection.MusicBoxes) {
+            return(
+                <MusicText/>
+            );
+        }
+
+        if (which_collection === Collection.Paintings) {
+            return(
+                <PaintingText/>
+            );
+        }
+
+        if (which_collection === Collection.LorePages) {
+            return(
+                <LoreText/>
+            );
+        }
+
+        return null;
+    }
+
 
     const ShopItems = () => {
 
@@ -577,8 +810,9 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
   
     }
 
+    let item_image_size = isMobile? "80" : "100";
     return(
-        <VStack alignItems="center" mb = "5rem">
+        <VStack alignItems="center" mb = "5rem" width="100%">
             <Box width="100%">
                 <HStack>
                     <Box width="65%"></Box>  
@@ -599,30 +833,42 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     <VStack width="100%" alignItems="center" spacing="2%">
 
                     
+                        <img style={{"imageRendering":"pixelated"}} src={shop} width={isMobile? "550" : "600"} alt={""}/>
 
-                        <HStack>
-                            <Box width="10%"></Box>         
-                            <Box  style={{
-                                backgroundImage: `url(${shop})`,
-                                backgroundPosition: 'center',
-                                backgroundSize: 'contain',
-                                backgroundRepeat: 'no-repeat',
-                                imageRendering: "pixelated"
-
-                            } } width="80%">
-                                <HStack>
+                        <HStack width="500" spacing="1rem" alignItems="center">
+                           
                         
-                                    <Box width="35%"></Box> 
-                                    <Box width="15%"> <DisplayChest visible = {true}/></Box>  
-                                    
-                                    
-                                    <Box width="5%"></Box> 
-                                    <Box width="15%" pb = "10%"><DisplayChest visible = {false}/> </Box>  
-                                    <Box width="30%"></Box> 
+                                    <VStack width="25%" alignItems="center">
+                                        <Box as="button" onClick={() => {setWhichCollection(Collection.DungeonKeys)}}>
+                                            <img style={{"imageRendering":"pixelated"}} src={keyring} width={item_image_size} alt={""}/>
+                                        </Box>
+                                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Keys</Text>
+                                    </VStack>
 
-                                </HStack>
-                            </Box>
-                            <Box width="10%"></Box> 
+                                    <VStack width="25%" alignItems="center">
+                                        <Box as="button" onClick={() => {setWhichCollection(Collection.LorePages)}}>
+                                            <img style={{"imageRendering":"pixelated"}} src={lorepage_collection} width={item_image_size} alt={""}/>
+                                        </Box>
+                                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Lore Pages</Text>
+                                    </VStack>
+
+                                    <VStack width="25%">
+                                        <Box as="button" onClick={() => {setWhichCollection(Collection.MusicBoxes)}}>
+                                            <img style={{"imageRendering":"pixelated"}} src={musicbox_collection} width={item_image_size} alt={""}/>
+                                        </Box>
+                                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Music Boxes</Text>
+                                    </VStack>
+
+                                    <VStack width="25%">
+                                        <Box as="button" onClick={() => {setWhichCollection(Collection.Paintings)}}>
+                                            <img style={{"imageRendering":"pixelated"}} src={paintings_collection} width={item_image_size} alt={""}/>
+                                        </Box>
+                                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Paintings</Text>
+                                    </VStack>
+
+                                    
+
+                            
                         </HStack>
 
                         {!wallet.publicKey &&
