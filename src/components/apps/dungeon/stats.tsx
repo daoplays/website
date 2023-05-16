@@ -485,6 +485,24 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
     );
 }
 
+function nFormatter(num : number, digits : number) {
+
+    const lookup = [
+      { value: 1, symbol: "" },
+      { value: 1e3, symbol: "k" },
+      { value: 1e6, symbol: "M" },
+      { value: 1e9, symbol: "G" },
+      { value: 1e12, symbol: "T" },
+      { value: 1e15, symbol: "P" },
+      { value: 1e18, symbol: "E" }
+    ];
+    const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+    var item = lookup.slice().reverse().find(function(item) {
+      return num >= item.value;
+    });
+    return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
+}
+
 function GameStats({plays, wins} : {plays : number[], wins : number[]})
 {
 
@@ -531,25 +549,25 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
                 
                     <tr>
                         <td>Plays</td>
-                        <td >{plays[0]}</td>
-                        <td >{plays[1]}</td>
-                        <td >{plays[2]}</td>
-                        <td >{plays[3]}</td>
-                        <td >{plays[4]}</td>
-                        <td >{plays[5]}</td>
-                        <td >{plays[6]}</td>
+                        <td >{nFormatter(plays[0], 1)}</td>
+                        <td >{nFormatter(plays[1], 1)}</td>
+                        <td >{nFormatter(plays[2], 1)}</td>
+                        <td >{nFormatter(plays[3], 1)}</td>
+                        <td >{nFormatter(plays[4], 1)}</td>
+                        <td >{nFormatter(plays[5], 1)}</td>
+                        <td >{nFormatter(plays[6], 1)}</td>
                         
                         
                     </tr>
                     <tr>
                         <td >Wins</td>
-                        <td >{wins[0]}</td>
-                        <td >{wins[1]}</td>
-                        <td >{wins[2]}</td>
-                        <td >{wins[3]}</td>
-                        <td >{wins[4]}</td>
-                        <td >{wins[5]}</td>
-                        <td >{wins[6]}</td>
+                        <td >{nFormatter(wins[0], 1)}</td>
+                        <td >{nFormatter(wins[1], 1)}</td>
+                        <td >{nFormatter(wins[2], 1)}</td>
+                        <td >{nFormatter(wins[3], 1)}</td>
+                        <td >{nFormatter(wins[4], 1)}</td>
+                        <td >{nFormatter(wins[5], 1)}</td>
+                        <td >{nFormatter(wins[6], 1)}</td>
                     </tr>
                     <tr>
                         <td >%</td>
@@ -591,13 +609,13 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
                 
                     <tr>
                         <td>Plays</td>
-                        <td >{tier_1_plays}</td>
-                        <td >{tier_2_plays}</td>                        
+                        <td >{nFormatter(tier_1_plays, 1)}</td>
+                        <td >{nFormatter(tier_2_plays, 1)}</td>                        
                     </tr>
                     <tr>
                         <td >Wins</td>
-                        <td >{tier_1_wins}</td>
-                        <td >{tier_2_wins}</td>
+                        <td >{nFormatter(tier_1_wins, 1)}</td>
+                        <td >{nFormatter(tier_2_wins, 1)}</td>
                     </tr>
                     <tr>
                         <td >%</td>
