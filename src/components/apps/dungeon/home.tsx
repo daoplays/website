@@ -1500,7 +1500,7 @@ export function DungeonApp()
 
         return (
             <Box bg='black'>
-                <img style={{"imageRendering":"pixelated"}} src={screen === Screen.ARENA_SCREEN ? arena_title : dungeon_title} width="500" alt={""}/>
+                <img style={{"imageRendering":"pixelated"}} src={screen === Screen.ARENA_SCREEN ? arena_title : dungeon_title} width={isMobile ? "400" : "500"} alt={""}/>
             </Box>
         )
     }

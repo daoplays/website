@@ -33,26 +33,6 @@ a.one:active {
 }
 
 /* HOME PAGE */
-input[type="range"] {
-    -webkit-appearance: none;
-    background-color: white ;
-    border: 0.1px solid white;
-    border-radius: 30px;
-    cursor: pointer;
-    height: 18px;
-    margin-top: 10px;
-
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    background-image: url('https://s2.coinmarketcap.com/static/img/coins/200x200/5426.png'); /* add the image URL */
-    background-size: cover; /* scale the image to cover the thumb */
-    width:30px;
-    border: 0.1px solid white;
-
-    height: 30px;
-    border-radius: 50%;
-  }
 @media screen and (max-width:1200px) {
     .rowElements{
         display: flex !important;

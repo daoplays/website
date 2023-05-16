@@ -262,7 +262,7 @@ export function Navigation(
         //const btnRef = React.useRef()
 
         return (
-            <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
+            <Box width="98%" ml="1%" mt="1%" mb="1rem" mr="1%">
               <HStack>
                 {wallet.publicKey &&
                       <Box width="70%">
@@ -276,7 +276,7 @@ export function Navigation(
                       <Box width="75%"></Box>
                   }
                   <Box width="25%">
-                    <HStack spacing="10%">
+                    <HStack spacing="12%">
                         <a href="https://twitter.com/sol_dungeon">
                             <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
                         </a>

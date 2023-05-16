@@ -95,6 +95,8 @@
   /* button styles here */
 
   transform: scale(0.7);
+  /*width: 25px;
+  height: 25px;*/
 }
 
 .music-player button {
