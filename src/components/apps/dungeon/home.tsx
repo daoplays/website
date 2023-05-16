@@ -950,7 +950,7 @@ export function DungeonApp()
 
                     if (!isMuted) {
                         try {
-                            // VictoryAudio.play()
+                            VictoryAudio.play()
                         } catch (error) {
                           console.log("Failed to play audio");
                         }
@@ -965,7 +965,7 @@ export function DungeonApp()
 
                     if (!isMuted) {
                         try {
-                        //   PlayerDeathAudio.play()
+                          PlayerDeathAudio.play()
                         } catch (error) {
                           console.log("Failed to play audio");
                         }
