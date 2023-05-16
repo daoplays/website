@@ -4,7 +4,6 @@ import {
     Text,
 } from '@chakra-ui/react';
 
-
 //  dungeon constants
 import {DUNGEON_FONT_SIZE} from './constants';
 
@@ -89,6 +88,9 @@ export const DungeonCharacterEmoji : string[] = [
     "<a:Ranger:1070471404425842688>",
     "<a:Wizard:1070471413829472287>"
 ]
+
+
+
 
 
 export const GoldEmoji : string = "<a:Gold:1086961346492510298>";
@@ -342,9 +344,10 @@ export const DisplayEnemyAppearsText = ({current_enemy, current_level, num_plays
 }
 
 export const DisplayPlayerFailedText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
-
+ 
     let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
     var random = seedrandom(seed_string);
+
 
     let enemy_text : string[] = DungeonPlayerDefeatedText[current_enemy];
     let idx : number = Math.floor(random() * enemy_text.length);
@@ -378,9 +381,10 @@ const EnemyDefeatedText = ({current_enemy, current_level, num_plays} : {current_
 }
 
 export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size, num_plays} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number, num_plays : number}) => {
-
+    
     let current_win = WIN_FACTORS[current_level] *  bet_size;
-
+    
+    
     if (current_level <  7) {
         let next_win = WIN_FACTORS[current_level + 1] *  bet_size;
         return(

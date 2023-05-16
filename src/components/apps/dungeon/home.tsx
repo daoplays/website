@@ -111,8 +111,13 @@ import { ArenaScreen } from './arena';
 
 import wagerSelect from './sounds/Wager_Select.mp3'
 import classSelect from './sounds/Class_Select.mp3'
-import dungeonTile from './sounds/Dungeon_Title_Screen.mp3'
-
+import dungeonTile from './sounds/Open_Door.mp3'
+import Retry from './sounds/Retry.mp3'
+import Torch from './sounds/Torch.mp3'
+import Escape from './sounds/Escape.mp3'
+import Game_Over from './sounds/Game_Over.mp3'
+import Player_Death from './sounds/Player_Death.mp3'
+import Victory from './sounds/Victory.mp3'
 import { MuteContext, MuteProvider } from './mute';
 
 
@@ -143,6 +148,12 @@ const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 const wagerSelectAudio = new Audio(wagerSelect)
 const classSelectAudio = new Audio(classSelect)
 const dungeonTileAudio = new Audio(dungeonTile)
+const GameOverAudio = new Audio(Game_Over)
+const EscapeAudio = new Audio(Escape)
+const TorchAudio = new Audio(Torch)
+const RetryAudio = new Audio(Retry)
+const VictoryAudio = new Audio(Victory)
+const PlayerDeathAudio = new Audio(Player_Death)
 
 const enum BetSize {
     SolanaBet1 = 0,
@@ -226,7 +237,9 @@ export function DungeonApp()
     const [player_character, setWhichCharacter] = useState<DungeonCharacter>(DungeonCharacter.knight);
     const [enemy_state, setEnemyState] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [player_state, setPlayerState] = useState<DungeonStatus>(DungeonStatus.unknown);
-    const [animateLevel, setAnimateLevel] = useState<number>(0);
+    
+    // animateLevel becomes a useRef
+    const animateLevel = useRef(0);
 
     // refs to hold initial status
     const initial_num_plays = useRef<number>(-1);
@@ -924,61 +937,81 @@ export function DungeonApp()
             setEnemyState(DungeonStatus.alive);
             setPlayerState(DungeonStatus.alive);
             if (currentStatus === DungeonStatus.alive) {
-                setAnimateLevel(1);
+
+                animateLevel.current = 1
+
             }
             else {
-                setAnimateLevel(2);
+                
+                animateLevel.current = 2
             }
 
         }, [num_plays, current_level, current_enemy, currentStatus, data_account_status, screen]);
 
-    useEffect(() => 
-    {
-            if (animateLevel === 0 || check_user_state.current === true) {
+        
+        const playAudio = useCallback((audio: HTMLAudioElement) => {
+            if (!isMuted) {
+              try {
+                audio.play();
+              } catch (error) {
+                console.log("Failed to play audio");
+              }
+            }
+          }, [isMuted]);
+        
+        // New function to handle animation
+        const handleAnimation = useCallback(( level:number ) => {
+            if (level === 0) {
                 return;
             }
             const timer = setTimeout(() => {
-
-                // player killed enemy
-                if (animateLevel === 1) {
+                if (level === 1) {
                     if (DEBUG) {
                         console.log("player killed enemy");
                     }
                     setPlayerState(DungeonStatus.alive);
                     setEnemyState(DungeonStatus.dead);
-                }
-                // enemy killed player
-                else {
+        
+                    //Victory sound plays
+
+                    playAudio(VictoryAudio)
+        
+                } else {
                     if (DEBUG) {
                         console.log("enemy killed player")
                     }
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
+                    
+                    //player death audio
+                    playAudio(PlayerDeathAudio)
                 }
-
+        
                 if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
-
                     const message: NewDiscordMessage = {
-                        message_type: animateLevel === 1 ? "defeated" : "killed_by",
+                        message_type: level === 1 ? "defeated" : "killed_by",
                         emoji_1: DungeonCharacterEmoji[player_character],
                         emoji_2: DungeonEnemyEmoji[current_enemy],
                         level: current_level,
                         sol_amount: 0,
                         achievement_name: ""
-                        
                     };
-
+        
                     post_discord_message(message);
                     discord_play_message_sent.current = true;
                 }
-
-                setAnimateLevel(0);
-                CheckNewPlayAchievements()
-                }, 5000);
-                return () => clearTimeout(timer);
         
-
-    }, [animateLevel, player_character, current_enemy, current_level, CheckNewPlayAchievements]);
+                animateLevel.current = 0;
+                CheckNewPlayAchievements()
+            }, 5000);
+        
+            return () => clearTimeout(timer);
+        },[current_level, player_character, current_enemy, CheckNewPlayAchievements,playAudio])
+        
+        // Replace the previous useEffect with this one
+        useEffect(() => {
+            handleAnimation(animateLevel.current);
+        }, [handleAnimation]);
 
 
     
@@ -1033,7 +1066,6 @@ export function DungeonApp()
 
     const Play = useCallback( async () => 
     {
-        //here
        
         
         setTransactionFailed(false);
@@ -1745,6 +1777,30 @@ export function DungeonApp()
     }
 
 
+    const handleExploreFurther = () => {
+        if (!isMuted) TorchAudio.play()
+        Play()
+      };
+
+
+    const handleEscape = () => {
+        if (!isMuted) EscapeAudio.play()
+        Quit()
+      };
+
+
+    const handleRetry = () => {
+        if (!isMuted) RetryAudio.play()
+        Play()
+      };
+
+
+      const handleExit = () => {
+        if (!isMuted) GameOverAudio.play()
+        ShowDeath()
+      };
+
+
     const InDungeon = () =>  {
 
         var font_size = DEFAULT_FONT_SIZE;
@@ -1816,13 +1872,13 @@ export function DungeonApp()
                         <Center>
                             <HStack alignItems="center">
                                 
-                                <Button variant='link' size='md' onClick={ShowDeath} mr="5rem">
+                                <Button variant='link' size='md' onClick={handleExit} mr="5rem">
                                     <div className="font-face-sfpb">
                                         <Text textAlign="center" fontSize={font_size} color="white">Exit</Text>
                                     </div> 
                                 </Button> 
                                 {!processing_transaction &&
-                                    <Button variant='link' size='md' onClick={Play} ml="5rem">
+                                    <Button variant='link' size='md' onClick={handleRetry} ml="5rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">Retry</Text>
                                         </div> 
@@ -1856,7 +1912,7 @@ export function DungeonApp()
 
                                 <HStack>
                                     {!processing_transaction &&
-                                    <Button variant='link' size='md' onClick={Quit} mr="3rem">
+                                    <Button variant='link' size='md' onClick={handleEscape} mr="3rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={font_size} color="white">Escape</Text>
                                         </div> 
@@ -1870,7 +1926,7 @@ export function DungeonApp()
                                         </Button> 
                                     }
                                     {!processing_transaction &&
-                                    <Button variant='link' size='md' onClick={Play} ml="10rem">
+                                    <Button variant='link' size='md' onClick={handleExploreFurther} ml="10rem">
                                         <div className="font-face-sfpb">
                                             <Text textAlign="center" fontSize={font_size} color="white">Explore Further</Text>
                                         </div> 
