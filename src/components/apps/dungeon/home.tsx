@@ -937,18 +937,30 @@ export function DungeonApp()
             setEnemyState(DungeonStatus.alive);
             setPlayerState(DungeonStatus.alive);
             if (currentStatus === DungeonStatus.alive) {
-                animateLevel.current=1
+
+                animateLevel.current = 1
+
             }
             else {
-                animateLevel.current=2
+                
+                animateLevel.current = 2
             }
 
         }, [num_plays, current_level, current_enemy, currentStatus, data_account_status, screen]);
 
         
+    const playAudio = (audio: HTMLAudioElement) => {
+      if (!isMuted) {
+        try {
+          audio.play();
+        } catch (error) {
+          console.log("Failed to play audio");
+        }
+      }
+    };
         
         // New function to handle animation
-        const handleAnimation = useCallback((level:number) => {
+        const handleAnimation = useCallback(( level:number ) => {
             if (level === 0) {
                 return;
             }
@@ -962,13 +974,7 @@ export function DungeonApp()
         
                     //Victory sound plays
 
-                    if (!isMuted) {
-                        try {
-                            VictoryAudio.play()
-                        } catch (error) {
-                          console.log("Failed to play audio");
-                        }
-                      }
+                    playAudio(VictoryAudio)
         
                 } else {
                     if (DEBUG) {
@@ -976,14 +982,9 @@ export function DungeonApp()
                     }
                     setPlayerState(DungeonStatus.dead);
                     setEnemyState(DungeonStatus.alive);
-
-                    if (!isMuted) {
-                        try {
-                          PlayerDeathAudio.play()
-                        } catch (error) {
-                          console.log("Failed to play audio");
-                        }
-                      }
+                    
+                    //player death audio
+                    playAudio(PlayerDeathAudio)
                 }
         
                 if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
