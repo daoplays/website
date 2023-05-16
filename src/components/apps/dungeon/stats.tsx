@@ -549,10 +549,10 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
                 
                     <tr>
                         <td>Plays</td>
-                        <td >{nFormatter(plays[0], 1)}</td>
-                        <td >{nFormatter(plays[1], 1)}</td>
-                        <td >{nFormatter(plays[2], 1)}</td>
-                        <td >{nFormatter(plays[3], 1)}</td>
+                        <td >{nFormatter(plays[0], 0)}</td>
+                        <td >{nFormatter(plays[1], 0)}</td>
+                        <td >{nFormatter(plays[2], 0)}</td>
+                        <td >{nFormatter(plays[3], 0)}</td>
                         <td >{nFormatter(plays[4], 1)}</td>
                         <td >{nFormatter(plays[5], 1)}</td>
                         <td >{nFormatter(plays[6], 1)}</td>
@@ -561,9 +561,9 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
                     </tr>
                     <tr>
                         <td >Wins</td>
-                        <td >{nFormatter(wins[0], 1)}</td>
-                        <td >{nFormatter(wins[1], 1)}</td>
-                        <td >{nFormatter(wins[2], 1)}</td>
+                        <td >{nFormatter(wins[0], 0)}</td>
+                        <td >{nFormatter(wins[1], 0)}</td>
+                        <td >{nFormatter(wins[2], 0)}</td>
                         <td >{nFormatter(wins[3], 1)}</td>
                         <td >{nFormatter(wins[4], 1)}</td>
                         <td >{nFormatter(wins[5], 1)}</td>
