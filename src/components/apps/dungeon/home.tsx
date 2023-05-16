@@ -950,14 +950,14 @@ export function DungeonApp()
 
         
         const playAudio = useCallback((audio: HTMLAudioElement) => {
-            if (!isMuted) {
+            if (muteState!==1) {
               try {
                 audio.play();
               } catch (error) {
                 console.log("Failed to play audio");
               }
             }
-          }, [isMuted]);
+          }, [muteState]);
         
         // New function to handle animation
         const handleAnimation = useCallback(( level:number ) => {
@@ -1543,21 +1543,21 @@ export function DungeonApp()
         classSelectAudio.volume=volume/100
         if (muteState!==1) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.knight);
-    },[muteState]);
+    },[muteState,volume]);
 
     const SelectRanger = useCallback( async () => 
     {
         classSelectAudio.volume=volume/100
         if (muteState!==1) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.ranger);
-    },[muteState]);
+    },[muteState,volume]);
 
     const SelectWizard = useCallback( async () => 
     {
         classSelectAudio.volume=volume/100
         if (muteState!==1) classSelectAudio.play()
         setWhichCharacter(DungeonCharacter.wizard);
-    },[muteState]);
+    },[muteState,volume]);
 
     const CharacterSelect = () => {
 
@@ -1778,25 +1778,29 @@ export function DungeonApp()
 
 
     const handleExploreFurther = () => {
-        if (!isMuted) TorchAudio.play()
+        TorchAudio.volume=volume/100
+        if (muteState!==1) TorchAudio.play()
         Play()
       };
 
 
     const handleEscape = () => {
-        if (!isMuted) EscapeAudio.play()
+        EscapeAudio.volume=volume/100
+        if (muteState!==1) EscapeAudio.play()
         Quit()
       };
 
 
     const handleRetry = () => {
-        if (!isMuted) RetryAudio.play()
+        RetryAudio.volume=volume/100
+        if (muteState!==1) RetryAudio.play()
         Play()
       };
 
 
       const handleExit = () => {
-        if (!isMuted) GameOverAudio.play()
+        GameOverAudio.volume=volume/100
+        if (muteState!==1) GameOverAudio.play()
         ShowDeath()
       };
 
