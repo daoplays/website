@@ -31,7 +31,7 @@ export const MuteButton: FC<MuteButtonProps> = ({ muteState, toggleMute, volume,
       content = (
         <Flex direction="column" alignItems="center" className='volume-slider-flex' >
             <img src={soundOnImg} alt="Sound On" />
-            <Box  width="2rem" height="0.5rem" marginTop="2rem">
+            <Box  width="1.5rem" height="0.3rem" marginTop="2rem">
                 <input
                     type="range"
                     min="0"
