@@ -949,15 +949,15 @@ export function DungeonApp()
         }, [num_plays, current_level, current_enemy, currentStatus, data_account_status, screen]);
 
         
-    const playAudio = (audio: HTMLAudioElement) => {
-      if (!isMuted) {
-        try {
-          audio.play();
-        } catch (error) {
-          console.log("Failed to play audio");
-        }
-      }
-    };
+        const playAudio = useCallback((audio: HTMLAudioElement) => {
+            if (!isMuted) {
+              try {
+                audio.play();
+              } catch (error) {
+                console.log("Failed to play audio");
+              }
+            }
+          }, [isMuted]);
         
         // New function to handle animation
         const handleAnimation = useCallback(( level:number ) => {
@@ -1006,7 +1006,7 @@ export function DungeonApp()
             }, 5000);
         
             return () => clearTimeout(timer);
-        },[isMuted, current_level, player_character, current_enemy, CheckNewPlayAchievements])
+        },[current_level, player_character, current_enemy, CheckNewPlayAchievements,playAudio])
         
         // Replace the previous useEffect with this one
         useEffect(() => {
