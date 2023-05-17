@@ -306,6 +306,11 @@ export function DungeonApp()
             setBetValue(BetSizeValues[selected_bet.value])
         };
 
+        const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            const value = Number(event.target.value);
+            handleBetChange(value as BetSize);
+          };
+
 
         type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
         
@@ -351,43 +356,62 @@ export function DungeonApp()
             },
           };
           
-          return(
+          return (
             <div className="font-face-sfpb">
-
-            {!isMobile &&
-                <HStack alignItems="center" spacing="1px">
-                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet1)} borderWidth='2px' height={"30px"}  borderColor={bet_size === BetSize.SolanaBet1 ? "white" : "black"}  width={"60px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[0]}</Text>
-                    </Box>
-                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet2)} height={"30px"}  borderWidth='2px'borderColor={bet_size === BetSize.SolanaBet2 ? "white" : "black"}  width={"60px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[1]}</Text>
-                    </Box>
-                    <Box as='button' onClick={() => handleBetChange(BetSize.SolanaBet3)} height={"30px"}  borderWidth='2px' borderColor={bet_size === BetSize.SolanaBet3 ? "white" : "black"}  width={"60px"}>
-                            <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">{BetSizeValues[2]}</Text>
-                    </Box>
-                    <Box borderWidth='2px'  borderColor="black" height={"30px"} width={"60px"}>
-                        <Text  align="center" fontSize={DUNGEON_FONT_SIZE} color="white">SOL</Text>
-                    </Box>
-                </HStack>
-            }
-            {isMobile &&
-                    <Select 
-                    placeholder={BetSizeValues[0] + ' SOL'}
-                    styles={colourStyles}
-                    isSearchable={false}
-                    onChange={(choice: SelectValue) => {handleSelectChange(choice)}}
-                    value={select_value}
-                    options = {[
-                        { value: BetSize.SolanaBet1, label: BetSizeValues[0] + ' SOL' },
-                        { value: BetSize.SolanaBet2, label: BetSizeValues[1] + ' SOL' },
-                        { value: BetSize.SolanaBet3, label: BetSizeValues[2] + ' SOL' }
-                    ]}      
-                /> 
-            }
+              {!isMobile && (
+                <VStack alignItems="center" spacing="1px">
+                  <Box
+                    borderWidth="2px"
+                    borderColor="black"
+                    height={"30px"}
+                    width={"60px"}
+                    marginBottom={'5px'}
+                  >
+                    <Text
+                      align="center"
+                      fontSize={DUNGEON_FONT_SIZE}
+                      color="white"
+                    >
+                      {bet_value} SOL
+                    </Text>
+                  </Box>
+                  <input
+                    type="range"
+                    min={BetSize.SolanaBet1}
+                    max={BetSize.SolanaBet3}
+                    value={bet_size}
+                    onChange={handleSliderChange}
+                    style={{marginTop:'1rem'}}
+                  />
                   
-
-              </div>
-
+                </VStack>
+              )}
+              {isMobile && (
+                <Select
+                  placeholder={BetSizeValues[0] + " SOL"}
+                  styles={colourStyles}
+                  isSearchable={false}
+                  onChange={(choice: SelectValue) => {
+                    handleSelectChange(choice);
+                  }}
+                  value={select_value}
+                  options={[
+                    {
+                      value: BetSize.SolanaBet1,
+                      label: BetSizeValues[0] + " SOL",
+                    },
+                    {
+                      value: BetSize.SolanaBet2,
+                      label: BetSizeValues[1] + " SOL",
+                    },
+                    {
+                      value: BetSize.SolanaBet3,
+                      label: BetSizeValues[2] + " SOL",
+                    },
+                  ]}
+                />
+              )}
+            </div>
           );
     }
     
