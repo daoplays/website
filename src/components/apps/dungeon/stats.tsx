@@ -754,7 +754,7 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
                         <PieChart  values={betsize_data} labels={["0.05", "0.1", "0.25"]} title="Bet Size Choices"/>
                     </HStack>
                 </Center>
-
+   
                 <Center  className='responsivePage'>
                     <HStack  className='responsiveGraph' >
                 <HorizontalBar title="Tier 1 W/L" x1={[tier_1_wins]} x2={[tier_1_losses]}/>
