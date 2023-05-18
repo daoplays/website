@@ -365,15 +365,16 @@ export function DungeonApp()
                     borderColor="black"
                     height={"30px"}
                     width={"60px"}
-                    marginBottom={'5px'}
+                    marginBottom={"5px"}
                   >
-                    <Text
-                      align="center"
-                      fontSize={DUNGEON_FONT_SIZE}
-                      color="white"
-                    >
-                      {bet_value} SOL
-                    </Text>
+                    <HStack justifyContent="center">
+                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                        {bet_value}
+                      </Text>
+                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                        SOL
+                      </Text>
+                    </HStack>
                   </Box>
                   <input
                     type="range"
@@ -381,9 +382,8 @@ export function DungeonApp()
                     max={BetSize.SolanaBet3}
                     value={bet_size}
                     onChange={handleSliderChange}
-                    style={{marginTop:'1rem'}}
+                    // style={{ marginTop: "1rem" }}
                   />
-                  
                 </VStack>
               )}
               {isMobile && (
