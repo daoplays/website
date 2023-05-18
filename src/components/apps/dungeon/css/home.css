@@ -10,7 +10,7 @@
     -webkit-appearance: none; /* Override default CSS styles */
     appearance: none;
     height: 7px; /* Specified height */
-    background: #ddd; /* Grey background */
+    background: #ffffff; /* Grey background */
   }
   
   .sliderTicks {
