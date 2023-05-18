@@ -33,6 +33,7 @@ export const DM_PROGRAM = new PublicKey('A4uKsKkxnXfvMr7939uekGk52GiiepwGxi9qQHy
 export const MARKETPLACE_PROGRAM = new PublicKey('EQwTJXUcpLmY2zLe4vbgKEHhGJuhoFTNUYkjjAi2mgVx');
 export const ARENA_PROGRAM = new PublicKey('3VhncqPFsFqfg5wPskJn1UsM9fYTcXJV2x7vDBQiVJc3');
 
+export const LOOT_TOKEN_MINT = new PublicKey('FGXnWVQuc35M8XLG4egciVhZXqhy3XawbY2V8TpfHHag');
 
 // account seeds
 export const MAIN_ACCOUNT_SEED = "house_account";

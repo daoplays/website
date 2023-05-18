@@ -206,6 +206,8 @@ export function Navigation(
         const { isOpen, onOpen, onClose } = useDisclosure();
       
         return (
+            <>
+            
           <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <Flex justifyContent="space-between" alignItems="center">
               <Box width="30%" display="flex" alignItems="center">
@@ -218,6 +220,9 @@ export function Navigation(
                   </Text>
                 </div>
               </Box>
+
+              <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+
               <Box display="flex" mr="7%" justifyContent="flex-end">
                 <HStack spacing="29%">
                   <a href="https://twitter.com/sol_dungeon">
@@ -252,6 +257,7 @@ export function Navigation(
             </Drawer>
             
           </Box>
+          </>
         );
       }
       
@@ -275,6 +281,10 @@ export function Navigation(
                   {!wallet.publicKey &&
                       <Box width="75%"></Box>
                   }
+
+                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+
+
                   <Box width="25%">
                     <HStack spacing="12%">
                         <a href="https://twitter.com/sol_dungeon">
@@ -328,14 +338,13 @@ export function Navigation(
             {!isMobile &&
             <>
                 <DesktopNavigation/>
-                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+                
             </>
             }
 
             {isMobile &&
             <>
                 <MobileNavigation/>
-                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
             </>
             }
         </>

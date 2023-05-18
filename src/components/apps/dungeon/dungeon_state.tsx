@@ -2,6 +2,7 @@ import {
     Box,
     Center,
     Text,
+    HStack
 } from '@chakra-ui/react';
 
 
@@ -45,6 +46,8 @@ import knight from "./images/Knight.gif"
 import ranger from "./images/Ranger.gif"
 import wizard from "./images/Wizard.gif"
 import corpse from "./images/Corpse.png"
+
+import loot from "./images/loot.png"
 
 export const WIN_FACTORS : number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
@@ -377,15 +380,32 @@ const EnemyDefeatedText = ({current_enemy, current_level, num_plays} : {current_
 
 }
 
-export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size, num_plays} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number, num_plays : number}) => {
+export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size, num_plays, last_gold} : {current_level : number, current_enemy : DungeonEnemy, bet_size : number, num_plays : number, last_gold : number}) => {
 
     let current_win = WIN_FACTORS[current_level] *  bet_size;
+
+    
 
     if (current_level <  7) {
         let next_win = WIN_FACTORS[current_level + 1] *  bet_size;
         return(
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
+
+            <Center>
+            <HStack alignContent="center" mt="1rem">
+                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You found {last_gold.toFixed(2)}</Text>
+            
+                <img
+                    src={loot}
+                    width="auto"
+                    alt={""}
+                    style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }}
+                />
+            </HStack>
+            </Center>                   
+
+
             <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Escape to claim your current loot of {current_win.toFixed(3)} SOL</Text>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Explore further to try and increase your loot to {next_win.toFixed(3)} SOL</Text>
        </div>
@@ -397,6 +417,7 @@ export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size
     return(
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
+            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You found {last_gold.toFixed(2)} loot!</Text>
             <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {current_win.toFixed(3)} SOL</Text>
             
