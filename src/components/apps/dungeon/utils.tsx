@@ -440,6 +440,7 @@ class PlayerData {
       readonly player_character: number,
       readonly current_bet_size: bignum,
       readonly current_key: number,
+      readonly last_gold: bignum,
       readonly extra_data: number[]
 
     ) {}
@@ -454,10 +455,11 @@ class PlayerData {
         ['player_character', u8],
         ['current_bet_size', u64],
         ['current_key', u8],
-        ['extra_data', uniformFixedSizeArray(u8, 23)],
+        ['last_gold', u64],
+        ['extra_data', uniformFixedSizeArray(u8, 15)],
 
       ],
-      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.current_bet_size!, args.current_key!, args.extra_data!),
+      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.current_bet_size!, args.current_key!, args.last_gold!, args.extra_data!),
       'PlayerData'
     )
 }
@@ -657,6 +659,25 @@ export function serialise_claim_achievement_instruction(instruction : number, ac
 /////////////////////// Key Shop Instructions and MetaData /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class ShopMintFromCollectionInstruction {
+    constructor(
+        readonly instruction: number,
+        readonly which_collection: number,
+        readonly which_from_collection: number
+
+    ) {}
+  
+    static readonly struct = new BeetStruct<ShopMintFromCollectionInstruction>(
+      [
+        ['instruction', u8],
+        ['which_collection', u8],
+        ['which_from_collection', u8]
+
+      ],
+      (args) => new ShopMintFromCollectionInstruction(args.instruction!, args.which_collection!, args.which_from_collection!),
+      'ShopMintFromCollectionInstruction'
+    )
+}
 
 export class KeyDataFromMint {
     constructor(
@@ -823,6 +844,15 @@ export async function run_keyData_GPA(bearer : string, key_index : number) : Pro
     }
 
     return data
+}
+
+export function serialise_mint_from_collection_instruction(instruction : number, which_collection : number, which_from_collection : number) : Buffer
+{
+
+    const data = new ShopMintFromCollectionInstruction(instruction, which_collection, which_from_collection);
+    const [buf] = ShopMintFromCollectionInstruction.struct.serialize(data);
+
+    return buf;
 }
 
 
