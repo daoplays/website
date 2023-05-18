@@ -658,11 +658,11 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                         <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/EnterTheDungeon.mp4" type="video/mp4"/>
                         Your browser does not support the video tag.
                     </video>
-                    <Box as="button" disabled={num_xp < 1100 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection()}}>
+                    <Box as="button" disabled={num_xp < 1000000 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection()}}>
                         <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Enter The Dungeon</Text>
                         <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: 100</Text>
                         <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
-
+                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Coming Soon</Text>
                     </Box>
                 </VStack>
             </Box>
@@ -691,10 +691,11 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     <VStack>
                         
                         <img style={{"imageRendering":"pixelated"}} src={tower_of_dur} width="150" alt={""}/>
-                        <Box as="button" disabled={num_xp < 1100 ? true : false} onClick={() => {setWhichCollection(Collection.Paintings); MintFromCollection()}}>
+                        <Box as="button" disabled={num_xp < 1000000 ? true : false} onClick={() => {setWhichCollection(Collection.Paintings); MintFromCollection()}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Tower of Dur</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: 100</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 2000 ? "2000 XP required" : "1000 Gold"} </Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Coming Soon</Text>
 
                         </Box>
                     </VStack>
