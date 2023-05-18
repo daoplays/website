@@ -82,11 +82,11 @@ import selector from "./images/Selector.gif"
 //  dungeon constants
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, PROD,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType, MAIN_ACCOUNT_SEED} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, Screen, DM_PROGRAM, KeyType, MAIN_ACCOUNT_SEED, LOOT_TOKEN_MINT} from './constants';
 
 // dungeon utils
 import { request_player_account_data, request_key_data_from_index, request_token_amount,
-    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction, get_JWT_token, get_current_blockhash, send_transaction, check_signature, request_current_balance, AchievementData, NewDiscordMessage, serialise_quit_instruction} from './utils';
+    serialise_play_instruction, serialise_basic_instruction, uInt16ToLEBytes, run_keyData_GPA, post_discord_message, request_player_achievement_data, serialise_claim_achievement_instruction, get_JWT_token, get_current_blockhash, send_transaction, check_signature, request_current_balance, AchievementData, NewDiscordMessage, serialise_quit_instruction, bignum_to_num} from './utils';
 
 import {DisplayPlayerSuccessText, DisplayPlayerFailedText, DisplayEnemyAppearsText, DisplayEnemy, DisplayPlayer, DisplayXP, DisplayLVL, DungeonEnemy, DungeonCharacter, DungeonStatus, WIN_FACTORS, DungeonCharacterEmoji, DungeonEnemyEmoji, GoldEmoji} from './dungeon_state';
 
@@ -209,6 +209,7 @@ export function DungeonApp()
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState<DungeonEnemy>(DungeonEnemy.None);
+    const [last_gold, setLastGold] = useState<number>(0);
 
     // achievement state
     const [which_achievement, setWhichAchievement] = useState<number | null>(null);
@@ -799,7 +800,8 @@ export function DungeonApp()
 
                 setNumXP(current_xp);
 
-                
+                setLastGold(bignum_to_num(player_data.last_gold) / 1e6);
+               
             } catch(error) {
                 console.log(error);
                 setCurrentLevel(0);
@@ -1065,8 +1067,6 @@ export function DungeonApp()
 
     const Play = useCallback( async () => 
     {
-       
-        
         setTransactionFailed(false);
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined)
@@ -1076,17 +1076,25 @@ export function DungeonApp()
         if (DEBUG) {
             console.log("In play", bet_size, BetSizeValues[bet_size]);
         }
+
         let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM))[0];
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
         let player_achievement_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)], DUNGEON_PROGRAM))[0];
+
+        let loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
 
         const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, bet_size);
 
         var account_vector  = [
             {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
             {pubkey: player_data_key, isSigner: false, isWritable: true},
-            {pubkey: player_achievement_key, isSigner: false, isWritable: true}
-
+            {pubkey: player_achievement_key, isSigner: false, isWritable: true},
+            {pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true},
+            {pubkey: loot_token_account, isSigner: false, isWritable: true}
         ];
 
         if (PROD) {
@@ -1105,6 +1113,7 @@ export function DungeonApp()
 
         // next 3 accounts are for the free play tokens
         account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
+        account_vector.push({pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
         account_vector.push({pubkey: FREE_PLAY_MINT, isSigner: false, isWritable: true});
 
         let free_play_token_account = await getAssociatedTokenAddress(
@@ -1532,7 +1541,7 @@ export function DungeonApp()
 
         return (
             <Box bg='black'>
-                <img style={{"imageRendering":"pixelated"}} src={screen === Screen.ARENA_SCREEN ? arena_title : dungeon_title} width="500" alt={""}/>
+                <img style={{"imageRendering":"pixelated"}} src={screen === Screen.ARENA_SCREEN ? arena_title : dungeon_title} width={isMobile ? "400" : "500"} alt={""}/>
             </Box>
         )
     }
@@ -1902,7 +1911,7 @@ export function DungeonApp()
                     {enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
-                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={bet_value} num_plays={num_plays}/>
+                            <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={bet_value} num_plays={num_plays} last_gold={last_gold}/>
 
                             {current_level < 7 &&
                                 <Center>

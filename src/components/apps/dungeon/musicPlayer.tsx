@@ -56,12 +56,15 @@ const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
     <>
       <ReactAudioPlayer
         src={audioSrc}
+        layout="horizontal"
         autoPlay={false}
         className='music-player'
         onClickNext={() => handleMusicButtonClick('next')}
         onClickPrevious={() => handleMusicButtonClick('previous')}
         onEnded={() => handleMusicButtonClick('next')}
         showSkipControls={true}
+        showDownloadProgress={false}
+        showFilledProgress={false}
         customIcons={{
           next: <img src={Next} alt="Next" />,
           previous: <img src={Prev} alt="Prev" />,
