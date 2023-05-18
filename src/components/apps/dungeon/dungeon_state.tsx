@@ -5,7 +5,6 @@ import {
     HStack
 } from '@chakra-ui/react';
 
-
 //  dungeon constants
 import {DUNGEON_FONT_SIZE} from './constants';
 
@@ -92,6 +91,9 @@ export const DungeonCharacterEmoji : string[] = [
     "<a:Ranger:1070471404425842688>",
     "<a:Wizard:1070471413829472287>"
 ]
+
+
+
 
 
 export const GoldEmoji : string = "<a:Gold:1086961346492510298>";
@@ -345,9 +347,10 @@ export const DisplayEnemyAppearsText = ({current_enemy, current_level, num_plays
 }
 
 export const DisplayPlayerFailedText = ({current_enemy, current_level, num_plays} : {current_enemy : DungeonEnemy, current_level : number, num_plays : number}) => {
-
+ 
     let seed_string = current_enemy.toString() + "_" + current_level.toString() + "_" + num_plays.toString();
     var random = seedrandom(seed_string);
+
 
     let enemy_text : string[] = DungeonPlayerDefeatedText[current_enemy];
     let idx : number = Math.floor(random() * enemy_text.length);
@@ -417,7 +420,21 @@ export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size
     return(
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
-            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You found {last_gold.toFixed(2)} loot!</Text>
+            
+            <Center>
+            <HStack alignContent="center" mt="1rem">
+                <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You found {last_gold.toFixed(2)}</Text>
+            
+                <img
+                    src={loot}
+                    width="auto"
+                    alt={""}
+                    style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }}
+                />
+            </HStack>
+            </Center>    
+
+
             <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Looking around you realise your job is done and there is nothing left to kill</Text>
             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Retire to claim your current loot of {current_win.toFixed(3)} SOL</Text>
             
