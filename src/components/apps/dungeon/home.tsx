@@ -379,14 +379,6 @@ export function DungeonApp()
                       </Text>
                     </HStack>
                   </Box>
-                  {/* <input
-                    type="range"
-                    min={BetSize.SolanaBet1}
-                    max={BetSize.SolanaBet3}
-                    value={bet_size}
-                    onChange={handleSliderChange}
-                    // style={{ marginTop: "1rem" }}
-                  /> */}
 
                   <div className="sliderContainer">
                     <div className="sliderTicks" style={{ left: bet_value === 0.05 ? 1.5 : 0, right: bet_value === 0.25 ? 1.5 : 0 }}>
