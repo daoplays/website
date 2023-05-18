@@ -35,6 +35,8 @@ import { isMobile } from "react-device-detect";
 //import useSound from 'use-sound';
 
 import 'react-h5-audio-player/lib/styles.css'
+import './css/home.css'
+
 
 import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
@@ -376,14 +378,30 @@ export function DungeonApp()
                       </Text>
                     </HStack>
                   </Box>
-                  <input
+                  {/* <input
                     type="range"
                     min={BetSize.SolanaBet1}
                     max={BetSize.SolanaBet3}
                     value={bet_size}
                     onChange={handleSliderChange}
                     // style={{ marginTop: "1rem" }}
-                  />
+                  /> */}
+
+                  <div className="sliderContainer">
+                    <div className="sliderTicks" style={{ left: bet_value === 0.05 ? 1.5 : 0, right: bet_value === 0.25 ? 1.5 : 0 }}>
+                      {BetSizeValues.map((betValue, index) => (
+                        <div key={index} className="sliderTick"></div>
+                      ))}
+                    </div>
+                    <input
+                      className={`slider ${bet_value === 0.25 ? "bet-small" : ""}`}
+                      type="range"
+                      min={BetSize.SolanaBet1}
+                      max={BetSize.SolanaBet3}
+                      value={bet_size}
+                      onChange={handleSliderChange}
+                    />
+                  </div>
                 </VStack>
               )}
               {isMobile && (
