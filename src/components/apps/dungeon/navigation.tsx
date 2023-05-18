@@ -206,6 +206,8 @@ export function Navigation(
         const { isOpen, onOpen, onClose } = useDisclosure();
       
         return (
+            <>
+            
           <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
             <Flex justifyContent="space-between" alignItems="center">
               <Box width="30%" display="flex" alignItems="center">
@@ -218,6 +220,9 @@ export function Navigation(
                   </Text>
                 </div>
               </Box>
+
+              <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+
               <Box display="flex" mr="7%" justifyContent="flex-end">
                 <HStack spacing="29%">
                   <a href="https://twitter.com/sol_dungeon">
@@ -252,6 +257,7 @@ export function Navigation(
             </Drawer>
             
           </Box>
+          </>
         );
       }
       
@@ -262,7 +268,7 @@ export function Navigation(
         //const btnRef = React.useRef()
 
         return (
-            <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
+            <Box width="98%" ml="1%" mt="1%" mb="1rem" mr="1%">
               <HStack>
                 {wallet.publicKey &&
                       <Box width="70%">
@@ -275,8 +281,12 @@ export function Navigation(
                   {!wallet.publicKey &&
                       <Box width="75%"></Box>
                   }
+
+                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+
+
                   <Box width="25%">
-                    <HStack spacing="10%">
+                    <HStack spacing="12%">
                         <a href="https://twitter.com/sol_dungeon">
                             <FontAwesomeIcon color="white" icon={brands('twitter')} size="lg"/>
                         </a>
@@ -302,7 +312,7 @@ export function Navigation(
                             <DrawerBody bg='black'>
                                 <VStack spacing='24px'>
                                    {NavBar.map((button,index) => (
-                                    button.text === 'Stats' ? null : (
+                                    (
                                 <Button variant='link' key={index} size='md' onClick={button.onClick}>
                                     <div className="font-face-sfpb">
                                         <Text fontSize='16px' color="white">{button.text}</Text>
@@ -328,14 +338,13 @@ export function Navigation(
             {!isMobile &&
             <>
                 <DesktopNavigation/>
-                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
+                
             </>
             }
 
             {isMobile &&
             <>
                 <MobileNavigation/>
-                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
             </>
             }
         </>
