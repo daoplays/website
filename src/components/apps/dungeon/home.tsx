@@ -64,6 +64,7 @@ import arena_title from "./images/Arena_Logo.png"
 import large_door from "./images/Large_Door.gif"
 import hallway from "./images/Hallway.gif"
 import hallway2 from "./images/Hallway2.gif"
+import hourglass from "./images/Hourglass.gif"
 
 //buttons
 import enter_button from "./images/Enter_Button.png"
@@ -262,6 +263,7 @@ export function DungeonApp()
     // referall code
     const [searchParams] = useSearchParams();
 
+    const [showHourGlass, setShowHourGlass] = useState(true)
 
    
 
@@ -709,6 +711,9 @@ export function DungeonApp()
         if (!check_user_state.current && !check_data_account.current && !check_achievements.current)
             return;
 
+
+        setShowHourGlass(true)
+
         let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
         if (check_data_account.current) {
@@ -853,9 +858,11 @@ export function DungeonApp()
                 setAchievementData(null);
             }
         }
+
+        setShowHourGlass(false)
         
 
-    }, [wallet, bearer_token]);
+    }, [wallet, bearer_token,showHourGlass]);
 
     // interval for checking state
     useEffect(() => {
@@ -1056,7 +1063,6 @@ export function DungeonApp()
         set_JWT_token();
         setPlayerState(DungeonStatus.unknown);
         setEnemyState(DungeonStatus.unknown);
-        
 
 
     }, [set_JWT_token]);
@@ -1856,10 +1862,16 @@ export function DungeonApp()
 
                 </HStack>
                 </Box>
-                <Box width="10%"></Box> 
+                
                 
             </HStack>
-            
+            {
+                showHourGlass &&
+            <Box mt="2%" width="5rem" display="flex" justifyContent="center">
+                <img src={hourglass} alt="Hourglass" width="100%" height="auto" />
+            </Box>
+            }
+                        
 
             <VStack  alignItems="center">
 
