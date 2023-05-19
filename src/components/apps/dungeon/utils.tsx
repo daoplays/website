@@ -656,7 +656,7 @@ export function serialise_claim_achievement_instruction(instruction : number, ac
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Key Shop Instructions and MetaData /////////////////////////////////////////
+/////////////////////// Shop Instructions and MetaData /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ShopMintFromCollectionInstruction {
@@ -713,18 +713,26 @@ class KeyDataFromIndex {
     )
 }
 
-class ShopData {
+export class ShopData {
     constructor(
       readonly keys_bought: number,
       readonly key_types_bought: number[],
+      readonly music_boxes_bought: number[],
+      readonly paintings_bought: number[],
+      readonly lore_pages_bought: number[],
+
     ) {}
   
     static readonly struct = new BeetStruct<ShopData>(
       [
         ['keys_bought', u16],
         ['key_types_bought', uniformFixedSizeArray(u16, 3)],
+        ['music_boxes_bought', uniformFixedSizeArray(u16, 32)],
+        ['paintings_bought', uniformFixedSizeArray(u16, 32)],
+        ['lore_pages_bought', uniformFixedSizeArray(u16, 32)],
+
       ],
-      (args) => new ShopData(args.keys_bought!, args.key_types_bought!),
+      (args) => new ShopData(args.keys_bought!, args.key_types_bought!, args.music_boxes_bought!, args.paintings_bought!, args.lore_pages_bought!),
       'ShopData'
     )
 }

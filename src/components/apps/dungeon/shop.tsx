@@ -18,11 +18,11 @@ import {
 
 import { DUNGEON_FONT_SIZE, PROD ,
     PYTH_BTC_DEV, PYTH_BTC_PROD, PYTH_ETH_DEV, PYTH_ETH_PROD, PYTH_SOL_DEV, PYTH_SOL_PROD,
-    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY} from './constants';
+    METAPLEX_META, SHOP_PROGRAM, DUNGEON_PROGRAM, SYSTEM_KEY, LOOT_TOKEN_MINT} from './constants';
 
 import bs58 from "bs58";
   
-import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount, serialise_mint_from_collection_instruction} from './utils';
+import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount, serialise_mint_from_collection_instruction, ShopData} from './utils';
 
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -64,6 +64,10 @@ const MUSICBOX_COLLECTION_MASTER = new PublicKey('BvJ4QqRgs6qRAKvCSWdeMpYtJZckiw
 const MUSICBOX_COLLECTION_META = new PublicKey('5BqLuUX3ujSZuRV1dmbtWDsStTg755woj9pRjpBLmtJk');
 const MUSICBOX_COLLECTION_MINT = new PublicKey('9wNxsyK7N4c5EiXkT2FmgYkQopGmBBmQKibtpo4eKVkA');
 
+const PAINTINGS_COLLECTION_MASTER = new PublicKey('2bKFgSg8XQvwEXXKr3t9eRBTEJduUa7zMNRL611dZztP');
+const PAINTINGS_COLLECTION_META = new PublicKey('AdsBbgrdpQoN1jgUgymXjMpbKqKVA1SkbJu5PC2bKAGT');
+const PAINTINGS_COLLECTION_MINT = new PublicKey('2Za8pAqW26N57fx2ie5PEnjSBCEFu44icL6LS9YaVHBb');
+
 const enum ShopInstruction {
     init = 0,
     create_token = 1,
@@ -100,6 +104,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     const [xp_req, setXPReq] = useState<number | null>(null);
     const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
     const [which_collection, setWhichCollection] = useState<Collection>(Collection.None);
+    const [shop_data, setShopData] = useState<ShopData | null>(null);
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -148,6 +153,11 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             return;
         }
 
+        let shop_data = await request_shop_data(bearer_token, program_data_key);
+
+        console.log("have shop data", shop_data);
+        setShopData(shop_data);
+
         user_num_keys.current = user_keys_bought;
         
         if (user_keys_bought >= 3) {
@@ -158,7 +168,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
         }
       
 
-        let shop_data = await request_shop_data(bearer_token, program_data_key);
+
 
         // if the shop hasn't been set up yet just return
         if (shop_data === null){
@@ -332,7 +342,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
 
 
-    const MintFromCollection = useCallback( async () => 
+    const MintFromCollection = useCallback( async (which_from_collection : number) => 
     {
 
             if (wallet.publicKey === null || wallet.signTransaction === undefined)
@@ -342,7 +352,19 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             const nft_mint_keypair = Keypair.generate();
             var nft_mint_pubkey = nft_mint_keypair.publicKey;
             
-            let program_data_key = (PublicKey.findProgramAddressSync([Buffer.from("music_boxes")], SHOP_PROGRAM))[0];
+            let collection_data_key;
+            if (which_collection === Collection.MusicBoxes) {
+               collection_data_key = (PublicKey.findProgramAddressSync([Buffer.from("music_boxes")], SHOP_PROGRAM))[0];
+            }
+            else if (which_collection === Collection.Paintings) {
+                collection_data_key = (PublicKey.findProgramAddressSync([Buffer.from("paintings")], SHOP_PROGRAM))[0];
+            }
+            else {
+                return;
+            }
+
+            let shop_data_key = (PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM))[0];
+
 
             let nft_meta_key = (PublicKey.findProgramAddressSync([Buffer.from("metadata"),
             METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()], METAPLEX_META))[0];
@@ -356,10 +378,16 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                 true // allow owner off curve
             );
 
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
 
             let player_data_key = (PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM))[0];
 
-            const create_token_data = serialise_mint_from_collection_instruction(ShopInstruction.mint_from_collection, which_collection, 0);
+            const create_token_data = serialise_mint_from_collection_instruction(ShopInstruction.mint_from_collection, which_collection, which_from_collection);
             const init_data = serialise_basic_instruction(ShopInstruction.init);
 
             var account_vector  = [
@@ -371,13 +399,26 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                 {pubkey: nft_master_key, isSigner: false, isWritable: true},
 
                 {pubkey: player_data_key, isSigner: false, isWritable: true},
-                {pubkey: program_data_key, isSigner: false, isWritable: true},
+                {pubkey: collection_data_key, isSigner: false, isWritable: true},
+                {pubkey: shop_data_key, isSigner: false, isWritable: true},
 
             ];
 
-            account_vector.push({pubkey: MUSICBOX_COLLECTION_MINT, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: MUSICBOX_COLLECTION_META, isSigner: false, isWritable: true});
-            account_vector.push({pubkey: MUSICBOX_COLLECTION_MASTER, isSigner: false, isWritable: true});
+            if (which_collection === Collection.MusicBoxes) {
+                account_vector.push({pubkey: MUSICBOX_COLLECTION_MINT, isSigner: false, isWritable: true});
+                account_vector.push({pubkey: MUSICBOX_COLLECTION_META, isSigner: false, isWritable: true});
+                account_vector.push({pubkey: MUSICBOX_COLLECTION_MASTER, isSigner: false, isWritable: true});
+            }
+
+            if (which_collection === Collection.Paintings) {
+                account_vector.push({pubkey: PAINTINGS_COLLECTION_MINT, isSigner: false, isWritable: true});
+                account_vector.push({pubkey: PAINTINGS_COLLECTION_META, isSigner: false, isWritable: true});
+                account_vector.push({pubkey: PAINTINGS_COLLECTION_MASTER, isSigner: false, isWritable: true});
+            }
+
+
+            account_vector.push({pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true});
+            account_vector.push({pubkey: loot_token_account, isSigner: false, isWritable: true});
             
             account_vector.push({pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
             account_vector.push({pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false});
@@ -395,7 +436,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             const init_instruction = new TransactionInstruction({
                 keys: [
                     {pubkey: wallet.publicKey, isSigner: true, isWritable: true},
-                    {pubkey: program_data_key, isSigner: false, isWritable: true},
+                    {pubkey: shop_data_key, isSigner: false, isWritable: true},
                     {pubkey: SYSTEM_KEY, isSigner: false, isWritable: true}
                 ],
                 programId: SHOP_PROGRAM,
@@ -647,24 +688,62 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
     const MusicText = (): JSX.Element | null => {
 
+        console.log("Shop state:", shop_data)
         return(
             <Center width = "100%">
             <Box width="80%">
-                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb = "1rem">These are music boxes from across the land of Limare.  Each one plays its own special tune. </Text>
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb = "1rem">These are music boxes from across the land of Limare.  Each one plays its own special tune. </Text>
+                <Center>
+                <HStack>
+                    <VStack>
+                        <video width="150" height="150"  controls controlsList="nodownload">
+                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/EnterTheDungeon.mp4" type="video/mp4"/>
+                            Your browser does not support the video tag.
+                        </video>
+                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(0)}}>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Enter The Dungeon</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+                        </Box>
+                    </VStack>
 
-                <VStack>
-                    
-                    <video width="150" height="150"  controls controlsList="nodownload">
-                        <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/EnterTheDungeon.mp4" type="video/mp4"/>
-                        Your browser does not support the video tag.
-                    </video>
-                    <Box as="button" disabled={num_xp < 1000000 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection()}}>
-                        <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Enter The Dungeon</Text>
-                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: 100</Text>
-                        <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
-                        <Text className="font-face-sfpb" color="grey" fontSize="10px">Coming Soon</Text>
-                    </Box>
-                </VStack>
+                    <VStack>
+                        <video width="150" height="150"  controls controlsList="nodownload">
+                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/DungeonCrawling.mp4" type="video/mp4"/>
+                            Your browser does not support the video tag.
+                        </video>
+                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(1)}}>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">02 - Dungeon Crawling</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[1]}</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+                        </Box>
+                    </VStack>
+
+                    <VStack>
+                        <video width="150" height="150"  controls controlsList="nodownload">
+                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/HackNSlash.mp4" type="video/mp4"/>
+                            Your browser does not support the video tag.
+                        </video>
+                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(2)}}>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">03 - Hack n' Slash</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[2]}</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+                        </Box>
+                    </VStack>
+
+                    <VStack>
+                        <video width="150" height="150"  controls controlsList="nodownload">
+                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/DelvingDeeper.mp4" type="video/mp4"/>
+                            Your browser does not support the video tag.
+                        </video>
+                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(3)}}>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">04 - Delving Deeper</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[3]}</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+                        </Box>
+                    </VStack>
+                </HStack>
+                </Center>
             </Box>
         </Center>
         );
@@ -691,11 +770,10 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     <VStack>
                         
                         <img style={{"imageRendering":"pixelated"}} src={tower_of_dur} width="150" alt={""}/>
-                        <Box as="button" disabled={num_xp < 1000000 ? true : false} onClick={() => {setWhichCollection(Collection.Paintings); MintFromCollection()}}>
+                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.Paintings); MintFromCollection(0)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Tower of Dur</Text>
-                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: 100</Text>
-                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 2000 ? "2000 XP required" : "1000 Gold"} </Text>
-                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Coming Soon</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}</Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 2000 ? "2000 XP required" : "2000 Gold"} </Text>
 
                         </Box>
                     </VStack>
