@@ -7,6 +7,7 @@
     /* transform: translateX(-50%); */
     display: block;
     background: transparent;
+    transition: none;
     
   }
   
@@ -143,8 +144,8 @@ button[aria-label="Enable loop"] {
 
 
   .music-player {
-    top: 0;
-    left: 38%;
+    top: -8px;
+    left: 28%;
     position: fixed;
   }
 

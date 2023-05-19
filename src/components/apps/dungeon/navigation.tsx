@@ -237,7 +237,7 @@ export function Navigation(
                 </HStack>
               </Box>
             </Flex>
-      
+            <MusicPlayer tracks={MusicList} muteState={muteState} />
             <Drawer isOpen={isOpen} placement="right" onClose={onClose} closeOnOverlayClick={true} >
               <DrawerOverlay  />
               <DrawerContent maxWidth={"25%"} maxHeight="fit-content" borderColor="white" borderWidth="2px">
@@ -252,6 +252,8 @@ export function Navigation(
                         </div>
                       </Button>
                     ))}
+
+                    
                   </VStack>
                 </DrawerBody>
               </DrawerContent>
@@ -301,7 +303,7 @@ export function Navigation(
 
                         <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
 
-                        
+                        <MusicPlayer tracks={MusicList} muteState={muteState} />
                         <Drawer
                             isOpen={isOpen}
                             placement='right'
@@ -340,14 +342,12 @@ export function Navigation(
             {!isMobile &&
             <>
                 <DesktopNavigation/>
-                <MusicPlayer tracks={MusicList} muteState={muteState} />
             </>
             }
 
             {isMobile &&
             <>
                 <MobileNavigation/>
-                <MusicPlayer tracks={MusicList} muteState={muteState} />
             </>
             }
         </>
