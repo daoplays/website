@@ -43,6 +43,10 @@
   button[aria-label="Rewind"] {
     display: none;
   }
+
+  button[aria-label="Unmute"] {
+    display: none;
+  }
   
 
   button[aria-label="Forward"] {
