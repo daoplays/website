@@ -97,14 +97,21 @@ const enum Collection {
 export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp : number, bearer_token : string, check_sol_balance : React.MutableRefObject<boolean>})
 {
     const wallet = useWallet();
-    const [current_mint, setCurrentMint]  = useState<PublicKey | null>(null);
-    const [which_key, setWhichKey] = useState<string | null>(null);
-    const [key_description, setKeyDescription] = useState<string | null>(null);
-    const [key_image, setKeyImage] = useState<string | null>(null);
+
+    // state for the purchased item
+    const [bought_item_mint, setBoughtItemMint]  = useState<PublicKey | null>(null);
+    const [bought_item_name, setBoughtItemName] = useState<string | null>(null);
+    const [bought_item_description, setBoughtItemDescription] = useState<string | null>(null);
+    const [bought_item_image, setBoughtItemImage] = useState<string | null>(null);
+
     const [xp_req, setXPReq] = useState<number | null>(null);
     const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
     const [which_collection, setWhichCollection] = useState<Collection>(Collection.None);
     const [shop_data, setShopData] = useState<ShopData | null>(null);
+
+    //button processing
+    const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
+
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -270,10 +277,12 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             //console.log(meta_data);
             let uri_json = await fetch(meta_data[0].data.uri).then(res => res.json());
 
-            setWhichKey(meta_data[0].data.name);
-            setKeyDescription(uri_json["description"]);
-            setKeyImage(uri_json["image"]);
-            setCurrentMint(meta_data[0].mint);
+            setBoughtItemName(meta_data[0].data.name);
+            setBoughtItemDescription(uri_json["description"]);
+            setBoughtItemImage(uri_json["image"]);
+            setBoughtItemMint(meta_data[0].mint);
+            setProcessingTransaction(false);
+
 
             current_key.current = null;
         
@@ -471,7 +480,8 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             }
 
             
-            //current_key.current = nft_meta_key;
+            setProcessingTransaction(true);
+            current_key.current = nft_meta_key;
             check_xp.current = true;
             check_sol_balance.current = true;
             
@@ -487,9 +497,9 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             if (wallet.publicKey === null || wallet.signTransaction === undefined)
                 return;
 
-            setWhichKey(null);
-            setKeyDescription(null);
-            setKeyImage(null);
+            setBoughtItemName(null);
+            setBoughtItemDescription(null);
+            setBoughtItemImage(null);
        
 
             const nft_mint_keypair = Keypair.generate();
@@ -700,7 +710,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                             <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/EnterTheDungeon.mp4" type="video/mp4"/>
                             Your browser does not support the video tag.
                         </video>
-                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(0)}}>
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(0)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Enter The Dungeon</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -712,7 +722,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                             <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/DungeonCrawling.mp4" type="video/mp4"/>
                             Your browser does not support the video tag.
                         </video>
-                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(1)}}>
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(1)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">02 - Dungeon Crawling</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[1]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -724,7 +734,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                             <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/HackNSlash.mp4" type="video/mp4"/>
                             Your browser does not support the video tag.
                         </video>
-                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(2)}}>
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(2)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">03 - Hack n' Slash</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[2]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -736,7 +746,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                             <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/DelvingDeeper.mp4" type="video/mp4"/>
                             Your browser does not support the video tag.
                         </video>
-                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(3)}}>
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(3)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">04 - Delving Deeper</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[3]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -824,6 +834,56 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     }
 
 
+    const DisplayBoughtItem = (): JSX.Element | null => {
+
+        if (which_collection === Collection.None) {
+            return(<></>);
+        }
+
+        if(bought_item_name === null || bought_item_image === null || bought_item_mint === null) {
+            return(<></>);          
+        }
+
+        if (which_collection === Collection.DungeonKeys) {
+            return(
+                <VStack spacing="3%" alignItems="center">
+                <HStack alignItems="center">
+                    <Box width="15%">
+                        <img style={{"imageRendering":"pixelated"}} src={bought_item_image} width="100" alt={""}/>
+                    </Box>
+                                
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {bought_item_name?.slice(0,17)}! </Text>
+                        </div>
+                </HStack>
+                <Center>
+                    <Box width = "100%">
+                        <div className="font-face-sfpb">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{bought_item_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+bought_item_mint.toString()}>here</a></Text>
+                        </div>
+                    </Box>
+                </Center>
+            </VStack>
+            );
+        }
+
+
+        return(
+            <VStack spacing="3%" alignItems="center">
+                <div className="font-face-sfpb">
+                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">Item Purchased!</Text>
+                </div>
+            <Center>
+                <Box width = "100%">
+                    <div className="font-face-sfpb">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+bought_item_mint.toString()}>here</a></Text>
+                    </div>
+                </Box>
+            </Center>
+        </VStack>
+        );    
+    }
+
     const ShopItems = () => {
 
         if (customer_status === CustomerStatus.prepaid) {
@@ -867,7 +927,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
     let item_image_size = isMobile? "80" : "100";
     return(
-        <VStack alignItems="center" mb = "5rem" width="100%">
+        <VStack alignItems="center" mb = "10rem" width="100%">
             <Box width="100%">
                 <HStack>
                     <Box width="65%"></Box>  
@@ -957,28 +1017,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                         </>
                         }
 
-                        {which_key !== null && key_image !== null && current_mint !== null &&
-                            <>
-                            <VStack spacing="3%" alignItems="center">
-                                <HStack alignItems="center">
-                                    <Box width="15%">
-                                        <img style={{"imageRendering":"pixelated"}} src={key_image} width="100" alt={""}/>
-                                    </Box>
-                                                
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You have found {which_key?.slice(0,17)}! </Text>
-                                        </div>
-                                </HStack>
-                                <Center>
-                                    <Box width = "100%">
-                                        <div className="font-face-sfpb">
-                                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{key_description}  View it <a className="one" target="_blank" rel="noreferrer" href={"https://explorer.solana.com/address/"+current_mint.toString()}>here</a></Text>
-                                        </div>
-                                    </Box>
-                                </Center>
-                            </VStack>
-                            </>            
-                        }
+                        <DisplayBoughtItem/>
 
 
                     </VStack>
