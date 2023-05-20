@@ -864,7 +864,7 @@ export function DungeonApp()
         setShowHourGlass(false)
         
 
-    }, [wallet, bearer_token,showHourGlass]);
+    }, [wallet, bearer_token]);
 
     // interval for checking state
     useEffect(() => {
@@ -980,8 +980,10 @@ export function DungeonApp()
                     if (DEBUG) {
                         console.log("player killed enemy");
                     }
-                    setPlayerState(DungeonStatus.alive);
-                    setEnemyState(DungeonStatus.dead);
+                    setTimeout(() => {
+                        setPlayerState(DungeonStatus.alive);
+                        setEnemyState(DungeonStatus.dead);
+                    }, 1000);
         
                     //Victory sound plays
 
@@ -991,8 +993,10 @@ export function DungeonApp()
                     if (DEBUG) {
                         console.log("enemy killed player")
                     }
-                    setPlayerState(DungeonStatus.dead);
-                    setEnemyState(DungeonStatus.alive);
+                    setTimeout(() => {
+                        setPlayerState(DungeonStatus.dead);
+                        setEnemyState(DungeonStatus.alive);
+                    }, 1000);
                     
                     //player death audio
                     playAudio(PlayerDeathAudio)
