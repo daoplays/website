@@ -66,6 +66,8 @@ import hallway from "./images/Hallway.gif"
 import hallway2 from "./images/Hallway2.gif"
 import hourglass from "./images/Hourglass.gif"
 
+import RollButton from "./images/RollButton.gif"
+
 //buttons
 import enter_button from "./images/Enter_Button.png"
 
@@ -973,7 +975,7 @@ export function DungeonApp()
             if (level === 0) {
                 return;
             }
-            const timer = setTimeout(() => {
+            
                 if (level === 1) {
                     if (DEBUG) {
                         console.log("player killed enemy");
@@ -1012,15 +1014,13 @@ export function DungeonApp()
         
                 animateLevel.current = 0;
                 CheckNewPlayAchievements()
-            }, 5000);
-        
-            return () => clearTimeout(timer);
+            
         },[current_level, player_character, current_enemy, CheckNewPlayAchievements,playAudio])
         
-        // Replace the previous useEffect with this one
-        useEffect(() => {
-            handleAnimation(animateLevel.current);
-        }, [handleAnimation]);
+        // // Replace the previous useEffect with this one
+        // useEffect(() => {
+        //     handleAnimation(animateLevel.current);
+        // }, [handleAnimation]);
 
 
     
@@ -1867,7 +1867,7 @@ export function DungeonApp()
             </HStack>
             {
                 showHourGlass &&
-            <Box mt="2%" width="5rem" display="flex" justifyContent="center">
+            <Box mt="4%" width="5rem" display="flex" justifyContent="center">
                 <img src={hourglass} alt="Hourglass" width="100%" height="auto" />
             </Box>
             }
@@ -1918,13 +1918,21 @@ export function DungeonApp()
                     <>
                                       
                     {enemy_state  === DungeonStatus.alive  && 
+                        <>
                         <DisplayEnemyAppearsText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
+                        {/* here */}
+                        <Box mt="2%" width="5rem" display="flex" justifyContent="center">
+                            <img src={RollButton} onClick={()=> handleAnimation(animateLevel.current)} alt="Roll Button" width="100%" height="auto" />
+                        </Box>
+                        </>
+                        
+
                     }
                     {enemy_state === DungeonStatus.dead &&
 
                         <VStack alignItems="center" spacing="2%">
                             <DisplayPlayerSuccessText current_level={current_level} current_enemy={current_enemy} bet_size={bet_value} num_plays={num_plays} last_gold={last_gold}/>
-
+                           
                             {current_level < 7 &&
                                 <Center>
 

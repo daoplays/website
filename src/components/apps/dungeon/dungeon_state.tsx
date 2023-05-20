@@ -48,6 +48,9 @@ import corpse from "./images/Corpse.png"
 
 import loot from "./images/loot.png"
 
+import Roll18 from "./images/Roll18.gif"
+
+import './css/dungeon_state.css'
 export const WIN_FACTORS : number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
 
@@ -356,14 +359,26 @@ export const DisplayPlayerFailedText = ({current_enemy, current_level, num_plays
     let idx : number = Math.floor(random() * enemy_text.length);
     let chosen_text : string = enemy_text[idx];
 
-    return(
+    return (
+      <>
         <Center>
-            <Box width="80%">
-                <div className="font-face-sfpb">
-                    <Text  mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{chosen_text}</Text>
-                </div>
-            </Box>
+          <Box width="80%">
+            <div className="font-face-sfpb">
+              <Text
+                mt="1rem"
+                fontSize={DUNGEON_FONT_SIZE}
+                textAlign="center"
+                color="white"
+              >
+                {chosen_text}
+              </Text>
+            </div>
+          </Box>
         </Center>
+        <div className="Roll-container">
+          <img src={Roll18} alt="Roll 18" />
+        </div>
+      </>
     );
 }
 
@@ -395,6 +410,10 @@ export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
 
+            <div className="Roll-container">
+                <img src={Roll18} alt="Roll 18" />
+            </div>
+
             <Center>
             <HStack alignContent="center" mt="1rem">
                 <Text  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">You found {last_gold.toFixed(2)}</Text>
@@ -420,6 +439,10 @@ export const DisplayPlayerSuccessText = ({current_level, current_enemy, bet_size
     return(
         <div className="font-face-sfpb">
             <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays}/>
+
+            <div className="Roll-container">
+                <img src={Roll18} alt="Roll 18" />
+            </div>
             
             <Center>
             <HStack alignContent="center" mt="1rem">
