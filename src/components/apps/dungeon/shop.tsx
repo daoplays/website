@@ -643,11 +643,25 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
         if (customer_status === CustomerStatus.prepaid) {
             return(
                 <Center width = "100%">
-                <Box width="80%">
-                    <div className="font-face-sfpb">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">That's a shiny little trinket you have there... Tell you what, how about I trade you for one of my Dungeon Keys?</Text>
-                    </div>
-                </Box>
+                    <VStack alignItems="center" width="100%">
+
+                        <Box width="80%">
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">That's a shiny little trinket you have there... Tell you what, how about I trade you for one of my Dungeon Keys?</Text>
+                            </div>
+                        </Box>
+
+                        <HStack alignItems="center">          
+                            <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                            
+                            <Button variant='link' size='lg' onClick={Mint}>
+                                <div className="font-face-sfpb">
+                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1 Shiny Trinket) </Text>      
+                                </div> 
+                            </Button>                
+                        </HStack>  
+
+                    </VStack>
             </Center>
             );
         }
@@ -667,11 +681,25 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
         if (customer_status === CustomerStatus.xp_whitelist || (xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req)) {
             return (
                 <Center width = "100%">
-                    <Box width="80%">
-                        <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[user_num_keys.current]}</Text>
-                        </div>
-                    </Box>
+                    <VStack alignItems="center" width="100%">
+
+                        <Box width="80%">
+                            <div className="font-face-sfpb">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">{valid_shop_text[user_num_keys.current]}</Text>
+                            </div>
+                        </Box>
+
+                        <HStack alignItems="center">      
+                            <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
+                            
+                            <Button variant='link' size='lg' onClick={Mint}>
+                                <div className="font-face-sfpb">
+                                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
+                                </div> 
+                            </Button>                       
+                        </HStack>
+
+                    </VStack>
                 </Center>
             );
         }
@@ -884,46 +912,6 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
         );    
     }
 
-    const ShopItems = () => {
-
-        if (customer_status === CustomerStatus.prepaid) {
-            return(
-                <HStack alignItems="center">          
-                    <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
-                    
-                    <Button variant='link' size='lg' onClick={Mint}>
-                        <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1 Shiny Trinket) </Text>      
-                        </div> 
-                    </Button>                
-            </HStack>
-            );
-        }
-
-        if (customer_status === CustomerStatus.xp_whitelist || (xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req)) {
-            return (
-                <HStack alignItems="center">
-                
-                    <>
-                        
-                        <Box width="15%"> <img style={{"imageRendering":"pixelated"}} src={key} width="100" alt={""}/></Box>
-                        
-                        <Button variant='link' size='lg' onClick={Mint}>
-                            <div className="font-face-sfpb">
-                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> Buy Key (1.5 SOL) </Text>      
-                            </div> 
-                        </Button>  
-
-                    </>
-                    
-                                    
-                </HStack>
-            );
-        }
-
-        return(<></>);
-  
-    }
 
     let item_image_size = isMobile? "80" : "100";
     return(
@@ -1013,7 +1001,6 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                         <>
                             
                             <ShopText/>
-                            <ShopItems/>
                         </>
                         }
 
