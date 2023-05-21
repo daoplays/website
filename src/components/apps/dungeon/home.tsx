@@ -196,8 +196,8 @@ export function DungeonApp()
 
 
     const handleBetChange = (selected : BetSize) => {
-        wagerSelectAudio.volume=volume/100
-        if (muteState!==1) wagerSelectAudio.play()
+
+        playAudio(wagerSelectAudio)
         setBetSize(selected);
         setBetValue(BetSizeValues[selected])
     }
@@ -952,14 +952,17 @@ export function DungeonApp()
 
         
         const playAudio = useCallback((audio: HTMLAudioElement) => {
-            if (muteState!==1) {
+
+            audio.volume = volume / 100
+
+            if (muteState !== 1) {
               try {
                 audio.play();
               } catch (error) {
                 console.log("Failed to play audio");
               }
             }
-          }, [muteState]);
+          }, [muteState,volume]);
         
         // New function to handle animation
         const handleAnimation = useCallback(( level:number ) => {
@@ -975,7 +978,6 @@ export function DungeonApp()
                     setEnemyState(DungeonStatus.dead);
         
                     //Victory sound plays
-                    VictoryAudio.volume=volume/100
                     playAudio(VictoryAudio)
         
                 } else {
@@ -986,7 +988,6 @@ export function DungeonApp()
                     setEnemyState(DungeonStatus.alive);
                     
                     //player death audio
-                    PlayerDeathAudio.volume=volume/100
                     playAudio(PlayerDeathAudio)
                 }
         
@@ -1009,7 +1010,7 @@ export function DungeonApp()
             }, 5000);
         
             return () => clearTimeout(timer);
-        },[current_level, player_character, current_enemy, CheckNewPlayAchievements,playAudio,volume])
+        },[current_level, player_character, current_enemy, CheckNewPlayAchievements,playAudio])
         
         // Replace the previous useEffect with this one
         useEffect(() => {
@@ -1062,9 +1063,8 @@ export function DungeonApp()
 
     }, [set_JWT_token]);
 
-    const handleEnterBtn = ()=>{
-        dungeonTileAudio.volume=volume/100
-        if (muteState!==1) dungeonTileAudio.play()
+    const handleEnterBtn = () =>{
+        playAudio(dungeonTileAudio)
     }
 
     const Play = useCallback( async () => 
@@ -1550,24 +1550,21 @@ export function DungeonApp()
 
     const SelectKnight = useCallback( async () => 
     {
-        classSelectAudio.volume=volume/100
-        if (muteState!==1) classSelectAudio.play()
+        playAudio(classSelectAudio)
         setWhichCharacter(DungeonCharacter.knight);
-    },[muteState,volume]);
+    },[playAudio]);
 
     const SelectRanger = useCallback( async () => 
     {
-        classSelectAudio.volume=volume/100
-        if (muteState!==1) classSelectAudio.play()
+        playAudio(classSelectAudio)
         setWhichCharacter(DungeonCharacter.ranger);
-    },[muteState,volume]);
+    },[playAudio]);
 
     const SelectWizard = useCallback( async () => 
     {
-        classSelectAudio.volume=volume/100
-        if (muteState!==1) classSelectAudio.play()
+        playAudio(classSelectAudio)
         setWhichCharacter(DungeonCharacter.wizard);
-    },[muteState,volume]);
+    },[playAudio]);
 
     const CharacterSelect = () => {
 
@@ -1788,29 +1785,25 @@ export function DungeonApp()
 
 
     const handleExploreFurther = () => {
-        TorchAudio.volume=volume/100
-        if (muteState!==1) TorchAudio.play()
+        playAudio(TorchAudio)
         Play()
       };
 
 
     const handleEscape = () => {
-        EscapeAudio.volume=volume/100
-        if (muteState!==1) EscapeAudio.play()
+        playAudio(EscapeAudio)
         Quit()
       };
 
 
     const handleRetry = () => {
-        RetryAudio.volume=volume/100
-        if (muteState!==1) RetryAudio.play()
+        playAudio(RetryAudio)
         Play()
       };
 
 
       const handleExit = () => {
-        GameOverAudio.volume=volume/100
-        if (muteState!==1) GameOverAudio.play()
+        playAudio(GameOverAudio)
         ShowDeath()
       };
 

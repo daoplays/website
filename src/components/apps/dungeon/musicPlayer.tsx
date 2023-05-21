@@ -22,14 +22,14 @@ interface MusicPlayerProps {
 
 const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
-  const {  volume,muteState } = useContext(MuteContext);
+  const {  volume, muteState } = useContext(MuteContext);
 
   useEffect(() => {
     const audioElement = document.getElementsByTagName('audio')[0];
-    if (muteState===1) {
-      audioElement.volume=0
+    if (muteState === 1) {
+      audioElement.volume = 0
     }else{
-      audioElement.volume=volume/100
+      audioElement.volume = volume / 100
     }
   },[volume,muteState])
   
