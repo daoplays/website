@@ -62,7 +62,6 @@ export function Navigation(
         { src: dungeonCrawling, name: 'Dungeon Crawling' },
     ];
 
-    const { muteState } = useContext(MuteContext);
 
   // This will be used to store the interval
   const intervalref = useRef<number | null>(null);
@@ -337,14 +336,14 @@ export function Navigation(
             {!isMobile &&
             <>
                 <DesktopNavigation/>
-                <MusicPlayer tracks={MusicList} muteState={muteState} />
+                <MusicPlayer tracks={MusicList} />
             </>
             }
 
             {isMobile &&
             <>
                 <MobileNavigation/>
-                <MusicPlayer tracks={MusicList} muteState={muteState} />
+                <MusicPlayer tracks={MusicList} />
             </>
             }
         </>

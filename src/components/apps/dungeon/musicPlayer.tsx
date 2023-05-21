@@ -15,22 +15,23 @@ interface MusicTrack {
 
 interface MusicPlayerProps {
   tracks: MusicTrack[];
-  muteState: number;
+  // muteState: number;
 }
 
 
 
-const MusicPlayer = ({ tracks,muteState }: MusicPlayerProps) => {
+const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
-  const {  volume } = useContext(MuteContext);
+  const {  volume,muteState } = useContext(MuteContext);
 
   useEffect(() => {
     const audioElement = document.getElementsByTagName('audio')[0];
-    audioElement.volume=volume/100
-    if (audioElement) {
-      audioElement.pause()
+    if (muteState===1) {
+      audioElement.volume=0
+    }else{
+      audioElement.volume=volume/100
     }
-  },[muteState,volume])
+  },[volume,muteState])
   
 
   const handleMusicButtonClick = (direction: 'next' | 'previous') => {

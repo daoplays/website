@@ -975,7 +975,7 @@ export function DungeonApp()
                     setEnemyState(DungeonStatus.dead);
         
                     //Victory sound plays
-
+                    VictoryAudio.volume=volume/100
                     playAudio(VictoryAudio)
         
                 } else {
@@ -986,6 +986,7 @@ export function DungeonApp()
                     setEnemyState(DungeonStatus.alive);
                     
                     //player death audio
+                    PlayerDeathAudio.volume=volume/100
                     playAudio(PlayerDeathAudio)
                 }
         
@@ -1008,7 +1009,7 @@ export function DungeonApp()
             }, 5000);
         
             return () => clearTimeout(timer);
-        },[current_level, player_character, current_enemy, CheckNewPlayAchievements,playAudio])
+        },[current_level, player_character, current_enemy, CheckNewPlayAchievements,playAudio,volume])
         
         // Replace the previous useEffect with this one
         useEffect(() => {
