@@ -22,7 +22,7 @@ import { DUNGEON_FONT_SIZE, PROD ,
 
 import bs58 from "bs58";
   
-import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount, serialise_mint_from_collection_instruction, ShopData} from './utils';
+import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount, serialise_mint_from_collection_instruction, ShopData, VideoComponent} from './utils';
 
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -42,6 +42,13 @@ import lorepage_collection from "./images/LorePages.png"
 import paintings_collection from "./images/Paintings.png"
 
 import shop from "./images/ShopInside.gif"
+
+// music boxes
+import enter_the_dungeon from "./shop_items/EnterTheDungeon.gif"
+import dungeon_crawling from "./shop_items/DungeonCrawling.gif"
+import hack_n_slash from "./shop_items/HackNSlash.gif"
+import delving_deeper from "./shop_items/DelvingDeeper.gif"
+
 
 // paintings
 import tower_of_dur from "./shop_items/TowerOfDur.png"
@@ -103,15 +110,19 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     const [bought_item_name, setBoughtItemName] = useState<string | null>(null);
     const [bought_item_description, setBoughtItemDescription] = useState<string | null>(null);
     const [bought_item_image, setBoughtItemImage] = useState<string | null>(null);
+    const bought_item_collection = useRef<Collection>(Collection.None);
+
+
+    const [collection_page, setCollectionPage] = useState<Collection>(Collection.None);
 
     const [xp_req, setXPReq] = useState<number | null>(null);
     const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
-    const [which_collection, setWhichCollection] = useState<Collection>(Collection.None);
     const [shop_data, setShopData] = useState<ShopData | null>(null);
 
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
 
+    // which collection has been bought
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -256,7 +267,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
     }, [wallet, user_num_keys, bearer_token]);
 
-    const check_key = useCallback(async() =>
+    const check_bought_item = useCallback(async() =>
     {
         
         if (current_key.current  === null)
@@ -265,7 +276,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
         try {
 
             //console.log("request meta data");
-            let raw_meta_data = await request_raw_account_data(bearer_token, current_key.current);
+            let raw_meta_data = await request_raw_account_data(bearer_token, current_key.current, "bought item");
 
             if (raw_meta_data === null) {
                 return;
@@ -298,7 +309,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
     useEffect(() => {
 
         if (key_interval.current === null) {
-            key_interval.current = window.setInterval(check_key, 1000);
+            key_interval.current = window.setInterval(check_bought_item, 1000);
         }
         else{
             window.clearInterval(key_interval.current);
@@ -312,7 +323,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             key_interval.current = null;
           }
         };
-    }, [check_key]);
+    }, [check_bought_item]);
 
     // interval for checking xp
     useEffect(() => {
@@ -351,7 +362,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
 
 
-    const MintFromCollection = useCallback( async (which_from_collection : number) => 
+    const MintFromCollection = useCallback( async (which_collection : number, which_from_collection : number) => 
     {
 
             if (wallet.publicKey === null || wallet.signTransaction === undefined)
@@ -479,7 +490,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                 return;
             }
 
-            
+            bought_item_collection.current = which_collection;
             setProcessingTransaction(true);
             current_key.current = nft_meta_key;
             check_xp.current = true;
@@ -488,7 +499,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             return;
         
 
-    },[wallet, bearer_token, check_sol_balance, which_collection]);
+    },[wallet, bearer_token, check_sol_balance]);
 
 
     const Mint = useCallback( async () => 
@@ -734,11 +745,10 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                 <Center>
                 <HStack>
                     <VStack>
-                        <video width="150" height="150"  controls controlsList="nodownload">
-                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/EnterTheDungeon.mp4" type="video/mp4"/>
-                            Your browser does not support the video tag.
-                        </video>
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(0)}}>
+                        <img style={{"imageRendering":"pixelated"}} src={enter_the_dungeon} width="150" alt={""}/>
+
+                        
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 0)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Enter The Dungeon</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -746,11 +756,9 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     </VStack>
 
                     <VStack>
-                        <video width="150" height="150"  controls controlsList="nodownload">
-                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/DungeonCrawling.mp4" type="video/mp4"/>
-                            Your browser does not support the video tag.
-                        </video>
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(1)}}>
+                        <img style={{"imageRendering":"pixelated"}} src={dungeon_crawling} width="150" alt={""}/>
+
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 1)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">02 - Dungeon Crawling</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[1]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -758,11 +766,8 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     </VStack>
 
                     <VStack>
-                        <video width="150" height="150"  controls controlsList="nodownload">
-                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/HackNSlash.mp4" type="video/mp4"/>
-                            Your browser does not support the video tag.
-                        </video>
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(2)}}>
+                        <img style={{"imageRendering":"pixelated"}} src={hack_n_slash} width="150" alt={""}/>
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 2)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">03 - Hack n' Slash</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[2]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -770,11 +775,9 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     </VStack>
 
                     <VStack>
-                        <video width="150" height="150"  controls controlsList="nodownload">
-                            <source src="https://github.com/SolDungeon/nft_metadata/raw/main/MusicBoxes/images/DelvingDeeper.mp4" type="video/mp4"/>
-                            Your browser does not support the video tag.
-                        </video>
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {setWhichCollection(Collection.MusicBoxes); MintFromCollection(3)}}>
+                        <img style={{"imageRendering":"pixelated"}} src={delving_deeper} width="150" alt={""}/>
+
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 3)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">04 - Delving Deeper</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[3]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -808,7 +811,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     <VStack>
                         
                         <img style={{"imageRendering":"pixelated"}} src={tower_of_dur} width="150" alt={""}/>
-                        <Box as="button" disabled={num_xp < 10 ? true : false} onClick={() => {setWhichCollection(Collection.Paintings); MintFromCollection(0)}}>
+                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.Paintings, 0)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Tower of Dur</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 2000 ? "2000 XP required" : "2000 Gold"} </Text>
@@ -822,7 +825,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
     const ShopText = (): JSX.Element | null => {
 
-        if (which_collection === Collection.None) {
+        if (collection_page === Collection.None) {
             return(
                 <Center width = "100%">
                 <Box width="80%">
@@ -834,25 +837,25 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             );
         }
 
-        if (which_collection === Collection.DungeonKeys) {
+        if (collection_page === Collection.DungeonKeys) {
             return(
                 <KeyText/>
             );
         }
 
-        if (which_collection === Collection.MusicBoxes) {
+        if (collection_page === Collection.MusicBoxes) {
             return(
                 <MusicText/>
             );
         }
 
-        if (which_collection === Collection.Paintings) {
+        if (collection_page === Collection.Paintings) {
             return(
                 <PaintingText/>
             );
         }
 
-        if (which_collection === Collection.LorePages) {
+        if (collection_page === Collection.LorePages) {
             return(
                 <LoreText/>
             );
@@ -864,7 +867,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
 
     const DisplayBoughtItem = (): JSX.Element | null => {
 
-        if (which_collection === Collection.None) {
+        if (bought_item_collection.current === Collection.None || bought_item_collection.current !== collection_page) {
             return(<></>);
         }
 
@@ -872,7 +875,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
             return(<></>);          
         }
 
-        if (which_collection === Collection.DungeonKeys) {
+        if (bought_item_collection.current === Collection.DungeonKeys) {
             return(
                 <VStack spacing="3%" alignItems="center">
                 <HStack alignItems="center">
@@ -942,28 +945,28 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                            
                         
                                     <VStack width="25%" alignItems="center">
-                                        <Box as="button" onClick={() => {setWhichCollection(Collection.DungeonKeys)}}>
+                                        <Box as="button" onClick={() => {setCollectionPage(Collection.DungeonKeys)}}>
                                             <img style={{"imageRendering":"pixelated"}} src={keyring} width={item_image_size} alt={""}/>
                                         </Box>
                                         <Text className="font-face-sfpb" color="grey" fontSize="10px">Keys</Text>
                                     </VStack>
 
                                     <VStack width="25%" alignItems="center">
-                                        <Box as="button" onClick={() => {setWhichCollection(Collection.LorePages)}}>
+                                        <Box as="button" onClick={() => {setCollectionPage(Collection.LorePages)}}>
                                             <img style={{"imageRendering":"pixelated"}} src={lorepage_collection} width={item_image_size} alt={""}/>
                                         </Box>
                                         <Text className="font-face-sfpb" color="grey" fontSize="10px">Lore Pages</Text>
                                     </VStack>
 
                                     <VStack width="25%">
-                                        <Box as="button" onClick={() => {setWhichCollection(Collection.MusicBoxes)}}>
+                                        <Box as="button" onClick={() => {setCollectionPage(Collection.MusicBoxes)}}>
                                             <img style={{"imageRendering":"pixelated"}} src={musicbox_collection} width={item_image_size} alt={""}/>
                                         </Box>
                                         <Text className="font-face-sfpb" color="grey" fontSize="10px">Music Boxes</Text>
                                     </VStack>
 
                                     <VStack width="25%">
-                                        <Box as="button" onClick={() => {setWhichCollection(Collection.Paintings)}}>
+                                        <Box as="button" onClick={() => {setCollectionPage(Collection.Paintings)}}>
                                             <img style={{"imageRendering":"pixelated"}} src={paintings_collection} width={item_image_size} alt={""}/>
                                         </Box>
                                         <Text className="font-face-sfpb" color="grey" fontSize="10px">Paintings</Text>
