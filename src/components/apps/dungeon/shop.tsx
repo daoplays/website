@@ -22,7 +22,7 @@ import { DUNGEON_FONT_SIZE, PROD ,
 
 import bs58 from "bs58";
   
-import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount, serialise_mint_from_collection_instruction, ShopData, VideoComponent} from './utils';
+import { request_raw_account_data, request_shop_data, request_shop_user_data, serialise_basic_instruction, get_current_blockhash, send_transaction, request_token_amount, serialise_mint_from_collection_instruction, ShopData} from './utils';
 
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -748,7 +748,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                         <img style={{"imageRendering":"pixelated"}} src={enter_the_dungeon} width="150" alt={""}/>
 
                         
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 0)}}>
+                        <Box as="button" disabled={(num_xp < 1100 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 0)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Enter The Dungeon</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
@@ -758,29 +758,29 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     <VStack>
                         <img style={{"imageRendering":"pixelated"}} src={dungeon_crawling} width="150" alt={""}/>
 
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 1)}}>
+                        <Box as="button" disabled={(num_xp < 2500 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 1)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">02 - Dungeon Crawling</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[1]}</Text>
-                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 2500 ? "2500 XP required" : "1000 Gold"} </Text>
                         </Box>
                     </VStack>
 
                     <VStack>
                         <img style={{"imageRendering":"pixelated"}} src={hack_n_slash} width="150" alt={""}/>
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 2)}}>
+                        <Box as="button" disabled={(num_xp < 4500 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 2)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">03 - Hack n' Slash</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[2]}</Text>
-                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 4500 ? "4500 XP required" : "1000 Gold"} </Text>
                         </Box>
                     </VStack>
 
                     <VStack>
                         <img style={{"imageRendering":"pixelated"}} src={delving_deeper} width="150" alt={""}/>
 
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 3)}}>
+                        <Box as="button" disabled={(num_xp < 7000 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.MusicBoxes, 3)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">04 - Delving Deeper</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[3]}</Text>
-                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 1100 ? "1100 XP required" : "1000 Gold"} </Text>
+                            <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 7000 ? "7000 XP required" : "1000 Gold"} </Text>
                         </Box>
                     </VStack>
                 </HStack>
@@ -811,7 +811,7 @@ export function ShopScreen({num_xp, bearer_token, check_sol_balance} : {num_xp :
                     <VStack>
                         
                         <img style={{"imageRendering":"pixelated"}} src={tower_of_dur} width="150" alt={""}/>
-                        <Box as="button" disabled={(num_xp < 10 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.Paintings, 0)}}>
+                        <Box as="button" disabled={(num_xp < 2000 || processing_transaction) ? true : false} onClick={() => {MintFromCollection(Collection.Paintings, 0)}}>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">01 - Tower of Dur</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}</Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">{num_xp < 2000 ? "2000 XP required" : "2000 Gold"} </Text>
