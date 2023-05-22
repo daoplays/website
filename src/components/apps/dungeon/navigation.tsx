@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useRef, useContext} from 'react';
+import React, { useCallback, useState, useEffect, useRef} from 'react';
 import { SetStateAction } from 'react';
 
 
@@ -62,7 +62,6 @@ export function Navigation(
         { src: dungeonCrawling, name: 'Dungeon Crawling' },
     ];
 
-    const { isMuted, toggleMute } = useContext(MuteContext);
 
   // This will be used to store the interval
   const intervalref = useRef<number | null>(null);
@@ -220,9 +219,6 @@ export function Navigation(
                   </Text>
                 </div>
               </Box>
-
-              <MusicPlayer tracks={MusicList} isMuted={isMuted} />
-
               <Box display="flex" mr="7%" justifyContent="flex-end">
                 <HStack spacing="29%">
                   <a href="https://twitter.com/sol_dungeon">
@@ -231,12 +227,15 @@ export function Navigation(
                   <a href="https://discord.gg/soldungeon">
                     <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
                   </a>
-                  <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
+                  <MuteContext.Consumer>
+                      {({ muteState, toggleMute, volume, setVolume }) => (
+                        <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
+                      )}
+                    </MuteContext.Consumer>
                   <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                 </HStack>
               </Box>
             </Flex>
-      
             <Drawer isOpen={isOpen} placement="right" onClose={onClose} closeOnOverlayClick={true} >
               <DrawerOverlay  />
               <DrawerContent maxWidth={"25%"} maxHeight="fit-content" borderColor="white" borderWidth="2px">
@@ -282,9 +281,6 @@ export function Navigation(
                       <Box width="75%"></Box>
                   }
 
-                <MusicPlayer tracks={MusicList} isMuted={isMuted} />
-
-
                   <Box width="25%">
                     <HStack spacing="12%">
                         <a href="https://twitter.com/sol_dungeon">
@@ -295,11 +291,13 @@ export function Navigation(
                             <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
 
-                        <MuteButton isMuted={isMuted} toggleMute={toggleMute} />
+                        <MuteContext.Consumer>
+                      {({ muteState, toggleMute, volume, setVolume }) => (
+                        <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
+                      )}
+                    </MuteContext.Consumer>
 
                         <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
-
-                        
                         <Drawer
                             isOpen={isOpen}
                             placement='right'
@@ -338,13 +336,14 @@ export function Navigation(
             {!isMobile &&
             <>
                 <DesktopNavigation/>
-                
+                <MusicPlayer tracks={MusicList} />
             </>
             }
 
             {isMobile &&
             <>
                 <MobileNavigation/>
+                <MusicPlayer tracks={MusicList} />
             </>
             }
         </>

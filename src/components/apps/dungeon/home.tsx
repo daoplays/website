@@ -196,8 +196,8 @@ export function DungeonApp()
 
 
     const handleBetChange = (selected : BetSize) => {
-        
-        if (!isMuted) wagerSelectAudio.play()
+
+        playAudio(wagerSelectAudio)
         setBetSize(selected);
         setBetValue(BetSizeValues[selected])
     }
@@ -273,7 +273,7 @@ export function DungeonApp()
     const discord_play_message_sent = useRef<boolean>(false);
 
     // Checking Mute state
-    const { isMuted } = useContext(MuteContext);
+    const { muteState, volume } = useContext(MuteContext);
 
 
     useEffect(() => 
@@ -952,14 +952,17 @@ export function DungeonApp()
 
         
         const playAudio = useCallback((audio: HTMLAudioElement) => {
-            if (!isMuted) {
+
+            audio.volume = volume / 100
+
+            if (muteState !== 1) {
               try {
                 audio.play();
               } catch (error) {
                 console.log("Failed to play audio");
               }
             }
-          }, [isMuted]);
+          }, [muteState,volume]);
         
         // New function to handle animation
         const handleAnimation = useCallback(( level:number ) => {
@@ -975,7 +978,6 @@ export function DungeonApp()
                     setEnemyState(DungeonStatus.dead);
         
                     //Victory sound plays
-
                     playAudio(VictoryAudio)
         
                 } else {
@@ -1061,8 +1063,8 @@ export function DungeonApp()
 
     }, [set_JWT_token]);
 
-    const handleEnterBtn = ()=>{
-        if (!isMuted) dungeonTileAudio.play()
+    const handleEnterBtn = () =>{
+        playAudio(dungeonTileAudio)
     }
 
     const Play = useCallback( async () => 
@@ -1548,22 +1550,21 @@ export function DungeonApp()
 
     const SelectKnight = useCallback( async () => 
     {
-        
-        if (!isMuted) classSelectAudio.play()
+        playAudio(classSelectAudio)
         setWhichCharacter(DungeonCharacter.knight);
-    },[isMuted]);
+    },[playAudio]);
 
     const SelectRanger = useCallback( async () => 
     {
-        if (!isMuted) classSelectAudio.play()
+        playAudio(classSelectAudio)
         setWhichCharacter(DungeonCharacter.ranger);
-    },[isMuted]);
+    },[playAudio]);
 
     const SelectWizard = useCallback( async () => 
     {
-        if (!isMuted) classSelectAudio.play()
+        playAudio(classSelectAudio)
         setWhichCharacter(DungeonCharacter.wizard);
-    },[isMuted]);
+    },[playAudio]);
 
     const CharacterSelect = () => {
 
@@ -1784,25 +1785,25 @@ export function DungeonApp()
 
 
     const handleExploreFurther = () => {
-        if (!isMuted) TorchAudio.play()
+        playAudio(TorchAudio)
         Play()
       };
 
 
     const handleEscape = () => {
-        if (!isMuted) EscapeAudio.play()
+        playAudio(EscapeAudio)
         Quit()
       };
 
 
     const handleRetry = () => {
-        if (!isMuted) RetryAudio.play()
+        playAudio(RetryAudio)
         Play()
       };
 
 
       const handleExit = () => {
-        if (!isMuted) GameOverAudio.play()
+        playAudio(GameOverAudio)
         ShowDeath()
       };
 

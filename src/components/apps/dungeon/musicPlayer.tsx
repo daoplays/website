@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import ReactAudioPlayer from 'react-h5-audio-player';
+import { MuteContext } from './mute';
 import 'react-h5-audio-player/lib/styles.css';
 import './css/musicPlayer.css'
 import Next from './images/Next.png';
@@ -14,23 +15,29 @@ interface MusicTrack {
 
 interface MusicPlayerProps {
   tracks: MusicTrack[];
-  isMuted: boolean;
+  // muteState: number;
 }
 
-const MusicPlayer = ({ tracks,isMuted }: MusicPlayerProps) => {
+
+
+const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
   const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
+  const {  volume, muteState } = useContext(MuteContext);
 
   useEffect(() => {
     const audioElement = document.getElementsByTagName('audio')[0];
-    if (audioElement) {
-      audioElement.pause()
+    if (muteState === 1) {
+      audioElement.volume = 0
+    }else{
+      audioElement.volume = volume / 100
     }
-  },[isMuted])
+  },[volume,muteState])
   
 
   const handleMusicButtonClick = (direction: 'next' | 'previous') => {
     // Find the index of the current audio source in the tracks array
     const currentIndex = tracks.findIndex((item) => item.src === audioSrc);
+    
   
     // Calculate the index of the next or previous track
     let nextIndex;
