@@ -50,7 +50,7 @@ if (isMobile) {
     EMOJI_SIZE = 20
 }
 
-export const PROD = true;
+export const PROD = false;
 export const TEST = false;
 export const DEBUG = false;
 
