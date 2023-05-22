@@ -46,6 +46,7 @@ import keyring from "./images/Keyring.gif";
 import musicbox_collection from "./images/MusicBoxCollection.gif";
 import lorepage_collection from "./images/LorePages.png";
 import paintings_collection from "./images/Paintings.png";
+import loot from "./images/loot.png";
 
 import shop from "./images/ShopInside.gif";
 
@@ -121,6 +122,7 @@ export function ShopScreen({
 
     const [collection_page, setCollectionPage] = useState<Collection>(Collection.None);
 
+    const [current_loot, setCurrentLoot] = useState<number>(0);
     const [xp_req, setXPReq] = useState<number | null>(null);
     const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
     const [shop_data, setShopData] = useState<ShopData | null>(null);
@@ -155,11 +157,30 @@ export function ShopScreen({
     ];
 
     const check_xp_reqs = useCallback(async () => {
+
         if (!wallet.publicKey) return;
 
         if (!check_xp.current) return;
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
+        let shop_data = await request_shop_data(bearer_token, program_data_key);
+
+        //console.log("have shop data", shop_data);
+        setShopData(shop_data);
+
+        // get loot balance
+        let loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        let loot_amount = await request_token_amount(bearer_token, loot_token_account);
+
+        if (loot_amount > 0) {
+            setCurrentLoot(loot_amount / 1.0e6);
+        }
+
         let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
 
         let user_data = await request_shop_user_data(bearer_token, dungeon_key_data_account);
@@ -171,13 +192,9 @@ export function ShopScreen({
         }
 
         if (user_keys_bought <= user_num_keys.current) {
+            check_xp.current = false;
             return;
         }
-
-        let shop_data = await request_shop_data(bearer_token, program_data_key);
-
-        console.log("have shop data", shop_data);
-        setShopData(shop_data);
 
         user_num_keys.current = user_keys_bought;
 
@@ -262,6 +279,7 @@ export function ShopScreen({
         setCustomerStatus(CustomerStatus.other);
         setXPReq(total_xp_req);
         check_xp.current = false;
+
     }, [wallet, user_num_keys, bearer_token]);
 
     const check_bought_item = useCallback(async () => {
@@ -288,6 +306,8 @@ export function ShopScreen({
             setProcessingTransaction(false);
 
             current_key.current = null;
+            check_xp.current = true;
+
         } catch (error) {
             console.log(error);
             return;
@@ -463,7 +483,6 @@ export function ShopScreen({
             bought_item_collection.current = which_collection;
             setProcessingTransaction(true);
             current_key.current = nft_meta_key;
-            check_xp.current = true;
             check_sol_balance.current = true;
 
             return;
@@ -973,13 +992,17 @@ export function ShopScreen({
         <VStack alignItems="center" mb="10rem" width="100%">
             <Box width="100%">
                 <HStack>
-                    <Box width="65%"></Box>
-                    <Box width="10%">
-                        <div className="font-face-sfpb">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    <Box width="55%"></Box>
+                    <Box width="20%">
+                        <HStack alignItems="center">
+                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                {current_loot.toFixed(2)}
+                            </Text>
+                            <img src={loot} width="auto" alt={""} style={{ marginBottom:"5px", maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                 XP {num_xp}
                             </Text>
-                        </div>
+                        </HStack>
                     </Box>
                     <Box width="25%"></Box>
                 </HStack>
