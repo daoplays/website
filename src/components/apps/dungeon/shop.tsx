@@ -727,7 +727,7 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 10 || processing_transaction ? true : false}
+                                    disabled={num_xp < 1100 || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 0);
                                     }}
@@ -749,7 +749,7 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 10 || processing_transaction ? true : false}
+                                    disabled={num_xp < 2500 || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 1);
                                     }}
@@ -770,7 +770,7 @@ export function ShopScreen({
                                 <img style={{ imageRendering: "pixelated" }} src={hack_n_slash} width="150" alt={""} />
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 10 || processing_transaction ? true : false}
+                                    disabled={num_xp < 4500 || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 2);
                                     }}
@@ -792,7 +792,7 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 10 || processing_transaction ? true : false}
+                                    disabled={num_xp < 7000 || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 3);
                                     }}
@@ -841,7 +841,7 @@ export function ShopScreen({
                         <img style={{ imageRendering: "pixelated" }} src={tower_of_dur} width="150" alt={""} />
                         <Box
                             as="button"
-                            disabled={num_xp < 10 || processing_transaction ? true : false}
+                            disabled={num_xp < 2000 || processing_transaction ? true : false}
                             onClick={() => {
                                 MintFromCollection(Collection.Paintings, 0);
                             }}
