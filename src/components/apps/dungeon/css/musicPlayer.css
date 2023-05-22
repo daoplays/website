@@ -7,58 +7,59 @@
     /* transform: translateX(-50%); */
     display: block;
     background: transparent;
-    
-  }
-  
-  /* Style the audio controls */
-  .music-player audio {
+    transition: none;
+}
+
+/* Style the audio controls */
+.music-player audio {
     width: 100%;
     height: 10px;
-  }
-  
-  /* Style the play/pause button */
-  .music-player audio::-webkit-media-controls-play-button,
-  .music-player audio::-webkit-media-controls-pause-button {
+}
+
+/* Style the play/pause button */
+.music-player audio::-webkit-media-controls-play-button,
+.music-player audio::-webkit-media-controls-pause-button {
     display: block;
     background-color: #fff; /* White */
     border-radius: 50%;
     width: 10px;
     height: 10px;
     margin: 7px;
-  }
-  
-  /* Style the track progress bar */
-  .music-player audio::-webkit-media-controls-timeline-container,
-  .music-player audio::-webkit-media-controls-timeline-progress-bar {
-    display: none;
+}
 
-  }
-
-  /* Hide mute button */
-  button[aria-label="Mute"] {
+/* Style the track progress bar */
+.music-player audio::-webkit-media-controls-timeline-container,
+.music-player audio::-webkit-media-controls-timeline-progress-bar {
     display: none;
-  }
+}
 
-  button[aria-label="Rewind"] {
+/* Hide mute button */
+button[aria-label="Mute"] {
     display: none;
-  }
-  
+}
 
-  button[aria-label="Forward"] {
+button[aria-label="Rewind"] {
     display: none;
-  }
-  
-  
-  /* Style the volume and mute buttons */
-  .music-player audio::-webkit-media-controls-volume-slider,
-  .music-player audio::-webkit-media-controls-mute-button {
+}
+
+button[aria-label="Unmute"] {
+    display: none;
+}
+
+button[aria-label="Forward"] {
+    display: none;
+}
+
+/* Style the volume and mute buttons */
+.music-player audio::-webkit-media-controls-volume-slider,
+.music-player audio::-webkit-media-controls-mute-button {
     display: none; /* Hide the default buttons */
     color: #fff;
-  }
-  
-  /* Style the custom volume and mute buttons */
-  .music-player .volume-button,
-  .music-player .mute-button {
+}
+
+/* Style the custom volume and mute buttons */
+.music-player .volume-button,
+.music-player .mute-button {
     display: block;
     background-color: #fff; /* White */
     border-radius: 50%;
@@ -66,86 +67,84 @@
     height: 10px;
     margin: 5px;
     color: #fff;
-  }
-  
-  /* Style the volume slider */
-  .music-player .volume-slider {
+}
+
+/* Style the volume slider */
+.music-player .volume-slider {
     color: #fff;
     width: 100%;
     height: 5px;
     background-color: #fff; /* White */
-  }
+}
 
-  .rhap_progress-section{
+.rhap_progress-section {
     display: none;
-  }
-  .rhap_progress-container{
+}
+.rhap_progress-container {
     display: none;
-  }
+}
 
-  .rhap_container {
+.rhap_container {
     transform: scale(1.5);
     width: fit-content;
-  }
+}
 
-  .music-player .rhap_play-pause-button,
+.music-player .rhap_play-pause-button,
 .music-player .rhap_skip-button,
 .music-player .rhap_rewind-button,
 .music-player .rhap_forward-button {
-  /* button styles here */
+    /* button styles here */
 
-  transform: scale(0.7);
+    transform: scale(0.7);
 }
 
 .music-player button {
-  padding: 0;
-  margin: 0;
-  /* width: 20px;
+    padding: 0;
+    margin: 0;
+    /* width: 20px;
   height: 20px; */
 }
 
 .music-player svg {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
-.rhap_volume-bar, .rhap_volume-indicator {
-  display: none;
+.rhap_volume-bar,
+.rhap_volume-indicator {
+    display: none;
 }
 
 button[aria-label="Enable loop"] {
-  display: none;
+    display: none;
 }
 
 @media only screen and (max-width: 495px) {
-    
-  .rhap_main {
-    font-size: 14px;
-  }
+    .rhap_main {
+        font-size: 14px;
+    }
 
-  .rhap_controls-section {
-    margin-top: 0px;
-  }
+    .rhap_controls-section {
+        margin-top: 0px;
+    }
 
-  .rhap_volume-bar-area {
-    height: 3px;
-  }
+    .rhap_volume-bar-area {
+        height: 3px;
+    }
 
-  .music-player .rhap_play-pause-button,
-  .music-player .rhap_skip-button,
-  .music-player .rhap_rewind-button,
-  .music-player .rhap_forward-button {
-    /* button styles here */
-    width: 20px;
-    height: 20px;
-    transform: scale(0.6);
-  }
+    .music-player .rhap_play-pause-button,
+    .music-player .rhap_skip-button,
+    .music-player .rhap_rewind-button,
+    .music-player .rhap_forward-button {
+        /* button styles here */
+        width: 20px;
+        height: 20px;
+        transform: scale(0.6);
+    }
 
-
-  .music-player {
-    top: 0;
-    left: 38%;
-    position: fixed;
-  }
-
+    .music-player {
+        top: -8px;
+        left: 28%;
+        position: fixed;
+    }
 }

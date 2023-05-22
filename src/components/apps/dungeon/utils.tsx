@@ -273,7 +273,7 @@ export async function request_current_balance(bearer : string, pubkey : PublicKe
     }
     let valid_response = check_json(account_info_result)
     if (!valid_response) {
-        console.log(account_info_result);
+        // console.log(account_info_result);
         return 0;
     }
 
