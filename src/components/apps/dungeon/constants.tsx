@@ -49,7 +49,7 @@ if (isMobile) {
 }
 
 export const PROD = true;
-export const TEST = true;
+export const TEST = false;
 export const DEBUG = false;
 
 export var network_string = "devnet";
