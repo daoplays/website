@@ -993,8 +993,8 @@ export function ShopScreen({
             <Box width="100%">
                 <HStack>
                     <Box width="55%"></Box>
-                    <Box width="20%">
-                        <HStack alignItems="center">
+                    <Box width="25%">
+                        <HStack alignItems="center" width="100%">
                             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                 {current_loot.toFixed(2)}
                             </Text>
@@ -1004,7 +1004,7 @@ export function ShopScreen({
                             </Text>
                         </HStack>
                     </Box>
-                    <Box width="25%"></Box>
+                    <Box width="20%"></Box>
                 </HStack>
             </Box>
 
