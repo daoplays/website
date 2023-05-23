@@ -153,7 +153,6 @@ export function ShopScreen({
 
     // state to handle playing the music boxes
     const [play_music_box, setPlayMusicBox] = useState<boolean>(false);
-    const current_music_box = useRef<HTMLAudioElement | null>(null);
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -756,7 +755,6 @@ export function ShopScreen({
     };
 
     const MusicTextButton = ({ which_box }: { which_box: number }): JSX.Element | null => {
-
         if (!MusixBoxAudio[which_box].paused) {
             return (
                 <Box
@@ -764,7 +762,6 @@ export function ShopScreen({
                     onClick={() => {
                         MusixBoxAudio[which_box].pause();
                         setPlayMusicBox(!play_music_box);
-                        //current_music_box.current = null;
                     }}
                 >
                     <img style={{ imageRendering: "pixelated" }} src={MusixBoxPauseButtons[which_box]} width="150" alt={""} />
@@ -777,7 +774,6 @@ export function ShopScreen({
                 as="button"
                 onClick={() => {
                     MusixBoxAudio[which_box].pause();
-                    current_music_box.current = MusixBoxAudio[which_box];
                     MusixBoxAudio[which_box].play();
                     setPlayMusicBox(!play_music_box);
                 }}
