@@ -51,10 +51,20 @@ import loot from "./images/loot.png";
 import shop from "./images/ShopInside.gif";
 
 // music boxes
-import enter_the_dungeon from "./shop_items/EnterTheDungeon.gif";
-import dungeon_crawling from "./shop_items/DungeonCrawling.gif";
-import hack_n_slash from "./shop_items/HackNSlash.gif";
-import delving_deeper from "./shop_items/DelvingDeeper.gif";
+import enter_the_dungeon_play from "./shop_items/EnterTheDungeon_Play.gif";
+import dungeon_crawling_play from "./shop_items/DungeonCrawling_Play.gif";
+import hack_n_slash_play from "./shop_items/HackNSlash_Play.gif";
+import delving_deeper_play from "./shop_items/DelvingDeeper_Play.gif";
+
+import enter_the_dungeon_pause from "./shop_items/EnterTheDungeon_Pause.gif";
+import dungeon_crawling_pause from "./shop_items/DungeonCrawling_Pause.gif";
+import hack_n_slash_pause from "./shop_items/HackNSlash_Pause.gif";
+import delving_deeper_pause from "./shop_items/DelvingDeeper_Pause.gif";
+
+import enter_the_dungeon_audio from "./sounds/Enter_the_Dungeon.mp3";
+import dungeon_crawling_audio from "./sounds/Dungeon_Crawling.mp3";
+import hack_n_slash_audio from "./sounds/Hack_n_Slash.mp3";
+import delving_deeper_audio from "./sounds/Delving_Deeper.mp3";
 
 // paintings
 import tower_of_dur from "./shop_items/TowerOfDur.png";
@@ -77,6 +87,17 @@ const MUSICBOX_COLLECTION_MINT = new PublicKey("9wNxsyK7N4c5EiXkT2FmgYkQopGmBBmQ
 const PAINTINGS_COLLECTION_MASTER = new PublicKey("2bKFgSg8XQvwEXXKr3t9eRBTEJduUa7zMNRL611dZztP");
 const PAINTINGS_COLLECTION_META = new PublicKey("AdsBbgrdpQoN1jgUgymXjMpbKqKVA1SkbJu5PC2bKAGT");
 const PAINTINGS_COLLECTION_MINT = new PublicKey("2Za8pAqW26N57fx2ie5PEnjSBCEFu44icL6LS9YaVHBb");
+
+const MusixBoxPlayButtons: string[] = [enter_the_dungeon_play, dungeon_crawling_play, hack_n_slash_play, delving_deeper_play];
+
+const MusixBoxPauseButtons: string[] = [enter_the_dungeon_pause, dungeon_crawling_pause, hack_n_slash_pause, delving_deeper_pause];
+
+const MusixBoxAudio: HTMLAudioElement[] = [
+    new Audio(enter_the_dungeon_audio),
+    new Audio(dungeon_crawling_audio),
+    new Audio(hack_n_slash_audio),
+    new Audio(delving_deeper_audio),
+];
 
 const enum ShopInstruction {
     init = 0,
@@ -130,7 +151,9 @@ export function ShopScreen({
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
 
-    // which collection has been bought
+    // state to handle playing the music boxes
+    const [play_music_box, setPlayMusicBox] = useState<boolean>(false);
+    const current_music_box = useRef<HTMLAudioElement | null>(null);
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -157,7 +180,6 @@ export function ShopScreen({
     ];
 
     const check_xp_reqs = useCallback(async () => {
-
         if (!wallet.publicKey) return;
 
         if (!check_xp.current) return;
@@ -279,7 +301,6 @@ export function ShopScreen({
         setCustomerStatus(CustomerStatus.other);
         setXPReq(total_xp_req);
         check_xp.current = false;
-
     }, [wallet, user_num_keys, bearer_token]);
 
     const check_bought_item = useCallback(async () => {
@@ -307,7 +328,6 @@ export function ShopScreen({
 
             current_key.current = null;
             check_xp.current = true;
-
         } catch (error) {
             console.log(error);
             return;
@@ -360,6 +380,10 @@ export function ShopScreen({
 
     const MintFromCollection = useCallback(
         async (which_collection: number, which_from_collection: number) => {
+            setBoughtItemName(null);
+            setBoughtItemDescription(null);
+            setBoughtItemImage(null);
+
             if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
             const nft_mint_keypair = Keypair.generate();
@@ -490,7 +514,7 @@ export function ShopScreen({
         [wallet, bearer_token, check_sol_balance]
     );
 
-    const Mint = useCallback(async () => {
+    const MintKey = useCallback(async () => {
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
         setBoughtItemName(null);
@@ -500,7 +524,7 @@ export function ShopScreen({
         const nft_mint_keypair = Keypair.generate();
         var nft_mint_pubkey = nft_mint_keypair.publicKey;
 
-        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
+        let shop_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
         let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
         let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
             [Buffer.from("key_meta"), nft_mint_pubkey.toBuffer()],
@@ -550,7 +574,7 @@ export function ShopScreen({
 
             { pubkey: player_data_key, isSigner: false, isWritable: true },
             { pubkey: dungeon_key_data_account, isSigner: false, isWritable: true },
-            { pubkey: program_data_key, isSigner: false, isWritable: true },
+            { pubkey: shop_data_key, isSigner: false, isWritable: true },
             { pubkey: dungeon_key_meta_account, isSigner: false, isWritable: true },
         ];
 
@@ -588,7 +612,7 @@ export function ShopScreen({
         const init_instruction = new TransactionInstruction({
             keys: [
                 { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-                { pubkey: program_data_key, isSigner: false, isWritable: true },
+                { pubkey: shop_data_key, isSigner: false, isWritable: true },
                 { pubkey: SYSTEM_KEY, isSigner: false, isWritable: true },
             ],
             programId: SHOP_PROGRAM,
@@ -646,7 +670,7 @@ export function ShopScreen({
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
-                            <Button variant="link" size="lg" onClick={Mint}>
+                            <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                         {" "}
@@ -693,7 +717,7 @@ export function ShopScreen({
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
-                            <Button variant="link" size="lg" onClick={Mint}>
+                            <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                         {" "}
@@ -731,8 +755,39 @@ export function ShopScreen({
         );
     };
 
+    const MusicTextButton = ({ which_box }: { which_box: number }): JSX.Element | null => {
+
+        if (!MusixBoxAudio[which_box].paused) {
+            return (
+                <Box
+                    as="button"
+                    onClick={() => {
+                        MusixBoxAudio[which_box].pause();
+                        setPlayMusicBox(!play_music_box);
+                        //current_music_box.current = null;
+                    }}
+                >
+                    <img style={{ imageRendering: "pixelated" }} src={MusixBoxPauseButtons[which_box]} width="150" alt={""} />
+                </Box>
+            );
+        }
+
+        return (
+            <Box
+                as="button"
+                onClick={() => {
+                    MusixBoxAudio[which_box].pause();
+                    current_music_box.current = MusixBoxAudio[which_box];
+                    MusixBoxAudio[which_box].play();
+                    setPlayMusicBox(!play_music_box);
+                }}
+            >
+                <img style={{ imageRendering: "pixelated" }} src={MusixBoxPlayButtons[which_box]} width="150" alt={""} />
+            </Box>
+        );
+    };
+
     const MusicText = (): JSX.Element | null => {
-        console.log("Shop state:", shop_data);
         return (
             <Center width="100%">
                 <Box width="80%">
@@ -742,8 +797,7 @@ export function ShopScreen({
                     <Center>
                         <HStack>
                             <VStack>
-                                <img style={{ imageRendering: "pixelated" }} src={enter_the_dungeon} width="150" alt={""} />
-
+                                <MusicTextButton which_box={0} />
                                 <Box
                                     as="button"
                                     disabled={num_xp < 1100 || processing_transaction ? true : false}
@@ -764,7 +818,7 @@ export function ShopScreen({
                             </VStack>
 
                             <VStack>
-                                <img style={{ imageRendering: "pixelated" }} src={dungeon_crawling} width="150" alt={""} />
+                                <MusicTextButton which_box={1} />
 
                                 <Box
                                     as="button"
@@ -786,7 +840,8 @@ export function ShopScreen({
                             </VStack>
 
                             <VStack>
-                                <img style={{ imageRendering: "pixelated" }} src={hack_n_slash} width="150" alt={""} />
+                                <MusicTextButton which_box={2} />
+
                                 <Box
                                     as="button"
                                     disabled={num_xp < 4500 || processing_transaction ? true : false}
@@ -807,7 +862,7 @@ export function ShopScreen({
                             </VStack>
 
                             <VStack>
-                                <img style={{ imageRendering: "pixelated" }} src={delving_deeper} width="150" alt={""} />
+                                <MusicTextButton which_box={3} />
 
                                 <Box
                                     as="button"
@@ -998,7 +1053,12 @@ export function ShopScreen({
                             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                 {current_loot.toFixed(2)}
                             </Text>
-                            <img src={loot} width="auto" alt={""} style={{ marginBottom:"5px", maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                            <img
+                                src={loot}
+                                width="auto"
+                                alt={""}
+                                style={{ marginBottom: "5px", maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }}
+                            />
                             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                 XP {num_xp}
                             </Text>
