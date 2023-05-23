@@ -1,4 +1,4 @@
-.wallet-button{
+.wallet-button {
     background-color: black !important;
     color: white !important;
     font-family: "SFPixelate" !important;
@@ -8,18 +8,18 @@
     padding: 0 0px !important;
     border-radius: 0px !important;
     text-decoration: underline !important;
- }
-  
- .wallet-button:hover {
-   color: white !important;
-   text-decoration: underline !important;
- }
+}
 
- .wallet-adapter-button-trigger {
+.wallet-button:hover {
+    color: white !important;
+    text-decoration: underline !important;
+}
+
+.wallet-adapter-button-trigger {
     background-color: #512da8;
 }
 
- .wallet-disconnect-button{
+.wallet-disconnect-button {
     background-color: black !important;
     color: white !important;
     font-family: "SFPixelate" !important;
@@ -28,10 +28,9 @@
     line-height: 20px !important;
     padding-left: 0px !important;
     margin-left: 0px !important;
- }
+}
 
-
- .mobile-wallet-button{
+.mobile-wallet-button {
     background-color: black !important;
     color: white !important;
     font-family: "SFPixelate" !important;
@@ -40,4 +39,4 @@
     line-height: 20px !important;
     padding: 0 0px !important;
     border-radius: 0px !important;
- }
+}

@@ -6,16 +6,16 @@ import "./css/mute.css";
 import VolumeSlider from "./slider";
 
 enum MuteState {
-  Unmuted,
-  Muted,
-  VolumeSlider,
+    Unmuted,
+    Muted,
+    VolumeSlider,
 }
 
 interface MuteButtonProps {
-  muteState: MuteState;
-  toggleMute: () => void;
-  volume: number;
-  setVolume: (value: number) => void;
+    muteState: MuteState;
+    toggleMute: () => void;
+    volume: number;
+    setVolume: (value: number) => void;
 }
 
 export const MuteContext = createContext<MuteButtonProps>({
