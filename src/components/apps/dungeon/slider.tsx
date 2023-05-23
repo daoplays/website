@@ -1,14 +1,19 @@
-import { FC, useState } from 'react';
+import { FC, useContext, useState } from "react";
+import { MuteContext } from "./mute";
 
 interface SliderProps {
-  value: number;
+  // value: number;
   onInput: (value: number) => void;
 }
 
-const VolumeSlider: FC<SliderProps> = ({ value, onInput }) => {
-  const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+const VolumeSlider: FC<SliderProps> = ({ onInput }) => {
+  const { volume: globalVolume } = useContext(MuteContext);
+  const [volume, setVolume] = useState(globalVolume);
+
+  const handleMouseUp = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseInt(event.target.value);
-    // onInput(newValue);
+    setVolume(newValue);
+    onInput(newValue);
   };
 
   return (
@@ -16,9 +21,14 @@ const VolumeSlider: FC<SliderProps> = ({ value, onInput }) => {
       type="range"
       min={0}
       max={100}
-      defaultValue={value}
-      onInput={handleSliderChange}
-      readOnly
+      defaultValue={volume}
+      // onChange={handleSliderChange}
+      onMouseUp={handleMouseUp}
+      style={{
+        width: "4rem",
+        transform: "rotate(-90deg)",
+        marginLeft: "-1rem",
+      }}
     />
   );
 };

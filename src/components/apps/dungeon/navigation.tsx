@@ -29,7 +29,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { brands, solid } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 import {Screen} from './constants';
 
-import { MuteButton, MuteContext } from './mute';
+import { MuteButton } from './mute';
 
 import delvingDeeper from './sounds/Delving_Deeper.mp3'
 import hackNSlash from './sounds/Hack_n_Slash.mp3'
@@ -227,11 +227,8 @@ export function Navigation(
                   <a href="https://discord.gg/soldungeon">
                     <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
                   </a>
-                  <MuteContext.Consumer>
-                      {({ muteState, toggleMute, volume, setVolume }) => (
-                        <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
-                      )}
-                    </MuteContext.Consumer>
+                        <MuteButton  />
+                      
                   <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                 </HStack>
               </Box>
@@ -291,11 +288,8 @@ export function Navigation(
                             <FontAwesomeIcon color="white" icon={brands('discord')} size="lg"/>
                         </a>
 
-                        <MuteContext.Consumer>
-                      {({ muteState, toggleMute, volume, setVolume }) => (
-                        <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
-                      )}
-                    </MuteContext.Consumer>
+                        <MuteButton  />
+                    
 
                         <FontAwesomeIcon  color="white" icon={solid('bars')} size="lg" onClick={onOpen}/>
                         <Drawer
