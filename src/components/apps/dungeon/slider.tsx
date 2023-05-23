@@ -1,5 +1,7 @@
 import { FC, useContext, useState } from "react";
 import { MuteContext } from "./mute";
+import "./css/slider.css";
+
 
 interface SliderProps {
   // value: number;
@@ -19,17 +21,13 @@ const VolumeSlider: FC<SliderProps> = ({ onInput }) => {
   return (
     <input
       type="range"
+      className='volume-slider'
       min={0}
       max={100}
       defaultValue={volume}
       // onChange={handleSliderChange}
       onMouseUp={handleMouseUp}
-      style={{
-        width: "6rem",
-        transform: "rotate(-90deg)",
-        marginLeft: "-2rem",
-        marginTop: "0.8rem",
-      }}
+      
     />
   );
 };

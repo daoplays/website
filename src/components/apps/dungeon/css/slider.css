@@ -1,0 +1,23 @@
+.volume-slider {
+    width: 6rem;
+    transform: rotate(-90deg);
+    margin-left: -2rem;
+    margin-top: 0.8rem;
+    appearance: "none";
+  }
+  
+  .volume-slider {
+    --slider-thumb-color: #8b8b8b;
+  }
+  
+  .volume-slider::-webkit-slider-thumb {
+    background-color: var(--slider-thumb-color);
+  }
+  
+  .volume-slider::-moz-range-thumb {
+    background-color: var(--slider-thumb-color);
+  }
+  
+  .volume-slider::-ms-thumb {
+    background-color: var(--slider-thumb-color);
+  }
