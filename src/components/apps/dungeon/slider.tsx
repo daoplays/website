@@ -25,9 +25,10 @@ const VolumeSlider: FC<SliderProps> = ({ onInput }) => {
       // onChange={handleSliderChange}
       onMouseUp={handleMouseUp}
       style={{
-        width: "4rem",
+        width: "6rem",
         transform: "rotate(-90deg)",
-        marginLeft: "-1rem",
+        marginLeft: "-2rem",
+        marginTop: "0.8rem",
       }}
     />
   );
