@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, i64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
@@ -13,6 +15,17 @@ import bs58 from "bs58";
 import {
     WalletDisconnectButton,
 } from '@solana/wallet-adapter-react-ui';
+
+// memo for wrapping video content
+export const VideoComponent = memo(function MyVideoComponent({url, width, height} : {url : string, width : string, height : string}) {
+      // only renders if url have changed!
+      return (
+        <video width={width} height={height}  controls controlsList="nodownload">
+            <source src={url} type="video/mp4"/>
+            Your browser does not support the video tag.
+        </video>
+        );
+});
 
 export async function get_JWT_token() : Promise<any | null>
 {
@@ -260,7 +273,7 @@ export async function request_current_balance(bearer : string, pubkey : PublicKe
     }
     let valid_response = check_json(account_info_result)
     if (!valid_response) {
-        console.log(account_info_result);
+        // console.log(account_info_result);
         return 0;
     }
 
@@ -315,7 +328,7 @@ export async function request_token_amount(bearer : string, pubkey : PublicKey) 
 
 
 
-export async function request_raw_account_data(bearer : string, pubkey : PublicKey) : Promise<Buffer | null>
+export async function request_raw_account_data(bearer : string, pubkey : PublicKey, name : String = "default") : Promise<Buffer | null>
 {
     var body = {"id": 1, "jsonrpc": "2.0", "method": "getAccountInfo", "params": [pubkey.toString(), {"encoding": "base64", "commitment": "confirmed"}]};
 
@@ -346,6 +359,7 @@ export async function request_raw_account_data(bearer : string, pubkey : PublicK
         account_data = Buffer.from(account_encoded_data[0], "base64");
     }
     catch (error) {
+        console.log("error parsing ", name)
         console.log(error);
         return null;
     }
@@ -656,7 +670,7 @@ export function serialise_claim_achievement_instruction(instruction : number, ac
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Key Shop Instructions and MetaData /////////////////////////////////////////
+/////////////////////// Shop Instructions and MetaData /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ShopMintFromCollectionInstruction {
@@ -713,18 +727,26 @@ class KeyDataFromIndex {
     )
 }
 
-class ShopData {
+export class ShopData {
     constructor(
       readonly keys_bought: number,
       readonly key_types_bought: number[],
+      readonly music_boxes_bought: number[],
+      readonly paintings_bought: number[],
+      readonly lore_pages_bought: number[],
+
     ) {}
   
     static readonly struct = new BeetStruct<ShopData>(
       [
         ['keys_bought', u16],
         ['key_types_bought', uniformFixedSizeArray(u16, 3)],
+        ['music_boxes_bought', uniformFixedSizeArray(u16, 32)],
+        ['paintings_bought', uniformFixedSizeArray(u16, 32)],
+        ['lore_pages_bought', uniformFixedSizeArray(u16, 32)],
+
       ],
-      (args) => new ShopData(args.keys_bought!, args.key_types_bought!),
+      (args) => new ShopData(args.keys_bought!, args.key_types_bought!, args.music_boxes_bought!, args.paintings_bought!, args.lore_pages_bought!),
       'ShopData'
     )
 }

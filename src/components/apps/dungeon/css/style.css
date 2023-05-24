@@ -28,43 +28,42 @@ a.one:active {
     color: white;
     border-bottom: 1px solid;
 }
-.rowElementsTitle{
+.rowElementsTitle {
     width: 27%;
 }
 
 /* HOME PAGE */
-@media screen and (max-width:1200px) {
-    .rowElements{
+@media screen and (max-width: 1200px) {
+    .rowElements {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
         flex-direction: column !important;
         width: 100% !important;
     }
-    .rowElementsTitle{
-    width: 60%;
-}
+    .rowElementsTitle {
+        width: 60%;
+    }
 }
 
 /* STATS */
-@media screen and (max-width:1200px) {
-    .responsiveGraph{
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      flex-direction: column !important;
-      width: 80% !important;
+@media screen and (max-width: 1200px) {
+    .responsiveGraph {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        flex-direction: column !important;
+        width: 80% !important;
     }
-    .responsiveGraph div{
+    .responsiveGraph div {
     }
-    .lineGraphVstack{
-      width: 100% !important;
-      margin-top: 40px !important;
-
+    .lineGraphVstack {
+        width: 100% !important;
+        margin-top: 40px !important;
     }
-    .responsivePage{
-  position: relative;
-  display: grid;
-  place-items: center ;
+    .responsivePage {
+        position: relative;
+        display: grid;
+        place-items: center;
     }
-  }
+}
