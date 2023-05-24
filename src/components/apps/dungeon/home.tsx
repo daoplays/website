@@ -306,10 +306,11 @@ export function DungeonApp() {
             setBetValue(BetSizeValues[selected_bet.value]);
         };
 
-        const handleSliderChange = (event: React.MouseEventHandler<HTMLInputElement>) => {
-            const value = Number(event.target.value);
+        const handleSliderChange = (event: React.MouseEvent<HTMLInputElement>) => {
+            const target = event.target as HTMLInputElement;
+            const value = Number(target.value);
             handleBetChange(value as BetSize);
-          };
+        };
 
 
         type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
