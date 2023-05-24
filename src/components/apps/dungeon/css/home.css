@@ -1,0 +1,53 @@
+.sliderContainer {
+    position: relative;
+    width: 100%;
+  }
+  
+  .slider {
+    width: 100%;
+    position: relative;
+    z-index: 2; 
+    -webkit-appearance: none; /* Override default CSS styles */
+    appearance: none;
+    height: 7px; /* Specified height */
+    background: #ffffff; /* Grey background */
+  }
+  
+  .sliderTicks {
+    position: absolute;
+    top: 60%;
+    left: 0px;
+    right: 0px;
+    height: 2px;
+    background: transparent; 
+    border-radius: 1px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .sliderTick {
+    position: relative;
+    width: 3px; 
+    height: 14px; 
+    background: #efefef;
+    transform: translateY(-50%); 
+  }
+
+
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 20px; /* Set a specific slider handle width */
+    height: 20px; /* Slider handle height */
+    background: #8b8b8b; /* gray background */
+    cursor: pointer; /* Cursor on hover */
+    border-radius: 60%; /* Rounded slider handle (optional) */
+    margin-left: -1px;
+    position: relative;
+  }
+
+  .slider.bet-small::-webkit-slider-thumb {
+    right: -2px;
+}
+  

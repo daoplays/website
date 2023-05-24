@@ -14,7 +14,9 @@ import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
-import "react-h5-audio-player/lib/styles.css";
+import 'react-h5-audio-player/lib/styles.css'
+import './css/home.css'
+
 
 import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -304,6 +306,13 @@ export function DungeonApp() {
             setBetValue(BetSizeValues[selected_bet.value]);
         };
 
+        const handleSliderChange = (event: React.MouseEvent<HTMLInputElement>) => {
+            const target = event.target as HTMLInputElement;
+            const value = Number(target.value);
+            handleBetChange(value as BetSize);
+        };
+
+
         type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
 
         const colourStyles: StylesConfig<BetValueObject, false> = {
@@ -345,73 +354,73 @@ export function DungeonApp() {
                     color: "white",
                 };
             },
-        };
-
-        return (
+          };
+          
+          return (
             <div className="font-face-sfpb">
-                {!isMobile && (
-                    <HStack alignItems="center" spacing="1px">
-                        <Box
-                            as="button"
-                            onClick={() => handleBetChange(BetSize.SolanaBet1)}
-                            borderWidth="2px"
-                            height={"30px"}
-                            borderColor={bet_size === BetSize.SolanaBet1 ? "white" : "black"}
-                            width={"60px"}
-                        >
-                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                                {BetSizeValues[0]}
-                            </Text>
-                        </Box>
-                        <Box
-                            as="button"
-                            onClick={() => handleBetChange(BetSize.SolanaBet2)}
-                            height={"30px"}
-                            borderWidth="2px"
-                            borderColor={bet_size === BetSize.SolanaBet2 ? "white" : "black"}
-                            width={"60px"}
-                        >
-                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                                {BetSizeValues[1]}
-                            </Text>
-                        </Box>
-                        <Box
-                            as="button"
-                            onClick={() => handleBetChange(BetSize.SolanaBet3)}
-                            height={"30px"}
-                            borderWidth="2px"
-                            borderColor={bet_size === BetSize.SolanaBet3 ? "white" : "black"}
-                            width={"60px"}
-                        >
-                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                                {BetSizeValues[2]}
-                            </Text>
-                        </Box>
-                        <Box borderWidth="2px" borderColor="black" height={"30px"} width={"60px"}>
-                            <Text align="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                                SOL
-                            </Text>
-                        </Box>
+              {!isMobile && (
+                <VStack alignItems="center" spacing="1px">
+                  <Box
+                    borderWidth="2px"
+                    borderColor="black"
+                    height={"30px"}
+                    width={"60px"}
+                    marginBottom={"5px"}
+                  >
+                    <HStack justifyContent="center">
+                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                        {bet_value}
+                      </Text>
+                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
+                        SOL
+                      </Text>
                     </HStack>
-                )}
-                {isMobile && (
-                    <Select
-                        placeholder={BetSizeValues[0] + " SOL"}
-                        styles={colourStyles}
-                        isSearchable={false}
-                        onChange={(choice: SelectValue) => {
-                            handleSelectChange(choice);
-                        }}
-                        value={select_value}
-                        options={[
-                            { value: BetSize.SolanaBet1, label: BetSizeValues[0] + " SOL" },
-                            { value: BetSize.SolanaBet2, label: BetSizeValues[1] + " SOL" },
-                            { value: BetSize.SolanaBet3, label: BetSizeValues[2] + " SOL" },
-                        ]}
+                  </Box>
+
+                  <div className="sliderContainer">
+                    <div className="sliderTicks" style={{ left: bet_value === 0.05 ? 1.5 : 0, right: bet_value === 0.25 ? 1.5 : 0 }}>
+                      {BetSizeValues.map((betValue, index) => (
+                        <div key={index} className="sliderTick"></div>
+                      ))}
+                    </div>
+                    <input
+                      className={`slider ${bet_value === 0.25 ? "bet-small" : ""}`}
+                      type="range"
+                      min={BetSize.SolanaBet1}
+                      max={BetSize.SolanaBet3}
+                      defaultValue={bet_size}
+                      onMouseUp={handleSliderChange}
                     />
-                )}
+                  </div>
+                </VStack>
+              )}
+              {isMobile && (
+                <Select
+                  placeholder={BetSizeValues[0] + " SOL"}
+                  styles={colourStyles}
+                  isSearchable={false}
+                  onChange={(choice: SelectValue) => {
+                    handleSelectChange(choice);
+                  }}
+                  value={select_value}
+                  options={[
+                    {
+                      value: BetSize.SolanaBet1,
+                      label: BetSizeValues[0] + " SOL",
+                    },
+                    {
+                      value: BetSize.SolanaBet2,
+                      label: BetSizeValues[1] + " SOL",
+                    },
+                    {
+                      value: BetSize.SolanaBet3,
+                      label: BetSizeValues[2] + " SOL",
+                    },
+                  ]}
+                />
+              )}
             </div>
-        );
+          );
     }
 
     function DiscountKeyInput() {
