@@ -306,7 +306,7 @@ export function DungeonApp() {
             setBetValue(BetSizeValues[selected_bet.value]);
         };
 
-        const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const handleSliderChange = (event: React.MouseEventHandler<HTMLInputElement>) => {
             const value = Number(event.target.value);
             handleBetChange(value as BetSize);
           };
@@ -387,8 +387,8 @@ export function DungeonApp() {
                       type="range"
                       min={BetSize.SolanaBet1}
                       max={BetSize.SolanaBet3}
-                      value={bet_size}
-                      onChange={handleSliderChange}
+                      defaultValue={bet_size}
+                      onMouseUp={handleSliderChange}
                     />
                   </div>
                 </VStack>
