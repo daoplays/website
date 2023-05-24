@@ -21,7 +21,7 @@ interface MuteButtonProps {
 export const MuteContext = createContext<MuteButtonProps>({
   muteState: MuteState.Unmuted,
   toggleMute: () => {},
-  volume: 50,
+  volume: 35,
   setVolume: () => {},
 });
 
@@ -70,7 +70,7 @@ export const MuteProvider = ({
   const [muteState, setMuteState] = useState(
     initialMuted ? MuteState.Muted : MuteState.Unmuted
   );
-  const [volume, setVolume] = useState(50);
+  const [volume, setVolume] = useState(35);
 
   const toggleMute = () => {
     setMuteState((prevState) => {
