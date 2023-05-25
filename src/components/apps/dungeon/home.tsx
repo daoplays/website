@@ -68,17 +68,16 @@ import {
     DM_PROGRAM,
     KeyType,
     MAIN_ACCOUNT_SEED,
+    DATA_ACCOUNT_SEED,
     LOOT_TOKEN_MINT,
 } from "./constants";
 
 // dungeon utils
 import {
     request_player_account_data,
-    request_key_data_from_index,
     request_token_amount,
     serialise_play_instruction,
     serialise_basic_instruction,
-    uInt16ToLEBytes,
     run_keyData_GPA,
     post_discord_message,
     request_player_achievement_data,
@@ -92,6 +91,7 @@ import {
     NewDiscordMessage,
     serialise_quit_instruction,
     bignum_to_num,
+    request_dungeon_program_data
 } from "./utils";
 
 import {
@@ -564,6 +564,15 @@ export function DungeonApp() {
         if (!check_user_state.current && !check_data_account.current && !check_achievements.current) return;
 
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+
+        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+        let dungeon_program_data = await request_dungeon_program_data(bearer_token, program_data_key);
+
+        if (dungeon_program_data !== null) {
+            let ema_value = dungeon_program_data?.current_ema_value;
+            let last_play = dungeon_program_data?.last_play;
+            console.log((new BN(ema_value)).toNumber(), (new BN(last_play)).toNumber());
+        }
 
         if (check_data_account.current) {
             // first check if the data account exists
@@ -1051,11 +1060,14 @@ export function DungeonApp() {
     }, [wallet, player_character, current_key_index, current_key_mint, bearer_token]);
 
     const Quit = useCallback(async () => {
+
         setTransactionFailed(false);
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
         setProcessingTransaction(true);
-        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+        let program_account_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
             [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
@@ -1078,6 +1090,7 @@ export function DungeonApp() {
             { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
             { pubkey: player_data_key, isSigner: false, isWritable: true },
             { pubkey: player_achievement_key, isSigner: false, isWritable: true },
+            { pubkey: program_account_key, isSigner: false, isWritable: true },
             { pubkey: program_data_key, isSigner: false, isWritable: true },
 
             { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
@@ -1278,6 +1291,7 @@ export function DungeonApp() {
     );
 
     const ApplyKey = useCallback(async () => {
+
         if (wallet.publicKey === null) return;
 
         setDiscountError(null);
@@ -1287,23 +1301,13 @@ export function DungeonApp() {
 
         if (isNaN(parsed_key_index)) return;
 
-        // if the string is more than 4 digits this should be a mint address
-        let index_buffer = uInt16ToLEBytes(parsed_key_index);
+        let key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
 
-        let dungeon_key_lookup_account = PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer], DUNGEON_PROGRAM)[0];
-
-        //console.log("lookup: ", Buffer.from("key_meta"), reversed_buffer);
-        let key_meta_data = await request_key_data_from_index(bearer_token, dungeon_key_lookup_account);
-
-        // if we have been passed a number check the lookup account exists
         if (key_meta_data === null) {
-            key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
-
-            if (key_meta_data === null) {
-                setDiscountError("Key " + discount_key_index + " has not been minted");
-                return;
-            }
+            setDiscountError("Key " + discount_key_index + " has not been minted");
+            return;
         }
+        
 
         console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
 
@@ -1488,15 +1492,19 @@ export function DungeonApp() {
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
                                 <Box width="27%">
+                                    <VStack>
                                     <div className="font-face-sfpb">
                                         <Text align="center" fontSize={font_size} color="white">
                                             DUNGEON
                                             <br />
                                             FEE:
                                             <br />
-                                            0.0015 SOL
+                                            0.002 SOL
                                         </Text>
                                     </div>
+                                    <DiscountKeyInput />
+
+                                    </VStack>
                                 </Box>
                                 <Box width="46%">
                                     <LargeDoor />
@@ -1553,6 +1561,7 @@ export function DungeonApp() {
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
                                 <Box width="27%" visibility={visible ? "visible" : "hidden"}>
+                                    <VStack>
                                     <div className="font-face-sfpb">
                                         {current_key_type === KeyType.Unknown && (
                                             <Text align="center" fontSize={font_size} color="white">
@@ -1560,7 +1569,7 @@ export function DungeonApp() {
                                                 <br />
                                                 FEE:
                                                 <br />
-                                                0.0015 SOL
+                                                0.002 SOL
                                             </Text>
                                         )}
                                         {current_key_type === KeyType.Bronze && (
@@ -1569,7 +1578,7 @@ export function DungeonApp() {
                                                 <br />
                                                 FEE:
                                                 <br />
-                                                0.0012 SOL
+                                                0.0015 SOL
                                             </Text>
                                         )}
                                         {current_key_type === KeyType.Silver && (
@@ -1578,7 +1587,7 @@ export function DungeonApp() {
                                                 <br />
                                                 FEE:
                                                 <br />
-                                                0.0008 SOL
+                                                0.001 SOL
                                             </Text>
                                         )}
                                         {current_key_type === KeyType.Gold && (
@@ -1587,10 +1596,13 @@ export function DungeonApp() {
                                                 <br />
                                                 FEE:
                                                 <br />
-                                                0.0004 SOL
+                                                0.0005 SOL
                                             </Text>
                                         )}
                                     </div>
+                                    <DiscountKeyInput />
+
+                                    </VStack>
                                 </Box>
                                 <Box width="46%">
                                     <LargeDoor />
@@ -1615,7 +1627,6 @@ export function DungeonApp() {
                                             </Button>
                                         </div>
 
-                                        <DiscountKeyInput />
                                     </VStack>
                                 </Box>
                             </HStack>

@@ -443,6 +443,21 @@ export async function get_discord_messages() : Promise<DiscordMessage[] | null>
 /////////////////////// Dungeon Game Instructions and MetaData /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class DungeonData {
+    constructor(
+      readonly current_ema_value: bignum,
+      readonly last_play: bignum
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonData>(
+      [
+        ['current_ema_value', u64],
+        ['last_play', i64],
+      ],
+      (args) => new DungeonData(args.current_ema_value!, args.last_play!),
+      'DungeonData'
+    )
+}
 
 class PlayerData {
     constructor(
@@ -614,6 +629,21 @@ export async function request_player_account_data(bearer : string, pubkey : Publ
     }
 
     const [data] = PlayerData.struct.deserialize(account_data);
+
+    return data;
+}
+
+
+export async function request_dungeon_program_data(bearer : string, pubkey : PublicKey) : Promise<DungeonData | null>
+{
+ 
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = DungeonData.struct.deserialize(account_data);
 
     return data;
 }
