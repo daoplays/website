@@ -446,15 +446,19 @@ export async function get_discord_messages() : Promise<DiscordMessage[] | null>
 class DungeonData {
     constructor(
       readonly current_ema_value: bignum,
-      readonly last_play: bignum
+      readonly this_minutes_loot: bignum,
+      readonly current_minute: bignum,
+
     ) {}
   
     static readonly struct = new BeetStruct<DungeonData>(
       [
         ['current_ema_value', u64],
-        ['last_play', i64],
+        ['this_minutes_loot', u64],
+        ['current_minute', i64],
+
       ],
-      (args) => new DungeonData(args.current_ema_value!, args.last_play!),
+      (args) => new DungeonData(args.current_ema_value!, args.this_minutes_loot!, args.current_minute!),
       'DungeonData'
     )
 }

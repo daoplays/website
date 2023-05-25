@@ -201,6 +201,7 @@ export function DungeonApp() {
     const [current_enemy, setCurrentEnemy] = useState<DungeonEnemy>(DungeonEnemy.None);
     const [total_loot, setTotalLoot] = useState<number>(0);
     const [last_loot, setLastLoot] = useState<number>(0);
+    const [loot_per_day, setLootPerDay] = useState<number>(0);
 
     // achievement state
     const [which_achievement, setWhichAchievement] = useState<number | null>(null);
@@ -566,13 +567,7 @@ export function DungeonApp() {
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
-        let dungeon_program_data = await request_dungeon_program_data(bearer_token, program_data_key);
-
-        if (dungeon_program_data !== null) {
-            let ema_value = dungeon_program_data?.current_ema_value;
-            let last_play = dungeon_program_data?.last_play;
-            console.log((new BN(ema_value)).toNumber(), (new BN(last_play)).toNumber());
-        }
+        
 
         if (check_data_account.current) {
             // first check if the data account exists
@@ -593,6 +588,22 @@ export function DungeonApp() {
         }
 
         if (check_user_state.current) {
+            try {
+
+                let dungeon_program_data = await request_dungeon_program_data(bearer_token, program_data_key);
+
+                if (dungeon_program_data !== null) {
+                    let ema_value = (new BN(dungeon_program_data?.current_ema_value)).toNumber() / 1e6;
+                    let this_minutes_loot = (new BN(dungeon_program_data?.this_minutes_loot)).toNumber() / 1e6;
+                    let current_minute = (new BN(dungeon_program_data?.current_minute)).toNumber();
+
+                    console.log(ema_value, this_minutes_loot, current_minute);
+                    setLootPerDay(24 * 60 * ema_value);
+                }
+            } catch (error) {
+                console.log(error);
+                setLootPerDay(0);
+            }
             try {
                 let player_data = await request_player_account_data(bearer_token, player_data_key);
 
@@ -1615,7 +1626,7 @@ export function DungeonApp() {
                                         <Text align="center" fontSize={font_size} color="white"> Back Soon! </Text>
                                         </Box>
                                         */}
-
+                           
                                             <Button variant="link" size="md" onClick={Play}>
                                                 <img
                                                     style={{ imageRendering: "pixelated" }}
@@ -1625,7 +1636,13 @@ export function DungeonApp() {
                                                     alt={""}
                                                 />
                                             </Button>
+
                                         </div>
+                                        <Box width = "60%" mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
+                                            <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
+                                            <Text align="center">Loot / Day  <br/> {loot_per_day.toFixed(2)}</Text>
+                                            </div>
+                                        </Box>
 
                                     </VStack>
                                 </Box>
