@@ -7,7 +7,6 @@ import Modal from "react-bootstrap/Modal";
 
 import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverBody, PopoverArrow, PopoverCloseButton } from "@chakra-ui/react";
 
-import Select, { StylesConfig } from "react-select";
 import FocusLock from "react-focus-lock";
 
 import { isMobile } from "react-device-detect";
@@ -18,7 +17,7 @@ import 'react-h5-audio-player/lib/styles.css'
 import './css/home.css'
 
 
-import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 import { WalletProvider, useWallet } from "@solana/wallet-adapter-react";
@@ -106,7 +105,6 @@ import {
     DungeonEnemy,
     DungeonCharacter,
     DungeonStatus,
-    WIN_FACTORS,
     DungeonCharacterEmoji,
     DungeonEnemyEmoji,
     GoldEmoji,
@@ -131,7 +129,6 @@ import { ArenaScreen } from "./arena";
 
 //import {DungeonScreen} from './dungeon';
 
-import wagerSelect from "./sounds/Wager_Select.mp3";
 import classSelect from "./sounds/Class_Select.mp3";
 import dungeonTile from "./sounds/Open_Door.mp3";
 import Retry from "./sounds/Retry.mp3";
@@ -166,7 +163,6 @@ const enum AccountStatus {
 
 const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
-const wagerSelectAudio = new Audio(wagerSelect);
 const classSelectAudio = new Audio(classSelect);
 const dungeonTileAudio = new Audio(dungeonTile);
 const GameOverAudio = new Audio(Game_Over);
@@ -176,18 +172,6 @@ const RetryAudio = new Audio(Retry);
 const VictoryAudio = new Audio(Victory);
 const PlayerDeathAudio = new Audio(Player_Death);
 
-const enum BetSize {
-    SolanaBet1 = 0,
-    SolanaBet2 = 1,
-    SolanaBet3 = 2,
-}
-
-const BetSizeValues: number[] = [0.05, 0.1, 0.25];
-
-type BetValueObject = Object & {
-    value: BetSize;
-    label: string;
-};
 
 const enum DungeonInstruction {
     add_funds = 0,
@@ -208,17 +192,6 @@ export function DungeonApp() {
     const [data_account_status, setDataAccountStatus] = useState<AccountStatus>(AccountStatus.unknown);
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
 
-    // settings for this game
-    const [bet_size, setBetSize] = useState<BetSize>(BetSize.SolanaBet1);
-    const [bet_value, setBetValue] = useState<number>(BetSizeValues[0]);
-    const [select_value, setSelectValue] = useState<BetValueObject | null>(null);
-
-    const handleBetChange = (selected: BetSize) => {
-        playAudio(wagerSelectAudio);
-        setBetSize(selected);
-        setBetValue(BetSizeValues[selected]);
-    };
-
     // these come from the blockchain
     const current_interaction = useRef<number | null>(null);
     const [num_plays, setNumPlays] = useState<number>(-1);
@@ -226,7 +199,8 @@ export function DungeonApp() {
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState<DungeonEnemy>(DungeonEnemy.None);
-    const [last_gold, setLastGold] = useState<number>(0);
+    const [total_loot, setTotalLoot] = useState<number>(0);
+    const [last_loot, setLastLoot] = useState<number>(0);
 
     // achievement state
     const [which_achievement, setWhichAchievement] = useState<number | null>(null);
@@ -297,131 +271,6 @@ export function DungeonApp() {
     const OpenDiscountError = useCallback(async () => {
         setShowDiscountError(true);
     }, []);
-
-    function BetSizeInput() {
-        const handleSelectChange = (selected: SelectValue) => {
-            let selected_bet = selected as BetValueObject;
-            setSelectValue(selected_bet);
-            setBetSize(selected_bet.value);
-            setBetValue(BetSizeValues[selected_bet.value]);
-        };
-
-        const handleSliderChange = (event: React.MouseEvent<HTMLInputElement>) => {
-            const target = event.target as HTMLInputElement;
-            const value = Number(target.value);
-            handleBetChange(value as BetSize);
-        };
-
-
-        type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
-
-        const colourStyles: StylesConfig<BetValueObject, false> = {
-            menu: (base) => ({
-                ...base,
-                width: "max-content",
-                minWidth: "100%",
-            }),
-            control: (provided) => ({
-                ...provided,
-                backgroundColor: "black",
-                color: "white",
-            }),
-            singleValue: (provided) => ({
-                ...provided,
-                fontSize: DUNGEON_FONT_SIZE,
-                backgroundColor: "black",
-                color: "white",
-            }),
-            placeholder: (provided) => ({
-                ...provided,
-                fontSize: DUNGEON_FONT_SIZE,
-                backgroundColor: "black",
-                color: "white",
-            }),
-            clearIndicator: (provided) => ({
-                ...provided,
-                padding: "0px",
-            }),
-            dropdownIndicator: (provided) => ({
-                ...provided,
-                padding: "0px",
-            }),
-            option: (provided, { isFocused }) => {
-                return {
-                    ...provided,
-
-                    backgroundColor: isFocused ? "grey" : "black",
-                    color: "white",
-                };
-            },
-          };
-          
-          return (
-            <div className="font-face-sfpb">
-              {!isMobile && (
-                <VStack alignItems="center" spacing="1px">
-                  <Box
-                    borderWidth="2px"
-                    borderColor="black"
-                    height={"30px"}
-                    width={"60px"}
-                    marginBottom={"5px"}
-                  >
-                    <HStack justifyContent="center">
-                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
-                        {bet_value}
-                      </Text>
-                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
-                        SOL
-                      </Text>
-                    </HStack>
-                  </Box>
-
-                  <div className="sliderContainer">
-                    <div className="sliderTicks" style={{ left: bet_value === 0.05 ? 1.5 : 0, right: bet_value === 0.25 ? 1.5 : 0 }}>
-                      {BetSizeValues.map((betValue, index) => (
-                        <div key={index} className="sliderTick"></div>
-                      ))}
-                    </div>
-                    <input
-                      className={`slider ${bet_value === 0.25 ? "bet-small" : ""}`}
-                      type="range"
-                      min={BetSize.SolanaBet1}
-                      max={BetSize.SolanaBet3}
-                      defaultValue={bet_size}
-                      onMouseUp={handleSliderChange}
-                    />
-                  </div>
-                </VStack>
-              )}
-              {isMobile && (
-                <Select
-                  placeholder={BetSizeValues[0] + " SOL"}
-                  styles={colourStyles}
-                  isSearchable={false}
-                  onChange={(choice: SelectValue) => {
-                    handleSelectChange(choice);
-                  }}
-                  value={select_value}
-                  options={[
-                    {
-                      value: BetSize.SolanaBet1,
-                      label: BetSizeValues[0] + " SOL",
-                    },
-                    {
-                      value: BetSize.SolanaBet2,
-                      label: BetSizeValues[1] + " SOL",
-                    },
-                    {
-                      value: BetSize.SolanaBet3,
-                      label: BetSizeValues[2] + " SOL",
-                    },
-                  ]}
-                />
-              )}
-            </div>
-          );
-    }
 
     function DiscountKeyInput() {
         let key_size = "50";
@@ -745,12 +594,6 @@ export function DungeonApp() {
                 let current_status = player_data.player_status + 1;
                 if (initial_status.current === DungeonStatus.unknown) {
                     initial_status.current = current_status;
-                    if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
-                        let current_bet_value_bn = new BN(player_data.current_bet_size);
-                        let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
-                        setBetValue(current_bet_value);
-                        //console.log("setting current status to alive", current_bet_value);
-                    }
                 }
 
                 let current_num_plays = new BN(player_data.num_plays).toNumber();
@@ -763,12 +606,6 @@ export function DungeonApp() {
                 }
 
                 current_interaction.current = current_num_plays;
-
-                if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
-                    let current_bet_value_bn = new BN(player_data.current_bet_size);
-                    let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
-                    setBetValue(current_bet_value);
-                }
 
                 setNumPlays(current_num_plays);
 
@@ -809,7 +646,9 @@ export function DungeonApp() {
 
                 setNumXP(current_xp);
 
-                setLastGold(bignum_to_num(player_data.last_gold) / 1e6);
+                setTotalLoot(bignum_to_num(player_data.total_gold) / 1e6);
+
+                setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
             } catch (error) {
                 console.log(error);
                 setCurrentLevel(0);
@@ -1075,9 +914,7 @@ export function DungeonApp() {
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
         setProcessingTransaction(true);
-        if (DEBUG) {
-            console.log("In play", bet_size, BetSizeValues[bet_size]);
-        }
+
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
@@ -1092,7 +929,10 @@ export function DungeonApp() {
             true // allow owner off curve
         );
 
-        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, bet_size);
+        let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
+
+
+        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, 0);
 
         var account_vector = [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
@@ -1118,6 +958,7 @@ export function DungeonApp() {
         // next 3 accounts are for the free play tokens
         account_vector.push({ pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
         account_vector.push({ pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
+
         account_vector.push({ pubkey: FREE_PLAY_MINT, isSigner: false, isWritable: true });
 
         let free_play_token_account = await getAssociatedTokenAddress(
@@ -1128,14 +969,15 @@ export function DungeonApp() {
 
         account_vector.push({ pubkey: free_play_token_account, isSigner: false, isWritable: true });
 
+
+        account_vector.push({ pubkey: DM_PROGRAM, isSigner: false, isWritable: false });
+        account_vector.push({ pubkey: dm_data_key, isSigner: false, isWritable: true });
+
         if (current_key_mint && current_key_index) {
             let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("key_meta"), current_key_mint.toBuffer()],
                 SHOP_PROGRAM
             )[0];
-
-            let index_buffer = uInt16ToLEBytes(current_key_index);
-            let dungeon_key_lookup_account = PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer], DUNGEON_PROGRAM)[0];
 
             let key_token_account = await getAssociatedTokenAddress(
                 current_key_mint, // mint
@@ -1153,7 +995,6 @@ export function DungeonApp() {
             account_vector.push({ pubkey: key_token_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: dungeon_key_meta_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: dungeon_key_metaplex_account, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: dungeon_key_lookup_account, isSigner: false, isWritable: true });
         }
 
         const play_instruction = new TransactionInstruction({
@@ -1207,7 +1048,7 @@ export function DungeonApp() {
         check_sol_balance.current = true;
         check_achievements.current = true;
         discord_play_message_sent.current = false;
-    }, [wallet, player_character, current_key_index, current_key_mint, bet_size, bearer_token]);
+    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token]);
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
@@ -1216,11 +1057,16 @@ export function DungeonApp() {
         setProcessingTransaction(true);
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
-        let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
             [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
             DUNGEON_PROGRAM
         )[0];
+
+        let loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
 
         let ref_code = searchParams.get("ref");
 
@@ -1234,10 +1080,11 @@ export function DungeonApp() {
             { pubkey: player_achievement_key, isSigner: false, isWritable: true },
             { pubkey: program_data_key, isSigner: false, isWritable: true },
 
-            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
+            { pubkey: loot_token_account, isSigner: false, isWritable: true },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false }
 
-            { pubkey: DM_PROGRAM, isSigner: false, isWritable: false },
-            { pubkey: dm_data_key, isSigner: false, isWritable: true },
         ];
 
         const quit_instruction = new TransactionInstruction({
@@ -1286,7 +1133,7 @@ export function DungeonApp() {
         check_achievements.current = true;
 
         // send a discord message
-        let current_win = WIN_FACTORS[current_level] * BetSizeValues[bet_size];
+        let current_win = total_loot;
 
         const message: NewDiscordMessage = {
             message_type: current_level === 7 ? "retired" : "escaped",
@@ -1300,7 +1147,7 @@ export function DungeonApp() {
         if (PROD) post_discord_message(message);
 
         return;
-    }, [wallet, player_character, current_level, bet_size, bearer_token, searchParams]);
+    }, [wallet, player_character, current_level, total_loot, bearer_token, searchParams]);
 
     const ClaimAchievement = useCallback(
         async (which: number) => {
@@ -1645,9 +1492,9 @@ export function DungeonApp() {
                                         <Text align="center" fontSize={font_size} color="white">
                                             DUNGEON
                                             <br />
-                                            MASTER'S
+                                            FEE:
                                             <br />
-                                            FEE: 3.00%
+                                            0.0015 SOL
                                         </Text>
                                     </div>
                                 </Box>
@@ -1711,36 +1558,36 @@ export function DungeonApp() {
                                             <Text align="center" fontSize={font_size} color="white">
                                                 DUNGEON
                                                 <br />
-                                                MASTER'S
+                                                FEE:
                                                 <br />
-                                                FEE: 3.00%
+                                                0.0015 SOL
                                             </Text>
                                         )}
                                         {current_key_type === KeyType.Bronze && (
                                             <Text align="center" fontSize={font_size} color="#CD7F32">
                                                 DUNGEON
                                                 <br />
-                                                MASTER'S
+                                                FEE:
                                                 <br />
-                                                FEE: 2.25%
+                                                0.0012 SOL
                                             </Text>
                                         )}
                                         {current_key_type === KeyType.Silver && (
                                             <Text align="center" fontSize={font_size} color="silver">
                                                 DUNGEON
                                                 <br />
-                                                MASTER'S
+                                                FEE:
                                                 <br />
-                                                FEE: 1.50%
+                                                0.0008 SOL
                                             </Text>
                                         )}
                                         {current_key_type === KeyType.Gold && (
                                             <Text align="center" fontSize={font_size} color="gold">
-                                                DUNGEON
+                                               DUNGEON
                                                 <br />
-                                                MASTER'S
+                                                FEE:
                                                 <br />
-                                                FEE: 0.75%
+                                                0.0004 SOL
                                             </Text>
                                         )}
                                     </div>
@@ -1767,7 +1614,6 @@ export function DungeonApp() {
                                                 />
                                             </Button>
                                         </div>
-                                        <BetSizeInput />
 
                                         <DiscountKeyInput />
                                     </VStack>
@@ -1950,9 +1796,9 @@ export function DungeonApp() {
                                         <DisplayPlayerSuccessText
                                             current_level={current_level}
                                             current_enemy={current_enemy}
-                                            bet_size={bet_value}
+                                            last_loot={last_loot}
                                             num_plays={num_plays}
-                                            last_gold={last_gold}
+                                            total_loot={total_loot}
                                         />
 
                                         {current_level < 7 && (
@@ -2047,7 +1893,7 @@ export function DungeonApp() {
                                 <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">
                                     You Have Died
                                     <br />
-                                    <del>{(WIN_FACTORS[current_level - 1] * bet_value).toFixed(3)} SOL</del>
+                                    <del>{(total_loot).toFixed(3)} Loot</del>
                                 </Text>
                             </div>
                         </Center>

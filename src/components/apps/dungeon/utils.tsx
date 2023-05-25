@@ -452,9 +452,9 @@ class PlayerData {
       readonly player_status: number,
       readonly dungeon_enemy: number,
       readonly player_character: number,
-      readonly current_bet_size: bignum,
-      readonly current_key: number,
       readonly last_gold: bignum,
+      readonly current_key: number,
+      readonly total_gold: bignum,
       readonly extra_data: number[]
 
     ) {}
@@ -467,13 +467,13 @@ class PlayerData {
         ['player_status', u8],
         ['dungeon_enemy', u8],
         ['player_character', u8],
-        ['current_bet_size', u64],
-        ['current_key', u8],
         ['last_gold', u64],
+        ['current_key', u8],
+        ['total_gold', u64],
         ['extra_data', uniformFixedSizeArray(u8, 15)],
 
       ],
-      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.current_bet_size!, args.current_key!, args.last_gold!, args.extra_data!),
+      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.extra_data!),
       'PlayerData'
     )
 }

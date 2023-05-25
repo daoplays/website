@@ -1,4 +1,4 @@
-import { Box, Center, Text, HStack } from "@chakra-ui/react";
+import { Box, Center, Text, HStack, VStack } from "@chakra-ui/react";
 
 //  dungeon constants
 import { DUNGEON_FONT_SIZE } from "./constants";
@@ -454,40 +454,49 @@ const EnemyDefeatedText = ({
 export const DisplayPlayerSuccessText = ({
     current_level,
     current_enemy,
-    bet_size,
+    last_loot,
     num_plays,
-    last_gold,
+    total_loot,
 }: {
     current_level: number;
     current_enemy: DungeonEnemy;
-    bet_size: number;
+    last_loot: number;
     num_plays: number;
-    last_gold: number;
+    total_loot: number;
 }) => {
-    let current_win = WIN_FACTORS[current_level] * bet_size;
 
     if (current_level < 7) {
-        let next_win = WIN_FACTORS[current_level + 1] * bet_size;
         return (
             <div className="font-face-sfpb">
                 <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
 
                 <Center>
-                    <HStack alignContent="center" mt="1rem">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            You found {last_gold.toFixed(2)}
-                        </Text>
+                    <VStack>
+                        <HStack alignContent="center" mt="1rem">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                You found {last_loot.toFixed(2)}
+                            </Text>
 
-                        <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
-                    </HStack>
+                            <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                        </HStack>
+
+                        <HStack alignContent="center" mt="1rem">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                Escape to claim {total_loot.toFixed(2)}
+                            </Text>
+
+                            <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+
+                            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                Or explore further to try and find more
+                            </Text>
+                        </HStack>
+
+                    </VStack>
                 </Center>
 
-                <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Escape to claim your current loot of {current_win.toFixed(3)} SOL
-                </Text>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Explore further to try and increase your loot to {next_win.toFixed(3)} SOL
-                </Text>
+                
+
             </div>
         );
     }
@@ -500,7 +509,7 @@ export const DisplayPlayerSuccessText = ({
             <Center>
                 <HStack alignContent="center" mt="1rem">
                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                        You found {last_gold.toFixed(2)}
+                        You found {last_loot.toFixed(2)}
                     </Text>
 
                     <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
@@ -510,9 +519,14 @@ export const DisplayPlayerSuccessText = ({
             <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                 Looking around you realise your job is done and there is nothing left to kill
             </Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                Retire to claim your current loot of {current_win.toFixed(3)} SOL
-            </Text>
+            <HStack alignContent="center" mt="1rem">
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    Retire to claim your current loot {total_loot.toFixed(2)}
+                </Text>
+
+                <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+            </HStack>
+
         </div>
     );
 };
