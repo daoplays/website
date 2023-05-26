@@ -42,6 +42,8 @@ import wizard from "./images/Wizard.gif";
 import corpse from "./images/Corpse.png";
 
 import loot from "./images/loot.png";
+import d20 from "./images/die_roll.gif";
+
 
 export const WIN_FACTORS: number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
@@ -388,14 +390,28 @@ const DungeonPlayerDefeatedText: string[][] = [
 export const DiceRollText = ({
     roll_one,
     roll_two,
-    advantage
+    advantage,
+    loading
 }: {
     roll_one: number;
     roll_two: number;
     advantage: boolean;
+    loading: boolean;
 }) => {
 
     if (advantage) {
+        if (loading) {
+            return (
+                <HStack mt="1rem">
+                    <Box width="30px" height="30px"  borderWidth='1px' borderColor={"white"}>
+                        <img src={d20} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+                    </Box>
+                    <Box width="30px" height="30px">
+                        <img src={d20} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+                    </Box>
+                </HStack>
+            );
+        }
         return (
             <HStack mt="1rem">
                 <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled With Advantage: </Text>
@@ -406,6 +422,15 @@ export const DiceRollText = ({
                     <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">  {roll_two}  </Text>
                 </Box>
             </HStack>
+        );
+    }
+
+    if (loading) {
+        return (
+
+                <Box width="30px" height="30px">
+                    <img src={d20} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+                </Box>
         );
     }
   

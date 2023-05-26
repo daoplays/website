@@ -1827,6 +1827,9 @@ export function DungeonApp() {
         let background_image = hallway;
         if (current_level > 4) background_image = hallway2;
 
+        console.log("In Dungeon  current_state ",
+        DungeonStatusString[currentStatus],"enemy_state",
+        DungeonStatusString[enemy_state])
         return (
             <>
                 <VStack width="100%">
@@ -1835,7 +1838,7 @@ export function DungeonApp() {
                             <Box width="25%"></Box>
                             <DisplayLVL current_level={current_level} />
                             <Box width="30%"></Box>
-                            <DisplayXP current_xp={numXP} />
+                            <DisplayXP current_xp={current_player_data === null ? 0 : current_player_data?.character_xp[player_character]} />
                             <Box width="25%"></Box>
                         </HStack>
                     </Box>
@@ -1896,6 +1899,7 @@ export function DungeonApp() {
                                         roll_one={roll_one.current}
                                         roll_two={roll_two.current}
                                         advantage={last_advantage.current}
+                                        loading={enemy_state === DungeonStatus.unknown}
                                     />
 
                                     <DisplayPlayerFailedText
@@ -1935,6 +1939,15 @@ export function DungeonApp() {
                         )}
                         {player_state === DungeonStatus.alive && current_level > 0 && (
                             <>
+                                {enemy_state === DungeonStatus.unknown && (
+                                     <DiceRollText
+                                     roll_one={roll_one.current}
+                                     roll_two={roll_two.current}
+                                     advantage={last_advantage.current}
+                                     loading={true}
+
+                                 />
+                                )}
                                 {enemy_state === DungeonStatus.alive && (
                                     <DisplayEnemyAppearsText
                                         current_enemy={current_enemy}
@@ -1948,6 +1961,8 @@ export function DungeonApp() {
                                             roll_one={roll_one.current}
                                             roll_two={roll_two.current}
                                             advantage={last_advantage.current}
+                                            loading={false}
+
                                         />
 
                                         <DisplayPlayerSuccessText
