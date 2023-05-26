@@ -200,23 +200,21 @@ export function ShopScreen({
         if (!check_shop_state.current && !check_loot_balance.current) return;
 
         if (check_loot_balance.current) {
+            // get loot balance
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
 
-                // get loot balance
-                let loot_token_account = await getAssociatedTokenAddress(
-                    LOOT_TOKEN_MINT, // mint
-                    wallet.publicKey, // owner
-                    true // allow owner off curve
-                );
+            let loot_amount = await request_token_amount(bearer_token, loot_token_account);
+            loot_amount = loot_amount / 1.0e6;
 
-                let loot_amount = await request_token_amount(bearer_token, loot_token_account);
-                loot_amount = loot_amount / 1.0e6;
+            if (loot_amount !== current_loot) {
+                check_loot_balance.current = false;
+            }
 
-                if (loot_amount !== current_loot) {
-                    check_loot_balance.current = false;
-                }
-
-                setCurrentLoot(loot_amount);
-                
+            setCurrentLoot(loot_amount);
         }
 
         if (check_shop_state.current) {
@@ -225,8 +223,6 @@ export function ShopScreen({
 
             //console.log("have shop data", shop_data);
             setShopData(shop_data);
-
-            
 
             let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
 
@@ -327,7 +323,6 @@ export function ShopScreen({
             setXPReq(total_xp_req);
             check_shop_state.current = false;
         }
-
     }, [wallet, user_num_keys, current_loot, bearer_token]);
 
     const check_bought_item = useCallback(async () => {
@@ -600,7 +595,6 @@ export function ShopScreen({
             check_user_state.current = true;
             check_sol_balance.current = true;
             check_loot_balance.current = true;
-
         },
         [wallet, bearer_token, check_user_state, check_sol_balance]
     );
@@ -887,7 +881,7 @@ export function ShopScreen({
                     </Text>
                     <Center>
                         <HStack>
-                            <VStack  alignItems="center">
+                            <VStack alignItems="center">
                                 <Box as="button" onClick={() => setWhichPotion(0)}>
                                     <img style={{ imageRendering: "pixelated" }} src={power_potion} width="150" alt={""} />
                                 </Box>
@@ -915,7 +909,7 @@ export function ShopScreen({
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
                                         50 LOOT
                                     </Text>
-                                    <Text  textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
+                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
                                         You Own {player_data?.num_bonus_loot_potions}
                                     </Text>
                                 </Box>

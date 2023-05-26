@@ -44,49 +44,49 @@ import corpse from "./images/Corpse.png";
 import loot from "./images/loot.png";
 import dice_roll from "./images/die_roll.gif";
 
-import rd20_1 from "./dice_images/r1.png"
-import rd20_2 from "./dice_images/r2.png"
-import rd20_3 from "./dice_images/r3.png"
-import rd20_4 from "./dice_images/r4.png"
-import rd20_5 from "./dice_images/r5.png"
-import rd20_6 from "./dice_images/r6.png"
-import rd20_7 from "./dice_images/r7.png"
-import rd20_8 from "./dice_images/r8.png"
-import rd20_9 from "./dice_images/r9.png"
-import rd20_10 from "./dice_images/r10.png"
-import rd20_11 from "./dice_images/r11.png"
-import rd20_12 from "./dice_images/r12.png"
-import rd20_13 from "./dice_images/r13.png"
-import rd20_14 from "./dice_images/r14.png"
-import rd20_15 from "./dice_images/r15.png"
-import rd20_16 from "./dice_images/r16.png"
-import rd20_17 from "./dice_images/r17.png"
-import rd20_18 from "./dice_images/r18.png"
-import rd20_19 from "./dice_images/r19.png"
-import rd20_20 from "./dice_images/r20.png"
+import rd20_1 from "./dice_images/r1.png";
+import rd20_2 from "./dice_images/r2.png";
+import rd20_3 from "./dice_images/r3.png";
+import rd20_4 from "./dice_images/r4.png";
+import rd20_5 from "./dice_images/r5.png";
+import rd20_6 from "./dice_images/r6.png";
+import rd20_7 from "./dice_images/r7.png";
+import rd20_8 from "./dice_images/r8.png";
+import rd20_9 from "./dice_images/r9.png";
+import rd20_10 from "./dice_images/r10.png";
+import rd20_11 from "./dice_images/r11.png";
+import rd20_12 from "./dice_images/r12.png";
+import rd20_13 from "./dice_images/r13.png";
+import rd20_14 from "./dice_images/r14.png";
+import rd20_15 from "./dice_images/r15.png";
+import rd20_16 from "./dice_images/r16.png";
+import rd20_17 from "./dice_images/r17.png";
+import rd20_18 from "./dice_images/r18.png";
+import rd20_19 from "./dice_images/r19.png";
+import rd20_20 from "./dice_images/r20.png";
 
-import bd20_1 from "./dice_images/b1.png"
-import bd20_2 from "./dice_images/b2.png"
-import bd20_3 from "./dice_images/b3.png"
-import bd20_4 from "./dice_images/b4.png"
-import bd20_5 from "./dice_images/b5.png"
-import bd20_6 from "./dice_images/b6.png"
-import bd20_7 from "./dice_images/b7.png"
-import bd20_8 from "./dice_images/b8.png"
-import bd20_9 from "./dice_images/b9.png"
-import bd20_10 from "./dice_images/b10.png"
-import bd20_11 from "./dice_images/b11.png"
-import bd20_12 from "./dice_images/b12.png"
-import bd20_13 from "./dice_images/b13.png"
-import bd20_14 from "./dice_images/b14.png"
-import bd20_15 from "./dice_images/b15.png"
-import bd20_16 from "./dice_images/b16.png"
-import bd20_17 from "./dice_images/b17.png"
-import bd20_18 from "./dice_images/b18.png"
-import bd20_19 from "./dice_images/b19.png"
-import bd20_20 from "./dice_images/b20.png"
+import bd20_1 from "./dice_images/b1.png";
+import bd20_2 from "./dice_images/b2.png";
+import bd20_3 from "./dice_images/b3.png";
+import bd20_4 from "./dice_images/b4.png";
+import bd20_5 from "./dice_images/b5.png";
+import bd20_6 from "./dice_images/b6.png";
+import bd20_7 from "./dice_images/b7.png";
+import bd20_8 from "./dice_images/b8.png";
+import bd20_9 from "./dice_images/b9.png";
+import bd20_10 from "./dice_images/b10.png";
+import bd20_11 from "./dice_images/b11.png";
+import bd20_12 from "./dice_images/b12.png";
+import bd20_13 from "./dice_images/b13.png";
+import bd20_14 from "./dice_images/b14.png";
+import bd20_15 from "./dice_images/b15.png";
+import bd20_16 from "./dice_images/b16.png";
+import bd20_17 from "./dice_images/b17.png";
+import bd20_18 from "./dice_images/b18.png";
+import bd20_19 from "./dice_images/b19.png";
+import bd20_20 from "./dice_images/b20.png";
 
-let red_dice_array : string[] = [
+let red_dice_array: string[] = [
     rd20_1,
     rd20_2,
     rd20_3,
@@ -106,10 +106,10 @@ let red_dice_array : string[] = [
     rd20_17,
     rd20_18,
     rd20_19,
-    rd20_20
-]
+    rd20_20,
+];
 
-let blue_dice_array : string[] = [
+let blue_dice_array: string[] = [
     bd20_1,
     bd20_2,
     bd20_3,
@@ -129,13 +129,12 @@ let blue_dice_array : string[] = [
     bd20_17,
     bd20_18,
     bd20_19,
-    bd20_20
-]
+    bd20_20,
+];
 
 export const WIN_FACTORS: number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
 var seedrandom = require("seedrandom");
-
 
 export const enum DungeonInstruction {
     add_funds = 0,
@@ -144,7 +143,7 @@ export const enum DungeonInstruction {
     explore = 3,
     claim_achievement = 4,
     drink_potion = 5,
-    buy_potion = 6
+    buy_potion = 6,
 }
 
 export const enum DungeonCharacter {
@@ -478,44 +477,56 @@ export const DiceRollText = ({
     roll_one,
     roll_two,
     advantage,
-    loading
+    loading,
 }: {
     roll_one: number;
     roll_two: number;
     advantage: boolean;
     loading: boolean;
 }) => {
-
-    let dice_size : string | number = "75px";
+    let dice_size: string | number = "75px";
 
     if (loading) {
         return (
-
-                <Box width="30px" height="30px">
-                    <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
-                </Box>
+            <Box width="30px" height="30px">
+                <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+            </Box>
         );
     }
 
     if (advantage) {
         return (
             <VStack mt="1rem">
-                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled With Advantage: </Text>
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    {" "}
+                    You Rolled With Advantage:{" "}
+                </Text>
                 <HStack>
-                        <img height={dice_size} width={dice_size} src={roll_one > roll_two ? red_dice_array[roll_one - 1] :  blue_dice_array[roll_one - 1] } alt={""} />
-                        <img height={dice_size} width={dice_size} src={roll_two > roll_one ? red_dice_array[roll_two - 1] :  blue_dice_array[roll_two - 1] }  alt={""} />
+                    <img
+                        height={dice_size}
+                        width={dice_size}
+                        src={roll_one > roll_two ? red_dice_array[roll_one - 1] : blue_dice_array[roll_one - 1]}
+                        alt={""}
+                    />
+                    <img
+                        height={dice_size}
+                        width={dice_size}
+                        src={roll_two > roll_one ? red_dice_array[roll_two - 1] : blue_dice_array[roll_two - 1]}
+                        alt={""}
+                    />
                 </HStack>
             </VStack>
         );
     }
 
-
-  
     // otherwise just return the first dice
     return (
         <VStack mt="1rem">
-            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled: </Text>
-                <img height={dice_size} width={dice_size} src={red_dice_array[roll_one - 1]}  alt={""} />
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                {" "}
+                You Rolled:{" "}
+            </Text>
+            <img height={dice_size} width={dice_size} src={red_dice_array[roll_one - 1]} alt={""} />
         </VStack>
     );
 };
@@ -560,14 +571,13 @@ export const DisplayPlayerFailedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Center  width="90%">
+        <Center width="90%">
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                 {chosen_text}
             </Text>
         </Center>
     );
 };
-
 
 const EnemyDefeatedText = ({
     current_enemy,
@@ -586,7 +596,7 @@ const EnemyDefeatedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Text width = "100%"  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+        <Text width="100%" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
             {chosen_text}
         </Text>
     );
@@ -598,49 +608,45 @@ export const DisplayPlayerSuccessText = ({
     last_loot,
     num_plays,
     total_loot,
-    loot_bonus
+    loot_bonus,
 }: {
     current_level: number;
     current_enemy: DungeonEnemy;
     last_loot: number;
     num_plays: number;
     total_loot: number;
-    loot_bonus: boolean
+    loot_bonus: boolean;
 }) => {
-
     if (current_level < 7) {
         return (
-            <Center className="font-face-sfpb" width = "100%">
+            <Center className="font-face-sfpb" width="100%">
+                <VStack width="100%">
+                    <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
 
-                
-                    <VStack width="100%">
-                        <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
+                    <HStack alignContent="center" mt="1rem">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            You found {last_loot.toFixed(2)}
+                        </Text>
 
-                        <HStack alignContent="center" mt="1rem">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                You found {last_loot.toFixed(2)} 
-                            </Text>
+                        <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
 
-                            <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            {loot_bonus ? "(x2 bonus)" : ""}
+                        </Text>
+                    </HStack>
 
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                {loot_bonus ? "(x2 bonus)" : ""}
-                            </Text>
-                        </HStack>
+                    <HStack alignContent="center" mt="1rem">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            Escape to claim {total_loot.toFixed(2)}
+                        </Text>
 
-                        <HStack alignContent="center" mt="1rem">
-                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                Escape to claim {total_loot.toFixed(2)}
-                            </Text>
+                        <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
 
-                            <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
-
-                            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                Or explore further to try and find more
-                            </Text>
-                        </HStack>
-
-                    </VStack>
+                        <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            Or explore further to try and find more
+                        </Text>
+                    </HStack>
+                </VStack>
             </Center>
         );
     }
@@ -670,7 +676,6 @@ export const DisplayPlayerSuccessText = ({
 
                 <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
             </HStack>
-
         </div>
     );
 };
@@ -849,9 +854,9 @@ export const DisplayPlayer = ({
 export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
     return (
         <Box width="10%">
-                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    XP {current_xp}
-                </Text>
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                XP {current_xp}
+            </Text>
         </Box>
     );
 };
