@@ -1421,7 +1421,7 @@ export function DungeonApp() {
         return (
             <>
                 <Center>
-                    <img style={{ imageRendering: "pixelated" }} src={large_door} width={500} alt={"generic"} />
+                    <img style={{ imageRendering: "pixelated" }} src={large_door} width={400} alt={"generic"} />
                 </Center>
             </>
         );
@@ -1753,13 +1753,6 @@ export function DungeonApp() {
                                             </Button>
                                         </div>
                                         <PotionButtons />
-                                        <Box width="60%" mr="2rem" p="2px" borderWidth="2px" borderColor="white">
-                                            <div className="font-face-sfpb" style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}>
-                                                <Text align="center">
-                                                    Loot / Day <br /> {loot_per_day.toFixed(2)}
-                                                </Text>
-                                            </div>
-                                        </Box>
                                     </VStack>
                                 </Box>
                             </HStack>
