@@ -44,48 +44,92 @@ import corpse from "./images/Corpse.png";
 import loot from "./images/loot.png";
 import dice_roll from "./images/die_roll.gif";
 
-import d20_1 from "./dice_images/1.png"
-import d20_2 from "./dice_images/2.png"
-import d20_3 from "./dice_images/3.png"
-import d20_4 from "./dice_images/4.png"
-import d20_5 from "./dice_images/5.png"
-import d20_6 from "./dice_images/6.png"
-import d20_7 from "./dice_images/7.png"
-import d20_8 from "./dice_images/8.png"
-import d20_9 from "./dice_images/9.png"
-import d20_10 from "./dice_images/10.png"
-import d20_11 from "./dice_images/11.png"
-import d20_12 from "./dice_images/12.png"
-import d20_13 from "./dice_images/13.png"
-import d20_14 from "./dice_images/14.png"
-import d20_15 from "./dice_images/15.png"
-import d20_16 from "./dice_images/16.png"
-import d20_17 from "./dice_images/17.png"
-import d20_18 from "./dice_images/18.png"
-import d20_19 from "./dice_images/19.png"
-import d20_20 from "./dice_images/20.png"
+import rd20_1 from "./dice_images/r1.png"
+import rd20_2 from "./dice_images/r2.png"
+import rd20_3 from "./dice_images/r3.png"
+import rd20_4 from "./dice_images/r4.png"
+import rd20_5 from "./dice_images/r5.png"
+import rd20_6 from "./dice_images/r6.png"
+import rd20_7 from "./dice_images/r7.png"
+import rd20_8 from "./dice_images/r8.png"
+import rd20_9 from "./dice_images/r9.png"
+import rd20_10 from "./dice_images/r10.png"
+import rd20_11 from "./dice_images/r11.png"
+import rd20_12 from "./dice_images/r12.png"
+import rd20_13 from "./dice_images/r13.png"
+import rd20_14 from "./dice_images/r14.png"
+import rd20_15 from "./dice_images/r15.png"
+import rd20_16 from "./dice_images/r16.png"
+import rd20_17 from "./dice_images/r17.png"
+import rd20_18 from "./dice_images/r18.png"
+import rd20_19 from "./dice_images/r19.png"
+import rd20_20 from "./dice_images/r20.png"
 
-let dice_array : string[] = [
-    d20_1,
-    d20_2,
-    d20_3,
-    d20_4,
-    d20_5,
-    d20_6,
-    d20_7,
-    d20_8,
-    d20_9,
-    d20_10,
-    d20_11,
-    d20_12,
-    d20_13,
-    d20_14,
-    d20_15,
-    d20_16,
-    d20_17,
-    d20_18,
-    d20_19,
-    d20_20
+import bd20_1 from "./dice_images/b1.png"
+import bd20_2 from "./dice_images/b2.png"
+import bd20_3 from "./dice_images/b3.png"
+import bd20_4 from "./dice_images/b4.png"
+import bd20_5 from "./dice_images/b5.png"
+import bd20_6 from "./dice_images/b6.png"
+import bd20_7 from "./dice_images/b7.png"
+import bd20_8 from "./dice_images/b8.png"
+import bd20_9 from "./dice_images/b9.png"
+import bd20_10 from "./dice_images/b10.png"
+import bd20_11 from "./dice_images/b11.png"
+import bd20_12 from "./dice_images/b12.png"
+import bd20_13 from "./dice_images/b13.png"
+import bd20_14 from "./dice_images/b14.png"
+import bd20_15 from "./dice_images/b15.png"
+import bd20_16 from "./dice_images/b16.png"
+import bd20_17 from "./dice_images/b17.png"
+import bd20_18 from "./dice_images/b18.png"
+import bd20_19 from "./dice_images/b19.png"
+import bd20_20 from "./dice_images/b20.png"
+
+let red_dice_array : string[] = [
+    rd20_1,
+    rd20_2,
+    rd20_3,
+    rd20_4,
+    rd20_5,
+    rd20_6,
+    rd20_7,
+    rd20_8,
+    rd20_9,
+    rd20_10,
+    rd20_11,
+    rd20_12,
+    rd20_13,
+    rd20_14,
+    rd20_15,
+    rd20_16,
+    rd20_17,
+    rd20_18,
+    rd20_19,
+    rd20_20
+]
+
+let blue_dice_array : string[] = [
+    bd20_1,
+    bd20_2,
+    bd20_3,
+    bd20_4,
+    bd20_5,
+    bd20_6,
+    bd20_7,
+    bd20_8,
+    bd20_9,
+    bd20_10,
+    bd20_11,
+    bd20_12,
+    bd20_13,
+    bd20_14,
+    bd20_15,
+    bd20_16,
+    bd20_17,
+    bd20_18,
+    bd20_19,
+    bd20_20
 ]
 
 export const WIN_FACTORS: number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
@@ -456,10 +500,10 @@ export const DiceRollText = ({
             <HStack mt="1rem">
                 <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled With Advantage: </Text>
                 <Box width="50px" height="50px">
-                    <img src={dice_array[roll_one - 1]} width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
+                    <img src={roll_one > roll_two ? red_dice_array[roll_one - 1] :  blue_dice_array[roll_one - 1] } width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
                 </Box>
                 <Box width="50px" height="50px">
-                    <img src={dice_array[roll_two - 1]} width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
+                    <img src={roll_two > roll_one ? red_dice_array[roll_two - 1] :  blue_dice_array[roll_two - 1] } width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
                 </Box>
             </HStack>
         );
@@ -472,7 +516,7 @@ export const DiceRollText = ({
         <HStack mt="1rem">
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled: </Text>
             <Box width="50px" height="50px">
-                <img src={dice_array[roll_one - 1]} width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
+                <img src={red_dice_array[roll_one - 1]} width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
             </Box>
         </HStack>
     );
