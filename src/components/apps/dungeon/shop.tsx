@@ -75,6 +75,7 @@ import delving_deeper_audio from "./sounds/Delving_Deeper.mp3";
 import tower_of_dur from "./shop_items/TowerOfDur.png";
 
 // potions
+import power_collection from "./shop_items/PotionCollection.gif";
 import power_potion from "./shop_items/Power_Potion.gif";
 import luck_potion from "./shop_items/Luck_Potion.gif";
 
@@ -178,7 +179,8 @@ export function ShopScreen({
 
     // interval for updating shop state
     const xp_interval = useRef<number | null>(null);
-    const check_xp = useRef<boolean>(true);
+    const check_shop_state = useRef<boolean>(true);
+    const check_loot_balance = useRef<boolean>(true);
 
     const valid_shop_text = [
         "I see you've noticed my magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!",
@@ -195,126 +197,138 @@ export function ShopScreen({
     const check_xp_reqs = useCallback(async () => {
         if (!wallet.publicKey) return;
 
-        if (!check_xp.current) return;
+        if (!check_shop_state.current && !check_loot_balance.current) return;
 
-        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
-        let shop_data = await request_shop_data(bearer_token, program_data_key);
+        if (check_loot_balance.current) {
 
-        //console.log("have shop data", shop_data);
-        setShopData(shop_data);
+                // get loot balance
+                let loot_token_account = await getAssociatedTokenAddress(
+                    LOOT_TOKEN_MINT, // mint
+                    wallet.publicKey, // owner
+                    true // allow owner off curve
+                );
 
-        // get loot balance
-        let loot_token_account = await getAssociatedTokenAddress(
-            LOOT_TOKEN_MINT, // mint
-            wallet.publicKey, // owner
-            true // allow owner off curve
-        );
+                let loot_amount = await request_token_amount(bearer_token, loot_token_account);
+                loot_amount = loot_amount / 1.0e6;
 
-        let loot_amount = await request_token_amount(bearer_token, loot_token_account);
+                if (loot_amount !== current_loot) {
+                    check_loot_balance.current = false;
+                }
 
-        if (loot_amount > 0) {
-            setCurrentLoot(loot_amount / 1.0e6);
+                setCurrentLoot(loot_amount);
+                
         }
 
-        let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
+        if (check_shop_state.current) {
+            let program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
+            let shop_data = await request_shop_data(bearer_token, program_data_key);
 
-        let user_data = await request_shop_user_data(bearer_token, dungeon_key_data_account);
+            //console.log("have shop data", shop_data);
+            setShopData(shop_data);
 
-        let user_keys_bought = 0;
+            
 
-        if (user_data !== null) {
-            user_keys_bought = user_data.num_keys;
-        }
+            let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
 
-        if (user_keys_bought <= user_num_keys.current) {
-            check_xp.current = false;
-            return;
-        }
+            let user_data = await request_shop_user_data(bearer_token, dungeon_key_data_account);
 
-        user_num_keys.current = user_keys_bought;
+            let user_keys_bought = 0;
 
-        if (user_keys_bought >= 3) {
-            setXPReq(-1);
-            check_xp.current = false;
+            if (user_data !== null) {
+                user_keys_bought = user_data.num_keys;
+            }
+
+            if (user_keys_bought <= user_num_keys.current) {
+                check_shop_state.current = false;
+                return;
+            }
+
+            user_num_keys.current = user_keys_bought;
+
+            if (user_keys_bought >= 3) {
+                setXPReq(-1);
+                check_shop_state.current = false;
+                setCustomerStatus(CustomerStatus.other);
+                return;
+            }
+
+            // if the shop hasn't been set up yet just return
+            if (shop_data === null) {
+                check_shop_state.current = false;
+                setCustomerStatus(CustomerStatus.other);
+                return;
+            }
+
+            let total_keys_bought = shop_data.keys_bought;
+
+            // if we have sold out there is nothing to sell
+            if (total_keys_bought >= 2000) {
+                setXPReq(-2);
+                check_shop_state.current = false;
+                setCustomerStatus(CustomerStatus.other);
+                return;
+            }
+
+            //console.log("total keys bought: ", total_keys_bought);
+            //console.log("user keys bought: ", user_keys_bought);
+
+            let n_levels = 10.0;
+            let total_keys = 3000.0;
+            let keys_per_level = total_keys / n_levels;
+            let current_level = Math.floor(total_keys_bought / keys_per_level);
+
+            let base_xp = 100;
+            let xp_cap_per_key = 500;
+            var base_xp_req = base_xp + current_level * 50;
+
+            //console.log("xp calc: ", n_levels, keys_per_level, current_level, base_xp_req);
+            var total_xp_req = base_xp_req + user_keys_bought * 50;
+
+            if (total_xp_req > xp_cap_per_key) {
+                total_xp_req = xp_cap_per_key;
+            }
+
+            //console.log("total xp req ", total_xp_req);
+
+            // check if they have any prepaid tokens
+            let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
+                PREPAID_WHITELIST_TOKEN, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
+
+            if (token_amount > 0) {
+                setCustomerStatus(CustomerStatus.prepaid);
+                setXPReq(total_xp_req);
+                check_shop_state.current = false;
+                return;
+            }
+
+            // if they dont have prepaid status then check for xp whitelist
+            let xp_whitelist_account_key = await getAssociatedTokenAddress(
+                XP_WHITELIST_TOKEN, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            let xp_token_amount = await request_token_amount(bearer_token, xp_whitelist_account_key);
+
+            if (xp_token_amount > 0) {
+                setCustomerStatus(CustomerStatus.xp_whitelist);
+                setXPReq(total_xp_req);
+                check_shop_state.current = false;
+
+                return;
+            }
+
             setCustomerStatus(CustomerStatus.other);
-            return;
-        }
-
-        // if the shop hasn't been set up yet just return
-        if (shop_data === null) {
-            check_xp.current = false;
-            setCustomerStatus(CustomerStatus.other);
-            return;
-        }
-
-        let total_keys_bought = shop_data.keys_bought;
-
-        // if we have sold out there is nothing to sell
-        if (total_keys_bought >= 2000) {
-            setXPReq(-2);
-            check_xp.current = false;
-            setCustomerStatus(CustomerStatus.other);
-            return;
-        }
-
-        //console.log("total keys bought: ", total_keys_bought);
-        //console.log("user keys bought: ", user_keys_bought);
-
-        let n_levels = 10.0;
-        let total_keys = 3000.0;
-        let keys_per_level = total_keys / n_levels;
-        let current_level = Math.floor(total_keys_bought / keys_per_level);
-
-        let base_xp = 100;
-        let xp_cap_per_key = 500;
-        var base_xp_req = base_xp + current_level * 50;
-
-        //console.log("xp calc: ", n_levels, keys_per_level, current_level, base_xp_req);
-        var total_xp_req = base_xp_req + user_keys_bought * 50;
-
-        if (total_xp_req > xp_cap_per_key) {
-            total_xp_req = xp_cap_per_key;
-        }
-
-        //console.log("total xp req ", total_xp_req);
-
-        // check if they have any prepaid tokens
-        let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
-            PREPAID_WHITELIST_TOKEN, // mint
-            wallet.publicKey, // owner
-            true // allow owner off curve
-        );
-
-        let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
-
-        if (token_amount > 0) {
-            setCustomerStatus(CustomerStatus.prepaid);
             setXPReq(total_xp_req);
-            check_xp.current = false;
-            return;
+            check_shop_state.current = false;
         }
 
-        // if they dont have prepaid status then check for xp whitelist
-        let xp_whitelist_account_key = await getAssociatedTokenAddress(
-            XP_WHITELIST_TOKEN, // mint
-            wallet.publicKey, // owner
-            true // allow owner off curve
-        );
-
-        let xp_token_amount = await request_token_amount(bearer_token, xp_whitelist_account_key);
-
-        if (xp_token_amount > 0) {
-            setCustomerStatus(CustomerStatus.xp_whitelist);
-            setXPReq(total_xp_req);
-            check_xp.current = false;
-
-            return;
-        }
-
-        setCustomerStatus(CustomerStatus.other);
-        setXPReq(total_xp_req);
-        check_xp.current = false;
-    }, [wallet, user_num_keys, bearer_token]);
+    }, [wallet, user_num_keys, current_loot, bearer_token]);
 
     const check_bought_item = useCallback(async () => {
         if (current_key.current === null) return;
@@ -340,7 +354,7 @@ export function ShopScreen({
             setProcessingTransaction(false);
 
             current_key.current = null;
-            check_xp.current = true;
+            check_shop_state.current = true;
         } catch (error) {
             console.log(error);
             return;
@@ -383,12 +397,12 @@ export function ShopScreen({
 
     useEffect(() => {
         user_num_keys.current = -1;
-        check_xp.current = true;
+        check_shop_state.current = true;
         setXPReq(null);
     }, [wallet]);
 
     useEffect(() => {
-        check_xp.current = true;
+        check_shop_state.current = true;
     }, []);
 
     const MintFromCollection = useCallback(
@@ -585,6 +599,8 @@ export function ShopScreen({
             setProcessingTransaction(false);
             check_user_state.current = true;
             check_sol_balance.current = true;
+            check_loot_balance.current = true;
+
         },
         [wallet, bearer_token, check_user_state, check_sol_balance]
     );
@@ -719,7 +735,7 @@ export function ShopScreen({
         }
 
         current_key.current = nft_meta_key;
-        check_xp.current = true;
+        check_shop_state.current = true;
         check_sol_balance.current = true;
 
         return;
@@ -1358,7 +1374,7 @@ export function ShopScreen({
                                         setCollectionPage(Collection.Potions);
                                     }}
                                 >
-                                    <img style={{ imageRendering: "pixelated" }} src={power_potion} width={item_image_size} alt={""} />
+                                    <img style={{ imageRendering: "pixelated" }} src={power_collection} width={item_image_size} alt={""} />
                                 </Box>
                                 <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                     Potions

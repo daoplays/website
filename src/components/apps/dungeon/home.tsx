@@ -1165,7 +1165,7 @@ export function DungeonApp() {
             setTransactionFailed(false);
             num_state_checks.current = 0;
 
-            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+            if (wallet.publicKey === null || wallet.signTransaction === undefined || wallet.signMessage === undefined) return;
 
             setProcessingTransaction(true);
 
@@ -1193,6 +1193,7 @@ export function DungeonApp() {
             transaction.add(play_instruction);
 
             try {
+
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
