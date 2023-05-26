@@ -1863,7 +1863,7 @@ export function DungeonApp() {
                                     <DisplayPlayerFailedText
                                         current_enemy={current_enemy}
                                         current_level={current_level}
-                                        num_plays={num_plays}
+                                        num_plays={num_plays.current}
                                     />
                                     <Center>
                                         <HStack alignItems="center">
@@ -1903,7 +1903,7 @@ export function DungeonApp() {
                                     <DisplayEnemyAppearsText
                                         current_enemy={current_enemy}
                                         current_level={current_level}
-                                        num_plays={num_plays}
+                                        num_plays={num_plays.current}
                                     />
                                 )}
                                 {enemy_state === DungeonStatus.dead && (
@@ -1912,7 +1912,7 @@ export function DungeonApp() {
                                             current_level={current_level}
                                             current_enemy={current_enemy}
                                             last_loot={last_loot}
-                                            num_plays={num_plays}
+                                            num_plays={num_plays.current}
                                             total_loot={total_loot}
                                         />
 
