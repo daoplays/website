@@ -202,7 +202,6 @@ export function DungeonApp() {
     const [advantage, setAdvantage] = useState<boolean>(false);
     const [loot_bonus, setLootBonus] = useState<boolean>(false);
 
-    const [numXP, setNumXP] = useState<number>(0);
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState<DungeonEnemy>(DungeonEnemy.None);
@@ -663,8 +662,6 @@ export function DungeonApp() {
 
                 setCurrentStatus(current_status);
 
-                setNumXP(current_xp);
-
                 setTotalLoot(bignum_to_num(player_data.total_gold) / 1e6);
 
                 setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
@@ -762,7 +759,6 @@ export function DungeonApp() {
         setScreen(Screen.HOME_SCREEN);
         setCurrentLevel(0);
         num_plays.current = -1;
-        setNumXP(0);
         setDataAccountStatus(AccountStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
@@ -770,6 +766,7 @@ export function DungeonApp() {
         setEnemyState(DungeonStatus.unknown);
         setAchievementStatus(null);
         setAchievementData(null);
+        setPlayerData(null);
         achievement_interations.current = -1;
 
         check_data_account.current = true;
