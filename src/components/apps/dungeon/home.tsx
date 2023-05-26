@@ -362,22 +362,18 @@ export function DungeonApp() {
         );
     }
 
-    function Disclaimer() {
-        const [show, setShow] = useState(false);
 
-        const handleClose = () => setShow(false);
-        const handleShow = () => setShow(true);
+    function Disclaimer() {
 
         const { setVisible } = useWalletModal();
 
         const handleConnectWallet = useCallback(async () => {
-            setShow(false);
             setVisible(true);
-        }, [setVisible, setShow]);
+        }, [setVisible]);
 
         return (
             <>
-                <Box as="button" onClick={handleShow}>
+                <Box as="button" onClick={handleConnectWallet}>
                     <div className="font-face-sfpb">
                         <Text style={{ textDecoration: "underline" }} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
                             CONNECT
@@ -387,28 +383,7 @@ export function DungeonApp() {
                     </div>
                 </Box>
 
-                <Modal centered show={show} onHide={handleClose}>
-                    <div className="font-face-sfpb">
-                        <Modal.Header style={{ backgroundColor: "black" }} closeButton>
-                            <Modal.Title style={{ fontSize: 30, color: "white", fontWeight: "semibold" }}>DISCLAIMER</Modal.Title>
-                        </Modal.Header>
-                    </div>
-                    <div className="font-face-sfpb text-center">
-                        <Modal.Body style={{ backgroundColor: "black", fontSize: 20, color: "white", fontWeight: "semibold" }}>
-                            I confirm online gambling is not forbidden in my jurisdiction and I'm at least 18 years old
-                        </Modal.Body>
-                    </div>
 
-                    <Modal.Footer style={{ alignItems: "center", justifyContent: "center", backgroundColor: "black" }}>
-                        <Box as="button" onClick={handleConnectWallet}>
-                            <div className="font-face-sfpb">
-                                <Text style={{ textDecoration: "underline" }} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
-                                    CONFIRM
-                                </Text>
-                            </div>
-                        </Box>
-                    </Modal.Footer>
-                </Modal>
             </>
         );
     }
