@@ -1633,7 +1633,7 @@ export function DungeonApp() {
         if (
             data_account_status === AccountStatus.created &&
             (initial_status.current === DungeonStatus.unknown ||
-                (num_plays === initial_num_plays.current && currentStatus === DungeonStatus.alive && current_level > 0))
+                (num_plays.current === initial_num_plays.current && currentStatus === DungeonStatus.alive && current_level > 0))
         ) {
             visible = false;
         }
