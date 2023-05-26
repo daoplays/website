@@ -91,7 +91,8 @@ import {
     NewDiscordMessage,
     serialise_quit_instruction,
     bignum_to_num,
-    request_dungeon_program_data
+    request_dungeon_program_data,
+    serialise_drink_potion_instruction
 } from "./utils";
 
 import {
@@ -179,6 +180,7 @@ const enum DungeonInstruction {
     quit = 2,
     explore = 3,
     claim_achievement = 4,
+    drink_potion = 5
 }
 
 export function DungeonApp() {
@@ -193,8 +195,8 @@ export function DungeonApp() {
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
 
     // these come from the blockchain
+    const num_plays = useRef<number>(-1);
     const current_interaction = useRef<number | null>(null);
-    const [num_plays, setNumPlays] = useState<number>(-1);
     const [numXP, setNumXP] = useState<number>(0);
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
@@ -202,6 +204,9 @@ export function DungeonApp() {
     const [total_loot, setTotalLoot] = useState<number>(0);
     const [last_loot, setLastLoot] = useState<number>(0);
     const [loot_per_day, setLootPerDay] = useState<number>(0);
+    const [advantage, setAdvantage] = useState<boolean>(false);
+    const [loot_bonus, setLootBonus] = useState<boolean>(false);
+
 
     // achievement state
     const [which_achievement, setWhichAchievement] = useState<number | null>(null);
@@ -611,6 +616,8 @@ export function DungeonApp() {
                     return;
                 }
 
+                console.log(player_data);
+
                 let current_status = player_data.player_status + 1;
                 if (initial_status.current === DungeonStatus.unknown) {
                     initial_status.current = current_status;
@@ -627,7 +634,7 @@ export function DungeonApp() {
 
                 current_interaction.current = current_num_plays;
 
-                setNumPlays(current_num_plays);
+                num_plays.current = current_num_plays;
 
                 let current_xp = new BN(player_data.num_wins).toNumber();
 
@@ -669,6 +676,10 @@ export function DungeonApp() {
                 setTotalLoot(bignum_to_num(player_data.total_gold) / 1e6);
 
                 setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
+
+                setAdvantage(player_data.advantage === 1);
+                setLootBonus(player_data.bonus_loot === 1);
+
             } catch (error) {
                 console.log(error);
                 setCurrentLevel(0);
@@ -748,7 +759,7 @@ export function DungeonApp() {
         setTransactionFailed(false);
         setScreen(Screen.HOME_SCREEN);
         setCurrentLevel(0);
-        setNumPlays(-1);
+        num_plays.current = -1;
         setNumXP(0);
         setDataAccountStatus(AccountStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
@@ -778,7 +789,7 @@ export function DungeonApp() {
                 "currentStatus",
                 DungeonStatusString[currentStatus],
                 "num_plays",
-                num_plays,
+                num_plays.current,
                 "init num plays",
                 initial_num_plays.current
             );
@@ -797,8 +808,8 @@ export function DungeonApp() {
 
         // if we aren't alive and numplays is still initial num plays we shouldn't display the enemy
         if (
-            num_plays > 1 &&
-            num_plays === initial_num_plays.current &&
+            num_plays.current > 1 &&
+            num_plays.current === initial_num_plays.current &&
             data_account_status === AccountStatus.created &&
             currentStatus !== DungeonStatus.alive
         )
@@ -818,7 +829,7 @@ export function DungeonApp() {
         } else {
             animateLevel.current = 2;
         }
-    }, [num_plays, current_level, current_enemy, currentStatus, data_account_status, screen]);
+    }, [current_level, current_enemy, currentStatus, data_account_status, screen]);
 
     const playAudio = useCallback(
         (audio: HTMLAudioElement) => {
@@ -1172,6 +1183,74 @@ export function DungeonApp() {
 
         return;
     }, [wallet, player_character, current_level, total_loot, bearer_token, searchParams]);
+
+    const DrinkPotion = useCallback(async (which: number) => {
+
+        setTransactionFailed(false);
+
+        if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+
+        setProcessingTransaction(true);
+
+
+        let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+       
+      
+        const instruction_data = serialise_drink_potion_instruction(DungeonInstruction.drink_potion, which);
+
+        var account_vector = [
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+            { pubkey: player_data_key, isSigner: false, isWritable: true },
+            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false }
+        ];
+
+        const play_instruction = new TransactionInstruction({
+            keys: account_vector,
+            programId: DUNGEON_PROGRAM,
+            data: instruction_data,
+        });
+
+        let txArgs = await get_current_blockhash(bearer_token);
+
+        let transaction = new Transaction(txArgs);
+        transaction.feePayer = wallet.publicKey;
+
+        transaction.add(play_instruction);
+
+        try {
+            let signed_transaction = await wallet.signTransaction(transaction);
+            const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+
+            if (transaction_response.result === "INVALID") {
+                console.log(transaction_response);
+                setProcessingTransaction(false);
+                return;
+            }
+
+            let signature = transaction_response.result;
+
+            if (DEBUG) {
+                console.log("play signature: ", signature);
+            }
+
+            current_signature.current = signature;
+            signature_check_count.current = 0;
+
+        } catch (error) {
+            setProcessingTransaction(false);
+            console.log(error);
+            return;
+        }
+
+        if (DEBUG) {
+            console.log("In Play - setting state");
+        }
+
+        check_user_state.current = true;
+        check_sol_balance.current = true;
+    }, [wallet, bearer_token]);
 
     const ClaimAchievement = useCallback(
         async (which: number) => {
@@ -1638,6 +1717,14 @@ export function DungeonApp() {
                                             </Button>
 
                                         </div>
+                                        <HStack>
+                                            <Box as="button" onClick={() => DrinkPotion(0)} borderWidth='1px'  borderColor={advantage ? "red" : "white"}>
+                                            <Text color="white">P1</Text>
+                                            </Box>
+                                            <Box as="button" onClick={() => DrinkPotion(1)} borderWidth='1px'  borderColor={loot_bonus ? "red" : "white"}>
+                                            <Text color="white">P2</Text>
+                                            </Box>
+                                        </HStack>
                                         <Box width = "60%" mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
                                             <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
                                             <Text align="center">Loot / Day  <br/> {loot_per_day.toFixed(2)}</Text>
@@ -1832,65 +1919,44 @@ export function DungeonApp() {
                                         {current_level < 7 && (
                                             <Center>
                                                 <HStack>
-                                                    {!processing_transaction && (
-                                                        <Button variant="link" size="md" onClick={handleEscape} mr="3rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
-                                                                    Escape
-                                                                </Text>
-                                                            </div>
-                                                        </Button>
-                                                    )}
-                                                    {processing_transaction && (
-                                                        <Button variant="link" size="md" mr="3rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
-                                                                    Escape
-                                                                </Text>
-                                                            </div>
-                                                        </Button>
-                                                    )}
-                                                    {!processing_transaction && (
-                                                        <Button variant="link" size="md" onClick={handleExploreFurther} ml="10rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
-                                                                    Explore Further
-                                                                </Text>
-                                                            </div>
-                                                        </Button>
-                                                    )}
-                                                    {processing_transaction && (
-                                                        <Button variant="link" size="md" ml="10rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
-                                                                    Explore Further
-                                                                </Text>
-                                                            </div>
-                                                        </Button>
-                                                    )}
+                                                    <Button disabled={processing_transaction ? true : false} variant="link" size="md" onClick={handleEscape} mr="3rem">
+                                                        <div className="font-face-sfpb">
+                                                            <Text textAlign="center" fontSize={font_size} color="white">
+                                                                Escape
+                                                            </Text>
+                                                        </div>
+                                                    </Button>
+                                                   
+                                                        
+                                                    <Button disabled={processing_transaction ? true : false} variant="link" size="md" onClick={handleExploreFurther} ml="10rem">
+                                                        <div className="font-face-sfpb">
+                                                            <Text textAlign="center" fontSize={font_size} color="white">
+                                                                Explore Further
+                                                            </Text>
+                                                        </div>
+                                                    </Button>
+
+                                                    <HStack>
+                                                        <Box as="button" onClick={() => DrinkPotion(0)} borderWidth='1px'  borderColor={advantage ? "red" : "white"}>
+                                                        <Text color="white">P1</Text>
+                                                        </Box>
+                                                        <Box as="button" onClick={() => DrinkPotion(1)} borderWidth='1px'  borderColor={loot_bonus ? "red" : "white"}>
+                                                        <Text color="white">P2</Text>
+                                                        </Box>
+                                                    </HStack>
+        
                                                 </HStack>
                                             </Center>
                                         )}
                                         {current_level >= 7 && (
                                             <Center>
-                                                {!processing_transaction && (
-                                                    <Button variant="link" size="md" onClick={Quit}>
-                                                        <div className="font-face-sfpb">
-                                                            <Text textAlign="center" fontSize={font_size} color="white">
-                                                                Retire
-                                                            </Text>
-                                                        </div>
-                                                    </Button>
-                                                )}
-                                                {processing_transaction && (
-                                                    <Button variant="link" size="md">
-                                                        <div className="font-face-sfpb">
-                                                            <Text textAlign="center" fontSize={font_size} color="white">
-                                                                Retire
-                                                            </Text>
-                                                        </div>
-                                                    </Button>
-                                                )}
+                                                <Button disabled={processing_transaction ? true : false} variant="link" size="md" onClick={Quit}>
+                                                    <div className="font-face-sfpb">
+                                                        <Text textAlign="center" fontSize={font_size} color="white">
+                                                            Retire
+                                                        </Text>
+                                                    </div>
+                                                </Button>
                                             </Center>
                                         )}
                                     </VStack>

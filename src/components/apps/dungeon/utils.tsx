@@ -474,8 +474,10 @@ class PlayerData {
       readonly last_gold: bignum,
       readonly current_key: number,
       readonly total_gold: bignum,
-      readonly extra_data: number[]
-
+      readonly character_xp: number[],
+      readonly advantage: number,
+      readonly num_advantage_potions: number,
+      readonly bonus_loot: number
     ) {}
   
     static readonly struct = new BeetStruct<PlayerData>(
@@ -489,10 +491,13 @@ class PlayerData {
         ['last_gold', u64],
         ['current_key', u8],
         ['total_gold', u64],
-        ['extra_data', uniformFixedSizeArray(u8, 15)],
+        ['character_xp', uniformFixedSizeArray(u32, 3)],
+        ['advantage', u8],
+        ['num_advantage_potions', u8],
+        ['bonus_loot', u8],
 
       ],
-      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.extra_data!),
+      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.character_xp!, args.advantage!, args.num_advantage_potions!, args.bonus_loot!),
       'PlayerData'
     )
 }
@@ -584,6 +589,22 @@ class DungeonQuitInstruction {
       ],
       (args) => new DungeonQuitInstruction(args.instruction!, args.ref_code!),
       'DungeonQuitInstruction'
+    )
+}
+
+class DungeonDrinkPotionInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly which_potion: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonDrinkPotionInstruction>(
+      [
+        ['instruction', u8],
+        ['which_potion', u8]
+      ],
+      (args) => new DungeonDrinkPotionInstruction(args.instruction!, args.which_potion!),
+      'DungeonDrinkPotionInstruction'
     )
 }
 
@@ -699,6 +720,15 @@ export function serialise_claim_achievement_instruction(instruction : number, ac
 
     const data = new DungeonClaimAchievementInstruction(instruction, achievement);
     const [buf] = DungeonClaimAchievementInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_drink_potion_instruction(instruction : number, which_potion : number) : Buffer
+{
+
+    const data = new DungeonDrinkPotionInstruction(instruction, which_potion);
+    const [buf] = DungeonDrinkPotionInstruction.struct.serialize(data);
 
     return buf;
 }
