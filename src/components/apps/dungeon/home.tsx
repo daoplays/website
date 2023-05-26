@@ -86,7 +86,6 @@ import {
     get_current_blockhash,
     send_transaction,
     check_signature,
-    request_current_balance,
     AchievementData,
     NewDiscordMessage,
     serialise_quit_instruction,
