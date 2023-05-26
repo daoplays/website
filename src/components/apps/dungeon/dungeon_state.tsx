@@ -47,6 +47,17 @@ export const WIN_FACTORS: number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54]
 
 var seedrandom = require("seedrandom");
 
+
+export const enum DungeonInstruction {
+    add_funds = 0,
+    play = 1,
+    quit = 2,
+    explore = 3,
+    claim_achievement = 4,
+    drink_potion = 5,
+    buy_potion = 6
+}
+
 export const enum DungeonCharacter {
     knight = 0,
     ranger = 1,

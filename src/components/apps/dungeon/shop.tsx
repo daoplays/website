@@ -21,6 +21,8 @@ import {
     LOOT_TOKEN_MINT,
 } from "./constants";
 
+import { DungeonInstruction } from "./dungeon_state";
+
 import bs58 from "bs58";
 
 import {
@@ -33,6 +35,9 @@ import {
     request_token_amount,
     serialise_mint_from_collection_instruction,
     ShopData,
+    serialise_buy_potion_instruction,
+    bignum_to_num,
+    PlayerData
 } from "./utils";
 
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -120,17 +125,20 @@ const enum Collection {
     MusicBoxes = 2,
     Paintings = 3,
     LorePages = 4,
-    None = 5,
+    Potions = 5,
+    None = 6,
 }
 
 export function ShopScreen({
-    num_xp,
+    player_data,
     bearer_token,
     check_sol_balance,
+    check_user_state,
 }: {
-    num_xp: number;
+    player_data: PlayerData | null;
     bearer_token: string;
     check_sol_balance: React.MutableRefObject<boolean>;
+    check_user_state: React.MutableRefObject<boolean>;
 }) {
     const wallet = useWallet();
 
@@ -513,6 +521,68 @@ export function ShopScreen({
         [wallet, bearer_token, check_sol_balance]
     );
 
+    const MintPotion = useCallback(
+        async (which: number) => {
+            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+
+            setProcessingTransaction(true);
+
+            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            const instruction_data = serialise_buy_potion_instruction(DungeonInstruction.buy_potion, which);
+
+            var account_vector = [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
+                { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
+                { pubkey: loot_token_account, isSigner: false, isWritable: true },
+                { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
+
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            transaction.add(play_instruction);
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    setProcessingTransaction(false);
+                    return;
+                }
+            } catch (error) {
+                setProcessingTransaction(false);
+                console.log(error);
+                return;
+            }
+
+            setProcessingTransaction(false);
+            check_user_state.current = true;
+            check_sol_balance.current = true;
+        },
+        [wallet, bearer_token, check_user_state, check_sol_balance]
+    );
+
     const MintKey = useCallback(async () => {
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
@@ -698,7 +768,7 @@ export function ShopScreen({
             );
         }
 
-        if (customer_status === CustomerStatus.xp_whitelist || (xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req)) {
+        if (customer_status === CustomerStatus.xp_whitelist || (xp_req !== null && player_data !== null && xp_req > 0 && bignum_to_num(player_data.num_xp) >= xp_req)) {
             return (
                 <Center width="100%">
                     <VStack alignItems="center" width="100%">
@@ -735,7 +805,7 @@ export function ShopScreen({
                 <Box width="80%">
                     <div className="font-face-sfpb">
                         <>
-                            {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp < xp_req && (
+                            {xp_req !== null && player_data !== null && xp_req > 0 && bignum_to_num(player_data.num_xp)  < xp_req && (
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                     {" "}
                                     {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP
@@ -783,6 +853,59 @@ export function ShopScreen({
         );
     };
 
+    const PotionText = (): JSX.Element | null => {
+        return (
+            <Center width="100%">
+                <Box width="80%">
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb="1rem">
+                        Magical potions to help you in your adventures
+                    </Text>
+                    <Center>
+                        <HStack>
+                            <VStack>
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        MintPotion(0);
+                                    }}
+                                >
+                                    <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                        Advantage
+                                    </Text>
+                                    <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                        1 Gold
+                                    </Text>
+                                    <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                       Own {player_data?.num_advantage_potions}
+                                    </Text>
+                                </Box>
+                            </VStack>
+
+                            <VStack>
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        MintPotion(1);
+                                    }}
+                                >
+                                    <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                        Loot
+                                    </Text>
+                                    <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                        1 Gold
+                                    </Text>
+                                    <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                       Own {player_data?.num_bonus_loot_potions}
+                                    </Text>
+                                </Box>
+                            </VStack>
+                        </HStack>
+                    </Center>
+                </Box>
+            </Center>
+        );
+    };
+
     const MusicText = (): JSX.Element | null => {
         return (
             <Center width="100%">
@@ -796,7 +919,7 @@ export function ShopScreen({
                                 <MusicTextButton which_box={0} />
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 1100 || processing_transaction ? true : false}
+                                    disabled={(player_data !== null && bignum_to_num(player_data.num_xp)  < 1100) || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 0);
                                     }}
@@ -808,7 +931,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 1100 ? "1100 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 Gold"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -818,7 +941,7 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 2500 || processing_transaction ? true : false}
+                                    disabled={(player_data !== null && bignum_to_num(player_data.num_xp)  < 2500) || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 1);
                                     }}
@@ -830,7 +953,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[1]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 2500 ? "2500 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && bignum_to_num(player_data.num_xp)  < 2500 ? "2500 XP required" : "1000 Gold"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -840,7 +963,7 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 4500 || processing_transaction ? true : false}
+                                    disabled={(player_data !== null && bignum_to_num(player_data.num_xp)  < 4500) || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 2);
                                     }}
@@ -852,7 +975,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[2]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 4500 ? "4500 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && bignum_to_num(player_data.num_xp)  < 4500 ? "4500 XP required" : "1000 Gold"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -862,7 +985,7 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 7000 || processing_transaction ? true : false}
+                                    disabled={(player_data !== null && bignum_to_num(player_data.num_xp)  < 7000) || processing_transaction ? true : false}
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 3);
                                     }}
@@ -874,7 +997,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[3]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 7000 ? "7000 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && bignum_to_num(player_data.num_xp) < 7000 ? "7000 XP required" : "1000 Gold"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -884,6 +1007,7 @@ export function ShopScreen({
             </Center>
         );
     };
+
     const LoreText = (): JSX.Element | null => {
         return (
             <Center width="100%">
@@ -911,7 +1035,7 @@ export function ShopScreen({
                         <img style={{ imageRendering: "pixelated" }} src={tower_of_dur} width="150" alt={""} />
                         <Box
                             as="button"
-                            disabled={num_xp < 2000 || processing_transaction ? true : false}
+                            disabled={(player_data !== null && bignum_to_num(player_data.num_xp)  < 2000) || processing_transaction ? true : false}
                             onClick={() => {
                                 MintFromCollection(Collection.Paintings, 0);
                             }}
@@ -923,7 +1047,7 @@ export function ShopScreen({
                                 Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}
                             </Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                {num_xp < 2000 ? "2000 XP required" : "2000 Gold"}{" "}
+                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 Gold"}{" "}
                             </Text>
                         </Box>
                     </VStack>
@@ -961,6 +1085,10 @@ export function ShopScreen({
 
         if (collection_page === Collection.LorePages) {
             return <LoreText />;
+        }
+
+        if (collection_page === Collection.Potions) {
+            return <PotionText />;
         }
 
         return null;
@@ -1040,6 +1168,7 @@ export function ShopScreen({
 
     let item_image_size = isMobile ? "80" : "100";
     return (
+
         <VStack alignItems="center" mb="10rem" width="100%">
             <Box width="100%">
                 <HStack>
@@ -1056,7 +1185,7 @@ export function ShopScreen({
                                 style={{ marginBottom: "5px", maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }}
                             />
                             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                XP {num_xp}
+                                XP {player_data === null ? "" : bignum_to_num(player_data.num_xp)}
                             </Text>
                         </HStack>
                     </Box>
@@ -1138,6 +1267,20 @@ export function ShopScreen({
                                 </Box>
                                 <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                     Paintings
+                                </Text>
+                            </VStack>
+
+                            <VStack width="25%" alignItems="center">
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        setCollectionPage(Collection.Potions);
+                                    }}
+                                >
+                                    <img style={{ imageRendering: "pixelated" }} src={keyring} width={item_image_size} alt={""} />
+                                </Box>
+                                <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                    Potions
                                 </Text>
                             </VStack>
                         </HStack>

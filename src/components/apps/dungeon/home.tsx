@@ -13,9 +13,8 @@ import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
-import 'react-h5-audio-player/lib/styles.css'
-import './css/home.css'
-
+import "react-h5-audio-player/lib/styles.css";
+import "./css/home.css";
 
 import { Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -91,7 +90,8 @@ import {
     serialise_quit_instruction,
     bignum_to_num,
     request_dungeon_program_data,
-    serialise_drink_potion_instruction
+    serialise_drink_potion_instruction,
+    PlayerData
 } from "./utils";
 
 import {
@@ -108,7 +108,8 @@ import {
     DungeonCharacterEmoji,
     DungeonEnemyEmoji,
     GoldEmoji,
-    DiceRollText
+    DiceRollText,
+    DungeonInstruction,
 } from "./dungeon_state";
 
 import { AchievementCard, AchievementMetaData } from "./achievements";
@@ -173,16 +174,6 @@ const RetryAudio = new Audio(Retry);
 const VictoryAudio = new Audio(Victory);
 const PlayerDeathAudio = new Audio(Player_Death);
 
-
-const enum DungeonInstruction {
-    add_funds = 0,
-    play = 1,
-    quit = 2,
-    explore = 3,
-    claim_achievement = 4,
-    drink_potion = 5
-}
-
 export function DungeonApp() {
     const wallet = useWallet();
 
@@ -200,13 +191,14 @@ export function DungeonApp() {
     // not all state should cause a rerender
     const update_status_effects = useRef<boolean>(true);
     const num_plays = useRef<number>(-1);
-    const last_advantage =  useRef<boolean>(false);
-    const last_loot_bonus =  useRef<boolean>(false);
+    const last_advantage = useRef<boolean>(false);
+    const last_loot_bonus = useRef<boolean>(false);
     const roll_one = useRef<number>(0);
     const roll_two = useRef<number>(0);
 
     const current_interaction = useRef<number | null>(null);
 
+    const [current_player_data, setPlayerData] = useState<PlayerData | null>(null);
     const [advantage, setAdvantage] = useState<boolean>(false);
     const [loot_bonus, setLootBonus] = useState<boolean>(false);
 
@@ -217,8 +209,6 @@ export function DungeonApp() {
     const [total_loot, setTotalLoot] = useState<number>(0);
     const [last_loot, setLastLoot] = useState<number>(0);
     const [loot_per_day, setLootPerDay] = useState<number>(0);
-
-
 
     // achievement state
     const [which_achievement, setWhichAchievement] = useState<number | null>(null);
@@ -566,7 +556,6 @@ export function DungeonApp() {
     }, [CheckSignature]);
 
     const check_state = useCallback(async () => {
-
         if (bearer_token === "") {
             console.log("no bearer token set in check_state");
             return;
@@ -580,25 +569,22 @@ export function DungeonApp() {
             return;
         }
 
-        if (num_state_checks.current > 2)
-            check_user_state.current = false;
+        if (num_state_checks.current > 2) check_user_state.current = false;
 
         if (!check_user_state.current && !check_achievements.current) return;
 
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
-        
+
         if (check_user_state.current) {
-
             try {
-
                 let dungeon_program_data = await request_dungeon_program_data(bearer_token, program_data_key);
 
                 if (dungeon_program_data !== null) {
-                    let ema_value = (new BN(dungeon_program_data?.current_ema_value)).toNumber() / 1e6;
-                    let this_minutes_loot = (new BN(dungeon_program_data?.this_minutes_loot)).toNumber() / 1e6;
-                    let current_minute = (new BN(dungeon_program_data?.current_minute)).toNumber();
+                    let ema_value = new BN(dungeon_program_data?.current_ema_value).toNumber() / 1e6;
+                    let this_minutes_loot = new BN(dungeon_program_data?.this_minutes_loot).toNumber() / 1e6;
+                    let current_minute = new BN(dungeon_program_data?.current_minute).toNumber();
 
                     console.log(ema_value, this_minutes_loot, current_minute);
                     setLootPerDay(24 * 60 * ema_value);
@@ -609,9 +595,6 @@ export function DungeonApp() {
             }
 
             try {
-
-
-
                 let player_data = await request_player_account_data(bearer_token, player_data_key);
 
                 console.log("have player data");
@@ -622,7 +605,7 @@ export function DungeonApp() {
                 }
 
                 setDataAccountStatus(AccountStatus.created);
-                
+
                 console.log(player_data);
 
                 let current_status = player_data.player_status + 1;
@@ -633,18 +616,19 @@ export function DungeonApp() {
                 let current_num_plays = new BN(player_data.num_plays).toNumber();
 
                 if (current_interaction.current !== null && current_num_plays <= current_interaction.current) {
-
                     if (DEBUG) {
                         console.log("num plays not increased", current_num_plays);
                     }
                     return;
                 }
 
+                setPlayerData(player_data);
+
                 current_interaction.current = current_num_plays;
 
                 num_plays.current = current_num_plays;
 
-                let current_xp = new BN(player_data.num_wins).toNumber();
+                let current_xp = new BN(player_data.num_xp).toNumber();
 
                 if (DEBUG) {
                     console.log(
@@ -684,12 +668,11 @@ export function DungeonApp() {
                 setTotalLoot(bignum_to_num(player_data.total_gold) / 1e6);
 
                 setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
-                
+
                 setAdvantage(player_data.advantage === 1);
                 setLootBonus(player_data.bonus_loot === 1);
 
                 if (update_status_effects.current) {
-                    
                     update_status_effects.current = false;
                 }
 
@@ -697,7 +680,6 @@ export function DungeonApp() {
                 roll_two.current = player_data.dice_two;
 
                 num_state_checks.current = 0;
-
             } catch (error) {
                 console.log(error);
                 setCurrentLevel(0);
@@ -967,7 +949,6 @@ export function DungeonApp() {
 
         setProcessingTransaction(true);
 
-
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
@@ -982,7 +963,6 @@ export function DungeonApp() {
         );
 
         let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
-
 
         const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, 0);
 
@@ -1020,7 +1000,6 @@ export function DungeonApp() {
         );
 
         account_vector.push({ pubkey: free_play_token_account, isSigner: false, isWritable: true });
-
 
         account_vector.push({ pubkey: DM_PROGRAM, isSigner: false, isWritable: false });
         account_vector.push({ pubkey: dm_data_key, isSigner: false, isWritable: true });
@@ -1104,11 +1083,9 @@ export function DungeonApp() {
 
         last_advantage.current = advantage;
         last_loot_bonus.current = loot_bonus;
-
     }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus]);
 
     const Quit = useCallback(async () => {
-
         setTransactionFailed(false);
         num_state_checks.current = 0;
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
@@ -1145,8 +1122,7 @@ export function DungeonApp() {
             { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
             { pubkey: loot_token_account, isSigner: false, isWritable: true },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false }
-
+            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
         ];
 
         const quit_instruction = new TransactionInstruction({
@@ -1211,74 +1187,73 @@ export function DungeonApp() {
         return;
     }, [wallet, player_character, current_level, total_loot, bearer_token, searchParams]);
 
-    const DrinkPotion = useCallback(async (which: number) => {
+    const DrinkPotion = useCallback(
+        async (which: number) => {
+            setTransactionFailed(false);
+            num_state_checks.current = 0;
 
-        setTransactionFailed(false);
-        num_state_checks.current = 0;
+            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
-        if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+            setProcessingTransaction(true);
 
-        setProcessingTransaction(true);
+            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
+            const instruction_data = serialise_drink_potion_instruction(DungeonInstruction.drink_potion, which);
 
-        let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
-       
-      
-        const instruction_data = serialise_drink_potion_instruction(DungeonInstruction.drink_potion, which);
+            var account_vector = [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
 
-        var account_vector = [
-            { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-            { pubkey: player_data_key, isSigner: false, isWritable: true },
-            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false }
-        ];
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
 
-        const play_instruction = new TransactionInstruction({
-            keys: account_vector,
-            programId: DUNGEON_PROGRAM,
-            data: instruction_data,
-        });
+            let txArgs = await get_current_blockhash(bearer_token);
 
-        let txArgs = await get_current_blockhash(bearer_token);
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
 
-        let transaction = new Transaction(txArgs);
-        transaction.feePayer = wallet.publicKey;
+            transaction.add(play_instruction);
 
-        transaction.add(play_instruction);
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-        try {
-            let signed_transaction = await wallet.signTransaction(transaction);
-            const encoded_transaction = bs58.encode(signed_transaction.serialize());
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
 
-            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    setProcessingTransaction(false);
+                    return;
+                }
 
-            if (transaction_response.result === "INVALID") {
-                console.log(transaction_response);
+                let signature = transaction_response.result;
+
+                if (DEBUG) {
+                    console.log("play signature: ", signature);
+                }
+
+                current_signature.current = signature;
+                signature_check_count.current = 0;
+            } catch (error) {
                 setProcessingTransaction(false);
+                console.log(error);
                 return;
             }
 
-            let signature = transaction_response.result;
-
             if (DEBUG) {
-                console.log("play signature: ", signature);
+                console.log("In Play - setting state");
             }
 
-            current_signature.current = signature;
-            signature_check_count.current = 0;
-
-        } catch (error) {
-            setProcessingTransaction(false);
-            console.log(error);
-            return;
-        }
-
-        if (DEBUG) {
-            console.log("In Play - setting state");
-        }
-
-        check_user_state.current = true;
-        check_sol_balance.current = true;
-    }, [wallet, bearer_token]);
+            check_user_state.current = true;
+            check_sol_balance.current = true;
+        },
+        [wallet, bearer_token]
+    );
 
     const ClaimAchievement = useCallback(
         async (which: number) => {
@@ -1410,7 +1385,6 @@ export function DungeonApp() {
     );
 
     const ApplyKey = useCallback(async () => {
-
         if (wallet.publicKey === null) return;
 
         setDiscountError(null);
@@ -1426,7 +1400,6 @@ export function DungeonApp() {
             setDiscountError("Key " + discount_key_index + " has not been minted");
             return;
         }
-        
 
         console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
 
@@ -1493,6 +1466,31 @@ export function DungeonApp() {
             </Box>
         );
     };
+
+    const PotionButtons = () => {
+        return (
+        <HStack>
+            <Box
+                as="button"
+                disabled={current_player_data === null || current_player_data?.num_advantage_potions === 0 ? true : false}
+                onClick={() => DrinkPotion(0)}
+                borderWidth="1px"
+                borderColor={advantage ? "red" : "white"}
+            >
+                <Text color="white">P1</Text>
+            </Box>
+            <Box
+                as="button"
+                disabled={current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? true : false}
+                onClick={() => DrinkPotion(1)}
+                borderWidth="1px"
+                borderColor={loot_bonus ? "red" : "white"}
+            >
+                <Text color="white">P2</Text>
+            </Box>
+        </HStack>
+        )
+    }
 
     const SelectKnight = useCallback(async () => {
         playAudio(classSelectAudio);
@@ -1612,17 +1610,16 @@ export function DungeonApp() {
                             <HStack alignItems="center" spacing="1%">
                                 <Box width="27%">
                                     <VStack>
-                                    <div className="font-face-sfpb">
-                                        <Text align="center" fontSize={font_size} color="white">
-                                            DUNGEON
-                                            <br />
-                                            FEE:
-                                            <br />
-                                            0.002 SOL
-                                        </Text>
-                                    </div>
-                                    <DiscountKeyInput />
-
+                                        <div className="font-face-sfpb">
+                                            <Text align="center" fontSize={font_size} color="white">
+                                                DUNGEON
+                                                <br />
+                                                FEE:
+                                                <br />
+                                                0.002 SOL
+                                            </Text>
+                                        </div>
+                                        <DiscountKeyInput />
                                     </VStack>
                                 </Box>
                                 <Box width="46%">
@@ -1656,7 +1653,21 @@ export function DungeonApp() {
 
         var visible = true;
 
-        console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", num_plays,  initial_num_plays.current, "dataaccount:", data_account_status,  "initial status", DungeonStatusString[initial_status.current]);
+        console.log(
+            "in characterSelect, progress: ",
+            current_level,
+            "enemy",
+            current_enemy,
+            "status",
+            DungeonStatusString[currentStatus],
+            "num_plays",
+            num_plays,
+            initial_num_plays.current,
+            "dataaccount:",
+            data_account_status,
+            "initial status",
+            DungeonStatusString[initial_status.current]
+        );
 
         // if i don't need to make an account but player status is unknown return nothing
         if (
@@ -1681,46 +1692,45 @@ export function DungeonApp() {
                             <HStack alignItems="center" spacing="1%">
                                 <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                     <VStack>
-                                    <div className="font-face-sfpb">
-                                        {current_key_type === KeyType.Unknown && (
-                                            <Text align="center" fontSize={font_size} color="white">
-                                                DUNGEON
-                                                <br />
-                                                FEE:
-                                                <br />
-                                                0.002 SOL
-                                            </Text>
-                                        )}
-                                        {current_key_type === KeyType.Bronze && (
-                                            <Text align="center" fontSize={font_size} color="#CD7F32">
-                                                DUNGEON
-                                                <br />
-                                                FEE:
-                                                <br />
-                                                0.0015 SOL
-                                            </Text>
-                                        )}
-                                        {current_key_type === KeyType.Silver && (
-                                            <Text align="center" fontSize={font_size} color="silver">
-                                                DUNGEON
-                                                <br />
-                                                FEE:
-                                                <br />
-                                                0.001 SOL
-                                            </Text>
-                                        )}
-                                        {current_key_type === KeyType.Gold && (
-                                            <Text align="center" fontSize={font_size} color="gold">
-                                               DUNGEON
-                                                <br />
-                                                FEE:
-                                                <br />
-                                                0.0005 SOL
-                                            </Text>
-                                        )}
-                                    </div>
-                                    <DiscountKeyInput />
-
+                                        <div className="font-face-sfpb">
+                                            {current_key_type === KeyType.Unknown && (
+                                                <Text align="center" fontSize={font_size} color="white">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.002 SOL
+                                                </Text>
+                                            )}
+                                            {current_key_type === KeyType.Bronze && (
+                                                <Text align="center" fontSize={font_size} color="#CD7F32">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.0015 SOL
+                                                </Text>
+                                            )}
+                                            {current_key_type === KeyType.Silver && (
+                                                <Text align="center" fontSize={font_size} color="silver">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.001 SOL
+                                                </Text>
+                                            )}
+                                            {current_key_type === KeyType.Gold && (
+                                                <Text align="center" fontSize={font_size} color="gold">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.0005 SOL
+                                                </Text>
+                                            )}
+                                        </div>
+                                        <DiscountKeyInput />
                                     </VStack>
                                 </Box>
                                 <Box width="46%">
@@ -1734,7 +1744,7 @@ export function DungeonApp() {
                                         <Text align="center" fontSize={font_size} color="white"> Back Soon! </Text>
                                         </Box>
                                         */}
-                           
+
                                             <Button variant="link" size="md" onClick={Play}>
                                                 <img
                                                     style={{ imageRendering: "pixelated" }}
@@ -1744,22 +1754,15 @@ export function DungeonApp() {
                                                     alt={""}
                                                 />
                                             </Button>
-
                                         </div>
-                                        <HStack>
-                                            <Box as="button" onClick={() => DrinkPotion(0)} borderWidth='1px'  borderColor={advantage ? "red" : "white"}>
-                                            <Text color="white">P1</Text>
-                                            </Box>
-                                            <Box as="button" onClick={() => DrinkPotion(1)} borderWidth='1px'  borderColor={loot_bonus ? "red" : "white"}>
-                                            <Text color="white">P2</Text>
-                                            </Box>
-                                        </HStack>
-                                        <Box width = "60%" mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                                            <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
-                                            <Text align="center">Loot / Day  <br/> {loot_per_day.toFixed(2)}</Text>
+                                        <PotionButtons/>
+                                        <Box width="60%" mr="2rem" p="2px" borderWidth="2px" borderColor="white">
+                                            <div className="font-face-sfpb" style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}>
+                                                <Text align="center">
+                                                    Loot / Day <br /> {loot_per_day.toFixed(2)}
+                                                </Text>
                                             </div>
                                         </Box>
-
                                     </VStack>
                                 </Box>
                             </HStack>
@@ -1827,7 +1830,6 @@ export function DungeonApp() {
         return (
             <>
                 <VStack width="100%">
-
                     <Box width="100%">
                         <HStack>
                             <Box width="25%"></Box>
@@ -1875,7 +1877,7 @@ export function DungeonApp() {
                         <Box width="10%"></Box>
                     </HStack>
 
-                    <VStack width = "100%" alignItems="center">
+                    <VStack width="100%" alignItems="center">
                         {transaction_failed && (
                             <div className="font-face-sfpb">
                                 <Center>
@@ -1903,14 +1905,20 @@ export function DungeonApp() {
                                     />
                                     <Center>
                                         <HStack alignItems="center">
-                                            <Button  variant="link" size="md" onClick={handleExit} mr="5rem">
+                                            <Button variant="link" size="md" onClick={handleExit} mr="5rem">
                                                 <div className="font-face-sfpb">
                                                     <Text textAlign="center" fontSize={font_size} color="white">
                                                         Exit
                                                     </Text>
                                                 </div>
                                             </Button>
-                                            <Button  disabled={processing_transaction ? true : false} variant="link" size="md" onClick={handleRetry} ml="5rem">
+                                            <Button
+                                                disabled={processing_transaction ? true : false}
+                                                variant="link"
+                                                size="md"
+                                                onClick={handleRetry}
+                                                ml="5rem"
+                                            >
                                                 <div className="font-face-sfpb">
                                                     <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
                                                         Retry
@@ -1918,15 +1926,8 @@ export function DungeonApp() {
                                                 </div>
                                             </Button>
 
-                                            <HStack>
-                                                <Box as="button" onClick={() => DrinkPotion(0)} borderWidth='1px'  borderColor={advantage ? "red" : "white"}>
-                                                    <Text color="white">P1</Text>
-                                                </Box>
-                                                <Box as="button" onClick={() => DrinkPotion(1)} borderWidth='1px'  borderColor={loot_bonus ? "red" : "white"}>
-                                                    <Text color="white">P2</Text>
-                                                </Box>
-                                            </HStack>
-                                            
+                                            <PotionButtons/>
+
                                         </HStack>
                                     </Center>
                                 </VStack>
@@ -1961,16 +1962,27 @@ export function DungeonApp() {
                                         {current_level < 7 && (
                                             <Center>
                                                 <HStack>
-                                                    <Button disabled={processing_transaction ? true : false} variant="link" size="md" onClick={handleEscape} mr="3rem">
+                                                    <Button
+                                                        disabled={processing_transaction ? true : false}
+                                                        variant="link"
+                                                        size="md"
+                                                        onClick={handleEscape}
+                                                        mr="3rem"
+                                                    >
                                                         <div className="font-face-sfpb">
                                                             <Text textAlign="center" fontSize={font_size} color="white">
                                                                 Escape
                                                             </Text>
                                                         </div>
                                                     </Button>
-                                                   
-                                                        
-                                                    <Button disabled={processing_transaction ? true : false} variant="link" size="md" onClick={handleExploreFurther} ml="10rem">
+
+                                                    <Button
+                                                        disabled={processing_transaction ? true : false}
+                                                        variant="link"
+                                                        size="md"
+                                                        onClick={handleExploreFurther}
+                                                        ml="10rem"
+                                                    >
                                                         <div className="font-face-sfpb">
                                                             <Text textAlign="center" fontSize={font_size} color="white">
                                                                 Explore Further
@@ -1978,21 +1990,19 @@ export function DungeonApp() {
                                                         </div>
                                                     </Button>
 
-                                                    <HStack>
-                                                        <Box as="button" onClick={() => DrinkPotion(0)} borderWidth='1px'  borderColor={advantage ? "red" : "white"}>
-                                                        <Text color="white">P1</Text>
-                                                        </Box>
-                                                        <Box as="button" onClick={() => DrinkPotion(1)} borderWidth='1px'  borderColor={loot_bonus ? "red" : "white"}>
-                                                        <Text color="white">P2</Text>
-                                                        </Box>
-                                                    </HStack>
-        
+                                                    <PotionButtons/>
+
                                                 </HStack>
                                             </Center>
                                         )}
                                         {current_level >= 7 && (
                                             <Center>
-                                                <Button disabled={processing_transaction ? true : false} variant="link" size="md" onClick={Quit}>
+                                                <Button
+                                                    disabled={processing_transaction ? true : false}
+                                                    variant="link"
+                                                    size="md"
+                                                    onClick={Quit}
+                                                >
                                                     <div className="font-face-sfpb">
                                                         <Text textAlign="center" fontSize={font_size} color="white">
                                                             Retire
@@ -2029,7 +2039,7 @@ export function DungeonApp() {
                                 <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">
                                     You Have Died
                                     <br />
-                                    <del>{(total_loot).toFixed(3)} Loot</del>
+                                    <del>{total_loot.toFixed(3)} Loot</del>
                                 </Text>
                             </div>
                         </Center>
@@ -2073,7 +2083,7 @@ export function DungeonApp() {
                             {screen === Screen.FAQ_SCREEN && <FAQScreen />}
                             {screen === Screen.HELP_SCREEN && <HelpScreen />}
                             {screen === Screen.SHOP_SCREEN && (
-                                <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance} />
+                                <ShopScreen  player_data={current_player_data} bearer_token={bearer_token} check_sol_balance={check_sol_balance}  check_user_state={check_user_state} />
                             )}
                             {screen === Screen.MARKETPLACE_SCREEN && <MarketplaceScreen bearer_token={bearer_token} />}
                             {screen === Screen.DM_SCREEN && <DMScreen bearer_token={bearer_token} />}
@@ -2095,7 +2105,7 @@ export function DungeonApp() {
                             {screen === Screen.ODDS_SCREEN && <OddsScreen />}
                             {screen === Screen.FAQ_SCREEN && <FAQScreen />}
                             {screen === Screen.SHOP_SCREEN && (
-                                <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance} />
+                                <ShopScreen player_data={current_player_data} bearer_token={bearer_token} check_sol_balance={check_sol_balance}  check_user_state={check_user_state} />
                             )}
                             {screen === Screen.MARKETPLACE_SCREEN && <MarketplaceScreen bearer_token={bearer_token} />}
                             {screen === Screen.HELP_SCREEN && <HelpScreen />}

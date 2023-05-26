@@ -463,10 +463,10 @@ class DungeonData {
     )
 }
 
-class PlayerData {
+export class PlayerData {
     constructor(
       readonly num_plays: bignum,
-      readonly num_wins: bignum,
+      readonly num_xp: bignum,
       readonly in_progress: number,
       readonly player_status: number,
       readonly dungeon_enemy: number,
@@ -488,7 +488,7 @@ class PlayerData {
     static readonly struct = new BeetStruct<PlayerData>(
       [
         ['num_plays', u64],
-        ['num_wins', u64],
+        ['num_xp', u64],
         ['in_progress', u8],
         ['player_status', u8],
         ['dungeon_enemy', u8],
@@ -507,7 +507,7 @@ class PlayerData {
         ['extra_space', uniformFixedSizeArray(u8, 80)]
 
       ],
-      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.character_xp!, args.advantage!, args.num_advantage_potions!, args.bonus_loot!, args.num_bonus_loot_potions!, args.bonus_loot_activation_time!, args.dice_one!, args.dice_two!, args.extra_space!),
+      (args) => new PlayerData(args.num_plays!, args.num_xp!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.character_xp!, args.advantage!, args.num_advantage_potions!, args.bonus_loot!, args.num_bonus_loot_potions!, args.bonus_loot_activation_time!, args.dice_one!, args.dice_two!, args.extra_space!),
       'PlayerData'
     )
 }
@@ -615,6 +615,22 @@ class DungeonDrinkPotionInstruction {
       ],
       (args) => new DungeonDrinkPotionInstruction(args.instruction!, args.which_potion!),
       'DungeonDrinkPotionInstruction'
+    )
+}
+
+class DungeonBuyPotionInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly which_potion: number
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonBuyPotionInstruction>(
+      [
+        ['instruction', u8],
+        ['which_potion', u8]
+      ],
+      (args) => new DungeonBuyPotionInstruction(args.instruction!, args.which_potion!),
+      'DungeonBuyPotionInstruction'
     )
 }
 
@@ -739,6 +755,15 @@ export function serialise_drink_potion_instruction(instruction : number, which_p
 
     const data = new DungeonDrinkPotionInstruction(instruction, which_potion);
     const [buf] = DungeonDrinkPotionInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_buy_potion_instruction(instruction : number, which_potion : number) : Buffer
+{
+
+    const data = new DungeonBuyPotionInstruction(instruction, which_potion);
+    const [buf] = DungeonBuyPotionInstruction.struct.serialize(data);
 
     return buf;
 }
