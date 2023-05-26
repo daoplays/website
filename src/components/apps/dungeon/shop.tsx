@@ -880,7 +880,7 @@ export function ShopScreen({
                                         Potion Of Power
                                     </Text>
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        1 Gold
+                                        10 LOOT
                                     </Text>
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
                                         You Own {player_data?.num_advantage_potions}
@@ -897,7 +897,7 @@ export function ShopScreen({
                                         Potion of Luck
                                     </Text>
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        1 Gold
+                                        50 LOOT
                                     </Text>
                                     <Text  textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
                                         You Own {player_data?.num_bonus_loot_potions}
@@ -917,8 +917,7 @@ export function ShopScreen({
                                 color="white"
                                 mb="1rem"
                             >
-                                Potion of Power - Gain an advantage over your next foe by rolling two dice and taking the higher as your
-                                attack value
+                                Potion of Power - Roll two dice in the next Room and pick the highest value as your attack
                             </Text>
                             <Box
                                 as="button"
@@ -944,7 +943,7 @@ export function ShopScreen({
                                 color="white"
                                 mb="1rem"
                             >
-                                Potion of Luck - For ten minutes after drinking you'll find double the loot!
+                                Potion of Luck - Find double the LOOT for 10 minutes after drinking
                             </Text>
                             <Box
                                 as="button"
@@ -994,7 +993,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1022,7 +1021,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 2500
                                             ? "2500 XP required"
-                                            : "1000 Gold"}{" "}
+                                            : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1050,7 +1049,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 4500
                                             ? "4500 XP required"
-                                            : "1000 Gold"}{" "}
+                                            : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1078,7 +1077,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 7000
                                             ? "7000 XP required"
-                                            : "1000 Gold"}{" "}
+                                            : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1130,7 +1129,7 @@ export function ShopScreen({
                                 Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}
                             </Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 Gold"}{" "}
+                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 LOOT"}{" "}
                             </Text>
                         </Box>
                     </VStack>

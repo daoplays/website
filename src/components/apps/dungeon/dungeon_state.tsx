@@ -486,6 +486,8 @@ export const DiceRollText = ({
     loading: boolean;
 }) => {
 
+    let dice_size : string | number = "75px";
+
     if (loading) {
         return (
 
@@ -497,15 +499,13 @@ export const DiceRollText = ({
 
     if (advantage) {
         return (
-            <HStack mt="1rem">
+            <VStack mt="1rem">
                 <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled With Advantage: </Text>
-                <Box width="50px" height="50px">
-                    <img src={roll_one > roll_two ? red_dice_array[roll_one - 1] :  blue_dice_array[roll_one - 1] } width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
-                </Box>
-                <Box width="50px" height="50px">
-                    <img src={roll_two > roll_one ? red_dice_array[roll_two - 1] :  blue_dice_array[roll_two - 1] } width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
-                </Box>
-            </HStack>
+                <HStack>
+                        <img height={dice_size} width={dice_size} src={roll_one > roll_two ? red_dice_array[roll_one - 1] :  blue_dice_array[roll_one - 1] } alt={""} />
+                        <img height={dice_size} width={dice_size} src={roll_two > roll_one ? red_dice_array[roll_two - 1] :  blue_dice_array[roll_two - 1] }  alt={""} />
+                </HStack>
+            </VStack>
         );
     }
 
@@ -513,12 +513,10 @@ export const DiceRollText = ({
   
     // otherwise just return the first dice
     return (
-        <HStack mt="1rem">
+        <VStack mt="1rem">
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled: </Text>
-            <Box width="50px" height="50px">
-                <img src={red_dice_array[roll_one - 1]} width="auto" alt={""} style={{ maxHeight: "50px", maxWidth: "50px" }} />
-            </Box>
-        </HStack>
+                <img height={dice_size} width={dice_size} src={red_dice_array[roll_one - 1]}  alt={""} />
+        </VStack>
     );
 };
 
@@ -539,11 +537,9 @@ export const DisplayEnemyAppearsText = ({
 
     // otherwise say the enemy type
     return (
-        <div className="font-face-sfpb">
-            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                {chosen_text}
-            </Text>
-        </div>
+        <Text className="font-face-sfpb" mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+            {chosen_text}
+        </Text>
     );
 };
 
@@ -564,14 +560,10 @@ export const DisplayPlayerFailedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Center  width="100%">
-            <Box width="100%">
-                <div className="font-face-sfpb">
-                    <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                        {chosen_text}
-                    </Text>
-                </div>
-            </Box>
+        <Center  width="90%">
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                {chosen_text}
+            </Text>
         </Center>
     );
 };
@@ -594,7 +586,7 @@ const EnemyDefeatedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Text width = "100%" mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+        <Text width = "100%"  fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
             {chosen_text}
         </Text>
     );
@@ -857,11 +849,9 @@ export const DisplayPlayer = ({
 export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
     return (
         <Box width="10%">
-            <div className="font-face-sfpb">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                     XP {current_xp}
                 </Text>
-            </div>
         </Box>
     );
 };
@@ -869,11 +859,9 @@ export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
 export const DisplayLVL = ({ current_level }: { current_level: number }) => {
     return (
         <Box width="10%">
-            <div className="font-face-sfpb">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Lvl. {current_level > 0 ? current_level : ""}
-                </Text>
-            </div>
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                Lvl. {current_level > 0 ? current_level : ""}
+            </Text>
         </Box>
     );
 };

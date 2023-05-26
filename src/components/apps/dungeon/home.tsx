@@ -51,7 +51,6 @@ import selector from "./images/Selector.gif";
 import power_potion from "./shop_items/Power_Potion.gif";
 import luck_potion from "./shop_items/Luck_Potion.gif";
 
-
 //  dungeon constants
 import {
     DEFAULT_FONT_SIZE,
@@ -97,7 +96,7 @@ import {
     bignum_to_num,
     request_dungeon_program_data,
     serialise_drink_potion_instruction,
-    PlayerData
+    PlayerData,
 } from "./utils";
 
 import {
@@ -368,9 +367,7 @@ export function DungeonApp() {
         );
     }
 
-
     function Disclaimer() {
-
         const { setVisible } = useWalletModal();
 
         const handleConnectWallet = useCallback(async () => {
@@ -388,8 +385,6 @@ export function DungeonApp() {
                         </Text>
                     </div>
                 </Box>
-
-
             </>
         );
     }
@@ -1447,28 +1442,52 @@ export function DungeonApp() {
 
     const PotionButtons = () => {
         return (
-        <HStack>
-            <Box
-                as="button"
-                disabled={current_player_data === null || current_player_data?.num_advantage_potions === 0 ? true : false}
-                onClick={() => DrinkPotion(0)}
-                borderWidth="1px"
-                borderColor={advantage ? "red" : "white"}
-            >
-                <img style={{ imageRendering: "pixelated" }} src={power_potion} width={EMOJI_SIZE} alt={""} />
-            </Box>
-            <Box
-                as="button"
-                disabled={current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? true : false}
-                onClick={() => DrinkPotion(1)}
-                borderWidth="1px"
-                borderColor={loot_bonus ? "red" : "white"}
-            >
-                <img style={{ imageRendering: "pixelated" }} src={luck_potion} width={EMOJI_SIZE} alt={""} />
-            </Box>
-        </HStack>
-        )
-    }
+            <HStack>
+                <HStack align="bottom" spacing="3px">
+                    <Box
+                        as="button"
+                        disabled={advantage || current_player_data === null || current_player_data?.num_advantage_potions === 0 ? true : false}
+                        onClick={() => DrinkPotion(0)}
+                        borderWidth="1px"
+                        borderColor={advantage ? "green" : "white"}
+                    >
+                        <img
+                            style={{
+                                imageRendering: "pixelated",
+                            }}
+                            src={power_potion}
+                            width={EMOJI_SIZE}
+                            alt={""}
+                        />
+                    </Box>
+                    <Text pt={EMOJI_SIZE/2} className="font-face-sfpb" color="grey" fontSize="10px">
+                            {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
+                    </Text>
+                </HStack>
+                <HStack align="bottom" spacing="3px">
+                    <Box
+                        as="button"
+                        disabled={loot_bonus || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? true : false}
+                        onClick={() => DrinkPotion(1)}
+                        borderWidth="1px"
+                        borderColor={loot_bonus ? "green" : "white"}
+                    >
+                        <img
+                            style={{
+                                imageRendering: "pixelated"
+                            }}
+                            src={luck_potion}
+                            width={EMOJI_SIZE}
+                            alt={""}
+                        />
+                    </Box>
+                    <Text pt={EMOJI_SIZE/2} className="font-face-sfpb" color="grey" fontSize="10px">
+                                {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
+                    </Text>
+                    </HStack>
+            </HStack>
+        );
+    };
 
     const SelectKnight = useCallback(async () => {
         playAudio(classSelectAudio);
@@ -1733,7 +1752,7 @@ export function DungeonApp() {
                                                 />
                                             </Button>
                                         </div>
-                                        <PotionButtons/>
+                                        <PotionButtons />
                                         <Box width="60%" mr="2rem" p="2px" borderWidth="2px" borderColor="white">
                                             <div className="font-face-sfpb" style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}>
                                                 <Text align="center">
@@ -1805,9 +1824,7 @@ export function DungeonApp() {
         let background_image = hallway;
         if (current_level > 4) background_image = hallway2;
 
-        console.log("In Dungeon  current_state ",
-        DungeonStatusString[currentStatus],"enemy_state",
-        DungeonStatusString[enemy_state])
+        console.log("In Dungeon  current_state ", DungeonStatusString[currentStatus], "enemy_state", DungeonStatusString[enemy_state]);
         return (
             <>
                 <VStack width="100%">
@@ -1816,7 +1833,9 @@ export function DungeonApp() {
                             <Box width="25%"></Box>
                             <DisplayLVL current_level={current_level} />
                             <Box width="30%"></Box>
-                            <DisplayXP current_xp={current_player_data === null ? 0 : current_player_data?.character_xp[player_character]} />
+                            <DisplayXP
+                                current_xp={current_player_data === null ? 0 : current_player_data?.character_xp[player_character]}
+                            />
                             <Box width="25%"></Box>
                         </HStack>
                     </Box>
@@ -1860,14 +1879,12 @@ export function DungeonApp() {
 
                     <VStack width="100%" alignItems="center">
                         {transaction_failed && (
-                            <div className="font-face-sfpb">
                                 <Center>
-                                    <Text fontSize={font_size} textAlign="center" color="red">
+                                    <Text className="font-face-sfpb" fontSize={font_size} textAlign="center" color="red">
                                         Transaction Failed. <br />
                                         Please Refresh.
                                     </Text>
                                 </Center>
-                            </div>
                         )}
 
                         {player_state === DungeonStatus.dead && (
@@ -1886,31 +1903,34 @@ export function DungeonApp() {
                                         num_plays={num_plays.current}
                                     />
                                     <Center>
-                                        <HStack alignItems="center">
-                                            <Button variant="link" size="md" onClick={handleExit} mr="5rem">
-                                                <div className="font-face-sfpb">
-                                                    <Text textAlign="center" fontSize={font_size} color="white">
+                                        <VStack>
+                                            <HStack mb="1rem">
+                                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                                                    Drink a Potion
+                                                </Text>
+                                                <PotionButtons />
+                                            </HStack>
+                                        
+                                            <HStack alignItems="center">
+                                                <Button variant="link" size="md" onClick={handleExit} mr="5rem">
+                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
                                                         Exit
                                                     </Text>
-                                                </div>
-                                            </Button>
-                                            <Button
-                                                disabled={processing_transaction ? true : false}
-                                                variant="link"
-                                                size="md"
-                                                onClick={handleRetry}
-                                                ml="5rem"
-                                            >
-                                                <div className="font-face-sfpb">
-                                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
+                                                </Button>
+                                                <Button
+                                                    disabled={processing_transaction ? true : false}
+                                                    variant="link"
+                                                    size="md"
+                                                    onClick={handleRetry}
+                                                    ml="5rem"
+                                                >
+                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
                                                         Retry
                                                     </Text>
-                                                </div>
-                                            </Button>
+                                                </Button>
 
-                                            <PotionButtons/>
-
-                                        </HStack>
+                                            </HStack>
+                                        </VStack>
                                     </Center>
                                 </VStack>
                             </>
@@ -1918,13 +1938,12 @@ export function DungeonApp() {
                         {player_state === DungeonStatus.alive && current_level > 0 && (
                             <>
                                 {enemy_state === DungeonStatus.unknown && (
-                                     <DiceRollText
-                                     roll_one={roll_one.current}
-                                     roll_two={roll_two.current}
-                                     advantage={last_advantage.current}
-                                     loading={true}
-
-                                 />
+                                    <DiceRollText
+                                        roll_one={roll_one.current}
+                                        roll_two={roll_two.current}
+                                        advantage={last_advantage.current}
+                                        loading={true}
+                                    />
                                 )}
                                 {enemy_state === DungeonStatus.alive && (
                                     <DisplayEnemyAppearsText
@@ -1934,13 +1953,12 @@ export function DungeonApp() {
                                     />
                                 )}
                                 {enemy_state === DungeonStatus.dead && (
-                                    <VStack width="100%" alignItems="center" spacing="2%">
+                                    <VStack width="100%" alignItems="center" spacing="2%" mb="5rem">
                                         <DiceRollText
                                             roll_one={roll_one.current}
                                             roll_two={roll_two.current}
                                             advantage={last_advantage.current}
                                             loading={false}
-
                                         />
 
                                         <DisplayPlayerSuccessText
@@ -1954,38 +1972,41 @@ export function DungeonApp() {
 
                                         {current_level < 7 && (
                                             <Center>
-                                                <HStack>
-                                                    <Button
-                                                        disabled={processing_transaction ? true : false}
-                                                        variant="link"
-                                                        size="md"
-                                                        onClick={handleEscape}
-                                                        mr="3rem"
-                                                    >
-                                                        <div className="font-face-sfpb">
-                                                            <Text textAlign="center" fontSize={font_size} color="white">
-                                                                Escape
-                                                            </Text>
-                                                        </div>
-                                                    </Button>
+                                                <VStack>
+                                                    <HStack mb="1rem">
+                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                                                            Drink a Potion
+                                                        </Text>
+                                                        <PotionButtons />
+                                                    </HStack>
+                                                
+                                                    <HStack>
+                                                        <Button
+                                                            disabled={processing_transaction ? true : false}
+                                                            variant="link"
+                                                            size="md"
+                                                            onClick={handleEscape}
+                                                            mr="3rem"
+                                                        >
+                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
+                                                                    Escape
+                                                                </Text>
+                                                        </Button>
 
-                                                    <Button
-                                                        disabled={processing_transaction ? true : false}
-                                                        variant="link"
-                                                        size="md"
-                                                        onClick={handleExploreFurther}
-                                                        ml="10rem"
-                                                    >
-                                                        <div className="font-face-sfpb">
-                                                            <Text textAlign="center" fontSize={font_size} color="white">
-                                                                Explore Further
-                                                            </Text>
-                                                        </div>
-                                                    </Button>
+                                                        <Button
+                                                            disabled={processing_transaction ? true : false}
+                                                            variant="link"
+                                                            size="md"
+                                                            onClick={handleExploreFurther}
+                                                            ml="10rem"
+                                                        >
+                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
+                                                                    Explore Further
+                                                                </Text>
+                                                        </Button>
 
-                                                    <PotionButtons/>
-
-                                                </HStack>
+                                                    </HStack>
+                                                </VStack>
                                             </Center>
                                         )}
                                         {current_level >= 7 && (
@@ -1996,11 +2017,9 @@ export function DungeonApp() {
                                                     size="md"
                                                     onClick={Quit}
                                                 >
-                                                    <div className="font-face-sfpb">
-                                                        <Text textAlign="center" fontSize={font_size} color="white">
+                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
                                                             Retire
                                                         </Text>
-                                                    </div>
                                                 </Button>
                                             </Center>
                                         )}
@@ -2076,14 +2095,19 @@ export function DungeonApp() {
                             {screen === Screen.FAQ_SCREEN && <FAQScreen />}
                             {screen === Screen.HELP_SCREEN && <HelpScreen />}
                             {screen === Screen.SHOP_SCREEN && (
-                                <ShopScreen  player_data={current_player_data} bearer_token={bearer_token} check_sol_balance={check_sol_balance}  check_user_state={check_user_state} />
+                                <ShopScreen
+                                    player_data={current_player_data}
+                                    bearer_token={bearer_token}
+                                    check_sol_balance={check_sol_balance}
+                                    check_user_state={check_user_state}
+                                />
                             )}
                             {screen === Screen.MARKETPLACE_SCREEN && <MarketplaceScreen bearer_token={bearer_token} />}
                             {screen === Screen.DM_SCREEN && <DMScreen bearer_token={bearer_token} />}
                             {screen === Screen.ACHIEVEMENT_SCREEN && (
                                 <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
                             )}
-                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} />}
+                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} loot_per_day={loot_per_day.toFixed(2)} player_data={current_player_data}/>}
                             {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) && (
                                 <UnconnectedPage />
                             )}
@@ -2098,14 +2122,19 @@ export function DungeonApp() {
                             {screen === Screen.ODDS_SCREEN && <OddsScreen />}
                             {screen === Screen.FAQ_SCREEN && <FAQScreen />}
                             {screen === Screen.SHOP_SCREEN && (
-                                <ShopScreen player_data={current_player_data} bearer_token={bearer_token} check_sol_balance={check_sol_balance}  check_user_state={check_user_state} />
+                                <ShopScreen
+                                    player_data={current_player_data}
+                                    bearer_token={bearer_token}
+                                    check_sol_balance={check_sol_balance}
+                                    check_user_state={check_user_state}
+                                />
                             )}
                             {screen === Screen.MARKETPLACE_SCREEN && <MarketplaceScreen bearer_token={bearer_token} />}
                             {screen === Screen.HELP_SCREEN && <HelpScreen />}
                             {screen === Screen.ACHIEVEMENT_SCREEN && (
                                 <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
                             )}
-                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} />}
+                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} loot_per_day={loot_per_day.toFixed(2)} player_data={current_player_data}/>}
                             {screen === Screen.DM_SCREEN && <DMScreen bearer_token={bearer_token} />}
                         </>
                     )}
