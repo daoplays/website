@@ -47,6 +47,11 @@ import wizard from "./images/Wizard.gif";
 import corpse from "./images/Corpse.png";
 import selector from "./images/Selector.gif";
 
+// potions
+import power_potion from "./shop_items/Power_Potion.gif";
+import luck_potion from "./shop_items/Luck_Potion.gif";
+
+
 //  dungeon constants
 import {
     DEFAULT_FONT_SIZE,
@@ -69,6 +74,7 @@ import {
     MAIN_ACCOUNT_SEED,
     DATA_ACCOUNT_SEED,
     LOOT_TOKEN_MINT,
+    EMOJI_SIZE,
 } from "./constants";
 
 // dungeon utils
@@ -1449,7 +1455,7 @@ export function DungeonApp() {
                 borderWidth="1px"
                 borderColor={advantage ? "red" : "white"}
             >
-                <Text color="white">P1</Text>
+                <img style={{ imageRendering: "pixelated" }} src={power_potion} width={EMOJI_SIZE} alt={""} />
             </Box>
             <Box
                 as="button"
@@ -1458,7 +1464,7 @@ export function DungeonApp() {
                 borderWidth="1px"
                 borderColor={loot_bonus ? "red" : "white"}
             >
-                <Text color="white">P2</Text>
+                <img style={{ imageRendering: "pixelated" }} src={luck_potion} width={EMOJI_SIZE} alt={""} />
             </Box>
         </HStack>
         )
