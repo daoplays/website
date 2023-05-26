@@ -477,7 +477,12 @@ class PlayerData {
       readonly character_xp: number[],
       readonly advantage: number,
       readonly num_advantage_potions: number,
-      readonly bonus_loot: number
+      readonly bonus_loot: number,
+      readonly num_bonus_loot_potions : number,
+      readonly bonus_loot_activation_time : bignum,
+      readonly dice_one : number,
+      readonly dice_two : number,
+      readonly extra_space : bignum[]
     ) {}
   
     static readonly struct = new BeetStruct<PlayerData>(
@@ -495,9 +500,14 @@ class PlayerData {
         ['advantage', u8],
         ['num_advantage_potions', u8],
         ['bonus_loot', u8],
+        ['num_bonus_loot_potions', u8],
+        ['bonus_loot_activation_time', i64],
+        ['dice_one', u8],
+        ['dice_two', u8],
+        ['extra_space', uniformFixedSizeArray(u8, 80)]
 
       ],
-      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.character_xp!, args.advantage!, args.num_advantage_potions!, args.bonus_loot!),
+      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.character_xp!, args.advantage!, args.num_advantage_potions!, args.bonus_loot!, args.num_bonus_loot_potions!, args.bonus_loot_activation_time!, args.dice_one!, args.dice_two!, args.extra_space!),
       'PlayerData'
     )
 }

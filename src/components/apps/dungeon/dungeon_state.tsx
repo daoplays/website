@@ -374,6 +374,41 @@ const DungeonPlayerDefeatedText: string[][] = [
     ["The werewolf has defeated you.", "The werewolf leaps on you faster than you can react and tears you to shreds"],
 ];
 
+export const DiceRollText = ({
+    roll_one,
+    roll_two,
+    advantage
+}: {
+    roll_one: number;
+    roll_two: number;
+    advantage: boolean;
+}) => {
+
+    if (advantage) {
+        return (
+            <HStack mt="1rem">
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled With Advantage: </Text>
+                <Box width="30px" height="30px"  borderWidth='1px' borderColor={roll_one > roll_two ? "blue" : "white"}>
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">  {roll_one}  </Text>
+                </Box>
+                <Box width="30px" height="30px"  borderWidth='1px' borderColor={roll_two > roll_one ? "blue" : "white"}>
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">  {roll_two}  </Text>
+                </Box>
+            </HStack>
+        );
+    }
+  
+    // otherwise just return the first dice
+    return (
+        <HStack mt="1rem">
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> You Rolled: </Text>
+            <Box width="30px" height="30px"  borderWidth='1px' borderColor="white">
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white"> {roll_one} </Text>
+            </Box>
+        </HStack>
+    );
+};
+
 export const DisplayEnemyAppearsText = ({
     current_enemy,
     current_level,
@@ -416,8 +451,8 @@ export const DisplayPlayerFailedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Center>
-            <Box width="80%">
+        <Center  width="100%">
+            <Box width="100%">
                 <div className="font-face-sfpb">
                     <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                         {chosen_text}
@@ -427,6 +462,7 @@ export const DisplayPlayerFailedText = ({
         </Center>
     );
 };
+
 
 const EnemyDefeatedText = ({
     current_enemy,
@@ -445,7 +481,7 @@ const EnemyDefeatedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+        <Text width = "100%" mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
             {chosen_text}
         </Text>
     );
@@ -457,27 +493,34 @@ export const DisplayPlayerSuccessText = ({
     last_loot,
     num_plays,
     total_loot,
+    loot_bonus
 }: {
     current_level: number;
     current_enemy: DungeonEnemy;
     last_loot: number;
     num_plays: number;
     total_loot: number;
+    loot_bonus: boolean
 }) => {
 
     if (current_level < 7) {
         return (
-            <div className="font-face-sfpb">
-                <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
+            <Center className="font-face-sfpb" width = "100%">
 
-                <Center>
-                    <VStack>
+                
+                    <VStack width="100%">
+                        <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
+
                         <HStack alignContent="center" mt="1rem">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                You found {last_loot.toFixed(2)}
+                                You found {last_loot.toFixed(2)} 
                             </Text>
 
                             <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                {loot_bonus ? "(x2 bonus)" : ""}
+                            </Text>
                         </HStack>
 
                         <HStack alignContent="center" mt="1rem">
@@ -493,11 +536,7 @@ export const DisplayPlayerSuccessText = ({
                         </HStack>
 
                     </VStack>
-                </Center>
-
-                
-
-            </div>
+            </Center>
         );
     }
 

@@ -109,6 +109,7 @@ import {
     DungeonCharacterEmoji,
     DungeonEnemyEmoji,
     GoldEmoji,
+    DiceRollText
 } from "./dungeon_state";
 
 import { AchievementCard, AchievementMetaData } from "./achievements";
@@ -195,8 +196,21 @@ export function DungeonApp() {
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
 
     // these come from the blockchain
+    const num_state_checks = useRef<number>(0);
+
+    // not all state should cause a rerender
+    const update_status_effects = useRef<boolean>(true);
     const num_plays = useRef<number>(-1);
+    const last_advantage =  useRef<boolean>(false);
+    const last_loot_bonus =  useRef<boolean>(false);
+    const roll_one = useRef<number>(0);
+    const roll_two = useRef<number>(0);
+
     const current_interaction = useRef<number | null>(null);
+
+    const [advantage, setAdvantage] = useState<boolean>(false);
+    const [loot_bonus, setLootBonus] = useState<boolean>(false);
+
     const [numXP, setNumXP] = useState<number>(0);
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
@@ -204,8 +218,7 @@ export function DungeonApp() {
     const [total_loot, setTotalLoot] = useState<number>(0);
     const [last_loot, setLastLoot] = useState<number>(0);
     const [loot_per_day, setLootPerDay] = useState<number>(0);
-    const [advantage, setAdvantage] = useState<boolean>(false);
-    const [loot_bonus, setLootBonus] = useState<boolean>(false);
+
 
 
     // achievement state
@@ -554,45 +567,31 @@ export function DungeonApp() {
     }, [CheckSignature]);
 
     const check_state = useCallback(async () => {
+
         if (bearer_token === "") {
             console.log("no bearer token set in check_state");
             return;
         }
 
         if (DEBUG) {
-            console.log("in in it check_updates ", check_user_state.current, " check balance: ", check_data_account.current);
+            console.log("in in it check_updates ", check_user_state.current);
         }
 
         if (!wallet.publicKey) {
             return;
         }
 
-        if (!check_user_state.current && !check_data_account.current && !check_achievements.current) return;
+        if (num_state_checks.current > 2)
+            check_user_state.current = false;
+
+        if (!check_user_state.current && !check_achievements.current) return;
 
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
         
-
-        if (check_data_account.current) {
-            // first check if the data account exists
-            try {
-                let balance = await request_current_balance(bearer_token, player_data_key);
-
-                if (balance > 0) {
-                    setDataAccountStatus(AccountStatus.created);
-                    check_data_account.current = false;
-                } else {
-                    setDataAccountStatus(AccountStatus.not_created);
-                    return;
-                }
-            } catch (error) {
-                console.log(error);
-                return;
-            }
-        }
-
         if (check_user_state.current) {
+
             try {
 
                 let dungeon_program_data = await request_dungeon_program_data(bearer_token, program_data_key);
@@ -609,13 +608,22 @@ export function DungeonApp() {
                 console.log(error);
                 setLootPerDay(0);
             }
+
             try {
+
+
+
                 let player_data = await request_player_account_data(bearer_token, player_data_key);
 
+                console.log("have player data");
                 if (player_data === null) {
+                    num_state_checks.current += 1;
+                    setDataAccountStatus(AccountStatus.unknown);
                     return;
                 }
 
+                setDataAccountStatus(AccountStatus.created);
+                
                 console.log(player_data);
 
                 let current_status = player_data.player_status + 1;
@@ -626,6 +634,7 @@ export function DungeonApp() {
                 let current_num_plays = new BN(player_data.num_plays).toNumber();
 
                 if (current_interaction.current !== null && current_num_plays <= current_interaction.current) {
+
                     if (DEBUG) {
                         console.log("num plays not increased", current_num_plays);
                     }
@@ -676,15 +685,27 @@ export function DungeonApp() {
                 setTotalLoot(bignum_to_num(player_data.total_gold) / 1e6);
 
                 setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
-
+                
                 setAdvantage(player_data.advantage === 1);
                 setLootBonus(player_data.bonus_loot === 1);
+
+                if (update_status_effects.current) {
+                    
+                    update_status_effects.current = false;
+                }
+
+                roll_one.current = player_data.dice_one;
+                roll_two.current = player_data.dice_two;
+
+                num_state_checks.current = 0;
 
             } catch (error) {
                 console.log(error);
                 setCurrentLevel(0);
                 setCurrentStatus(DungeonStatus.unknown);
                 setCurrentEnemy(DungeonEnemy.None);
+                setDataAccountStatus(AccountStatus.not_created);
+                num_state_checks.current += 1;
             }
         }
 
@@ -941,6 +962,7 @@ export function DungeonApp() {
 
     const Play = useCallback(async () => {
         setTransactionFailed(false);
+        num_state_checks.current = 0;
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
@@ -1079,11 +1101,17 @@ export function DungeonApp() {
         check_sol_balance.current = true;
         check_achievements.current = true;
         discord_play_message_sent.current = false;
-    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token]);
+        update_status_effects.current = true;
+
+        last_advantage.current = advantage;
+        last_loot_bonus.current = loot_bonus;
+
+    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus]);
 
     const Quit = useCallback(async () => {
 
         setTransactionFailed(false);
+        num_state_checks.current = 0;
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
         setProcessingTransaction(true);
@@ -1187,6 +1215,7 @@ export function DungeonApp() {
     const DrinkPotion = useCallback(async (which: number) => {
 
         setTransactionFailed(false);
+        num_state_checks.current = 0;
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
@@ -1255,6 +1284,7 @@ export function DungeonApp() {
     const ClaimAchievement = useCallback(
         async (which: number) => {
             setTransactionFailed(false);
+            num_state_checks.current = 0;
 
             if (wallet.publicKey === null || wallet.signTransaction === undefined || which === null) return;
 
@@ -1627,7 +1657,7 @@ export function DungeonApp() {
 
         var visible = true;
 
-        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", num_plays,  initial_num_plays.current, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status.current]);
+        console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", num_plays,  initial_num_plays.current, "dataaccount:", data_account_status,  "initial status", DungeonStatusString[initial_status.current]);
 
         // if i don't need to make an account but player status is unknown return nothing
         if (
@@ -1638,12 +1668,12 @@ export function DungeonApp() {
             visible = false;
         }
 
-        //console.log("have made it here in CS 2");
+        console.log("have made it here in CS 2");
         // if i am alive or exploring and  the level is > 0 never show this
         if (data_account_status === AccountStatus.unknown || (current_level > 0 && currentStatus === DungeonStatus.alive)) {
             visible = false;
         }
-        //console.log("have made it here in CS");
+        console.log("have made it here in CS");
         return (
             <>
                 <Box width="100%">
@@ -1797,7 +1827,8 @@ export function DungeonApp() {
 
         return (
             <>
-                <VStack>
+                <VStack width="100%">
+
                     <Box width="100%">
                         <HStack>
                             <Box width="25%"></Box>
@@ -1845,7 +1876,7 @@ export function DungeonApp() {
                         <Box width="10%"></Box>
                     </HStack>
 
-                    <VStack alignItems="center">
+                    <VStack width = "100%" alignItems="center">
                         {transaction_failed && (
                             <div className="font-face-sfpb">
                                 <Center>
@@ -1860,6 +1891,12 @@ export function DungeonApp() {
                         {player_state === DungeonStatus.dead && (
                             <>
                                 <VStack alignItems="center" spacing="2%">
+                                    <DiceRollText
+                                        roll_one={roll_one.current}
+                                        roll_two={roll_two.current}
+                                        advantage={last_advantage.current}
+                                    />
+
                                     <DisplayPlayerFailedText
                                         current_enemy={current_enemy}
                                         current_level={current_level}
@@ -1867,31 +1904,30 @@ export function DungeonApp() {
                                     />
                                     <Center>
                                         <HStack alignItems="center">
-                                            <Button variant="link" size="md" onClick={handleExit} mr="5rem">
+                                            <Button  variant="link" size="md" onClick={handleExit} mr="5rem">
                                                 <div className="font-face-sfpb">
                                                     <Text textAlign="center" fontSize={font_size} color="white">
                                                         Exit
                                                     </Text>
                                                 </div>
                                             </Button>
-                                            {!processing_transaction && (
-                                                <Button variant="link" size="md" onClick={handleRetry} ml="5rem">
-                                                    <div className="font-face-sfpb">
-                                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
-                                                            Retry
-                                                        </Text>
-                                                    </div>
-                                                </Button>
-                                            )}
-                                            {processing_transaction && (
-                                                <Button variant="link" size="md" ml="5rem">
-                                                    <div className="font-face-sfpb">
-                                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
-                                                            Retry
-                                                        </Text>
-                                                    </div>
-                                                </Button>
-                                            )}
+                                            <Button  disabled={processing_transaction ? true : false} variant="link" size="md" onClick={handleRetry} ml="5rem">
+                                                <div className="font-face-sfpb">
+                                                    <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
+                                                        Retry
+                                                    </Text>
+                                                </div>
+                                            </Button>
+
+                                            <HStack>
+                                                <Box as="button" onClick={() => DrinkPotion(0)} borderWidth='1px'  borderColor={advantage ? "red" : "white"}>
+                                                    <Text color="white">P1</Text>
+                                                </Box>
+                                                <Box as="button" onClick={() => DrinkPotion(1)} borderWidth='1px'  borderColor={loot_bonus ? "red" : "white"}>
+                                                    <Text color="white">P2</Text>
+                                                </Box>
+                                            </HStack>
+                                            
                                         </HStack>
                                     </Center>
                                 </VStack>
@@ -1907,13 +1943,20 @@ export function DungeonApp() {
                                     />
                                 )}
                                 {enemy_state === DungeonStatus.dead && (
-                                    <VStack alignItems="center" spacing="2%">
+                                    <VStack width="100%" alignItems="center" spacing="2%">
+                                        <DiceRollText
+                                            roll_one={roll_one.current}
+                                            roll_two={roll_two.current}
+                                            advantage={last_advantage.current}
+                                        />
+
                                         <DisplayPlayerSuccessText
                                             current_level={current_level}
                                             current_enemy={current_enemy}
                                             last_loot={last_loot}
                                             num_plays={num_plays.current}
                                             total_loot={total_loot}
+                                            loot_bonus={last_loot_bonus.current}
                                         />
 
                                         {current_level < 7 && (
