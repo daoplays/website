@@ -5,6 +5,7 @@ import { Box, Center, Text, HStack, VStack } from "@chakra-ui/react";
 import { NumberInput, NumberInputField } from "@chakra-ui/react";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { isMobile } from "react-device-detect";
 
@@ -17,7 +18,7 @@ import { solid } from "@fortawesome/fontawesome-svg-core/import.macro"; // <-- i
 
 import hallway from "./images/Arena1.gif";
 
-import { DEFAULT_FONT_SIZE, ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE } from "./constants";
+import { DEFAULT_FONT_SIZE, ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE, LOOT_TOKEN_MINT } from "./constants";
 
 import {
     run_arena_free_game_GPA,
@@ -1711,7 +1712,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                     <Modal.Footer style={{ alignItems: "center", justifyContent: "center", backgroundColor: "black" }}>
                         <div className="font-face-sfpb">
                             <VStack>
-                                <Box visibility="hidden" as="button" borderWidth="2px" borderColor="white" width="120px">
+                                <Box as="button" borderWidth="2px" borderColor="white" width="120px">
                                     <Text
                                         align="center"
                                         onClick={
@@ -2082,7 +2083,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                         </HStack>
                     </VStack>
 
-                    <Center width="100%" height="150px"></Center>
+                    <Center width="100%" height="350px"></Center>
                 </Box>
             );
         }
@@ -2176,7 +2177,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                         </HStack>
                     </VStack>
 
-                    <Center width="100%" height="150px">
+                    <Center width="100%" height="350px">
                         {(active_game.status === GameStatus.in_progress || active_game.status === GameStatus.draw) && (
                             <VStack width="100%" alignItems="center">
                                 {active_game.status === GameStatus.draw && (
