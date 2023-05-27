@@ -1,13 +1,13 @@
 @font-face {
-    font-family: 'SFPixelate';
-    src: local('SFPixelate'), url(../fonts/SF_Pixelate.woff2) format('woff2');
+    font-family: "SFPixelate";
+    src: local("SFPixelate"), url(../fonts/SF_Pixelate.woff2) format("woff2");
     /* other formats include: 'woff2', 'truetype, 'opentype',
                               'embedded-opentype', and 'svg' */
 }
 
 @font-face {
-    font-family: 'SFPixelateBold';
-    src: local('SFPixelateBold'), url(../fonts/SF_Pixelate_Bold.woff2) format('woff2');
+    font-family: "SFPixelateBold";
+    src: local("SFPixelateBold"), url(../fonts/SF_Pixelate_Bold.woff2) format("woff2");
     /* other formats include: 'woff2', 'truetype, 'opentype',
                               'embedded-opentype', and 'svg' */
 }
