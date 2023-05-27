@@ -35,7 +35,7 @@ import hallway from "./images/Hallway.gif";
 import hallway2 from "./images/Hallway2.gif";
 
 //buttons
-import enter_button from "./images/Enter_Button.png";
+//import enter_button from "./images/Enter_Button.png";
 
 // shop items
 import key from "./images/Key.png";
@@ -138,7 +138,7 @@ import { ArenaScreen } from "./arena";
 //import {DungeonScreen} from './dungeon';
 
 import classSelect from "./sounds/Class_Select.mp3";
-import dungeonTile from "./sounds/Open_Door.mp3";
+//import dungeonTile from "./sounds/Open_Door.mp3";
 import Retry from "./sounds/Retry.mp3";
 import Torch from "./sounds/Torch.mp3";
 import Escape from "./sounds/Escape.mp3";
@@ -172,7 +172,7 @@ const enum AccountStatus {
 const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
 const classSelectAudio = new Audio(classSelect);
-const dungeonTileAudio = new Audio(dungeonTile);
+//const dungeonTileAudio = new Audio(dungeonTile);
 const GameOverAudio = new Audio(Game_Over);
 const EscapeAudio = new Audio(Escape);
 const TorchAudio = new Audio(Torch);
@@ -930,9 +930,9 @@ export function DungeonApp() {
         setEnemyState(DungeonStatus.unknown);
     }, [set_JWT_token]);
 
-    const handleEnterBtn = () => {
-        playAudio(dungeonTileAudio);
-    };
+    //const handleEnterBtn = () => {
+     //   playAudio(dungeonTileAudio);
+    //};
 
     const Play = useCallback(async () => {
         setTransactionFailed(false);
