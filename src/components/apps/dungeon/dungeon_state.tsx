@@ -1,4 +1,4 @@
-import { Box, Center, Text, HStack } from "@chakra-ui/react";
+import { Box, Center, Text, HStack, VStack } from "@chakra-ui/react";
 
 //  dungeon constants
 import { DUNGEON_FONT_SIZE } from "./constants";
@@ -42,10 +42,109 @@ import wizard from "./images/Wizard.gif";
 import corpse from "./images/Corpse.png";
 
 import loot from "./images/loot.png";
+import dice_roll from "./images/die_roll.gif";
+
+import rd20_1 from "./dice_images/r1.png";
+import rd20_2 from "./dice_images/r2.png";
+import rd20_3 from "./dice_images/r3.png";
+import rd20_4 from "./dice_images/r4.png";
+import rd20_5 from "./dice_images/r5.png";
+import rd20_6 from "./dice_images/r6.png";
+import rd20_7 from "./dice_images/r7.png";
+import rd20_8 from "./dice_images/r8.png";
+import rd20_9 from "./dice_images/r9.png";
+import rd20_10 from "./dice_images/r10.png";
+import rd20_11 from "./dice_images/r11.png";
+import rd20_12 from "./dice_images/r12.png";
+import rd20_13 from "./dice_images/r13.png";
+import rd20_14 from "./dice_images/r14.png";
+import rd20_15 from "./dice_images/r15.png";
+import rd20_16 from "./dice_images/r16.png";
+import rd20_17 from "./dice_images/r17.png";
+import rd20_18 from "./dice_images/r18.png";
+import rd20_19 from "./dice_images/r19.png";
+import rd20_20 from "./dice_images/r20.png";
+
+import bd20_1 from "./dice_images/b1.png";
+import bd20_2 from "./dice_images/b2.png";
+import bd20_3 from "./dice_images/b3.png";
+import bd20_4 from "./dice_images/b4.png";
+import bd20_5 from "./dice_images/b5.png";
+import bd20_6 from "./dice_images/b6.png";
+import bd20_7 from "./dice_images/b7.png";
+import bd20_8 from "./dice_images/b8.png";
+import bd20_9 from "./dice_images/b9.png";
+import bd20_10 from "./dice_images/b10.png";
+import bd20_11 from "./dice_images/b11.png";
+import bd20_12 from "./dice_images/b12.png";
+import bd20_13 from "./dice_images/b13.png";
+import bd20_14 from "./dice_images/b14.png";
+import bd20_15 from "./dice_images/b15.png";
+import bd20_16 from "./dice_images/b16.png";
+import bd20_17 from "./dice_images/b17.png";
+import bd20_18 from "./dice_images/b18.png";
+import bd20_19 from "./dice_images/b19.png";
+import bd20_20 from "./dice_images/b20.png";
+
+let red_dice_array: string[] = [
+    rd20_1,
+    rd20_2,
+    rd20_3,
+    rd20_4,
+    rd20_5,
+    rd20_6,
+    rd20_7,
+    rd20_8,
+    rd20_9,
+    rd20_10,
+    rd20_11,
+    rd20_12,
+    rd20_13,
+    rd20_14,
+    rd20_15,
+    rd20_16,
+    rd20_17,
+    rd20_18,
+    rd20_19,
+    rd20_20,
+];
+
+let blue_dice_array: string[] = [
+    bd20_1,
+    bd20_2,
+    bd20_3,
+    bd20_4,
+    bd20_5,
+    bd20_6,
+    bd20_7,
+    bd20_8,
+    bd20_9,
+    bd20_10,
+    bd20_11,
+    bd20_12,
+    bd20_13,
+    bd20_14,
+    bd20_15,
+    bd20_16,
+    bd20_17,
+    bd20_18,
+    bd20_19,
+    bd20_20,
+];
 
 export const WIN_FACTORS: number[] = [1.0, 1.5, 2.25, 3.375, 6.75, 13.5, 27, 54];
 
 var seedrandom = require("seedrandom");
+
+export const enum DungeonInstruction {
+    add_funds = 0,
+    play = 1,
+    quit = 2,
+    explore = 3,
+    claim_achievement = 4,
+    drink_potion = 5,
+    buy_potion = 6,
+}
 
 export const enum DungeonCharacter {
     knight = 0,
@@ -374,6 +473,68 @@ const DungeonPlayerDefeatedText: string[][] = [
     ["The werewolf has defeated you.", "The werewolf leaps on you faster than you can react and tears you to shreds"],
 ];
 
+export const DiceRollText = ({
+    roll_one,
+    roll_two,
+    loading,
+}: {
+    roll_one: number;
+    roll_two: number;
+    loading: boolean;
+}) => {
+    let dice_size: string | number = "75px";
+
+    if (loading) {
+        return (
+            <VStack mt="1rem">
+            <Box width="30px" height="30px">
+                <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+            </Box>
+            <Text className="font-face-sfpb" fontSize={10} textAlign="center" color="grey">
+                    Loading
+            </Text>
+            </VStack>
+        );
+    }
+
+    let advantage = roll_two > 0;
+    if (advantage) {
+        return (
+            <VStack mt="1rem">
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    {" "}
+                    You Rolled With Advantage:{" "}
+                </Text>
+                <HStack>
+                    <img
+                        height={dice_size}
+                        width={dice_size}
+                        src={roll_one > roll_two ? red_dice_array[roll_one - 1] : blue_dice_array[roll_one - 1]}
+                        alt={""}
+                    />
+                    <img
+                        height={dice_size}
+                        width={dice_size}
+                        src={roll_two > roll_one ? red_dice_array[roll_two - 1] : blue_dice_array[roll_two - 1]}
+                        alt={""}
+                    />
+                </HStack>
+            </VStack>
+        );
+    }
+
+    // otherwise just return the first dice
+    return (
+        <VStack mt="1rem">
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                {" "}
+                You Rolled:{" "}
+            </Text>
+            <img height={dice_size} width={dice_size} src={red_dice_array[roll_one - 1]} alt={""} />
+        </VStack>
+    );
+};
+
 export const DisplayEnemyAppearsText = ({
     current_enemy,
     current_level,
@@ -391,11 +552,9 @@ export const DisplayEnemyAppearsText = ({
 
     // otherwise say the enemy type
     return (
-        <div className="font-face-sfpb">
-            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                {chosen_text}
-            </Text>
-        </div>
+        <Text className="font-face-sfpb" mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+            {chosen_text}
+        </Text>
     );
 };
 
@@ -416,14 +575,10 @@ export const DisplayPlayerFailedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Center>
-            <Box width="80%">
-                <div className="font-face-sfpb">
-                    <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                        {chosen_text}
-                    </Text>
-                </div>
-            </Box>
+        <Center width="90%">
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                {chosen_text}
+            </Text>
         </Center>
     );
 };
@@ -445,7 +600,7 @@ const EnemyDefeatedText = ({
     let chosen_text: string = enemy_text[idx];
 
     return (
-        <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+        <Text width="100%" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
             {chosen_text}
         </Text>
     );
@@ -454,41 +609,49 @@ const EnemyDefeatedText = ({
 export const DisplayPlayerSuccessText = ({
     current_level,
     current_enemy,
-    bet_size,
+    last_loot,
     num_plays,
-    last_gold,
+    total_loot,
+    loot_bonus,
 }: {
     current_level: number;
     current_enemy: DungeonEnemy;
-    bet_size: number;
+    last_loot: number;
     num_plays: number;
-    last_gold: number;
+    total_loot: number;
+    loot_bonus: boolean;
 }) => {
-    let current_win = WIN_FACTORS[current_level] * bet_size;
-
     if (current_level < 7) {
-        let next_win = WIN_FACTORS[current_level + 1] * bet_size;
         return (
-            <div className="font-face-sfpb">
-                <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
+            <Center className="font-face-sfpb" width="100%">
+                <VStack width="100%">
+                    <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
 
-                <Center>
                     <HStack alignContent="center" mt="1rem">
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            You found {last_gold.toFixed(2)}
+                            You found {last_loot.toFixed(2)}
                         </Text>
 
                         <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
-                    </HStack>
-                </Center>
 
-                <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Escape to claim your current loot of {current_win.toFixed(3)} SOL
-                </Text>
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Explore further to try and increase your loot to {next_win.toFixed(3)} SOL
-                </Text>
-            </div>
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            {loot_bonus ? "(x2 bonus)" : ""}
+                        </Text>
+                    </HStack>
+
+                    <HStack alignContent="center" mt="1rem">
+                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            Escape to claim {total_loot.toFixed(2)}
+                        </Text>
+
+                        <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+
+                        <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            Or explore further to try and find more
+                        </Text>
+                    </HStack>
+                </VStack>
+            </Center>
         );
     }
 
@@ -500,7 +663,7 @@ export const DisplayPlayerSuccessText = ({
             <Center>
                 <HStack alignContent="center" mt="1rem">
                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                        You found {last_gold.toFixed(2)}
+                        You found {last_loot.toFixed(2)}
                     </Text>
 
                     <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
@@ -510,9 +673,13 @@ export const DisplayPlayerSuccessText = ({
             <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                 Looking around you realise your job is done and there is nothing left to kill
             </Text>
-            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                Retire to claim your current loot of {current_win.toFixed(3)} SOL
-            </Text>
+            <HStack alignContent="center" mt="1rem">
+                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    Retire to claim your current loot {total_loot.toFixed(2)}
+                </Text>
+
+                <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+            </HStack>
         </div>
     );
 };
@@ -691,11 +858,9 @@ export const DisplayPlayer = ({
 export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
     return (
         <Box width="10%">
-            <div className="font-face-sfpb">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    XP {current_xp}
-                </Text>
-            </div>
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                XP {current_xp}
+            </Text>
         </Box>
     );
 };
@@ -703,11 +868,9 @@ export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
 export const DisplayLVL = ({ current_level }: { current_level: number }) => {
     return (
         <Box width="10%">
-            <div className="font-face-sfpb">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Lvl. {current_level > 0 ? current_level : ""}
-                </Text>
-            </div>
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                Lvl. {current_level > 0 ? current_level : ""}
+            </Text>
         </Box>
     );
 };

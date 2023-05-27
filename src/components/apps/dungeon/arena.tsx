@@ -1692,7 +1692,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                     <Modal.Footer style={{ alignItems: "center", justifyContent: "center", backgroundColor: "black" }}>
                         <div className="font-face-sfpb">
                             <VStack>
-                                <Box as="button" borderWidth="2px" borderColor="white" width="120px">
+                                <Box visibility="hidden" as="button" borderWidth="2px" borderColor="white" width="120px">
                                     <Text
                                         align="center"
                                         onClick={
