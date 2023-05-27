@@ -566,6 +566,22 @@ export class AchievementData {
     )
 }
 
+class KeyFreePlayData {
+    constructor(
+      readonly last_date: number,
+      readonly freeplays_remaining: number,
+    ) {}
+  
+    static readonly struct = new BeetStruct<KeyFreePlayData>(
+      [
+        ['last_date', u16],
+        ['freeplays_remaining', u8],
+      ],
+      (args) => new KeyFreePlayData(args.last_date!, args.freeplays_remaining!),
+      'KeyFreePlayData'
+    )
+}
+
 class DungeonPlayInstruction {
     constructor(
       readonly instruction: number,
@@ -680,6 +696,21 @@ export async function request_player_account_data(bearer : string, pubkey : Publ
     }
 
     const [data] = PlayerData.struct.deserialize(account_data);
+
+    return data;
+}
+
+
+export async function request_key_freeplays_data(bearer : string, pubkey : PublicKey) : Promise<KeyFreePlayData | null>
+{
+ 
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = KeyFreePlayData.struct.deserialize(account_data);
 
     return data;
 }

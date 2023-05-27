@@ -97,6 +97,7 @@ import {
     request_dungeon_program_data,
     serialise_drink_potion_instruction,
     PlayerData,
+    request_key_freeplays_data
 } from "./utils";
 
 import {
@@ -225,9 +226,9 @@ export function DungeonApp() {
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState<string>("");
-    const [current_key_type, setCurrentKeyType] = useState<KeyType>(KeyType.Unknown);
     const [current_key_mint, setCurrentKeyMint] = useState<PublicKey | null>(null);
     const [current_key_index, setCurrentKeyIndex] = useState<number | null>(null);
+    const [key_freeplays, setKeyFreePlays] = useState<number>(-1);
 
     // error handling on applying the discount
     const [discount_error, setDiscountError] = useState<string | null>(null);
@@ -350,6 +351,14 @@ export function DungeonApp() {
                                             </Button>
                                         </div>
                                     </VStack>
+                                    {key_freeplays >= 0 && (
+                                        <>
+                                            <Divider mt="1rem" mb="1rem" />
+                                            <div className="font-face-sfpb">
+                                                <Text color="white">{key_freeplays} freeplays remaining</Text>
+                                            </div>
+                                        </>
+                                    )}
                                     {discount_error && (
                                         <>
                                             <Divider mt="1rem" mb="1rem" />
@@ -558,10 +567,7 @@ export function DungeonApp() {
 
                 if (dungeon_program_data !== null) {
                     let ema_value = new BN(dungeon_program_data?.current_ema_value).toNumber() / 1e6;
-                    let this_minutes_loot = new BN(dungeon_program_data?.this_minutes_loot).toNumber() / 1e6;
-                    let current_minute = new BN(dungeon_program_data?.current_minute).toNumber();
-
-                    console.log(ema_value, this_minutes_loot, current_minute);
+                    
                     setLootPerDay(24 * 60 * ema_value);
                 }
             } catch (error) {
@@ -572,7 +578,6 @@ export function DungeonApp() {
             try {
                 let player_data = await request_player_account_data(bearer_token, player_data_key);
 
-                console.log("have player data");
                 if (player_data === null) {
                     num_state_checks.current += 1;
                     setDataAccountStatus(AccountStatus.unknown);
@@ -580,8 +585,6 @@ export function DungeonApp() {
                 }
 
                 setDataAccountStatus(AccountStatus.created);
-
-                console.log(player_data);
 
                 let current_status = player_data.player_status + 1;
                 if (initial_status.current === DungeonStatus.unknown) {
@@ -998,11 +1001,16 @@ export function DungeonApp() {
                 METAPLEX_META
             )[0];
 
+            let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), current_key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+
+
             // accounts for discount key
             account_vector.push({ pubkey: current_key_mint, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: key_token_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: dungeon_key_meta_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: dungeon_key_metaplex_account, isSigner: false, isWritable: false });
+            account_vector.push({ pubkey: key_freeplays_account, isSigner: false, isWritable: true });
+
         }
 
         const play_instruction = new TransactionInstruction({
@@ -1379,7 +1387,7 @@ export function DungeonApp() {
             return;
         }
 
-        console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
+        //console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
 
         let key_mint = key_meta_data.key_mint;
         let key_type = key_meta_data.key_type;
@@ -1399,7 +1407,26 @@ export function DungeonApp() {
             return;
         }
 
-        setCurrentKeyType(key_type);
+        let max_freeplays = 10;
+        if (key_type === KeyType.Silver)
+            max_freeplays = 20;
+        if (key_type === KeyType.Gold)
+            max_freeplays = 30;   
+
+        // get remaining freeplays
+        let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+
+        let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
+
+        if (freeplay_data === null) {
+            console.log("no free play account found, setting to ", max_freeplays);
+            setKeyFreePlays(max_freeplays);
+        }
+        else {
+            console.log("free plays remaining", freeplay_data);
+            setKeyFreePlays(freeplay_data.freeplays_remaining);
+        }
+        
         setCurrentKeyMint(key_mint);
         setCurrentKeyIndex(key_index);
     }, [wallet, discount_key_index, bearer_token]);
@@ -1449,7 +1476,6 @@ export function DungeonApp() {
 
         let loot_bonus_time = current_player_data ? bignum_to_num(current_player_data?.bonus_loot_activation_time) : 0;
         let current_time = Date.now() / 1000;
-        console.log("bonus time:", loot_bonus_time, current_time, (current_time - loot_bonus_time) / 60);
         let loot_bonus_valid = loot_bonus && (current_time - loot_bonus_time) / 60 < 10.1;
 
         return (
@@ -1661,21 +1687,6 @@ export function DungeonApp() {
 
         var visible = true;
 
-        console.log(
-            "in characterSelect, progress: ",
-            current_level,
-            "enemy",
-            current_enemy,
-            "status",
-            DungeonStatusString[currentStatus],
-            "num_plays",
-            num_plays,
-            initial_num_plays.current,
-            "dataaccount:",
-            data_account_status,
-            "initial status",
-            DungeonStatusString[initial_status.current]
-        );
 
         // if i don't need to make an account but player status is unknown return nothing
         if (
@@ -1686,12 +1697,12 @@ export function DungeonApp() {
             visible = false;
         }
 
-        console.log("have made it here in CS 2");
+        //console.log("have made it here in CS 2");
         // if i am alive or exploring and  the level is > 0 never show this
         if (data_account_status === AccountStatus.unknown || (current_level > 0 && currentStatus === DungeonStatus.alive)) {
             visible = false;
         }
-        console.log("have made it here in CS");
+        //console.log("have made it here in CS");
         return (
             <>
                 <Box width="100%">
@@ -1701,7 +1712,7 @@ export function DungeonApp() {
                                 <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                     <VStack>
                                         <div className="font-face-sfpb">
-                                            {current_key_type === KeyType.Unknown && (
+                                            {key_freeplays <= 0 && (
                                                 <Text align="center" fontSize={font_size} color="white">
                                                     DUNGEON
                                                     <br />
@@ -1710,31 +1721,13 @@ export function DungeonApp() {
                                                     0.002 SOL
                                                 </Text>
                                             )}
-                                            {current_key_type === KeyType.Bronze && (
-                                                <Text align="center" fontSize={font_size} color="#CD7F32">
+                                            {key_freeplays > 0 && (
+                                                <Text align="center" fontSize={font_size} color="white">
                                                     DUNGEON
                                                     <br />
                                                     FEE:
                                                     <br />
-                                                    0.0015 SOL
-                                                </Text>
-                                            )}
-                                            {current_key_type === KeyType.Silver && (
-                                                <Text align="center" fontSize={font_size} color="silver">
-                                                    DUNGEON
-                                                    <br />
-                                                    FEE:
-                                                    <br />
-                                                    0.001 SOL
-                                                </Text>
-                                            )}
-                                            {current_key_type === KeyType.Gold && (
-                                                <Text align="center" fontSize={font_size} color="gold">
-                                                    DUNGEON
-                                                    <br />
-                                                    FEE:
-                                                    <br />
-                                                    0.0005 SOL
+                                                    0.000 SOL
                                                 </Text>
                                             )}
                                         </div>
@@ -1828,7 +1821,6 @@ export function DungeonApp() {
         let background_image = hallway;
         if (current_level > 4) background_image = hallway2;
 
-        console.log("In Dungeon  current_state ", DungeonStatusString[currentStatus], "enemy_state", DungeonStatusString[enemy_state]);
         return (
             <>
                 <VStack width="100%">
