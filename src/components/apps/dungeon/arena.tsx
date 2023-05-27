@@ -969,10 +969,28 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
         let game_sol_account = PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM)[0];
         let fees_account = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
 
+        let player_loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        let arena_loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            game_sol_account, // owner
+            true // allow owner off curve
+        );
+
         const instruction_data = serialise_basic_instruction(ArenaInstruction.claim_reward);
 
         var account_vector = [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+
+            { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable:  false},
+            { pubkey: player_loot_token_account, isSigner: false, isWritable: true },
+            { pubkey: arena_loot_token_account, isSigner: false, isWritable: true },
+
+
             { pubkey: game_data_account, isSigner: false, isWritable: true },
             { pubkey: game_sol_account, isSigner: false, isWritable: true },
             { pubkey: fees_account, isSigner: false, isWritable: true },
@@ -980,6 +998,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
             { pubkey: arena_account, isSigner: false, isWritable: true },
 
             { pubkey: DM_PROGRAM, isSigner: false, isWritable: false },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
             { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
         ];
 
