@@ -476,24 +476,28 @@ const DungeonPlayerDefeatedText: string[][] = [
 export const DiceRollText = ({
     roll_one,
     roll_two,
-    advantage,
     loading,
 }: {
     roll_one: number;
     roll_two: number;
-    advantage: boolean;
     loading: boolean;
 }) => {
     let dice_size: string | number = "75px";
 
     if (loading) {
         return (
+            <VStack mt="1rem">
             <Box width="30px" height="30px">
                 <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
             </Box>
+            <Text className="font-face-sfpb" fontSize={10} textAlign="center" color="grey">
+                    Loading
+            </Text>
+            </VStack>
         );
     }
 
+    let advantage = roll_two > 0;
     if (advantage) {
         return (
             <VStack mt="1rem">

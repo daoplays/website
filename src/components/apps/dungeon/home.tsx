@@ -643,7 +643,11 @@ export function DungeonApp() {
                 setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
 
                 setAdvantage(player_data.advantage === 1);
-                setLootBonus(player_data.bonus_loot === 1);
+
+                let loot_bonus_time = bignum_to_num(player_data.bonus_loot_activation_time);
+                let current_time = Date.now() / 1000;
+        
+                setLootBonus(player_data.bonus_loot === 1 && (current_time - loot_bonus_time) / 60 < 10.1);
 
                 if (update_status_effects.current) {
                     update_status_effects.current = false;
@@ -1442,6 +1446,12 @@ export function DungeonApp() {
     };
 
     const PotionButtons = () => {
+
+        let loot_bonus_time = current_player_data ? bignum_to_num(current_player_data?.bonus_loot_activation_time) : 0;
+        let current_time = Date.now() / 1000;
+        console.log("bonus time:", loot_bonus_time, current_time, (current_time - loot_bonus_time) / 60);
+        let loot_bonus_valid = loot_bonus && (current_time - loot_bonus_time) / 60 < 10.1;
+
         return (
             <HStack>
                 <HStack align="bottom" spacing="3px">
@@ -1468,10 +1478,10 @@ export function DungeonApp() {
                 <HStack align="bottom" spacing="3px">
                     <Box
                         as="button"
-                        disabled={loot_bonus || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? true : false}
+                        disabled={loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? true : false}
                         onClick={() => DrinkPotion(1)}
                         borderWidth="1px"
-                        borderColor={loot_bonus ? "green" : "white"}
+                        borderColor={loot_bonus_valid ? "green" : "white"}
                     >
                         <img
                             style={{
@@ -1887,7 +1897,6 @@ export function DungeonApp() {
                                     <DiceRollText
                                         roll_one={roll_one.current}
                                         roll_two={roll_two.current}
-                                        advantage={last_advantage.current}
                                         loading={enemy_state === DungeonStatus.unknown}
                                     />
 
@@ -1935,7 +1944,6 @@ export function DungeonApp() {
                                     <DiceRollText
                                         roll_one={roll_one.current}
                                         roll_two={roll_two.current}
-                                        advantage={last_advantage.current}
                                         loading={true}
                                     />
                                 )}
@@ -1951,7 +1959,6 @@ export function DungeonApp() {
                                         <DiceRollText
                                             roll_one={roll_one.current}
                                             roll_two={roll_two.current}
-                                            advantage={last_advantage.current}
                                             loading={false}
                                         />
 
