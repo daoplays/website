@@ -1753,12 +1753,12 @@ export function DungeonApp() {
                                 <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                     <VStack align="center">
                                         <div className="font-face-sfpb">
-                                            {/*
+                                            {
                                         <Box borderWidth='2px'  borderColor="white" width="100%">
                                         <Text align="center" fontSize={font_size} color="white"> Back Soon! </Text>
                                         </Box>
-                                        */}
-
+                                        }
+                                {/*
                                             <Button variant="link" size="md" onClick={Play}>
                                                 <img
                                                     style={{ imageRendering: "pixelated" }}
@@ -1768,6 +1768,7 @@ export function DungeonApp() {
                                                     alt={""}
                                                 />
                                             </Button>
+                                    */}
                                         </div>
                                         <PotionButtons />
                                     </VStack>
