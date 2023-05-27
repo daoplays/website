@@ -1261,7 +1261,9 @@ export function DungeonApp() {
 
             if (wallet.publicKey === null || wallet.signTransaction === undefined || which === null) return;
 
-            let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+            let program_account_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+            let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+
             let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
             let player_achievement_key = PublicKey.findProgramAddressSync(
                 [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
@@ -1306,7 +1308,7 @@ export function DungeonApp() {
                 { pubkey: nft_meta_key, isSigner: false, isWritable: true },
                 { pubkey: nft_master_key, isSigner: false, isWritable: true },
 
-                { pubkey: program_data_key, isSigner: false, isWritable: true },
+                { pubkey: program_account_key, isSigner: false, isWritable: true },
                 { pubkey: shop_program_data_key, isSigner: false, isWritable: true },
 
                 { pubkey: SHOP_PROGRAM, isSigner: false, isWritable: false },
@@ -1325,7 +1327,7 @@ export function DungeonApp() {
             const init_instruction = new TransactionInstruction({
                 keys: [
                     { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-                    { pubkey: program_data_key, isSigner: false, isWritable: true },
+                    { pubkey: program_account_key, isSigner: false, isWritable: true },
                     { pubkey: program_data_key, isSigner: false, isWritable: true },
                     { pubkey: SYSTEM_KEY, isSigner: false, isWritable: true },
                 ],
