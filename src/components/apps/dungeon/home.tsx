@@ -659,6 +659,19 @@ export function DungeonApp() {
                 roll_one.current = player_data.dice_one;
                 roll_two.current = player_data.dice_two;
 
+
+                // just check the freeplay key if the amount remaining is greater than zero
+                if (current_key_mint !== null && key_freeplays > 0) {
+
+                    let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), current_key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+
+                    let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
+
+                    if (freeplay_data !== null) {
+                        console.log("free plays remaining", freeplay_data);
+                        setKeyFreePlays(freeplay_data.freeplays_remaining);
+                    }
+                }
                 num_state_checks.current = 0;
             } catch (error) {
                 console.log(error);
@@ -710,7 +723,7 @@ export function DungeonApp() {
                 setAchievementData(null);
             }
         }
-    }, [wallet, bearer_token]);
+    }, [wallet, bearer_token, current_key_mint, key_freeplays]);
 
     // interval for checking state
     useEffect(() => {

@@ -5,7 +5,8 @@ import { Box, Center, Text, HStack, VStack } from "@chakra-ui/react";
 import { NumberInput, NumberInputField } from "@chakra-ui/react";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
+import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { isMobile } from "react-device-detect";
 
 import bs58 from "bs58";
@@ -17,7 +18,7 @@ import { solid } from "@fortawesome/fontawesome-svg-core/import.macro"; // <-- i
 
 import hallway from "./images/Arena1.gif";
 
-import { DEFAULT_FONT_SIZE, ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE } from "./constants";
+import { DEFAULT_FONT_SIZE, ARENA_PROGRAM, SYSTEM_KEY, PROD, DM_PROGRAM, WSS_NODE, DEBUG, EMOJI_SIZE, LOOT_TOKEN_MINT } from "./constants";
 
 import {
     run_arena_free_game_GPA,
@@ -701,7 +702,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
     };
 
     const ArenaGameCard = ({ game, index }: { game: GameData; index: number }) => {
-        let bet_size: number = bignum_to_num(game.bet_size) / LAMPORTS_PER_SOL;
+        let bet_size: number = bignum_to_num(game.bet_size) / 1e6;
         let time_limit: number = game.game_speed === GameSpeed.fast ? 2.05 : 1440.05;
         let time_passed: number = (time - bignum_to_num(game.last_interaction)) / 60;
         let forfeit: boolean =
@@ -813,15 +814,33 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
             )[0];
             let game_sol_account = PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM)[0];
 
+            let player_loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+    
+            let arena_loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                game_sol_account, // owner
+                true // allow owner off curve
+            );
+
             const instruction_data = serialise_basic_instruction(ArenaInstruction.cancel_game);
 
             var account_vector = [
                 { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+
+                { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable:  false},
+                { pubkey: player_loot_token_account, isSigner: false, isWritable: true },
+                { pubkey: arena_loot_token_account, isSigner: false, isWritable: true },
+
                 { pubkey: game_data_account, isSigner: false, isWritable: true },
                 { pubkey: game_sol_account, isSigner: false, isWritable: true },
 
                 { pubkey: arena_account, isSigner: false, isWritable: true },
 
+                { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
                 { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
             ];
 
@@ -1014,7 +1033,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
             emoji_1: player_emoji,
             emoji_2: GoldEmoji,
             level: 0,
-            sol_amount: (bignum_to_num(active_game.bet_size) * 2) / LAMPORTS_PER_SOL,
+            sol_amount: (bignum_to_num(active_game.bet_size) * 2) / 1e6,
             achievement_name: "",
         };
 
@@ -1063,14 +1082,33 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                 return;
             }
 
+            let player_loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+    
+            let arena_loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                game_sol_account, // owner
+                true // allow owner off curve
+            );
+
             const instruction_data = serialise_Arena_JoinGame_instruction(ArenaInstruction.join_game, chosen_character);
 
             var account_vector = [
                 { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+
+                { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable:  false},
+                { pubkey: player_loot_token_account, isSigner: false, isWritable: true },
+                { pubkey: arena_loot_token_account, isSigner: false, isWritable: true },
+
+
                 { pubkey: game_data_account, isSigner: false, isWritable: true },
                 { pubkey: game_sol_account, isSigner: false, isWritable: true },
 
                 { pubkey: arena_account, isSigner: false, isWritable: true },
+                { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
 
                 { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
             ];
@@ -1142,6 +1180,18 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
         )[0];
         let sol_data_account = PublicKey.findProgramAddressSync([Buffer.from("sol_account")], ARENA_PROGRAM)[0];
 
+        let player_loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
+
+        let arena_loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            sol_data_account, // owner
+            true // allow owner off curve
+        );
+
         if (DEBUG) {
             console.log("arena: ", arena_account.toString());
             console.log("game_data_account: ", game_data_account.toString());
@@ -1152,7 +1202,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
 
         if (bet_size < 0.05) return;
 
-        let bet_size_bn = new BN(bet_size * LAMPORTS_PER_SOL);
+        let bet_size_bn = new BN(bet_size * 1e6);
         const instruction_data = serialise_Arena_CreateGame_instruction(
             ArenaInstruction.create_game,
             bet_size_bn,
@@ -1164,9 +1214,15 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
         var account_vector = [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
             { pubkey: game_data_account, isSigner: false, isWritable: true },
+
+            { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable:  false},
+            { pubkey: player_loot_token_account, isSigner: false, isWritable: true },
+            { pubkey: arena_loot_token_account, isSigner: false, isWritable: true },
+
             { pubkey: sol_data_account, isSigner: false, isWritable: true },
 
             { pubkey: arena_account, isSigner: false, isWritable: true },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
             { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
         ];
 
@@ -2048,13 +2104,13 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                 <HStack>
                                     <Box width="30%"></Box>
                                     <Box width="15%" visibility="hidden">
-                                        {" "}
+                                        
                                         <DisplayPlayer player_character={0} player_status={0} is_player_one={true} />
                                     </Box>
                                     <Box width="10%"></Box>
                                     <Box width="15%" visibility="hidden">
-                                        {" "}
-                                        <DisplayPlayer player_character={0} player_status={0} is_player_one={false} />{" "}
+                                        
+                                        <DisplayPlayer player_character={0} player_status={0} is_player_one={false} />
                                     </Box>
                                     <Box width="30%"></Box>
                                 </HStack>
@@ -2134,7 +2190,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                 <HStack>
                                     <Box width="30%"></Box>
                                     <Box width="15%">
-                                        {" "}
+                                        
                                         <DisplayPlayer
                                             player_character={active_game.player_one_character}
                                             player_status={active_game.player_one_status}
@@ -2143,12 +2199,12 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                     </Box>
                                     <Box width="10%"></Box>
                                     <Box width="15%" visibility={active_game.status === 0 ? "hidden" : "visible"}>
-                                        {" "}
+                                        
                                         <DisplayPlayer
                                             player_character={active_game.player_two_character}
                                             player_status={active_game.player_two_status}
                                             is_player_one={false}
-                                        />{" "}
+                                        />
                                     </Box>
                                     <Box width="30%"></Box>
                                 </HStack>
@@ -2157,7 +2213,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                         </HStack>
                     </VStack>
 
-                    <Center width="100%" height="150px">
+                    <Center width="100%" height="350px">
                         {(active_game.status === GameStatus.in_progress || active_game.status === GameStatus.draw) && (
                             <VStack width="100%" alignItems="center">
                                 {active_game.status === GameStatus.draw && (
@@ -2169,14 +2225,12 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                 )}
                                 {player_sent_encrypted_move !== opponent_sent_encrypted_move && !forfeit && (
                                     <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                        {" "}
                                         It looks like one of our fighters is ready to go, but the other needs a bit more time. The crowd is
                                         getting impatient so let's hope there's some action soon!
                                     </Text>
                                 )}
                                 {!player_sent_encrypted_move && (
                                     <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                        {" "}
                                         Choose your move
                                     </Text>
                                 )}
@@ -2191,8 +2245,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                 {player_sent_encrypted_move && forfeit && (
                                     <VStack width="80%">
                                         <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                            {" "}
-                                            Your opponent is playing the pacifist, take them down!{" "}
+                                            Your opponent is playing the pacifist, take them down!
                                         </Text>
 
                                         <Center width="100%">
@@ -2213,8 +2266,8 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                         {active_game.status === GameStatus.in_reveal && (
                             <VStack width="80%">
                                 <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                    {" "}
-                                    It looks like both our combatants are ready to go, show us what you've got!{" "}
+                                    
+                                    It looks like both our combatants are ready to go, show us what you've got!
                                 </Text>
 
                                 <Box
@@ -2231,8 +2284,8 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                     width="100px"
                                 >
                                     <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                        {" "}
-                                        Fight{" "}
+                                        
+                                        Fight
                                     </Text>
                                 </Box>
                             </VStack>
@@ -2247,7 +2300,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                     player_one_wins={active_game.player_one_status === ArenaStatus.alive}
                                 />
                                 <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                    {" "}
+                                    
                                     You are victorious!
                                 </Text>
 
@@ -2265,8 +2318,8 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                     width="110px"
                                 >
                                     <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                        {" "}
-                                        Claim Reward{" "}
+                                        
+                                        Claim Reward
                                     </Text>
                                 </Box>
                             </VStack>
@@ -2283,8 +2336,8 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                 />
 
                                 <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                    {" "}
-                                    You have been defeated{" "}
+                                    
+                                    You have been defeated
                                 </Text>
                             </VStack>
                         )}
@@ -2300,7 +2353,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
 
                                 {is_player_one && !player_sent_encrypted_move && (
                                     <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                        {" "}
+                                        
                                         Choose your move
                                     </Text>
                                 )}
@@ -2309,7 +2362,7 @@ export function ArenaScreen({ bearer_token }: { bearer_token: string }) {
                                 )}
                                 {is_player_one && player_sent_encrypted_move && (
                                     <Text className="font-face-sfpb" align="center" fontSize={ARENA_FONT_SIZE} color="white">
-                                        {" "}
+                                        
                                         It looks like our first combatant is ready to go. The crowd is getting impatient so let's hope their
                                         opponent shows up soon!
                                     </Text>
