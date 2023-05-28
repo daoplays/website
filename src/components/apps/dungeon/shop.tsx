@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { Box, Button, HStack, Center, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, HStack, Center, Text, VStack, NumberInput, NumberInputField } from "@chakra-ui/react";
 import { isMobile } from "react-device-detect";
 
 import { PublicKey, Keypair, Transaction, TransactionInstruction } from "@solana/web3.js";
@@ -160,6 +160,8 @@ export function ShopScreen({
     const [xp_req, setXPReq] = useState<number | null>(null);
     const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
     const [shop_data, setShopData] = useState<ShopData | null>(null);
+
+    const [potion_quantity, setPotionQuantity] = useState<string>("1");
 
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
@@ -929,6 +931,30 @@ export function ShopScreen({
                             >
                                 Potion of Power - Roll two dice in the next Room and pick the highest value as your attack
                             </Text>
+                            <VStack>
+                            <div className="font-face-sfpb">
+                                    <NumberInput
+                                        fontSize={DUNGEON_FONT_SIZE}
+                                        color="white"
+                                        size="sm"
+                                        onChange={(valueString) => setPotionQuantity(valueString)}
+                                        value={potion_quantity}
+                                        precision={0}
+                                        borderColor="white"
+                                        min={1}
+                                        max={100}
+                                        
+                                    >
+                                        <NumberInputField
+                                            autoFocus={true}
+                                            height={DUNGEON_FONT_SIZE}
+                                            width={50}
+                                            paddingTop="1rem"
+                                            paddingBottom="1rem"
+                                            borderColor="white"
+                                        />
+                                    </NumberInput>
+                                </div>
                             <Box
                                 as="button"
                                 onClick={() => {
@@ -937,10 +963,12 @@ export function ShopScreen({
                                 borderWidth="1px"
                                 borderColor="white"
                             >
+                                
                                 <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
                                     Purchase
                                 </Text>
                             </Box>
+                            </VStack>
                         </VStack>
                     )}
                     {which_potion === 1 && (
