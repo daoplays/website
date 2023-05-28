@@ -552,7 +552,12 @@ export function ShopScreen({
                 true // allow owner off curve
             );
 
-            const instruction_data = serialise_buy_potion_instruction(DungeonInstruction.buy_potion, which);
+            let quantity = parseInt(potion_quantity);
+            if (isNaN(quantity)) {
+                setProcessingTransaction(false);
+                return;
+            }
+            const instruction_data = serialise_buy_potion_instruction(DungeonInstruction.buy_potion, which, quantity);
 
             var account_vector = [
                 { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
@@ -598,7 +603,7 @@ export function ShopScreen({
             check_sol_balance.current = true;
             check_loot_balance.current = true;
         },
-        [wallet, bearer_token, check_user_state, check_sol_balance]
+        [wallet, bearer_token, check_user_state, check_sol_balance, potion_quantity]
     );
 
     const MintKey = useCallback(async () => {
@@ -874,6 +879,46 @@ export function ShopScreen({
         );
     };
 
+    const PotionQuantity = (): JSX.Element | null => {
+        return (
+            <div className="font-face-sfpb">
+                <HStack>
+                    <Text
+                        mt="1rem"
+                        className="font-face-sfpb"
+                        fontSize={DUNGEON_FONT_SIZE}
+                        textAlign="center"
+                        color="white"
+                        mb="1rem"
+                    >
+                    Quantity
+                    </Text>
+                    <NumberInput
+                        fontSize={DUNGEON_FONT_SIZE}
+                        color="white"
+                        size="sm"
+                        onChange={(valueString) => setPotionQuantity(valueString)}
+                        value={potion_quantity}
+                        precision={0}
+                        borderColor="white"
+                        min={1}
+                        max={100}
+                        
+                    >
+                        <NumberInputField
+                            autoFocus={true}
+                            height={DUNGEON_FONT_SIZE}
+                            width={50}
+                            paddingTop="1rem"
+                            paddingBottom="1rem"
+                            borderColor="white"
+                        />
+                    </NumberInput>
+                </HStack>
+            </div>
+        );
+    }
+
     const PotionText = (): JSX.Element | null => {
         return (
             <Center width="100%">
@@ -932,29 +977,8 @@ export function ShopScreen({
                                 Potion of Power - Roll two dice in the next Room and pick the highest value as your attack
                             </Text>
                             <VStack>
-                            <div className="font-face-sfpb">
-                                    <NumberInput
-                                        fontSize={DUNGEON_FONT_SIZE}
-                                        color="white"
-                                        size="sm"
-                                        onChange={(valueString) => setPotionQuantity(valueString)}
-                                        value={potion_quantity}
-                                        precision={0}
-                                        borderColor="white"
-                                        min={1}
-                                        max={100}
-                                        
-                                    >
-                                        <NumberInputField
-                                            autoFocus={true}
-                                            height={DUNGEON_FONT_SIZE}
-                                            width={50}
-                                            paddingTop="1rem"
-                                            paddingBottom="1rem"
-                                            borderColor="white"
-                                        />
-                                    </NumberInput>
-                                </div>
+
+                            <PotionQuantity/>
                             <Box
                                 as="button"
                                 onClick={() => {
@@ -983,6 +1007,9 @@ export function ShopScreen({
                             >
                                 Potion of Luck - Find double the LOOT for 10 minutes after drinking
                             </Text>
+                            <VStack>
+                            <PotionQuantity/>
+
                             <Box
                                 as="button"
                                 onClick={() => {
@@ -995,6 +1022,8 @@ export function ShopScreen({
                                     Purchase
                                 </Text>
                             </Box>
+                            </VStack>
+
                         </VStack>
                     )}
                 </Box>
