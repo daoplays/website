@@ -7,18 +7,16 @@ import Modal from "react-bootstrap/Modal";
 
 import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverBody, PopoverArrow, PopoverCloseButton } from "@chakra-ui/react";
 
-import Select, { StylesConfig } from "react-select";
 import FocusLock from "react-focus-lock";
 
 import { isMobile } from "react-device-detect";
 
 //import useSound from 'use-sound';
 
-import 'react-h5-audio-player/lib/styles.css'
-import './css/home.css'
+import "react-h5-audio-player/lib/styles.css";
+import "./css/home.css";
 
-
-import { LAMPORTS_PER_SOL, Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 import { WalletProvider, useWallet } from "@solana/wallet-adapter-react";
@@ -49,6 +47,10 @@ import wizard from "./images/Wizard.gif";
 import corpse from "./images/Corpse.png";
 import selector from "./images/Selector.gif";
 
+// potions
+import power_potion from "./shop_items/Power_Potion.gif";
+import luck_potion from "./shop_items/Luck_Potion.gif";
+
 //  dungeon constants
 import {
     DEFAULT_FONT_SIZE,
@@ -69,17 +71,17 @@ import {
     DM_PROGRAM,
     KeyType,
     MAIN_ACCOUNT_SEED,
+    DATA_ACCOUNT_SEED,
     LOOT_TOKEN_MINT,
+    EMOJI_SIZE,
 } from "./constants";
 
 // dungeon utils
 import {
     request_player_account_data,
-    request_key_data_from_index,
     request_token_amount,
     serialise_play_instruction,
     serialise_basic_instruction,
-    uInt16ToLEBytes,
     run_keyData_GPA,
     post_discord_message,
     request_player_achievement_data,
@@ -88,11 +90,14 @@ import {
     get_current_blockhash,
     send_transaction,
     check_signature,
-    request_current_balance,
     AchievementData,
     NewDiscordMessage,
     serialise_quit_instruction,
     bignum_to_num,
+    request_dungeon_program_data,
+    serialise_drink_potion_instruction,
+    PlayerData,
+    request_key_freeplays_data
 } from "./utils";
 
 import {
@@ -106,10 +111,11 @@ import {
     DungeonEnemy,
     DungeonCharacter,
     DungeonStatus,
-    WIN_FACTORS,
     DungeonCharacterEmoji,
     DungeonEnemyEmoji,
     GoldEmoji,
+    DiceRollText,
+    DungeonInstruction,
 } from "./dungeon_state";
 
 import { AchievementCard, AchievementMetaData } from "./achievements";
@@ -131,7 +137,6 @@ import { ArenaScreen } from "./arena";
 
 //import {DungeonScreen} from './dungeon';
 
-import wagerSelect from "./sounds/Wager_Select.mp3";
 import classSelect from "./sounds/Class_Select.mp3";
 import dungeonTile from "./sounds/Open_Door.mp3";
 import Retry from "./sounds/Retry.mp3";
@@ -166,7 +171,6 @@ const enum AccountStatus {
 
 const DungeonStatusString = ["unknown", "alive", "dead", "exploring"];
 
-const wagerSelectAudio = new Audio(wagerSelect);
 const classSelectAudio = new Audio(classSelect);
 const dungeonTileAudio = new Audio(dungeonTile);
 const GameOverAudio = new Audio(Game_Over);
@@ -175,27 +179,6 @@ const TorchAudio = new Audio(Torch);
 const RetryAudio = new Audio(Retry);
 const VictoryAudio = new Audio(Victory);
 const PlayerDeathAudio = new Audio(Player_Death);
-
-const enum BetSize {
-    SolanaBet1 = 0,
-    SolanaBet2 = 1,
-    SolanaBet3 = 2,
-}
-
-const BetSizeValues: number[] = [0.05, 0.1, 0.25];
-
-type BetValueObject = Object & {
-    value: BetSize;
-    label: string;
-};
-
-const enum DungeonInstruction {
-    add_funds = 0,
-    play = 1,
-    quit = 2,
-    explore = 3,
-    claim_achievement = 4,
-}
 
 export function DungeonApp() {
     const wallet = useWallet();
@@ -208,25 +191,29 @@ export function DungeonApp() {
     const [data_account_status, setDataAccountStatus] = useState<AccountStatus>(AccountStatus.unknown);
     const initial_status = useRef<DungeonStatus>(DungeonStatus.unknown);
 
-    // settings for this game
-    const [bet_size, setBetSize] = useState<BetSize>(BetSize.SolanaBet1);
-    const [bet_value, setBetValue] = useState<number>(BetSizeValues[0]);
-    const [select_value, setSelectValue] = useState<BetValueObject | null>(null);
-
-    const handleBetChange = (selected: BetSize) => {
-        playAudio(wagerSelectAudio);
-        setBetSize(selected);
-        setBetValue(BetSizeValues[selected]);
-    };
-
     // these come from the blockchain
+    const num_state_checks = useRef<number>(0);
+
+    // not all state should cause a rerender
+    const update_status_effects = useRef<boolean>(true);
+    const num_plays = useRef<number>(-1);
+    const last_advantage = useRef<boolean>(false);
+    const last_loot_bonus = useRef<boolean>(false);
+    const roll_one = useRef<number>(0);
+    const roll_two = useRef<number>(0);
+
     const current_interaction = useRef<number | null>(null);
-    const [num_plays, setNumPlays] = useState<number>(-1);
-    const [numXP, setNumXP] = useState<number>(0);
+
+    const [current_player_data, setPlayerData] = useState<PlayerData | null>(null);
+    const [advantage, setAdvantage] = useState<boolean>(false);
+    const [loot_bonus, setLootBonus] = useState<boolean>(false);
+
     const [current_level, setCurrentLevel] = useState<number>(0);
     const [currentStatus, setCurrentStatus] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [current_enemy, setCurrentEnemy] = useState<DungeonEnemy>(DungeonEnemy.None);
-    const [last_gold, setLastGold] = useState<number>(0);
+    const [total_loot, setTotalLoot] = useState<number>(0);
+    const [last_loot, setLastLoot] = useState<number>(0);
+    const [loot_per_day, setLootPerDay] = useState<number>(0);
 
     // achievement state
     const [which_achievement, setWhichAchievement] = useState<number | null>(null);
@@ -239,9 +226,9 @@ export function DungeonApp() {
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState<string>("");
-    const [current_key_type, setCurrentKeyType] = useState<KeyType>(KeyType.Unknown);
     const [current_key_mint, setCurrentKeyMint] = useState<PublicKey | null>(null);
     const [current_key_index, setCurrentKeyIndex] = useState<number | null>(null);
+    const [key_freeplays, setKeyFreePlays] = useState<number>(-1);
 
     // error handling on applying the discount
     const [discount_error, setDiscountError] = useState<string | null>(null);
@@ -297,131 +284,6 @@ export function DungeonApp() {
     const OpenDiscountError = useCallback(async () => {
         setShowDiscountError(true);
     }, []);
-
-    function BetSizeInput() {
-        const handleSelectChange = (selected: SelectValue) => {
-            let selected_bet = selected as BetValueObject;
-            setSelectValue(selected_bet);
-            setBetSize(selected_bet.value);
-            setBetValue(BetSizeValues[selected_bet.value]);
-        };
-
-        const handleSliderChange = (event: React.MouseEvent<HTMLInputElement>) => {
-            const target = event.target as HTMLInputElement;
-            const value = Number(target.value);
-            handleBetChange(value as BetSize);
-        };
-
-
-        type SelectValue = BetValueObject | BetValueObject[] | null | undefined;
-
-        const colourStyles: StylesConfig<BetValueObject, false> = {
-            menu: (base) => ({
-                ...base,
-                width: "max-content",
-                minWidth: "100%",
-            }),
-            control: (provided) => ({
-                ...provided,
-                backgroundColor: "black",
-                color: "white",
-            }),
-            singleValue: (provided) => ({
-                ...provided,
-                fontSize: DUNGEON_FONT_SIZE,
-                backgroundColor: "black",
-                color: "white",
-            }),
-            placeholder: (provided) => ({
-                ...provided,
-                fontSize: DUNGEON_FONT_SIZE,
-                backgroundColor: "black",
-                color: "white",
-            }),
-            clearIndicator: (provided) => ({
-                ...provided,
-                padding: "0px",
-            }),
-            dropdownIndicator: (provided) => ({
-                ...provided,
-                padding: "0px",
-            }),
-            option: (provided, { isFocused }) => {
-                return {
-                    ...provided,
-
-                    backgroundColor: isFocused ? "grey" : "black",
-                    color: "white",
-                };
-            },
-          };
-          
-          return (
-            <div className="font-face-sfpb">
-              {!isMobile && (
-                <VStack alignItems="center" spacing="1px">
-                  <Box
-                    borderWidth="2px"
-                    borderColor="black"
-                    height={"30px"}
-                    width={"60px"}
-                    marginBottom={"5px"}
-                  >
-                    <HStack justifyContent="center">
-                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
-                        {bet_value}
-                      </Text>
-                      <Text fontSize={DUNGEON_FONT_SIZE} color="white">
-                        SOL
-                      </Text>
-                    </HStack>
-                  </Box>
-
-                  <div className="sliderContainer">
-                    <div className="sliderTicks" style={{ left: bet_value === 0.05 ? 1.5 : 0, right: bet_value === 0.25 ? 1.5 : 0 }}>
-                      {BetSizeValues.map((betValue, index) => (
-                        <div key={index} className="sliderTick"></div>
-                      ))}
-                    </div>
-                    <input
-                      className={`slider ${bet_value === 0.25 ? "bet-small" : ""}`}
-                      type="range"
-                      min={BetSize.SolanaBet1}
-                      max={BetSize.SolanaBet3}
-                      defaultValue={bet_size}
-                      onMouseUp={handleSliderChange}
-                    />
-                  </div>
-                </VStack>
-              )}
-              {isMobile && (
-                <Select
-                  placeholder={BetSizeValues[0] + " SOL"}
-                  styles={colourStyles}
-                  isSearchable={false}
-                  onChange={(choice: SelectValue) => {
-                    handleSelectChange(choice);
-                  }}
-                  value={select_value}
-                  options={[
-                    {
-                      value: BetSize.SolanaBet1,
-                      label: BetSizeValues[0] + " SOL",
-                    },
-                    {
-                      value: BetSize.SolanaBet2,
-                      label: BetSizeValues[1] + " SOL",
-                    },
-                    {
-                      value: BetSize.SolanaBet3,
-                      label: BetSizeValues[2] + " SOL",
-                    },
-                  ]}
-                />
-              )}
-            </div>
-          );
-    }
 
     function DiscountKeyInput() {
         let key_size = "50";
@@ -489,6 +351,14 @@ export function DungeonApp() {
                                             </Button>
                                         </div>
                                     </VStack>
+                                    {key_freeplays >= 0 && (
+                                        <>
+                                            <Divider mt="1rem" mb="1rem" />
+                                            <div className="font-face-sfpb">
+                                                <Text color="white">{key_freeplays} freeplays remaining</Text>
+                                            </div>
+                                        </>
+                                    )}
                                     {discount_error && (
                                         <>
                                             <Divider mt="1rem" mb="1rem" />
@@ -507,21 +377,15 @@ export function DungeonApp() {
     }
 
     function Disclaimer() {
-        const [show, setShow] = useState(false);
-
-        const handleClose = () => setShow(false);
-        const handleShow = () => setShow(true);
-
         const { setVisible } = useWalletModal();
 
         const handleConnectWallet = useCallback(async () => {
-            setShow(false);
             setVisible(true);
-        }, [setVisible, setShow]);
+        }, [setVisible]);
 
         return (
             <>
-                <Box as="button" onClick={handleShow}>
+                <Box as="button" onClick={handleConnectWallet}>
                     <div className="font-face-sfpb">
                         <Text style={{ textDecoration: "underline" }} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
                             CONNECT
@@ -530,29 +394,6 @@ export function DungeonApp() {
                         </Text>
                     </div>
                 </Box>
-
-                <Modal centered show={show} onHide={handleClose}>
-                    <div className="font-face-sfpb">
-                        <Modal.Header style={{ backgroundColor: "black" }} closeButton>
-                            <Modal.Title style={{ fontSize: 30, color: "white", fontWeight: "semibold" }}>DISCLAIMER</Modal.Title>
-                        </Modal.Header>
-                    </div>
-                    <div className="font-face-sfpb text-center">
-                        <Modal.Body style={{ backgroundColor: "black", fontSize: 20, color: "white", fontWeight: "semibold" }}>
-                            I confirm online gambling is not forbidden in my jurisdiction and I'm at least 18 years old
-                        </Modal.Body>
-                    </div>
-
-                    <Modal.Footer style={{ alignItems: "center", justifyContent: "center", backgroundColor: "black" }}>
-                        <Box as="button" onClick={handleConnectWallet}>
-                            <div className="font-face-sfpb">
-                                <Text style={{ textDecoration: "underline" }} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
-                                    CONFIRM
-                                </Text>
-                            </div>
-                        </Box>
-                    </Modal.Footer>
-                </Modal>
             </>
         );
     }
@@ -705,52 +546,49 @@ export function DungeonApp() {
         }
 
         if (DEBUG) {
-            console.log("in in it check_updates ", check_user_state.current, " check balance: ", check_data_account.current);
+            console.log("in in it check_updates ", check_user_state.current);
         }
 
         if (!wallet.publicKey) {
             return;
         }
 
-        if (!check_user_state.current && !check_data_account.current && !check_achievements.current) return;
+        if (num_state_checks.current > 2) check_user_state.current = false;
+
+        if (!check_user_state.current && !check_achievements.current) return;
 
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
-        if (check_data_account.current) {
-            // first check if the data account exists
-            try {
-                let balance = await request_current_balance(bearer_token, player_data_key);
+        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
 
-                if (balance > 0) {
-                    setDataAccountStatus(AccountStatus.created);
-                    check_data_account.current = false;
-                } else {
-                    setDataAccountStatus(AccountStatus.not_created);
-                    return;
+        if (check_user_state.current) {
+            try {
+                let dungeon_program_data = await request_dungeon_program_data(bearer_token, program_data_key);
+
+                if (dungeon_program_data !== null) {
+                    let ema_value = new BN(dungeon_program_data?.current_ema_value).toNumber() / 1e6;
+                    
+                    setLootPerDay(24 * 60 * ema_value);
                 }
             } catch (error) {
                 console.log(error);
-                return;
+                setLootPerDay(0);
             }
-        }
 
-        if (check_user_state.current) {
             try {
                 let player_data = await request_player_account_data(bearer_token, player_data_key);
 
                 if (player_data === null) {
+                    num_state_checks.current += 1;
+                    setDataAccountStatus(AccountStatus.unknown);
                     return;
                 }
+
+                setDataAccountStatus(AccountStatus.created);
 
                 let current_status = player_data.player_status + 1;
                 if (initial_status.current === DungeonStatus.unknown) {
                     initial_status.current = current_status;
-                    if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
-                        let current_bet_value_bn = new BN(player_data.current_bet_size);
-                        let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
-                        setBetValue(current_bet_value);
-                        //console.log("setting current status to alive", current_bet_value);
-                    }
                 }
 
                 let current_num_plays = new BN(player_data.num_plays).toNumber();
@@ -762,17 +600,13 @@ export function DungeonApp() {
                     return;
                 }
 
+                setPlayerData(player_data);
+
                 current_interaction.current = current_num_plays;
 
-                if (current_status === DungeonStatus.alive && player_data.in_progress > 0) {
-                    let current_bet_value_bn = new BN(player_data.current_bet_size);
-                    let current_bet_value = current_bet_value_bn.toNumber() / LAMPORTS_PER_SOL;
-                    setBetValue(current_bet_value);
-                }
+                num_plays.current = current_num_plays;
 
-                setNumPlays(current_num_plays);
-
-                let current_xp = new BN(player_data.num_wins).toNumber();
+                let current_xp = new BN(player_data.num_xp).toNumber();
 
                 if (DEBUG) {
                     console.log(
@@ -807,14 +641,45 @@ export function DungeonApp() {
 
                 setCurrentStatus(current_status);
 
-                setNumXP(current_xp);
+                setTotalLoot(bignum_to_num(player_data.total_gold) / 1e6);
 
-                setLastGold(bignum_to_num(player_data.last_gold) / 1e6);
+                setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
+
+                setAdvantage(player_data.advantage === 1);
+
+                let loot_bonus_time = bignum_to_num(player_data.bonus_loot_activation_time);
+                let current_time = Date.now() / 1000;
+        
+                setLootBonus(player_data.bonus_loot === 1 && (current_time - loot_bonus_time) / 60 < 10.1);
+
+                if (update_status_effects.current) {
+                    update_status_effects.current = false;
+                }
+
+                roll_one.current = player_data.dice_one;
+                roll_two.current = player_data.dice_two;
+
+
+                // just check the freeplay key if the amount remaining is greater than zero
+                if (current_key_mint !== null && key_freeplays > 0) {
+
+                    let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), current_key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+
+                    let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
+
+                    if (freeplay_data !== null) {
+                        console.log("free plays remaining", freeplay_data);
+                        setKeyFreePlays(freeplay_data.freeplays_remaining);
+                    }
+                }
+                num_state_checks.current = 0;
             } catch (error) {
                 console.log(error);
                 setCurrentLevel(0);
                 setCurrentStatus(DungeonStatus.unknown);
                 setCurrentEnemy(DungeonEnemy.None);
+                setDataAccountStatus(AccountStatus.not_created);
+                num_state_checks.current += 1;
             }
         }
 
@@ -858,7 +723,7 @@ export function DungeonApp() {
                 setAchievementData(null);
             }
         }
-    }, [wallet, bearer_token]);
+    }, [wallet, bearer_token, current_key_mint, key_freeplays]);
 
     // interval for checking state
     useEffect(() => {
@@ -889,8 +754,7 @@ export function DungeonApp() {
         setTransactionFailed(false);
         setScreen(Screen.HOME_SCREEN);
         setCurrentLevel(0);
-        setNumPlays(-1);
-        setNumXP(0);
+        num_plays.current = -1;
         setDataAccountStatus(AccountStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
@@ -898,6 +762,7 @@ export function DungeonApp() {
         setEnemyState(DungeonStatus.unknown);
         setAchievementStatus(null);
         setAchievementData(null);
+        setPlayerData(null);
         achievement_interations.current = -1;
 
         check_data_account.current = true;
@@ -919,7 +784,7 @@ export function DungeonApp() {
                 "currentStatus",
                 DungeonStatusString[currentStatus],
                 "num_plays",
-                num_plays,
+                num_plays.current,
                 "init num plays",
                 initial_num_plays.current
             );
@@ -938,8 +803,8 @@ export function DungeonApp() {
 
         // if we aren't alive and numplays is still initial num plays we shouldn't display the enemy
         if (
-            num_plays > 1 &&
-            num_plays === initial_num_plays.current &&
+            num_plays.current > 1 &&
+            num_plays.current === initial_num_plays.current &&
             data_account_status === AccountStatus.created &&
             currentStatus !== DungeonStatus.alive
         )
@@ -959,7 +824,7 @@ export function DungeonApp() {
         } else {
             animateLevel.current = 2;
         }
-    }, [num_plays, current_level, current_enemy, currentStatus, data_account_status, screen]);
+    }, [current_level, current_enemy, currentStatus, data_account_status, screen]);
 
     const playAudio = useCallback(
         (audio: HTMLAudioElement) => {
@@ -1071,13 +936,11 @@ export function DungeonApp() {
 
     const Play = useCallback(async () => {
         setTransactionFailed(false);
+        num_state_checks.current = 0;
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
         setProcessingTransaction(true);
-        if (DEBUG) {
-            console.log("In play", bet_size, BetSizeValues[bet_size]);
-        }
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
@@ -1092,7 +955,9 @@ export function DungeonApp() {
             true // allow owner off curve
         );
 
-        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, bet_size);
+        let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
+
+        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, 0);
 
         var account_vector = [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
@@ -1118,6 +983,7 @@ export function DungeonApp() {
         // next 3 accounts are for the free play tokens
         account_vector.push({ pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
         account_vector.push({ pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
+
         account_vector.push({ pubkey: FREE_PLAY_MINT, isSigner: false, isWritable: true });
 
         let free_play_token_account = await getAssociatedTokenAddress(
@@ -1128,14 +994,14 @@ export function DungeonApp() {
 
         account_vector.push({ pubkey: free_play_token_account, isSigner: false, isWritable: true });
 
+        account_vector.push({ pubkey: DM_PROGRAM, isSigner: false, isWritable: false });
+        account_vector.push({ pubkey: dm_data_key, isSigner: false, isWritable: true });
+
         if (current_key_mint && current_key_index) {
             let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("key_meta"), current_key_mint.toBuffer()],
                 SHOP_PROGRAM
             )[0];
-
-            let index_buffer = uInt16ToLEBytes(current_key_index);
-            let dungeon_key_lookup_account = PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer], DUNGEON_PROGRAM)[0];
 
             let key_token_account = await getAssociatedTokenAddress(
                 current_key_mint, // mint
@@ -1148,12 +1014,16 @@ export function DungeonApp() {
                 METAPLEX_META
             )[0];
 
+            let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), current_key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+
+
             // accounts for discount key
             account_vector.push({ pubkey: current_key_mint, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: key_token_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: dungeon_key_meta_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: dungeon_key_metaplex_account, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: dungeon_key_lookup_account, isSigner: false, isWritable: true });
+            account_vector.push({ pubkey: key_freeplays_account, isSigner: false, isWritable: true });
+
         }
 
         const play_instruction = new TransactionInstruction({
@@ -1207,20 +1077,32 @@ export function DungeonApp() {
         check_sol_balance.current = true;
         check_achievements.current = true;
         discord_play_message_sent.current = false;
-    }, [wallet, player_character, current_key_index, current_key_mint, bet_size, bearer_token]);
+        update_status_effects.current = true;
+
+        last_advantage.current = advantage;
+        last_loot_bonus.current = loot_bonus;
+    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus]);
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
+        num_state_checks.current = 0;
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
         setProcessingTransaction(true);
-        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+        let program_account_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
-        let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
             [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
             DUNGEON_PROGRAM
         )[0];
+
+        let loot_token_account = await getAssociatedTokenAddress(
+            LOOT_TOKEN_MINT, // mint
+            wallet.publicKey, // owner
+            true // allow owner off curve
+        );
 
         let ref_code = searchParams.get("ref");
 
@@ -1232,12 +1114,13 @@ export function DungeonApp() {
             { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
             { pubkey: player_data_key, isSigner: false, isWritable: true },
             { pubkey: player_achievement_key, isSigner: false, isWritable: true },
+            { pubkey: program_account_key, isSigner: false, isWritable: true },
             { pubkey: program_data_key, isSigner: false, isWritable: true },
 
+            { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
+            { pubkey: loot_token_account, isSigner: false, isWritable: true },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
             { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
-
-            { pubkey: DM_PROGRAM, isSigner: false, isWritable: false },
-            { pubkey: dm_data_key, isSigner: false, isWritable: true },
         ];
 
         const quit_instruction = new TransactionInstruction({
@@ -1286,7 +1169,7 @@ export function DungeonApp() {
         check_achievements.current = true;
 
         // send a discord message
-        let current_win = WIN_FACTORS[current_level] * BetSizeValues[bet_size];
+        let current_win = total_loot;
 
         const message: NewDiscordMessage = {
             message_type: current_level === 7 ? "retired" : "escaped",
@@ -1300,15 +1183,87 @@ export function DungeonApp() {
         if (PROD) post_discord_message(message);
 
         return;
-    }, [wallet, player_character, current_level, bet_size, bearer_token, searchParams]);
+    }, [wallet, player_character, current_level, total_loot, bearer_token, searchParams]);
+
+    const DrinkPotion = useCallback(
+        async (which: number) => {
+            setTransactionFailed(false);
+            num_state_checks.current = 0;
+
+            if (wallet.publicKey === null || wallet.signTransaction === undefined || wallet.signMessage === undefined) return;
+
+            setProcessingTransaction(true);
+
+            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+
+            const instruction_data = serialise_drink_potion_instruction(DungeonInstruction.drink_potion, which);
+
+            var account_vector = [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
+
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            transaction.add(play_instruction);
+
+            try {
+
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    setProcessingTransaction(false);
+                    return;
+                }
+
+                let signature = transaction_response.result;
+
+                if (DEBUG) {
+                    console.log("play signature: ", signature);
+                }
+
+                current_signature.current = signature;
+                signature_check_count.current = 0;
+            } catch (error) {
+                setProcessingTransaction(false);
+                console.log(error);
+                return;
+            }
+
+            if (DEBUG) {
+                console.log("In Play - setting state");
+            }
+
+            check_user_state.current = true;
+            check_sol_balance.current = true;
+        },
+        [wallet, bearer_token]
+    );
 
     const ClaimAchievement = useCallback(
         async (which: number) => {
             setTransactionFailed(false);
+            num_state_checks.current = 0;
 
             if (wallet.publicKey === null || wallet.signTransaction === undefined || which === null) return;
 
-            let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+            let program_account_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+            let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+
             let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
             let player_achievement_key = PublicKey.findProgramAddressSync(
                 [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
@@ -1353,7 +1308,7 @@ export function DungeonApp() {
                 { pubkey: nft_meta_key, isSigner: false, isWritable: true },
                 { pubkey: nft_master_key, isSigner: false, isWritable: true },
 
-                { pubkey: program_data_key, isSigner: false, isWritable: true },
+                { pubkey: program_account_key, isSigner: false, isWritable: true },
                 { pubkey: shop_program_data_key, isSigner: false, isWritable: true },
 
                 { pubkey: SHOP_PROGRAM, isSigner: false, isWritable: false },
@@ -1372,7 +1327,7 @@ export function DungeonApp() {
             const init_instruction = new TransactionInstruction({
                 keys: [
                     { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-                    { pubkey: program_data_key, isSigner: false, isWritable: true },
+                    { pubkey: program_account_key, isSigner: false, isWritable: true },
                     { pubkey: program_data_key, isSigner: false, isWritable: true },
                     { pubkey: SYSTEM_KEY, isSigner: false, isWritable: true },
                 ],
@@ -1440,25 +1395,14 @@ export function DungeonApp() {
 
         if (isNaN(parsed_key_index)) return;
 
-        // if the string is more than 4 digits this should be a mint address
-        let index_buffer = uInt16ToLEBytes(parsed_key_index);
+        let key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
 
-        let dungeon_key_lookup_account = PublicKey.findProgramAddressSync([Buffer.from("key_meta"), index_buffer], DUNGEON_PROGRAM)[0];
-
-        //console.log("lookup: ", Buffer.from("key_meta"), reversed_buffer);
-        let key_meta_data = await request_key_data_from_index(bearer_token, dungeon_key_lookup_account);
-
-        // if we have been passed a number check the lookup account exists
         if (key_meta_data === null) {
-            key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
-
-            if (key_meta_data === null) {
-                setDiscountError("Key " + discount_key_index + " has not been minted");
-                return;
-            }
+            setDiscountError("Key " + discount_key_index + " has not been minted");
+            return;
         }
 
-        console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
+        //console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
 
         let key_mint = key_meta_data.key_mint;
         let key_type = key_meta_data.key_type;
@@ -1478,7 +1422,26 @@ export function DungeonApp() {
             return;
         }
 
-        setCurrentKeyType(key_type);
+        let max_freeplays = 10;
+        if (key_type === KeyType.Silver)
+            max_freeplays = 20;
+        if (key_type === KeyType.Gold)
+            max_freeplays = 30;   
+
+        // get remaining freeplays
+        let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+
+        let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
+
+        if (freeplay_data === null) {
+            console.log("no free play account found, setting to ", max_freeplays);
+            setKeyFreePlays(max_freeplays);
+        }
+        else {
+            console.log("free plays remaining", freeplay_data);
+            setKeyFreePlays(freeplay_data.freeplays_remaining);
+        }
+        
         setCurrentKeyMint(key_mint);
         setCurrentKeyIndex(key_index);
     }, [wallet, discount_key_index, bearer_token]);
@@ -1505,7 +1468,7 @@ export function DungeonApp() {
         return (
             <>
                 <Center>
-                    <img style={{ imageRendering: "pixelated" }} src={large_door} width={500} alt={"generic"} />
+                    <img style={{ imageRendering: "pixelated" }} src={large_door} width={400} alt={"generic"} />
                 </Center>
             </>
         );
@@ -1521,6 +1484,60 @@ export function DungeonApp() {
                     alt={""}
                 />
             </Box>
+        );
+    };
+
+    const PotionButtons = () => {
+
+        let loot_bonus_time = current_player_data ? bignum_to_num(current_player_data?.bonus_loot_activation_time) : 0;
+        let current_time = Date.now() / 1000;
+        let loot_bonus_valid = loot_bonus && (current_time - loot_bonus_time) / 60 < 10.1;
+
+        return (
+            <HStack>
+                <HStack align="bottom" spacing="3px">
+                    <Box
+                        as="button"
+                        disabled={advantage || current_player_data === null || current_player_data?.num_advantage_potions === 0 ? true : false}
+                        onClick={() => DrinkPotion(0)}
+                        borderWidth="1px"
+                        borderColor={advantage ? "green" : "white"}
+                    >
+                        <img
+                            style={{
+                                imageRendering: "pixelated",
+                            }}
+                            src={power_potion}
+                            width={EMOJI_SIZE}
+                            alt={""}
+                        />
+                    </Box>
+                    <Text pt={EMOJI_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
+                            {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
+                    </Text>
+                </HStack>
+                <HStack align="bottom" spacing="3px">
+                    <Box
+                        as="button"
+                        disabled={loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? true : false}
+                        onClick={() => DrinkPotion(1)}
+                        borderWidth="1px"
+                        borderColor={loot_bonus_valid ? "green" : "white"}
+                    >
+                        <img
+                            style={{
+                                imageRendering: "pixelated"
+                            }}
+                            src={luck_potion}
+                            width={EMOJI_SIZE}
+                            alt={""}
+                        />
+                    </Box>
+                    <Text pt={EMOJI_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
+                                {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
+                    </Text>
+                    </HStack>
+            </HStack>
         );
     };
 
@@ -1641,15 +1658,18 @@ export function DungeonApp() {
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
                                 <Box width="27%">
-                                    <div className="font-face-sfpb">
-                                        <Text align="center" fontSize={font_size} color="white">
-                                            DUNGEON
-                                            <br />
-                                            MASTER'S
-                                            <br />
-                                            FEE: 3.00%
-                                        </Text>
-                                    </div>
+                                    <VStack>
+                                        <div className="font-face-sfpb">
+                                            <Text align="center" fontSize={font_size} color="white">
+                                                DUNGEON
+                                                <br />
+                                                FEE:
+                                                <br />
+                                                0.002 SOL
+                                            </Text>
+                                        </div>
+                                        <DiscountKeyInput />
+                                    </VStack>
                                 </Box>
                                 <Box width="46%">
                                     <LargeDoor />
@@ -1682,13 +1702,12 @@ export function DungeonApp() {
 
         var visible = true;
 
-        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "status", DungeonStatusString[currentStatus], "num_plays", num_plays,  initial_num_plays.current, "dataaccount:", AccountStatusString[data_account_status],  "initial status", DungeonStatusString[initial_status.current]);
 
         // if i don't need to make an account but player status is unknown return nothing
         if (
             data_account_status === AccountStatus.created &&
             (initial_status.current === DungeonStatus.unknown ||
-                (num_plays === initial_num_plays.current && currentStatus === DungeonStatus.alive && current_level > 0))
+                (num_plays.current === initial_num_plays.current && currentStatus === DungeonStatus.alive && current_level > 0))
         ) {
             visible = false;
         }
@@ -1706,44 +1725,29 @@ export function DungeonApp() {
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
                                 <Box width="27%" visibility={visible ? "visible" : "hidden"}>
-                                    <div className="font-face-sfpb">
-                                        {current_key_type === KeyType.Unknown && (
-                                            <Text align="center" fontSize={font_size} color="white">
-                                                DUNGEON
-                                                <br />
-                                                MASTER'S
-                                                <br />
-                                                FEE: 3.00%
-                                            </Text>
-                                        )}
-                                        {current_key_type === KeyType.Bronze && (
-                                            <Text align="center" fontSize={font_size} color="#CD7F32">
-                                                DUNGEON
-                                                <br />
-                                                MASTER'S
-                                                <br />
-                                                FEE: 2.25%
-                                            </Text>
-                                        )}
-                                        {current_key_type === KeyType.Silver && (
-                                            <Text align="center" fontSize={font_size} color="silver">
-                                                DUNGEON
-                                                <br />
-                                                MASTER'S
-                                                <br />
-                                                FEE: 1.50%
-                                            </Text>
-                                        )}
-                                        {current_key_type === KeyType.Gold && (
-                                            <Text align="center" fontSize={font_size} color="gold">
-                                                DUNGEON
-                                                <br />
-                                                MASTER'S
-                                                <br />
-                                                FEE: 0.75%
-                                            </Text>
-                                        )}
-                                    </div>
+                                    <VStack>
+                                        <div className="font-face-sfpb">
+                                            {key_freeplays <= 0 && (
+                                                <Text align="center" fontSize={font_size} color="white">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.002 SOL
+                                                </Text>
+                                            )}
+                                            {key_freeplays > 0 && (
+                                                <Text align="center" fontSize={font_size} color="white">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.000 SOL
+                                                </Text>
+                                            )}
+                                        </div>
+                                        <DiscountKeyInput />
+                                    </VStack>
                                 </Box>
                                 <Box width="46%">
                                     <LargeDoor />
@@ -1767,9 +1771,7 @@ export function DungeonApp() {
                                                 />
                                             </Button>
                                         </div>
-                                        <BetSizeInput />
-
-                                        <DiscountKeyInput />
+                                        <PotionButtons />
                                     </VStack>
                                 </Box>
                             </HStack>
@@ -1836,13 +1838,15 @@ export function DungeonApp() {
 
         return (
             <>
-                <VStack>
+                <VStack width="100%">
                     <Box width="100%">
                         <HStack>
                             <Box width="25%"></Box>
                             <DisplayLVL current_level={current_level} />
                             <Box width="30%"></Box>
-                            <DisplayXP current_xp={numXP} />
+                            <DisplayXP
+                                current_xp={current_player_data === null ? 0 : current_player_data?.character_xp[player_character]}
+                            />
                             <Box width="25%"></Box>
                         </HStack>
                     </Box>
@@ -1884,139 +1888,147 @@ export function DungeonApp() {
                         <Box width="10%"></Box>
                     </HStack>
 
-                    <VStack alignItems="center">
+                    <VStack width="100%" alignItems="center">
                         {transaction_failed && (
-                            <div className="font-face-sfpb">
                                 <Center>
-                                    <Text fontSize={font_size} textAlign="center" color="red">
+                                    <Text className="font-face-sfpb" fontSize={font_size} textAlign="center" color="red">
                                         Transaction Failed. <br />
                                         Please Refresh.
                                     </Text>
                                 </Center>
-                            </div>
                         )}
 
                         {player_state === DungeonStatus.dead && (
                             <>
                                 <VStack alignItems="center" spacing="2%">
+                                    <DiceRollText
+                                        roll_one={roll_one.current}
+                                        roll_two={roll_two.current}
+                                        loading={enemy_state === DungeonStatus.unknown}
+                                    />
+
                                     <DisplayPlayerFailedText
                                         current_enemy={current_enemy}
                                         current_level={current_level}
-                                        num_plays={num_plays}
+                                        num_plays={num_plays.current}
                                     />
                                     <Center>
-                                        <HStack alignItems="center">
-                                            <Button variant="link" size="md" onClick={handleExit} mr="5rem">
-                                                <div className="font-face-sfpb">
-                                                    <Text textAlign="center" fontSize={font_size} color="white">
+                                        <VStack>
+                                            <HStack mb="1rem">
+                                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                                                    Drink a Potion
+                                                </Text>
+                                                <PotionButtons />
+                                            </HStack>
+                                        
+                                            <HStack alignItems="center">
+                                                <Button variant="link" size="md" onClick={handleExit} mr="5rem">
+                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
                                                         Exit
                                                     </Text>
-                                                </div>
-                                            </Button>
-                                            {!processing_transaction && (
-                                                <Button variant="link" size="md" onClick={handleRetry} ml="5rem">
-                                                    <div className="font-face-sfpb">
-                                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
-                                                            Retry
-                                                        </Text>
-                                                    </div>
                                                 </Button>
-                                            )}
-                                            {processing_transaction && (
-                                                <Button variant="link" size="md" ml="5rem">
-                                                    <div className="font-face-sfpb">
-                                                        <Text textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
-                                                            Retry
-                                                        </Text>
-                                                    </div>
+                                                <Button
+                                                    disabled={processing_transaction ? true : false}
+                                                    variant="link"
+                                                    size="md"
+                                                    onClick={handleRetry}
+                                                    ml="5rem"
+                                                >
+                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
+                                                        Retry
+                                                    </Text>
                                                 </Button>
-                                            )}
-                                        </HStack>
+
+                                            </HStack>
+                                        </VStack>
                                     </Center>
                                 </VStack>
                             </>
                         )}
                         {player_state === DungeonStatus.alive && current_level > 0 && (
                             <>
+                                {enemy_state === DungeonStatus.unknown && (
+                                    <DiceRollText
+                                        roll_one={roll_one.current}
+                                        roll_two={roll_two.current}
+                                        loading={true}
+                                    />
+                                )}
                                 {enemy_state === DungeonStatus.alive && (
                                     <DisplayEnemyAppearsText
                                         current_enemy={current_enemy}
                                         current_level={current_level}
-                                        num_plays={num_plays}
+                                        num_plays={num_plays.current}
                                     />
                                 )}
                                 {enemy_state === DungeonStatus.dead && (
-                                    <VStack alignItems="center" spacing="2%">
+                                    <VStack width="100%" alignItems="center" spacing="2%" mb="5rem">
+                                        <DiceRollText
+                                            roll_one={roll_one.current}
+                                            roll_two={roll_two.current}
+                                            loading={false}
+                                        />
+
                                         <DisplayPlayerSuccessText
                                             current_level={current_level}
                                             current_enemy={current_enemy}
-                                            bet_size={bet_value}
-                                            num_plays={num_plays}
-                                            last_gold={last_gold}
+                                            last_loot={last_loot}
+                                            num_plays={num_plays.current}
+                                            total_loot={total_loot}
+                                            loot_bonus={last_loot_bonus.current}
                                         />
 
                                         {current_level < 7 && (
                                             <Center>
-                                                <HStack>
-                                                    {!processing_transaction && (
-                                                        <Button variant="link" size="md" onClick={handleEscape} mr="3rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
+                                                <VStack>
+                                                    <HStack mb="1rem">
+                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                                                            Drink a Potion
+                                                        </Text>
+                                                        <PotionButtons />
+                                                    </HStack>
+                                                
+                                                    <HStack>
+                                                        <Button
+                                                            disabled={processing_transaction ? true : false}
+                                                            variant="link"
+                                                            size="md"
+                                                            onClick={handleEscape}
+                                                            mr="3rem"
+                                                        >
+                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
                                                                     Escape
                                                                 </Text>
-                                                            </div>
                                                         </Button>
-                                                    )}
-                                                    {processing_transaction && (
-                                                        <Button variant="link" size="md" mr="3rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
-                                                                    Escape
-                                                                </Text>
-                                                            </div>
-                                                        </Button>
-                                                    )}
-                                                    {!processing_transaction && (
-                                                        <Button variant="link" size="md" onClick={handleExploreFurther} ml="10rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
+
+                                                        <Button
+                                                            disabled={processing_transaction ? true : false}
+                                                            variant="link"
+                                                            size="md"
+                                                            onClick={handleExploreFurther}
+                                                            ml="10rem"
+                                                        >
+                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
                                                                     Explore Further
                                                                 </Text>
-                                                            </div>
                                                         </Button>
-                                                    )}
-                                                    {processing_transaction && (
-                                                        <Button variant="link" size="md" ml="10rem">
-                                                            <div className="font-face-sfpb">
-                                                                <Text textAlign="center" fontSize={font_size} color="white">
-                                                                    Explore Further
-                                                                </Text>
-                                                            </div>
-                                                        </Button>
-                                                    )}
-                                                </HStack>
+
+                                                    </HStack>
+                                                </VStack>
                                             </Center>
                                         )}
                                         {current_level >= 7 && (
                                             <Center>
-                                                {!processing_transaction && (
-                                                    <Button variant="link" size="md" onClick={Quit}>
-                                                        <div className="font-face-sfpb">
-                                                            <Text textAlign="center" fontSize={font_size} color="white">
-                                                                Retire
-                                                            </Text>
-                                                        </div>
-                                                    </Button>
-                                                )}
-                                                {processing_transaction && (
-                                                    <Button variant="link" size="md">
-                                                        <div className="font-face-sfpb">
-                                                            <Text textAlign="center" fontSize={font_size} color="white">
-                                                                Retire
-                                                            </Text>
-                                                        </div>
-                                                    </Button>
-                                                )}
+                                                <Button
+                                                    disabled={processing_transaction ? true : false}
+                                                    variant="link"
+                                                    size="md"
+                                                    onClick={Quit}
+                                                >
+                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
+                                                            Retire
+                                                        </Text>
+                                                </Button>
                                             </Center>
                                         )}
                                     </VStack>
@@ -2047,7 +2059,7 @@ export function DungeonApp() {
                                 <Text textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="Red">
                                     You Have Died
                                     <br />
-                                    <del>{(WIN_FACTORS[current_level - 1] * bet_value).toFixed(3)} SOL</del>
+                                    <del>{total_loot.toFixed(3)} Loot</del>
                                 </Text>
                             </div>
                         </Center>
@@ -2091,14 +2103,19 @@ export function DungeonApp() {
                             {screen === Screen.FAQ_SCREEN && <FAQScreen />}
                             {screen === Screen.HELP_SCREEN && <HelpScreen />}
                             {screen === Screen.SHOP_SCREEN && (
-                                <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance} />
+                                <ShopScreen
+                                    player_data={current_player_data}
+                                    bearer_token={bearer_token}
+                                    check_sol_balance={check_sol_balance}
+                                    check_user_state={check_user_state}
+                                />
                             )}
                             {screen === Screen.MARKETPLACE_SCREEN && <MarketplaceScreen bearer_token={bearer_token} />}
                             {screen === Screen.DM_SCREEN && <DMScreen bearer_token={bearer_token} />}
                             {screen === Screen.ACHIEVEMENT_SCREEN && (
                                 <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
                             )}
-                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} />}
+                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} loot_per_day={loot_per_day.toFixed(2)} player_data={current_player_data}/>}
                             {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) && (
                                 <UnconnectedPage />
                             )}
@@ -2113,14 +2130,19 @@ export function DungeonApp() {
                             {screen === Screen.ODDS_SCREEN && <OddsScreen />}
                             {screen === Screen.FAQ_SCREEN && <FAQScreen />}
                             {screen === Screen.SHOP_SCREEN && (
-                                <ShopScreen num_xp={numXP} bearer_token={bearer_token} check_sol_balance={check_sol_balance} />
+                                <ShopScreen
+                                    player_data={current_player_data}
+                                    bearer_token={bearer_token}
+                                    check_sol_balance={check_sol_balance}
+                                    check_user_state={check_user_state}
+                                />
                             )}
                             {screen === Screen.MARKETPLACE_SCREEN && <MarketplaceScreen bearer_token={bearer_token} />}
                             {screen === Screen.HELP_SCREEN && <HelpScreen />}
                             {screen === Screen.ACHIEVEMENT_SCREEN && (
                                 <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
                             )}
-                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} />}
+                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} loot_per_day={loot_per_day.toFixed(2)} player_data={current_player_data}/>}
                             {screen === Screen.DM_SCREEN && <DMScreen bearer_token={bearer_token} />}
                         </>
                     )}

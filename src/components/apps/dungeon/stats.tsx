@@ -20,7 +20,7 @@ import { useMediaQuery } from 'react-responsive'
 //} from '@solana/wallet-adapter-react';
 
 import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, EMOJI_SIZE } from './constants';
-import {AchievementData, bignum_to_num} from './utils';
+import {AchievementData, bignum_to_num, PlayerData} from './utils';
 import {DungeonEnemy, DungeonCharacter} from './dungeon_state';
 
 import './css/table.css';
@@ -250,7 +250,7 @@ function Clears(AchievementData : AchievementData) : number
 }
 
 
-function PlayerStats({AchievementData} : {AchievementData : AchievementData | null})
+function PlayerStats({AchievementData, player_data} : {AchievementData : AchievementData | null, player_data : PlayerData | null})
 {
 
     const isMobile = useMediaQuery({ query: '(max-width: 500px)' })
@@ -288,7 +288,7 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
 
                 <VStack align="center">
                     <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{(bignum_to_num(AchievementData.total_lamports_claimed)/1e9).toFixed(3)}</Text>
-                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total<br/>SOL<br/>Looted </Text>
+                    <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total<br/>Looted </Text>
                 </VStack>
 
                 <VStack align="center">
@@ -315,7 +315,7 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
 
                         <VStack align="center">
                             <Text align="center" fontSize={DEFAULT_FONT_SIZE}>{(bignum_to_num(AchievementData.total_lamports_claimed)/1e9).toFixed(3)}</Text>
-                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total SOL<br/>Looted </Text>
+                            <Text align="center" fontSize={DUNGEON_FONT_SIZE}>Total<br/>Looted </Text>
                         </VStack>
                     </VStack>
 
@@ -354,25 +354,41 @@ function PlayerStats({AchievementData} : {AchievementData : AchievementData | nu
             </Center>
         }
 
-            <Text fontSize={DUNGEON_FONT_SIZE}>Levels Survived/Killed</Text>
-                <Table className="custom-table">
+            <Text fontSize={DUNGEON_FONT_SIZE}>Character Stats</Text>
+                <Table className="custom-centered-table">
                     <thead>
                     <tr>
+                        <th></th>
                         <th><Center><img src={knight_emoji} width="auto" alt={""} style={{marginLeft: "8px", maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
-                        <th><Center><img src={ranger_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th style={{visibility:"hidden"}}><Center><img src={ranger_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
                         <th><Center><img src={wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th style={{visibility:"hidden"}}><Center><img src={knight_emoji} width="auto" alt={""} style={{marginLeft: "8px", maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th><Center><img src={ranger_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
+                        <th style={{visibility:"hidden"}}><Center><img src={wizard_emoji} width="auto" alt={""} style={{maxHeight: EMOJI_SIZE, maxWidth: EMOJI_SIZE}}/></Center></th>
                         
                     </tr>
                     </thead>
                     <tbody style={{
                         backgroundColor: 'black'
                     }}>
-                    
                         <tr>
-                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.knight}/></td>
-                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.ranger}/></td>
-                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.wizard}/></td>
+                            <td>XP</td>
+                            <td >{player_data?.character_xp[0]} XP</td>
+                            <td style={{visibility:"hidden"}}>{player_data?.character_xp[1]} </td>
+                            <td >{player_data?.character_xp[2]} XP</td>
+                            <td style={{visibility:"hidden"}}>{player_data?.character_xp[0]} </td>
+                            <td >{player_data?.character_xp[1]} XP</td>
+                            <td style={{visibility:"hidden"}}>{player_data?.character_xp[2]} </td>
                             
+                        </tr>
+                        <tr>
+                            <td>Levels Survived/Killed</td>
+                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.knight}/></td>
+                            <td style={{visibility:"hidden"}}><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.ranger}/></td>
+                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.wizard}/></td>
+                            <td style={{visibility:"hidden"}}><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.knight}/></td>
+                            <td ><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.ranger}/></td>
+                            <td style={{visibility:"hidden"}}><CharacterWinLoss AchievementData = {AchievementData} player_character = {DungeonCharacter.wizard}/></td>
                         </tr>
                     </tbody>
                 </Table>
@@ -633,7 +649,7 @@ function GameStats({plays, wins} : {plays : number[], wins : number[]})
     );
 }
 
-export function StatsScreen({AchievementData} : {AchievementData : AchievementData | null})
+export function StatsScreen({AchievementData, loot_per_day, player_data} : {AchievementData : AchievementData | null, loot_per_day : string, player_data : PlayerData | null})
 {
 
     const [activeTab, setActiveTab] = useState<any>("home");
@@ -642,7 +658,6 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
     const [user_data, setUserData] = useState<number[]>([]);
 
     const [character_data, setCharacterData] = useState<number[]>([]);
-    const [betsize_data, setBetSizeData] = useState<number[]>([]);
     const [total_plays, setTotalPlays] = useState<number>(0);
     const [total_volume, setTotalVolume] = useState<number>(0);
     const [total_users, setTotalUsers] = useState<number>(0);
@@ -655,8 +670,8 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
     const [tier_2_losses, setTier2Losses] = useState<number>(0);
 
 
-    //const wallet = useWallet();
 
+    console.log("in stats", player_data);
     const FetchData = useCallback( async () => 
     {
         
@@ -691,7 +706,6 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
         //console.log(main_stats);
 
         setCharacterData(main_stats["characters"]);
-        setBetSizeData(main_stats["bet_sizes"]);
         setTotalPlays(main_stats["total_games"]);
         setTotalVolume(main_stats["total_volume"]);
         setTotalUsers(main_stats["total_users"])
@@ -814,27 +828,23 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
                         <LongPlot title="Dungeons & Degens Daily Data" x_data={dates} y_data={volume_data} y2_data={user_data}/>
                         <VStack  className='lineGraphVstack' alignItems="left">
                             <Box width = "100%" mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
-                                <Text align="center">Total Plays  <br/> {total_plays}</Text>
-                                </div>
+                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Plays  <br/> {total_plays}</Text>
                             </Box>
                             <Box width = "100%"  ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
-                                <Text align="center">Total Volume <br/> {total_volume.toFixed(2)}</Text>
-                                </div>
+                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Volume <br/> {total_volume.toFixed(2)}</Text>
                             </Box> 
                             <Box width = "100%"  ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                                <div className="font-face-sfpb" style={{color: "white", fontSize: DUNGEON_FONT_SIZE}}>
-                                <Text align="center">Total Users <br/> {total_users}</Text>
-                                </div>
-                            </Box>   
+                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Users <br/> {total_users}</Text>
+                            </Box> 
+                            <Box width = "100%"  ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
+                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">LOOT / day <br/> {loot_per_day}</Text>
+                            </Box>  
                         </VStack>
                     </HStack>
                 </Center>
                 <Center  className='responsivePage'>
                     <HStack className='responsiveGraph' >
                         <PieChart values={character_data} labels={["Knight", "Ranger", "Wizard"]} title="Character Choices"/>
-                        <PieChart  values={betsize_data} labels={["0.05", "0.1", "0.25"]} title="Bet Size Choices"/>
                     </HStack>
                 </Center>
    
@@ -853,7 +863,7 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
             </Tab> 
             
             <Tab eventKey="perils" title="PLAYER" tabClassName="custom-tab">
-                <PlayerStats AchievementData={AchievementData}/>
+                <PlayerStats AchievementData={AchievementData} player_data={player_data}/>
                 
             </Tab>     
             
