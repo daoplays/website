@@ -2130,6 +2130,8 @@ export function DungeonApp() {
     );
 }
 
+
+
 function Home() {
     const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()], []);
 

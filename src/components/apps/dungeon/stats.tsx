@@ -845,7 +845,6 @@ export function StatsScreen({AchievementData} : {AchievementData : AchievementDa
 
                 </HStack>
 
-                    </HStack>
                 </Center>
             </Tab>
             <Tab eventKey="games" title="GAMES" tabClassName="custom-tab">
