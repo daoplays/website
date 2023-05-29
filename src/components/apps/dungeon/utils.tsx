@@ -621,15 +621,17 @@ class DungeonQuitInstruction {
 class DungeonDrinkPotionInstruction {
     constructor(
       readonly instruction: number,
-      readonly which_potion: number
+      readonly which_potion: number,
+      readonly quantity: number,
     ) {}
   
     static readonly struct = new BeetStruct<DungeonDrinkPotionInstruction>(
       [
         ['instruction', u8],
-        ['which_potion', u8]
+        ['which_potion', u8],
+        ['quantity', u8]
       ],
-      (args) => new DungeonDrinkPotionInstruction(args.instruction!, args.which_potion!),
+      (args) => new DungeonDrinkPotionInstruction(args.instruction!, args.which_potion!, args.quantity!),
       'DungeonDrinkPotionInstruction'
     )
 }
@@ -637,15 +639,18 @@ class DungeonDrinkPotionInstruction {
 class DungeonBuyPotionInstruction {
     constructor(
       readonly instruction: number,
-      readonly which_potion: number
+      readonly which_potion: number,
+      readonly quantity: number,
     ) {}
   
     static readonly struct = new BeetStruct<DungeonBuyPotionInstruction>(
       [
         ['instruction', u8],
-        ['which_potion', u8]
+        ['which_potion', u8],
+        ['quantity', u8]
+
       ],
-      (args) => new DungeonBuyPotionInstruction(args.instruction!, args.which_potion!),
+      (args) => new DungeonBuyPotionInstruction(args.instruction!, args.which_potion!, args.quantity!),
       'DungeonBuyPotionInstruction'
     )
 }
@@ -784,16 +789,16 @@ export function serialise_claim_achievement_instruction(instruction : number, ac
 export function serialise_drink_potion_instruction(instruction : number, which_potion : number) : Buffer
 {
 
-    const data = new DungeonDrinkPotionInstruction(instruction, which_potion);
+    const data = new DungeonDrinkPotionInstruction(instruction, which_potion, 0);
     const [buf] = DungeonDrinkPotionInstruction.struct.serialize(data);
 
     return buf;
 }
 
-export function serialise_buy_potion_instruction(instruction : number, which_potion : number) : Buffer
+export function serialise_buy_potion_instruction(instruction : number, which_potion : number , quantity : number) : Buffer
 {
 
-    const data = new DungeonBuyPotionInstruction(instruction, which_potion);
+    const data = new DungeonBuyPotionInstruction(instruction, which_potion, quantity);
     const [buf] = DungeonBuyPotionInstruction.struct.serialize(data);
 
     return buf;
