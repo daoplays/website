@@ -8,51 +8,80 @@ export function FAQScreen() {
             <Center mb="5rem">
                 <Box width="80%">
                     <div className="font-face-sfp" style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}>
+
                         <h2 className="mt-5 font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
-                            What is Dungeons & Degens
+                            WHAT IS THIS?
                         </h2>
+
                         <br />
-                        DUNGEONS & DEGENS is a Web3 gaming site inspired by retro dungeon crawlers and RPGs. It combines elements of
-                        wagering and RPG progression to create an exciting and immersive entertainment experience. The XP System grants
-                        Players XP points as they progress through the dungeon. XP points can be spent on a variety of rewards such as free
-                        raffle entries and Solana Loot NFTs. The Solana Loot System is similar to Loot NFTs on Ethereum but intended to be
-                        interoperable within the Solana network instead. Our first game available, DUNGEON, puts a fresh spin on the tired
-                        coin-flip games, combining 'push your luck' game-play with permanent character progression.
+                        DUNGEONS & DEGENS is a retro RPG designed specifically for Web3 degens.
+                        Explore the Dungeon to earn XP and find $LOOT, then spend it on Consumables to boost your progress or Limited Edition Collectibles!
+                        The game is constantly updated with more content and new uses for $LOOT.
+
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
-                            Is there a cost to play
+                            WHAT BLOCKCHAIN IS THE GAME ON?
                         </h2>
+
                         <br />
-                        There is a 3% Dungeon Fee applied to Player winnings when exiting the dungeon alive. No fee is taken on losses.
-                        Coming Soon: The Dungeon Fee can be reduced by entering a Key Code from our Dungeon Key NFTs. A set of 10 Keys can
-                        also be burned for a Dungeon Master NFT. To find out more about our NFT collections please visit our Discord
-                        channel.
+                        DUNGEONS & DEGENS runs entirely on the Solana blockchain. It is the only network that can settle transactions fast enough to handle all the game logic entirely on-chain.
+                        <br/><br/>
+                        The program address is: FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk
+                        <br/><br/>
+                        $LOOT is an SPL token. The token address is: FGXnWVQuc35M8XLG4egciVhZXqhy3XawbY2V8TpfHHag
+
+
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
-                            How does Dungeon work
+                            HOW DOES IT WORK?
                         </h2>
                         <br />
                         <ul>
-                            <li>Connect your Phantom Wallet. A dedicated burner wallet is recommended</li>
-                            <li>Select your Hero (Cosmetic only - No gameplay impact)</li>
+                            <li>Step 1: Connect with a Solana wallet. We recommend Solflare.</li>
+                            <li>Step 2: Select a Hero then Enter the Dungeon. A 0.002 SOL entry fee is required. The first time you play a little bit more will be required to create your game data account.</li>
                             <li>
-                                Click "Enter Dungeon" and accept the wager transaction. The first time you play this will create a data
-                                account to track your progress
+                            Step 3: On Room 1, one of many possible Perils will spawn. Wait for your Die Roll to resolve on-chain.
                             </li>
-                            <li>Wait for the Room to spawn a Peril and resolve it</li>
-                            <li>Exit the dungeon or Continue to the next Room</li>
+                            <li>Step 4: If successful, you may choose to Escape with the $LOOT you have found or to Explore the next Room. Deeper Rooms contain bigger $LOOT rewards but also have more dangerous Perils.</li>
+                            <li>Step 5: If unsuccessful, your Hero dies and the $LOOT accumulated during that run is lost.</li>
                             <li>
-                                After earning 100XP, visit the Merchant to redeem a Whitelist Token to our Dungeon Key Mint (Coming Soon){" "}
+                            Step 6: Spend $LOOT at the Shop on upgrades, boosts, and collectibles.
                             </li>
-                            <li>If you need any further help please submit a support ticket in our Discord channel </li>
                         </ul>
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
-                            What are Dungeon Keys
+                            DUNGEON KEYS
                         </h2>
                         <br />
-                        Dungeon Keys grant holders between 25% and 75% fee discounts depending on the quality of the key. Simply click the
-                        key icon and enter the key number, e.g. for Dungeon Key #0035 you would enter 35 and click Apply. The first time a
-                        key is used it will create a small lookup account to make using the key faster in the future.
+                            Dungeon Key NFTs grant a number of Free Entries to the Dungeon every day. They can be purchased in the SHOP for 2 SOL each, while supplies last.
+                            <br/><br/>
+                            Free Entries per Day:
+                            <ul>
+                                <li>Bronze - 10</li>
+                                <li>Silver - 20</li>
+                                <li>Gold - 30</li>
+                            </ul>
+                            <br/>
+                            To use the Free Plays, connect with a wallet holding a Dungeon Key, click the key symbol, enter its Key Number, then click Apply.
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
-                            How does the Arena work
+                            WHAT GAMES INSPIRED DUNGEONS & DEGENS?
+                        </h2>
+                        
+                        <br />
+                        
+                        Too many to list but some of the most influential ones are:
+                        <br/><br/>
+                        <ul>
+                            <li> Dungeons & Dragons 5th ed. </li>
+                            <li> Ultima 2</li>
+                            <li> Oregon Trail</li>
+                            <li> Dragon's Lair</li>
+                            <li> Old School Runescape</li>
+                            <li> DeFi Kingdoms</li>
+                            <li> Degen Coin Flip</li>
+                        </ul>
+                        <br/>
+                        These games provide lessons not just in lore, art, and gameplay, but also in UX and good governance.
+
+                        <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
+                            HOW DOES THE ARENA WORK
                         </h2>
                         <br />
                         The Arena is a Player vs. Player mode where individuals can create or join games to compete against each other.

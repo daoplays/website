@@ -36,6 +36,7 @@ export const LOOT_TOKEN_MINT = new PublicKey("FGXnWVQuc35M8XLG4egciVhZXqhy3XawbY
 
 // account seeds
 export const MAIN_ACCOUNT_SEED = "house_account";
+export const DATA_ACCOUNT_SEED = "data_account";
 
 // set font size
 export var DEFAULT_FONT_SIZE = "30px";

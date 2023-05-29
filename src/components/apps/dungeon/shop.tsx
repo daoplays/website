@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { Box, Button, HStack, Center, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, HStack, Center, Text, VStack, NumberInput, NumberInputField } from "@chakra-ui/react";
 import { isMobile } from "react-device-detect";
 
 import { PublicKey, Keypair, Transaction, TransactionInstruction } from "@solana/web3.js";
@@ -21,6 +21,8 @@ import {
     LOOT_TOKEN_MINT,
 } from "./constants";
 
+import { DungeonInstruction } from "./dungeon_state";
+
 import bs58 from "bs58";
 
 import {
@@ -33,6 +35,9 @@ import {
     request_token_amount,
     serialise_mint_from_collection_instruction,
     ShopData,
+    serialise_buy_potion_instruction,
+    bignum_to_num,
+    PlayerData,
 } from "./utils";
 
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -68,6 +73,11 @@ import delving_deeper_audio from "./sounds/Delving_Deeper.mp3";
 
 // paintings
 import tower_of_dur from "./shop_items/TowerOfDur.png";
+
+// potions
+import power_collection from "./shop_items/PotionCollection.gif";
+import power_potion from "./shop_items/Power_Potion.gif";
+import luck_potion from "./shop_items/Luck_Potion.gif";
 
 import "./css/style.css";
 import "./css/fonts.css";
@@ -120,17 +130,20 @@ const enum Collection {
     MusicBoxes = 2,
     Paintings = 3,
     LorePages = 4,
-    None = 5,
+    Potions = 5,
+    None = 6,
 }
 
 export function ShopScreen({
-    num_xp,
+    player_data,
     bearer_token,
     check_sol_balance,
+    check_user_state,
 }: {
-    num_xp: number;
+    player_data: PlayerData | null;
     bearer_token: string;
     check_sol_balance: React.MutableRefObject<boolean>;
+    check_user_state: React.MutableRefObject<boolean>;
 }) {
     const wallet = useWallet();
 
@@ -148,11 +161,15 @@ export function ShopScreen({
     const [customer_status, setCustomerStatus] = useState<CustomerStatus>(CustomerStatus.unknown);
     const [shop_data, setShopData] = useState<ShopData | null>(null);
 
+    const [potion_quantity, setPotionQuantity] = useState<string>("1");
+
     //button processing
     const [processing_transaction, setProcessingTransaction] = useState<boolean>(false);
 
     // state to handle playing the music boxes
     const [play_music_box, setPlayMusicBox] = useState<boolean>(false);
+
+    const [which_potion, setWhichPotion] = useState<number>(-1);
 
     //number of keys this user has bought
     const user_num_keys = useRef<number>(-1);
@@ -164,7 +181,8 @@ export function ShopScreen({
 
     // interval for updating shop state
     const xp_interval = useRef<number | null>(null);
-    const check_xp = useRef<boolean>(true);
+    const check_shop_state = useRef<boolean>(true);
+    const check_loot_balance = useRef<boolean>(true);
 
     const valid_shop_text = [
         "I see you've noticed my magnificent chest of keys.. Rummage around for something you like, i'm sure whatever you find will come in handy in your travels!",
@@ -181,126 +199,133 @@ export function ShopScreen({
     const check_xp_reqs = useCallback(async () => {
         if (!wallet.publicKey) return;
 
-        if (!check_xp.current) return;
+        if (!check_shop_state.current && !check_loot_balance.current) return;
 
-        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
-        let shop_data = await request_shop_data(bearer_token, program_data_key);
+        if (check_loot_balance.current) {
+            // get loot balance
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
 
-        //console.log("have shop data", shop_data);
-        setShopData(shop_data);
+            let loot_amount = await request_token_amount(bearer_token, loot_token_account);
+            loot_amount = loot_amount / 1.0e6;
 
-        // get loot balance
-        let loot_token_account = await getAssociatedTokenAddress(
-            LOOT_TOKEN_MINT, // mint
-            wallet.publicKey, // owner
-            true // allow owner off curve
-        );
+            if (loot_amount !== current_loot) {
+                check_loot_balance.current = false;
+            }
 
-        let loot_amount = await request_token_amount(bearer_token, loot_token_account);
-
-        if (loot_amount > 0) {
-            setCurrentLoot(loot_amount / 1.0e6);
+            setCurrentLoot(loot_amount);
         }
 
-        let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
+        if (check_shop_state.current) {
+            let program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
+            let shop_data = await request_shop_data(bearer_token, program_data_key);
 
-        let user_data = await request_shop_user_data(bearer_token, dungeon_key_data_account);
+            //console.log("have shop data", shop_data);
+            setShopData(shop_data);
 
-        let user_keys_bought = 0;
+            let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
 
-        if (user_data !== null) {
-            user_keys_bought = user_data.num_keys;
-        }
+            let user_data = await request_shop_user_data(bearer_token, dungeon_key_data_account);
 
-        if (user_keys_bought <= user_num_keys.current) {
-            check_xp.current = false;
-            return;
-        }
+            let user_keys_bought = 0;
 
-        user_num_keys.current = user_keys_bought;
+            if (user_data !== null) {
+                user_keys_bought = user_data.num_keys;
+            }
 
-        if (user_keys_bought >= 3) {
-            setXPReq(-1);
-            check_xp.current = false;
+            if (user_keys_bought <= user_num_keys.current) {
+                check_shop_state.current = false;
+                return;
+            }
+
+            user_num_keys.current = user_keys_bought;
+
+            if (user_keys_bought >= 3) {
+                setXPReq(-1);
+                check_shop_state.current = false;
+                setCustomerStatus(CustomerStatus.other);
+                return;
+            }
+
+            // if the shop hasn't been set up yet just return
+            if (shop_data === null) {
+                check_shop_state.current = false;
+                setCustomerStatus(CustomerStatus.other);
+                return;
+            }
+
+            let total_keys_bought = shop_data.keys_bought;
+
+            // if we have sold out there is nothing to sell
+            if (total_keys_bought >= 2000) {
+                setXPReq(-2);
+                check_shop_state.current = false;
+                setCustomerStatus(CustomerStatus.other);
+                return;
+            }
+
+            //console.log("total keys bought: ", total_keys_bought);
+            //console.log("user keys bought: ", user_keys_bought);
+
+            let n_levels = 10.0;
+            let total_keys = 3000.0;
+            let keys_per_level = total_keys / n_levels;
+            let current_level = Math.floor(total_keys_bought / keys_per_level);
+
+            let base_xp = 100;
+            let xp_cap_per_key = 500;
+            var base_xp_req = base_xp + current_level * 50;
+
+            //console.log("xp calc: ", n_levels, keys_per_level, current_level, base_xp_req);
+            var total_xp_req = base_xp_req + user_keys_bought * 50;
+
+            if (total_xp_req > xp_cap_per_key) {
+                total_xp_req = xp_cap_per_key;
+            }
+
+            //console.log("total xp req ", total_xp_req);
+
+            // check if they have any prepaid tokens
+            let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
+                PREPAID_WHITELIST_TOKEN, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
+
+            if (token_amount > 0) {
+                setCustomerStatus(CustomerStatus.prepaid);
+                setXPReq(total_xp_req);
+                check_shop_state.current = false;
+                return;
+            }
+
+            // if they dont have prepaid status then check for xp whitelist
+            let xp_whitelist_account_key = await getAssociatedTokenAddress(
+                XP_WHITELIST_TOKEN, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            let xp_token_amount = await request_token_amount(bearer_token, xp_whitelist_account_key);
+
+            if (xp_token_amount > 0) {
+                setCustomerStatus(CustomerStatus.xp_whitelist);
+                setXPReq(total_xp_req);
+                check_shop_state.current = false;
+
+                return;
+            }
+
             setCustomerStatus(CustomerStatus.other);
-            return;
-        }
-
-        // if the shop hasn't been set up yet just return
-        if (shop_data === null) {
-            check_xp.current = false;
-            setCustomerStatus(CustomerStatus.other);
-            return;
-        }
-
-        let total_keys_bought = shop_data.keys_bought;
-
-        // if we have sold out there is nothing to sell
-        if (total_keys_bought >= 2000) {
-            setXPReq(-2);
-            check_xp.current = false;
-            setCustomerStatus(CustomerStatus.other);
-            return;
-        }
-
-        //console.log("total keys bought: ", total_keys_bought);
-        //console.log("user keys bought: ", user_keys_bought);
-
-        let n_levels = 10.0;
-        let total_keys = 3000.0;
-        let keys_per_level = total_keys / n_levels;
-        let current_level = Math.floor(total_keys_bought / keys_per_level);
-
-        let base_xp = 100;
-        let xp_cap_per_key = 500;
-        var base_xp_req = base_xp + current_level * 50;
-
-        //console.log("xp calc: ", n_levels, keys_per_level, current_level, base_xp_req);
-        var total_xp_req = base_xp_req + user_keys_bought * 50;
-
-        if (total_xp_req > xp_cap_per_key) {
-            total_xp_req = xp_cap_per_key;
-        }
-
-        //console.log("total xp req ", total_xp_req);
-
-        // check if they have any prepaid tokens
-        let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
-            PREPAID_WHITELIST_TOKEN, // mint
-            wallet.publicKey, // owner
-            true // allow owner off curve
-        );
-
-        let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
-
-        if (token_amount > 0) {
-            setCustomerStatus(CustomerStatus.prepaid);
             setXPReq(total_xp_req);
-            check_xp.current = false;
-            return;
+            check_shop_state.current = false;
         }
-
-        // if they dont have prepaid status then check for xp whitelist
-        let xp_whitelist_account_key = await getAssociatedTokenAddress(
-            XP_WHITELIST_TOKEN, // mint
-            wallet.publicKey, // owner
-            true // allow owner off curve
-        );
-
-        let xp_token_amount = await request_token_amount(bearer_token, xp_whitelist_account_key);
-
-        if (xp_token_amount > 0) {
-            setCustomerStatus(CustomerStatus.xp_whitelist);
-            setXPReq(total_xp_req);
-            check_xp.current = false;
-
-            return;
-        }
-
-        setCustomerStatus(CustomerStatus.other);
-        setXPReq(total_xp_req);
-        check_xp.current = false;
-    }, [wallet, user_num_keys, bearer_token]);
+    }, [wallet, user_num_keys, current_loot, bearer_token]);
 
     const check_bought_item = useCallback(async () => {
         if (current_key.current === null) return;
@@ -326,7 +351,7 @@ export function ShopScreen({
             setProcessingTransaction(false);
 
             current_key.current = null;
-            check_xp.current = true;
+            check_shop_state.current = true;
         } catch (error) {
             console.log(error);
             return;
@@ -369,12 +394,12 @@ export function ShopScreen({
 
     useEffect(() => {
         user_num_keys.current = -1;
-        check_xp.current = true;
+        check_shop_state.current = true;
         setXPReq(null);
     }, [wallet]);
 
     useEffect(() => {
-        check_xp.current = true;
+        check_shop_state.current = true;
     }, []);
 
     const MintFromCollection = useCallback(
@@ -513,6 +538,74 @@ export function ShopScreen({
         [wallet, bearer_token, check_sol_balance]
     );
 
+    const MintPotion = useCallback(
+        async (which: number) => {
+            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+
+            setProcessingTransaction(true);
+
+            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true // allow owner off curve
+            );
+
+            let quantity = parseInt(potion_quantity);
+            if (isNaN(quantity)) {
+                setProcessingTransaction(false);
+                return;
+            }
+            const instruction_data = serialise_buy_potion_instruction(DungeonInstruction.buy_potion, which, quantity);
+
+            var account_vector = [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
+                { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
+                { pubkey: loot_token_account, isSigner: false, isWritable: true },
+                { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
+
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            transaction.add(play_instruction);
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    setProcessingTransaction(false);
+                    return;
+                }
+            } catch (error) {
+                setProcessingTransaction(false);
+                console.log(error);
+                return;
+            }
+
+            setProcessingTransaction(false);
+            check_user_state.current = true;
+            check_sol_balance.current = true;
+            check_loot_balance.current = true;
+        },
+        [wallet, bearer_token, check_user_state, check_sol_balance, potion_quantity]
+    );
+
     const MintKey = useCallback(async () => {
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
@@ -643,7 +736,7 @@ export function ShopScreen({
         }
 
         current_key.current = nft_meta_key;
-        check_xp.current = true;
+        check_shop_state.current = true;
         check_sol_balance.current = true;
 
         return;
@@ -698,7 +791,10 @@ export function ShopScreen({
             );
         }
 
-        if (customer_status === CustomerStatus.xp_whitelist || (xp_req !== null && num_xp !== null && xp_req > 0 && num_xp >= xp_req)) {
+        if (
+            customer_status === CustomerStatus.xp_whitelist ||
+            (xp_req !== null && player_data !== null && xp_req > 0 && bignum_to_num(player_data.num_xp) >= xp_req)
+        ) {
             return (
                 <Center width="100%">
                     <VStack alignItems="center" width="100%">
@@ -735,7 +831,7 @@ export function ShopScreen({
                 <Box width="80%">
                     <div className="font-face-sfpb">
                         <>
-                            {xp_req !== null && num_xp !== null && xp_req > 0 && num_xp < xp_req && (
+                            {xp_req !== null && player_data !== null && xp_req > 0 && bignum_to_num(player_data.num_xp) < xp_req && (
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                     {" "}
                                     {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP
@@ -783,6 +879,158 @@ export function ShopScreen({
         );
     };
 
+    const PotionQuantity = (): JSX.Element | null => {
+        return (
+            <div className="font-face-sfpb">
+                <HStack>
+                    <Text
+                        mt="1rem"
+                        className="font-face-sfpb"
+                        fontSize={DUNGEON_FONT_SIZE}
+                        textAlign="center"
+                        color="white"
+                        mb="1rem"
+                    >
+                    Quantity
+                    </Text>
+                    <NumberInput
+                        fontSize={DUNGEON_FONT_SIZE}
+                        color="white"
+                        size="sm"
+                        onChange={(valueString) => setPotionQuantity(valueString)}
+                        value={potion_quantity}
+                        precision={0}
+                        borderColor="white"
+                        min={1}
+                        max={100}
+                        
+                    >
+                        <NumberInputField
+                            autoFocus={true}
+                            height={DUNGEON_FONT_SIZE}
+                            width={50}
+                            paddingTop="1rem"
+                            paddingBottom="1rem"
+                            borderColor="white"
+                        />
+                    </NumberInput>
+                </HStack>
+            </div>
+        );
+    }
+
+    const PotionText = (): JSX.Element | null => {
+        return (
+            <Center width="100%">
+                <Box width="80%">
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb="1rem">
+                        Magical potions to help you in your adventures
+                    </Text>
+                    <Center>
+                        <HStack>
+                            <VStack alignItems="center">
+                                <Box as="button" onClick={() => setWhichPotion(0)}>
+                                    <img style={{ imageRendering: "pixelated" }} src={power_potion} width="150" alt={""} />
+                                </Box>
+                                <Box>
+                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
+                                        Potion Of Power
+                                    </Text>
+                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
+                                        10 LOOT
+                                    </Text>
+                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
+                                        You Own {player_data?.num_advantage_potions}
+                                    </Text>
+                                </Box>
+                            </VStack>
+
+                            <VStack alignItems="center">
+                                <Box as="button" onClick={() => setWhichPotion(1)}>
+                                    <img style={{ imageRendering: "pixelated" }} src={luck_potion} width="150" alt={""} />
+                                </Box>
+                                <Box as="button">
+                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
+                                        Potion of Luck
+                                    </Text>
+                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
+                                        50 LOOT
+                                    </Text>
+                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
+                                        You Own {player_data?.num_bonus_loot_potions}
+                                    </Text>
+                                </Box>
+                            </VStack>
+                        </HStack>
+                    </Center>
+
+                    {which_potion === 0 && (
+                        <VStack>
+                            <Text
+                                mt="1rem"
+                                className="font-face-sfpb"
+                                fontSize={DUNGEON_FONT_SIZE}
+                                textAlign="center"
+                                color="white"
+                                mb="1rem"
+                            >
+                                Potion of Power - Roll two dice in the next Room and pick the highest value as your attack
+                            </Text>
+                            <VStack>
+
+                            <PotionQuantity/>
+                            <Box
+                                as="button"
+                                onClick={() => {
+                                    MintPotion(0);
+                                }}
+                                borderWidth="1px"
+                                borderColor="white"
+                            >
+                                
+                                <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
+                                    Purchase
+                                </Text>
+                            </Box>
+                            </VStack>
+                        </VStack>
+                    )}
+                    {which_potion === 1 && (
+                        <VStack>
+                            <Text
+                                mt="1rem"
+                                className="font-face-sfpb"
+                                fontSize={DUNGEON_FONT_SIZE}
+                                textAlign="center"
+                                color="white"
+                                mb="1rem"
+                            >
+                                Potion of Luck - Find double the LOOT for 10 minutes after drinking
+                            </Text>
+                            <VStack>
+                            <PotionQuantity/>
+
+                            <Box
+                                as="button"
+                                onClick={() => {
+                                    MintPotion(1);
+                                }}
+                                borderWidth="1px"
+                                borderColor="white"
+                            >
+                                <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
+                                    Purchase
+                                </Text>
+                            </Box>
+                            </VStack>
+
+                        </VStack>
+                    )}
+                </Box>
+            </Center>
+        );
+    };
+
     const MusicText = (): JSX.Element | null => {
         return (
             <Center width="100%">
@@ -796,7 +1044,11 @@ export function ShopScreen({
                                 <MusicTextButton which_box={0} />
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 1100 || processing_transaction ? true : false}
+                                    disabled={
+                                        (player_data !== null && bignum_to_num(player_data.num_xp) < 1100) || processing_transaction
+                                            ? true
+                                            : false
+                                    }
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 0);
                                     }}
@@ -808,7 +1060,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 1100 ? "1100 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -818,7 +1070,11 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 2500 || processing_transaction ? true : false}
+                                    disabled={
+                                        (player_data !== null && bignum_to_num(player_data.num_xp) < 2500) || processing_transaction
+                                            ? true
+                                            : false
+                                    }
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 1);
                                     }}
@@ -830,7 +1086,9 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[1]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 2500 ? "2500 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && bignum_to_num(player_data.num_xp) < 2500
+                                            ? "2500 XP required"
+                                            : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -840,7 +1098,11 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 4500 || processing_transaction ? true : false}
+                                    disabled={
+                                        (player_data !== null && bignum_to_num(player_data.num_xp) < 4500) || processing_transaction
+                                            ? true
+                                            : false
+                                    }
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 2);
                                     }}
@@ -852,7 +1114,9 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[2]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 4500 ? "4500 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && bignum_to_num(player_data.num_xp) < 4500
+                                            ? "4500 XP required"
+                                            : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -862,7 +1126,11 @@ export function ShopScreen({
 
                                 <Box
                                     as="button"
-                                    disabled={num_xp < 7000 || processing_transaction ? true : false}
+                                    disabled={
+                                        (player_data !== null && bignum_to_num(player_data.num_xp) < 7000) || processing_transaction
+                                            ? true
+                                            : false
+                                    }
                                     onClick={() => {
                                         MintFromCollection(Collection.MusicBoxes, 3);
                                     }}
@@ -874,7 +1142,9 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[3]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {num_xp < 7000 ? "7000 XP required" : "1000 Gold"}{" "}
+                                        {player_data !== null && bignum_to_num(player_data.num_xp) < 7000
+                                            ? "7000 XP required"
+                                            : "1000 LOOT"}{" "}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -884,6 +1154,7 @@ export function ShopScreen({
             </Center>
         );
     };
+
     const LoreText = (): JSX.Element | null => {
         return (
             <Center width="100%">
@@ -911,7 +1182,9 @@ export function ShopScreen({
                         <img style={{ imageRendering: "pixelated" }} src={tower_of_dur} width="150" alt={""} />
                         <Box
                             as="button"
-                            disabled={num_xp < 2000 || processing_transaction ? true : false}
+                            disabled={
+                                (player_data !== null && bignum_to_num(player_data.num_xp) < 2000) || processing_transaction ? true : false
+                            }
                             onClick={() => {
                                 MintFromCollection(Collection.Paintings, 0);
                             }}
@@ -923,7 +1196,7 @@ export function ShopScreen({
                                 Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}
                             </Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                {num_xp < 2000 ? "2000 XP required" : "2000 Gold"}{" "}
+                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 LOOT"}{" "}
                             </Text>
                         </Box>
                     </VStack>
@@ -961,6 +1234,10 @@ export function ShopScreen({
 
         if (collection_page === Collection.LorePages) {
             return <LoreText />;
+        }
+
+        if (collection_page === Collection.Potions) {
+            return <PotionText />;
         }
 
         return null;
@@ -1056,7 +1333,7 @@ export function ShopScreen({
                                 style={{ marginBottom: "5px", maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }}
                             />
                             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                XP {num_xp}
+                                XP {player_data === null ? "" : bignum_to_num(player_data.num_xp)}
                             </Text>
                         </HStack>
                     </Box>
@@ -1138,6 +1415,20 @@ export function ShopScreen({
                                 </Box>
                                 <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                     Paintings
+                                </Text>
+                            </VStack>
+
+                            <VStack width="25%" alignItems="center">
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        setCollectionPage(Collection.Potions);
+                                    }}
+                                >
+                                    <img style={{ imageRendering: "pixelated" }} src={power_collection} width={item_image_size} alt={""} />
+                                </Box>
+                                <Text className="font-face-sfpb" color="grey" fontSize="10px">
+                                    Potions
                                 </Text>
                             </VStack>
                         </HStack>

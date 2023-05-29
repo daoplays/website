@@ -443,37 +443,71 @@ export async function get_discord_messages() : Promise<DiscordMessage[] | null>
 /////////////////////// Dungeon Game Instructions and MetaData /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class DungeonData {
+    constructor(
+      readonly current_ema_value: bignum,
+      readonly this_minutes_loot: bignum,
+      readonly current_minute: bignum,
 
-class PlayerData {
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonData>(
+      [
+        ['current_ema_value', u64],
+        ['this_minutes_loot', u64],
+        ['current_minute', i64],
+
+      ],
+      (args) => new DungeonData(args.current_ema_value!, args.this_minutes_loot!, args.current_minute!),
+      'DungeonData'
+    )
+}
+
+export class PlayerData {
     constructor(
       readonly num_plays: bignum,
-      readonly num_wins: bignum,
+      readonly num_xp: bignum,
       readonly in_progress: number,
       readonly player_status: number,
       readonly dungeon_enemy: number,
       readonly player_character: number,
-      readonly current_bet_size: bignum,
-      readonly current_key: number,
       readonly last_gold: bignum,
-      readonly extra_data: number[]
-
+      readonly current_key: number,
+      readonly total_gold: bignum,
+      readonly character_xp: number[],
+      readonly advantage: number,
+      readonly num_advantage_potions: number,
+      readonly bonus_loot: number,
+      readonly num_bonus_loot_potions : number,
+      readonly bonus_loot_activation_time : bignum,
+      readonly dice_one : number,
+      readonly dice_two : number,
+      readonly extra_space : bignum[]
     ) {}
   
     static readonly struct = new BeetStruct<PlayerData>(
       [
         ['num_plays', u64],
-        ['num_wins', u64],
+        ['num_xp', u64],
         ['in_progress', u8],
         ['player_status', u8],
         ['dungeon_enemy', u8],
         ['player_character', u8],
-        ['current_bet_size', u64],
-        ['current_key', u8],
         ['last_gold', u64],
-        ['extra_data', uniformFixedSizeArray(u8, 15)],
+        ['current_key', u8],
+        ['total_gold', u64],
+        ['character_xp', uniformFixedSizeArray(u32, 3)],
+        ['advantage', u8],
+        ['num_advantage_potions', u8],
+        ['bonus_loot', u8],
+        ['num_bonus_loot_potions', u8],
+        ['bonus_loot_activation_time', i64],
+        ['dice_one', u8],
+        ['dice_two', u8],
+        ['extra_space', uniformFixedSizeArray(u8, 80)]
 
       ],
-      (args) => new PlayerData(args.num_plays!, args.num_wins!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.current_bet_size!, args.current_key!, args.last_gold!, args.extra_data!),
+      (args) => new PlayerData(args.num_plays!, args.num_xp!, args.in_progress!, args.player_status!, args.dungeon_enemy!, args.player_character!, args.last_gold!, args.current_key!, args.total_gold!, args.character_xp!, args.advantage!, args.num_advantage_potions!, args.bonus_loot!, args.num_bonus_loot_potions!, args.bonus_loot_activation_time!, args.dice_one!, args.dice_two!, args.extra_space!),
       'PlayerData'
     )
 }
@@ -532,6 +566,22 @@ export class AchievementData {
     )
 }
 
+class KeyFreePlayData {
+    constructor(
+      readonly last_date: number,
+      readonly freeplays_remaining: number,
+    ) {}
+  
+    static readonly struct = new BeetStruct<KeyFreePlayData>(
+      [
+        ['last_date', u16],
+        ['freeplays_remaining', u8],
+      ],
+      (args) => new KeyFreePlayData(args.last_date!, args.freeplays_remaining!),
+      'KeyFreePlayData'
+    )
+}
+
 class DungeonPlayInstruction {
     constructor(
       readonly instruction: number,
@@ -565,6 +615,43 @@ class DungeonQuitInstruction {
       ],
       (args) => new DungeonQuitInstruction(args.instruction!, args.ref_code!),
       'DungeonQuitInstruction'
+    )
+}
+
+class DungeonDrinkPotionInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly which_potion: number,
+      readonly quantity: number,
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonDrinkPotionInstruction>(
+      [
+        ['instruction', u8],
+        ['which_potion', u8],
+        ['quantity', u8]
+      ],
+      (args) => new DungeonDrinkPotionInstruction(args.instruction!, args.which_potion!, args.quantity!),
+      'DungeonDrinkPotionInstruction'
+    )
+}
+
+class DungeonBuyPotionInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly which_potion: number,
+      readonly quantity: number,
+    ) {}
+  
+    static readonly struct = new BeetStruct<DungeonBuyPotionInstruction>(
+      [
+        ['instruction', u8],
+        ['which_potion', u8],
+        ['quantity', u8]
+
+      ],
+      (args) => new DungeonBuyPotionInstruction(args.instruction!, args.which_potion!, args.quantity!),
+      'DungeonBuyPotionInstruction'
     )
 }
 
@@ -618,6 +705,36 @@ export async function request_player_account_data(bearer : string, pubkey : Publ
     return data;
 }
 
+
+export async function request_key_freeplays_data(bearer : string, pubkey : PublicKey) : Promise<KeyFreePlayData | null>
+{
+ 
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = KeyFreePlayData.struct.deserialize(account_data);
+
+    return data;
+}
+
+
+export async function request_dungeon_program_data(bearer : string, pubkey : PublicKey) : Promise<DungeonData | null>
+{
+ 
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = DungeonData.struct.deserialize(account_data);
+
+    return data;
+}
+
 export async function request_player_achievement_data(bearer : string, pubkey : PublicKey) : Promise<AchievementData | null>
 {
  
@@ -665,6 +782,24 @@ export function serialise_claim_achievement_instruction(instruction : number, ac
 
     const data = new DungeonClaimAchievementInstruction(instruction, achievement);
     const [buf] = DungeonClaimAchievementInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_drink_potion_instruction(instruction : number, which_potion : number) : Buffer
+{
+
+    const data = new DungeonDrinkPotionInstruction(instruction, which_potion, 0);
+    const [buf] = DungeonDrinkPotionInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_buy_potion_instruction(instruction : number, which_potion : number , quantity : number) : Buffer
+{
+
+    const data = new DungeonBuyPotionInstruction(instruction, which_potion, quantity);
+    const [buf] = DungeonBuyPotionInstruction.struct.serialize(data);
 
     return buf;
 }
