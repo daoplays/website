@@ -1432,12 +1432,20 @@ export function DungeonApp() {
         let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
 
         if (freeplay_data === null) {
-            console.log("no free play account found, setting to ", max_freeplays);
+            //console.log("no free play account found, setting to ", max_freeplays);
             setKeyFreePlays(max_freeplays);
         }
         else {
-            console.log("free plays remaining", freeplay_data);
-            setKeyFreePlays(freeplay_data.freeplays_remaining);
+            let current_time = Date.now() / 1000;
+            let current_date = Math.floor(current_time / 24 / 60 / 60);
+            //console.log("free plays remaining", freeplay_data.freeplays_remaining, freeplay_data.last_date, current_date);
+            if (current_date === freeplay_data.last_date) {
+                setKeyFreePlays(freeplay_data.freeplays_remaining);
+            }
+            else
+            {
+                setKeyFreePlays(max_freeplays);
+            }
         }
         
         setCurrentKeyMint(key_mint);

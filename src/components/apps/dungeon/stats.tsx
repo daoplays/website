@@ -682,7 +682,6 @@ export function StatsScreen({AchievementData, loot_per_day, player_data} : {Achi
         //console.log(daily_data);
 
         let dates_from_file : string[] = [];
-        let volume_from_file : number[] = [];
         let users_from_file : number[] = [];
         let interactions_from_file : number[] = [];
 
