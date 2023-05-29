@@ -693,14 +693,13 @@ export function StatsScreen({AchievementData, loot_per_day, player_data} : {Achi
                 continue;
             }
             dates_from_file.push(line[0])
-            volume_from_file.push(Number(line[1]))
-            interactions_from_file.push(Number(line[2]))
-            users_from_file.push(Number(line[3]))
+            interactions_from_file.push(Number(line[1]))
+            users_from_file.push(Number(line[2]))
 
         }
 
         setDates(dates_from_file);
-        setVolumeData(volume_from_file);
+        setVolumeData(interactions_from_file);
         setUserData(users_from_file);
 
         let main_stats = await (await fetch("https://raw.githubusercontent.com/SolDungeon/chart_data/main/main_stats.json").then(res => res.json()));
@@ -792,7 +791,7 @@ export function StatsScreen({AchievementData, loot_per_day, player_data} : {Achi
                 showgrid: true,
                 gridcolor: 'grey',
                 gridwidth: 1,
-                title: 'Volume (SOL)',
+                title: 'Games Played',
                 titlefont: {color: 'rgb(126,165,248)'},
 
             },
@@ -828,10 +827,10 @@ export function StatsScreen({AchievementData, loot_per_day, player_data} : {Achi
                         <LongPlot title="Dungeons & Degens Daily Data" x_data={dates} y_data={volume_data} y2_data={user_data}/>
                         <VStack className='lineGraphVstack' alignItems="left">
                             <Box width = "100%" mr="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Plays  <br/> {total_plays}</Text>
+                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Games  <br/> {total_plays}</Text>
                             </Box>
                             <Box width = "100%"  ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
-                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Volume <br/> {total_volume.toFixed(2)}</Text>
+                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Loot <br/> {total_volume.toFixed(2)}</Text>
                             </Box> 
                             <Box width = "100%"  ml="2rem" p="2px" borderWidth='2px'  borderColor="white">
                                 <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">Total Users <br/> {total_users}</Text>
