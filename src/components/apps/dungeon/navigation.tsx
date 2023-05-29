@@ -14,6 +14,7 @@ import { Screen } from "./constants";
 
 import { MuteButton, MuteContext } from "./mute";
 
+import large_door from "./images/Large_Door.gif";
 import delvingDeeper from "./sounds/Delving_Deeper.mp3";
 import hackNSlash from "./sounds/Hack_n_Slash.mp3";
 import enterTheDungeon from "./sounds/Enter_the_Dungeon.mp3";
@@ -172,14 +173,20 @@ export function Navigation({
                                 </Text>
                             </div>
                         </Box>
-                        <Box display="flex" mr="7%" justifyContent="flex-end">
+                        <Box display="flex" mr="9.5%" justifyContent="flex-end">
                             <HStack spacing="29%">
+                            <a>
+                                <img src={large_door} style={{maxWidth:'none'}} width={24} alt={"generic"} />
+                                </a>
                                 <a href="https://twitter.com/sol_dungeon">
                                     <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
                                 </a>
                                 <a href="https://discord.gg/soldungeon">
                                     <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
                                 </a>
+                                
+                                
+                                
                                 <MuteContext.Consumer>
                                     {({ muteState, toggleMute, volume, setVolume }) => (
                                         <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
