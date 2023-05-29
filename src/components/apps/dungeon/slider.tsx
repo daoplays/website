@@ -1,4 +1,4 @@
-import { FC, useContext, useState } from "react";
+import { FC, MouseEventHandler, useContext, useState } from "react";
 import { MuteContext } from "./mute";
 import "./css/slider.css";
 
@@ -12,8 +12,8 @@ const VolumeSlider: FC<SliderProps> = ({ onInput }) => {
   const { volume: globalVolume } = useContext(MuteContext);
   const [volume, setVolume] = useState(globalVolume);
 
-  const handleMouseUp = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseInt(event.target.value);
+  const handleMouseUp: MouseEventHandler<HTMLInputElement> = (event) => {
+    const newValue = parseInt((event.target as HTMLInputElement).value, 10);
     setVolume(newValue);
     onInput(newValue);
   };
@@ -25,7 +25,6 @@ const VolumeSlider: FC<SliderProps> = ({ onInput }) => {
       min={0}
       max={100}
       defaultValue={volume}
-      // onChange={handleSliderChange}
       onMouseUp={handleMouseUp}
       
     />
