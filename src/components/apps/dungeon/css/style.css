@@ -36,39 +36,6 @@ body {
     height: 100vh !important;
     overflow-y: scroll !important;
 }
-/* .body {
-    scroll-behavior: smooth;
-  }
-  
-  @keyframes smoothScroll {
-    0% { 
-      scroll-behavior: smooth;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-    }
-    100% { 
-      scroll-snap-align: end;
-      scroll-snap-stop: always;
-    }
-  }
-  
-  body {
-    animation: smoothScroll 5s linear infinite;
-  } */
-
-/* ::-webkit-scrollbar {
-    width: 10px !important; 
-    border-radius: 20px !important;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background-color: #f1f1f1  !important; 
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background-color: #888  !important; 
-  }
-   */
 
 /* HOME PAGE */
 @media screen and (max-width: 1200px) {
