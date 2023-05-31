@@ -73,7 +73,7 @@ import {
     MAIN_ACCOUNT_SEED,
     DATA_ACCOUNT_SEED,
     LOOT_TOKEN_MINT,
-    EMOJI_SIZE,
+    POTION_SIZE,
 } from "./constants";
 
 // dungeon utils
@@ -1516,11 +1516,11 @@ export function DungeonApp() {
                                 imageRendering: "pixelated",
                             }}
                             src={power_potion}
-                            width={EMOJI_SIZE}
+                            width={POTION_SIZE}
                             alt={""}
                         />
                     </Box>
-                    <Text pt={EMOJI_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
+                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
                             {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
                     </Text>
                 </HStack>
@@ -1537,11 +1537,11 @@ export function DungeonApp() {
                                 imageRendering: "pixelated"
                             }}
                             src={luck_potion}
-                            width={EMOJI_SIZE}
+                            width={POTION_SIZE}
                             alt={""}
                         />
                     </Box>
-                    <Text pt={EMOJI_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
+                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
                                 {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
                     </Text>
                     </HStack>
@@ -1751,7 +1751,9 @@ export function DungeonApp() {
                             fontSize={font_size}
                             color="white"
                           >
+                            <a href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko" style={{ color: 'white', textDecoration: 'none' }}>
                             Buy a Key
+                            </a>
                           </Text>
                         </div>
                       </VStack>
@@ -1791,7 +1793,7 @@ export function DungeonApp() {
                     <Box width="33%" mt="2rem">
                       <CharacterSelect />
                       <div className="font-face-sfpb">
-                        <Text align="center" fontSize="29px" color="white">
+                        <Text align="center" fontSize="29px" color="white" onClick={() => setScreen(Screen.FAQ_SCREEN)}>
                           HOW TO PLAY
                         </Text>
                       </div>
