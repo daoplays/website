@@ -2002,7 +2002,7 @@ export function DungeonApp() {
                         />
                         <Box
                           mt="2%"
-                          width="5rem"
+                          width={isMobile ? "4rem" : "7rem"}
                           display="flex"
                           justifyContent="center"
                         >

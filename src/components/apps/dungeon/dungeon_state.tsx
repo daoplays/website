@@ -3,6 +3,8 @@ import { Box, Center, Text, HStack, VStack } from "@chakra-ui/react";
 //  dungeon constants
 import { DUNGEON_FONT_SIZE } from "./constants";
 
+import { isMobile } from "react-device-detect";
+
 //enemies
 import assassin from "./images/Assassin.gif";
 import blue_slime from "./images/Blue_Slime.gif";
@@ -488,9 +490,9 @@ export const DiceRollText = ({
         return (
             <VStack mt="1rem">
             <Box width="30px" height="30px">
-                <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
+                <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: isMobile ? "30px" : "60px", maxWidth: isMobile ? "30px" : "60px" }} />
             </Box>
-            <Text className="font-face-sfpb" fontSize={10} textAlign="center" color="grey">
+            <Text className="font-face-sfpb" style={{marginTop:'2rem',marginLeft: !isMobile ? '1.6rem':'0rem'}} fontSize={10} textAlign="center" color="grey">
                     Loading
             </Text>
             </VStack>
