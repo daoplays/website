@@ -135,6 +135,11 @@ export function Navigation({
         return;
     }, [setScreen]);
 
+    const ShowRest = useCallback(async () => {
+        setScreen(Screen.REST_SCREEN);
+        return;
+    }, [setScreen]);
+
     const addMargin = (index: number) => {
         if (index === 0) {
             return { marginTop: "1rem", _focus: { boxShadow: "none" } };
@@ -148,6 +153,7 @@ export function Navigation({
     const NavBar = [
         { text: "Home", onClick: ShowHome },
         { text: "Arena", onClick: ShowArena },
+        { text: "Rest", onClick: ShowRest },
         { text: "DM", onClick: ShowDM },
         { text: "Shop", onClick: ShowShop },
         { text: "Achievements", onClick: ShowAchievements },

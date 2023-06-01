@@ -1,7 +1,7 @@
 import { memo } from 'react';
 
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, u8, u16, u32, u64, i64, bignum, bool } from '@metaplex-foundation/beet'
+import { BeetStruct, FixableBeetStruct, uniformFixedSizeArray,  utf8String, array, u8, u16, u32, u64, i64, bignum, bool } from '@metaplex-foundation/beet'
 import { publicKey } from '@metaplex-foundation/beet-solana'
 
 import { network_string, SHOP_PROGRAM, DEBUG, RPC_NODE, MARKETPLACE_PROGRAM, ARENA_PROGRAM} from './constants';
@@ -463,6 +463,65 @@ class DungeonData {
     )
 }
 
+export class HouseData {
+    constructor(
+      readonly grid_width: number,
+      readonly grid_height: number,
+      readonly grid_cell_size : number,
+      readonly grid_offset : number[],
+      readonly sprites: number[],
+      readonly player_data : string[],
+      readonly enemy_data : string[]
+
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<HouseData>(
+      [
+        ['grid_width', u8],
+        ['grid_height', u8],
+        ['grid_cell_size', u8],
+        ['grid_offset', uniformFixedSizeArray(u16, 3)],
+        ['sprites', array(u8)],
+        ['player_data', array(utf8String)],
+        ['enemy_data', array(utf8String)],
+
+
+      ],
+      (args) => new HouseData(args.grid_width!, args.grid_height!, args.grid_cell_size!, args.grid_offset!, args.sprites!, args.player_data!, args.enemy_data!),
+      'HouseData'
+    )
+}
+
+export class u64Data {
+    constructor(
+      readonly value: bignum,
+    ) {}
+  
+    static readonly struct = new BeetStruct<u64Data>(
+      [
+        ['value', u64]
+      ],
+      (args) => new u64Data(args.value!),
+      'u64Data'
+    )
+}
+
+export class HouseStateData {
+    constructor(
+      readonly size: bignum,
+      readonly data: number[]
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<HouseStateData>(
+      [
+        ['size', u64],
+        ['data', array(u8)]
+      ],
+      (args) => new HouseStateData(args.size!, args.data!),
+      'HouseStateData'
+    )
+}
+
 export class PlayerData {
     constructor(
       readonly num_plays: bignum,
@@ -691,6 +750,25 @@ class DungeonClaimAchievementInstruction {
     )
 }
 
+
+class DungeonSaveHomeInstruction {
+    constructor(
+      readonly instruction: number,
+      readonly data: HouseData
+
+    ) {}
+  
+    static readonly struct = new FixableBeetStruct<DungeonSaveHomeInstruction>(
+      [
+        ['instruction', u8],
+        ['data', HouseData.struct]
+      ],
+      (args) => new DungeonSaveHomeInstruction(args.instruction!, args.data!),
+      'DungeonSaveHomeInstruction'
+    )
+}
+
+
 export async function request_player_account_data(bearer : string, pubkey : PublicKey) : Promise<PlayerData | null>
 {
  
@@ -750,6 +828,28 @@ export async function request_player_achievement_data(bearer : string, pubkey : 
 }
 
 
+export async function request_player_home_data(bearer : string, pubkey : PublicKey) : Promise<HouseStateData | null>
+{
+ 
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = HouseStateData.struct.deserialize(account_data);
+
+    return data;
+}
+
+export function serialise_house_data(width: number, height : number, cell_size : number, offset : number[], sprites : number[], player_data : string[], enemy_data : string[]) : Buffer
+{
+    const data = new HouseData(width, height, cell_size, offset, sprites, player_data, enemy_data);
+    const [buf] = HouseData.struct.serialize(data);
+
+    return buf;
+}
+
 export function serialise_play_instruction(instruction : number, which_character : number, bet_size : number) : Buffer
 {
 
@@ -800,6 +900,15 @@ export function serialise_buy_potion_instruction(instruction : number, which_pot
 
     const data = new DungeonBuyPotionInstruction(instruction, which_potion, quantity);
     const [buf] = DungeonBuyPotionInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_save_home_instruction(instruction : number, house_data : HouseData) : Buffer
+{
+
+    const data = new DungeonSaveHomeInstruction(instruction, house_data);
+    const [buf] = DungeonSaveHomeInstruction.struct.serialize(data);
 
     return buf;
 }

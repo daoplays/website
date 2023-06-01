@@ -144,6 +144,7 @@ export const enum DungeonInstruction {
     claim_achievement = 4,
     drink_potion = 5,
     buy_potion = 6,
+    save_home = 7
 }
 
 export const enum DungeonCharacter {

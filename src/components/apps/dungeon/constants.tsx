@@ -49,7 +49,7 @@ if (isMobile) {
     EMOJI_SIZE = 20;
 }
 
-export const PROD = true;
+export const PROD = false;
 export const TEST = false;
 export const DEBUG = false;
 
@@ -80,6 +80,7 @@ export const enum Screen {
     STATS_SCREEN = 9,
     MARKETPLACE_SCREEN = 10,
     ARENA_SCREEN = 11,
+    REST_SCREEN = 12,
 }
 
 export const enum KeyType {
