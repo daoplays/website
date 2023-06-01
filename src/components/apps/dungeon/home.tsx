@@ -36,6 +36,7 @@ import hallway2 from "./images/Hallway2.gif";
 
 //buttons
 import enter_button from "./images/Enter_Button.png";
+import RollButton from "./images/RollButton.gif"
 
 // shop items
 import key from "./images/Key.png";
@@ -847,25 +848,27 @@ export function DungeonApp() {
             if (level === 0) {
                 return;
             }
-            const timer = setTimeout(() => {
+            
                 if (level === 1) {
                     if (DEBUG) {
                         console.log("player killed enemy");
                     }
-                    setPlayerState(DungeonStatus.alive);
-                    setEnemyState(DungeonStatus.dead);
-
-                    //Victory sound plays
-                    playAudio(VictoryAudio);
+                    setTimeout(() => {
+                        setPlayerState(DungeonStatus.alive);
+                        setEnemyState(DungeonStatus.dead);
+                        //Victory sound plays
+                        playAudio(VictoryAudio)
+                    }, 1000);
                 } else {
                     if (DEBUG) {
                         console.log("enemy killed player");
                     }
-                    setPlayerState(DungeonStatus.dead);
-                    setEnemyState(DungeonStatus.alive);
-
-                    //player death audio
-                    playAudio(PlayerDeathAudio);
+                    setTimeout(() => {
+                        setPlayerState(DungeonStatus.dead);
+                        setEnemyState(DungeonStatus.alive);
+                        //player death audio
+                        playAudio(PlayerDeathAudio)
+                    }, 1000);
                 }
 
                 if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
@@ -884,17 +887,17 @@ export function DungeonApp() {
 
                 animateLevel.current = 0;
                 CheckNewPlayAchievements();
-            }, 5000);
+           
 
-            return () => clearTimeout(timer);
+            
         },
         [current_level, player_character, current_enemy, CheckNewPlayAchievements, playAudio]
     );
 
     // Replace the previous useEffect with this one
-    useEffect(() => {
-        handleAnimation(animateLevel.current);
-    }, [handleAnimation]);
+    // useEffect(() => {
+    //     handleAnimation(animateLevel.current);
+    // }, [handleAnimation]);
 
     const set_JWT_token = useCallback(async () => {
         console.log("Setting new JWT token");
@@ -1845,207 +1848,281 @@ export function DungeonApp() {
         if (current_level > 4) background_image = hallway2;
 
         return (
-            <>
-                <VStack width="100%">
-                    <Box width="100%">
-                        <HStack>
-                            <Box width="25%"></Box>
-                            <DisplayLVL current_level={current_level} />
-                            <Box width="30%"></Box>
-                            <DisplayXP
-                                current_xp={current_player_data === null ? 0 : current_player_data?.character_xp[player_character]}
-                            />
-                            <Box width="25%"></Box>
-                        </HStack>
+          <>
+            <VStack width="100%">
+              <Box width="100%">
+                <HStack>
+                  <Box width="25%"></Box>
+                  <DisplayLVL current_level={current_level} />
+                  <Box width="30%"></Box>
+                  <DisplayXP
+                    current_xp={
+                      current_player_data === null
+                        ? 0
+                        : current_player_data?.character_xp[player_character]
+                    }
+                  />
+                  <Box width="25%"></Box>
+                </HStack>
+              </Box>
+
+              <HStack mb="2%" mt="1%">
+                <Box width="10%"></Box>
+                <Box
+                  style={{
+                    backgroundImage: `url(${background_image})`,
+                    backgroundPosition: "center",
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    imageRendering: "pixelated",
+                  }}
+                  width="80%"
+                >
+                  <HStack>
+                    <Box width="30%"></Box>
+                    <Box width="15%">
+                      {" "}
+                      <DisplayPlayer
+                        player_state={player_state}
+                        player_character={player_character}
+                        current_enemy={current_enemy}
+                      />
                     </Box>
+                    <Box width="10%"></Box>
+                    <Box width="15%">
+                      {" "}
+                      <DisplayEnemy
+                        player_state={player_state}
+                        enemy_state={enemy_state}
+                        current_enemy={current_enemy}
+                      />{" "}
+                    </Box>
+                    <Box width="30%"></Box>
+                  </HStack>
+                </Box>
+                <Box width="10%"></Box>
+              </HStack>
 
-                    <HStack mb="2%" mt="1%">
-                        <Box width="10%"></Box>
-                        <Box
-                            style={{
-                                backgroundImage: `url(${background_image})`,
-                                backgroundPosition: "center",
-                                backgroundSize: "contain",
-                                backgroundRepeat: "no-repeat",
-                                imageRendering: "pixelated",
-                            }}
-                            width="80%"
-                        >
-                            <HStack>
-                                <Box width="30%"></Box>
-                                <Box width="15%">
-                                    {" "}
-                                    <DisplayPlayer
-                                        player_state={player_state}
-                                        player_character={player_character}
-                                        current_enemy={current_enemy}
-                                    />
-                                </Box>
-                                <Box width="10%"></Box>
-                                <Box width="15%">
-                                    {" "}
-                                    <DisplayEnemy
-                                        player_state={player_state}
-                                        enemy_state={enemy_state}
-                                        current_enemy={current_enemy}
-                                    />{" "}
-                                </Box>
-                                <Box width="30%"></Box>
-                            </HStack>
-                        </Box>
-                        <Box width="10%"></Box>
-                    </HStack>
+              <VStack width="100%" alignItems="center">
+                {transaction_failed && (
+                  <Center>
+                    <Text
+                      className="font-face-sfpb"
+                      fontSize={font_size}
+                      textAlign="center"
+                      color="red"
+                    >
+                      Transaction Failed. <br />
+                      Please Refresh.
+                    </Text>
+                  </Center>
+                )}
 
-                    <VStack width="100%" alignItems="center">
-                        {transaction_failed && (
-                                <Center>
-                                    <Text className="font-face-sfpb" fontSize={font_size} textAlign="center" color="red">
-                                        Transaction Failed. <br />
-                                        Please Refresh.
-                                    </Text>
-                                </Center>
-                        )}
+                {player_state === DungeonStatus.dead && (
+                  <>
+                    <VStack alignItems="center" spacing="2%">
+                      <DiceRollText
+                        roll_one={roll_one.current}
+                        roll_two={roll_two.current}
+                        loading={enemy_state === DungeonStatus.unknown}
+                      />
 
-                        {player_state === DungeonStatus.dead && (
-                            <>
-                                <VStack alignItems="center" spacing="2%">
-                                    <DiceRollText
-                                        roll_one={roll_one.current}
-                                        roll_two={roll_two.current}
-                                        loading={enemy_state === DungeonStatus.unknown}
-                                    />
+                      <DisplayPlayerFailedText
+                        current_enemy={current_enemy}
+                        current_level={current_level}
+                        num_plays={num_plays.current}
+                      />
+                      <Center>
+                        <VStack>
+                          <HStack mb="1rem">
+                            <Text
+                              className="font-face-sfpb"
+                              textAlign="center"
+                              fontSize={DUNGEON_FONT_SIZE}
+                              color="white"
+                            >
+                              Drink a Potion
+                            </Text>
+                            <PotionButtons />
+                          </HStack>
 
-                                    <DisplayPlayerFailedText
-                                        current_enemy={current_enemy}
-                                        current_level={current_level}
-                                        num_plays={num_plays.current}
-                                    />
-                                    <Center>
-                                        <VStack>
-                                            <HStack mb="1rem">
-                                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                                                    Drink a Potion
-                                                </Text>
-                                                <PotionButtons />
-                                            </HStack>
-                                        
-                                            <HStack alignItems="center">
-                                                <Button variant="link" size="md" onClick={handleExit} mr="5rem">
-                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                        Exit
-                                                    </Text>
-                                                </Button>
-                                                <Button
-                                                    disabled={processing_transaction ? true : false}
-                                                    variant="link"
-                                                    size="md"
-                                                    onClick={handleRetry}
-                                                    ml="5rem"
-                                                >
-                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
-                                                        Retry
-                                                    </Text>
-                                                </Button>
-
-                                            </HStack>
-                                        </VStack>
-                                    </Center>
-                                </VStack>
-                            </>
-                        )}
-                        {player_state === DungeonStatus.alive && current_level > 0 && (
-                            <>
-                                {enemy_state === DungeonStatus.unknown && (
-                                    <DiceRollText
-                                        roll_one={roll_one.current}
-                                        roll_two={roll_two.current}
-                                        loading={true}
-                                    />
-                                )}
-                                {enemy_state === DungeonStatus.alive && (
-                                    <DisplayEnemyAppearsText
-                                        current_enemy={current_enemy}
-                                        current_level={current_level}
-                                        num_plays={num_plays.current}
-                                    />
-                                )}
-                                {enemy_state === DungeonStatus.dead && (
-                                    <VStack width="100%" alignItems="center" spacing="2%" mb="5rem">
-                                        <DiceRollText
-                                            roll_one={roll_one.current}
-                                            roll_two={roll_two.current}
-                                            loading={false}
-                                        />
-
-                                        <DisplayPlayerSuccessText
-                                            current_level={current_level}
-                                            current_enemy={current_enemy}
-                                            last_loot={last_loot}
-                                            num_plays={num_plays.current}
-                                            total_loot={total_loot}
-                                            loot_bonus={last_loot_bonus.current}
-                                        />
-
-                                        {current_level < 7 && (
-                                            <Center>
-                                                <VStack>
-                                                    <HStack mb="1rem">
-                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
-                                                            Drink a Potion
-                                                        </Text>
-                                                        <PotionButtons />
-                                                    </HStack>
-                                                
-                                                    <HStack>
-                                                        <Button
-                                                            disabled={processing_transaction ? true : false}
-                                                            variant="link"
-                                                            size="md"
-                                                            onClick={handleEscape}
-                                                            mr="3rem"
-                                                        >
-                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                                    Escape
-                                                                </Text>
-                                                        </Button>
-
-                                                        <Button
-                                                            disabled={processing_transaction ? true : false}
-                                                            variant="link"
-                                                            size="md"
-                                                            onClick={handleExploreFurther}
-                                                            ml="10rem"
-                                                        >
-                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                                    Explore Further
-                                                                </Text>
-                                                        </Button>
-
-                                                    </HStack>
-                                                </VStack>
-                                            </Center>
-                                        )}
-                                        {current_level >= 7 && (
-                                            <Center>
-                                                <Button
-                                                    disabled={processing_transaction ? true : false}
-                                                    variant="link"
-                                                    size="md"
-                                                    onClick={Quit}
-                                                >
-                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                            Retire
-                                                        </Text>
-                                                </Button>
-                                            </Center>
-                                        )}
-                                    </VStack>
-                                )}
-                            </>
-                        )}
+                          <HStack alignItems="center">
+                            <Button
+                              variant="link"
+                              size="md"
+                              onClick={handleExit}
+                              mr="5rem"
+                            >
+                              <Text
+                                className="font-face-sfpb"
+                                textAlign="center"
+                                fontSize={font_size}
+                                color="white"
+                              >
+                                Exit
+                              </Text>
+                            </Button>
+                            <Button
+                              disabled={processing_transaction ? true : false}
+                              variant="link"
+                              size="md"
+                              onClick={handleRetry}
+                              ml="5rem"
+                            >
+                              <Text
+                                className="font-face-sfpb"
+                                textAlign="center"
+                                fontSize={DEFAULT_FONT_SIZE}
+                                color="white"
+                              >
+                                Retry
+                              </Text>
+                            </Button>
+                          </HStack>
+                        </VStack>
+                      </Center>
                     </VStack>
-                </VStack>
-            </>
+                  </>
+                )}
+                {player_state === DungeonStatus.alive && current_level > 0 && (
+                  <>
+                    {enemy_state === DungeonStatus.unknown && (
+                      <DiceRollText
+                        roll_one={roll_one.current}
+                        roll_two={roll_two.current}
+                        loading={true}
+                      />
+                    )}
+                    {enemy_state === DungeonStatus.alive && (
+                      <>
+                        <DisplayEnemyAppearsText
+                          current_enemy={current_enemy}
+                          current_level={current_level}
+                          num_plays={num_plays.current}
+                        />
+                        <Box
+                          mt="2%"
+                          width="5rem"
+                          display="flex"
+                          justifyContent="center"
+                        >
+                          <img
+                            src={RollButton}
+                            onClick={() =>
+                              handleAnimation(animateLevel.current)
+                            }
+                            alt="Roll Button"
+                            width="100%"
+                            height="auto"
+                          />
+                        </Box>
+                      </>
+                    )}
+                    {enemy_state === DungeonStatus.dead && (
+                      <VStack
+                        width="100%"
+                        alignItems="center"
+                        spacing="2%"
+                        mb="5rem"
+                      >
+                        <DiceRollText
+                          roll_one={roll_one.current}
+                          roll_two={roll_two.current}
+                          loading={false}
+                        />
+
+                        <DisplayPlayerSuccessText
+                          current_level={current_level}
+                          current_enemy={current_enemy}
+                          last_loot={last_loot}
+                          num_plays={num_plays.current}
+                          total_loot={total_loot}
+                          loot_bonus={last_loot_bonus.current}
+                        />
+
+                        {current_level < 7 && (
+                          <Center>
+                            <VStack>
+                              <HStack mb="1rem">
+                                <Text
+                                  className="font-face-sfpb"
+                                  textAlign="center"
+                                  fontSize={DUNGEON_FONT_SIZE}
+                                  color="white"
+                                >
+                                  Drink a Potion
+                                </Text>
+                                <PotionButtons />
+                              </HStack>
+
+                              <HStack>
+                                <Button
+                                  disabled={
+                                    processing_transaction ? true : false
+                                  }
+                                  variant="link"
+                                  size="md"
+                                  onClick={handleEscape}
+                                  mr="3rem"
+                                >
+                                  <Text
+                                    className="font-face-sfpb"
+                                    textAlign="center"
+                                    fontSize={font_size}
+                                    color="white"
+                                  >
+                                    Escape
+                                  </Text>
+                                </Button>
+
+                                <Button
+                                  disabled={
+                                    processing_transaction ? true : false
+                                  }
+                                  variant="link"
+                                  size="md"
+                                  onClick={handleExploreFurther}
+                                  ml="10rem"
+                                >
+                                  <Text
+                                    className="font-face-sfpb"
+                                    textAlign="center"
+                                    fontSize={font_size}
+                                    color="white"
+                                  >
+                                    Explore Further
+                                  </Text>
+                                </Button>
+                              </HStack>
+                            </VStack>
+                          </Center>
+                        )}
+                        {current_level >= 7 && (
+                          <Center>
+                            <Button
+                              disabled={processing_transaction ? true : false}
+                              variant="link"
+                              size="md"
+                              onClick={Quit}
+                            >
+                              <Text
+                                className="font-face-sfpb"
+                                textAlign="center"
+                                fontSize={font_size}
+                                color="white"
+                              >
+                                Retire
+                              </Text>
+                            </Button>
+                          </Center>
+                        )}
+                      </VStack>
+                    )}
+                  </>
+                )}
+              </VStack>
+            </VStack>
+          </>
         );
     };
 
