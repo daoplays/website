@@ -291,16 +291,24 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
 
     return (
-        <div className="home">
-            <div className="container">
-                <div className={styles.container}>
-                    <div className={styles.unityWrapper}>
-                        <Unity unityProvider={unityProvider} style={{ width: 1920, height: 1080 }}/>
-                    </div>
-                </div>
+        <>
+        {!wallet.publicKey &&
+            <></>
+        }
 
-                <br />
+        {wallet.publicKey &&
+            <div className="home">
+                <div className="container">
+                    <div className={styles.container}>
+                        <div className={styles.unityWrapper}>
+                            <Unity unityProvider={unityProvider} style={{ width: 1920, height: 1080 }}/>
+                        </div>
+                    </div>
+
+                    <br />
+                </div>
             </div>
-        </div>
+        }
+        </>
     );
 }

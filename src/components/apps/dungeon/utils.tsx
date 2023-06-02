@@ -541,7 +541,7 @@ export class PlayerData {
       readonly bonus_loot_activation_time : bignum,
       readonly dice_one : number,
       readonly dice_two : number,
-      readonly extra_space : bignum[]
+      readonly extra_space : number[]
     ) {}
   
     static readonly struct = new BeetStruct<PlayerData>(
