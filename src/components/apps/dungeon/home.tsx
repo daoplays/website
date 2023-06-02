@@ -1520,7 +1520,7 @@ export function DungeonApp() {
                             alt={""}
                         />
                     </Box>
-                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
+                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" :"14px"}>
                             {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
                     </Text>
                 </HStack>
@@ -1541,7 +1541,7 @@ export function DungeonApp() {
                             alt={""}
                         />
                     </Box>
-                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize="10px">
+                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" :"14px"}>
                                 {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
                     </Text>
                     </HStack>
