@@ -103,7 +103,7 @@ function verify_message(event) {
         post_string = event.queryStringParameters.emoji_1 + " was killed by " + event.queryStringParameters.emoji_2 + " in level " + event.queryStringParameters.level;
     }
     else if (message_type === "retired") {
-        post_string = event.queryStringParameters.emoji_1 + " retired at level " + event.queryStringParameters.level + " with " + event.queryStringParameters.sol_amount + " LOOT" + event.queryStringParameters.emoji_2;
+        post_string = event.queryStringParameters.emoji_1 + " retired at level " + event.queryStringParameters.level + " with " + event.queryStringParameters.sol_amount + " LOOT " + event.queryStringParameters.emoji_2;
     }
     else if (message_type === "escaped") {
         post_string = event.queryStringParameters.emoji_1 + " escaped from level " + event.queryStringParameters.level + " with " + event.queryStringParameters.sol_amount + " LOOT " + event.queryStringParameters.emoji_2;

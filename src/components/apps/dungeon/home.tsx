@@ -580,7 +580,7 @@ export function DungeonApp() {
 
                 if (player_data === null) {
                     num_state_checks.current += 1;
-                    setDataAccountStatus(AccountStatus.unknown);
+                    setDataAccountStatus(AccountStatus.not_created);
                     return;
                 }
 
@@ -1710,6 +1710,7 @@ export function DungeonApp() {
 
         var visible = true;
 
+        //console.log("have made it here in CS", visible);
 
         // if i don't need to make an account but player status is unknown return nothing
         if (
@@ -1720,12 +1721,12 @@ export function DungeonApp() {
             visible = false;
         }
 
-        //console.log("have made it here in CS 2");
+        //console.log("have made it here in CS 2", visible);
         // if i am alive or exploring and  the level is > 0 never show this
         if (data_account_status === AccountStatus.unknown || (current_level > 0 && currentStatus === DungeonStatus.alive)) {
             visible = false;
         }
-        //console.log("have made it here in CS");
+        //console.log("have made it here in CS 3", visible);
         return (
             <>
                 <Box width="100%">
