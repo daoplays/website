@@ -44,7 +44,7 @@ import wizard from "./images/Wizard.gif";
 import corpse from "./images/Corpse.png";
 
 import loot from "./images/loot.png";
-import dice_roll from "./images/die_roll.gif";
+import hour_glass from "./images/Hourglass.gif";
 
 import rd20_1 from "./dice_images/r1.png";
 import rd20_2 from "./dice_images/r2.png";
@@ -475,7 +475,7 @@ const DungeonPlayerDefeatedText: string[][] = [
     ["The werewolf has defeated you.", "The werewolf leaps on you faster than you can react and tears you to shreds"],
 ];
 
-export const DiceRollText = ({
+export const HourGlassText = ({
     roll_one,
     roll_two,
     loading,
@@ -484,18 +484,33 @@ export const DiceRollText = ({
     roll_two: number;
     loading: boolean;
 }) => {
-    let dice_size: string | number = "75px";
+    let hour_glass_size: string | number = isMobile ? "2.5rem" : "5rem";
+    let dice_roll_size: string | number = isMobile ? "64px" : "112px";
 
     if (loading) {
         return (
-            <VStack mt="1rem">
-            <Box width="30px" height="30px">
-                <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: isMobile ? "30px" : "60px", maxWidth: isMobile ? "30px" : "60px" }} />
+          <VStack mt="1rem">
+            <Box mt="2%" width={hour_glass_size} display="flex" justifyContent="center">
+              <img
+                src={hour_glass}
+                alt="Hourglass"
+                width="100%"
+                height="auto"
+              />
             </Box>
-            <Text className="font-face-sfpb" style={{marginTop:'2rem',marginLeft: !isMobile ? '1.6rem':'0rem'}} fontSize={10} textAlign="center" color="grey">
-                    Loading
+            <Text
+              className="font-face-sfpb"
+              style={{
+                marginTop: "2rem",
+                marginLeft: !isMobile ? "1.6rem" : "0rem",
+              }}
+              fontSize={18}
+              textAlign="center"
+              color="grey"
+            >
+              Loading
             </Text>
-            </VStack>
+          </VStack>
         );
     }
 
@@ -509,14 +524,14 @@ export const DiceRollText = ({
                 </Text>
                 <HStack>
                     <img
-                        height={dice_size}
-                        width={dice_size}
+                        height={dice_roll_size}
+                        width={dice_roll_size}
                         src={roll_one > roll_two ? red_dice_array[roll_one - 1] : blue_dice_array[roll_one - 1]}
                         alt={""}
                     />
                     <img
-                        height={dice_size}
-                        width={dice_size}
+                        height={dice_roll_size}
+                        width={dice_roll_size}
                         src={roll_two > roll_one ? red_dice_array[roll_two - 1] : blue_dice_array[roll_two - 1]}
                         alt={""}
                     />
@@ -530,9 +545,9 @@ export const DiceRollText = ({
         <VStack mt="1rem">
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                 {" "}
-                You Rolled:{" "}
+                {/* You Rolled:{" "} */}
             </Text>
-            <img height={dice_size} width={dice_size} src={red_dice_array[roll_one - 1]} alt={""} />
+            <img height={dice_roll_size} width={dice_roll_size} src={red_dice_array[roll_one - 1]} alt={""} />
         </VStack>
     );
 };

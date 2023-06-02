@@ -115,7 +115,7 @@ import {
     DungeonCharacterEmoji,
     DungeonEnemyEmoji,
     GoldEmoji,
-    DiceRollText,
+    HourGlassText,
     DungeonInstruction,
 } from "./dungeon_state";
 
@@ -1921,7 +1921,7 @@ export function DungeonApp() {
                 {player_state === DungeonStatus.dead && (
                   <>
                     <VStack alignItems="center" spacing="2%">
-                      <DiceRollText
+                      <HourGlassText
                         roll_one={roll_one.current}
                         roll_two={roll_two.current}
                         loading={enemy_state === DungeonStatus.unknown}
@@ -1987,7 +1987,7 @@ export function DungeonApp() {
                 {player_state === DungeonStatus.alive && current_level > 0 && (
                   <>
                     {enemy_state === DungeonStatus.unknown && (
-                      <DiceRollText
+                      <HourGlassText
                         roll_one={roll_one.current}
                         roll_two={roll_two.current}
                         loading={true}
@@ -2016,6 +2016,14 @@ export function DungeonApp() {
                             height="auto"
                           />
                         </Box>
+                        <Text
+                          className="font-face-sfpb"
+                          fontSize={DUNGEON_FONT_SIZE}
+                          textAlign="center"
+                          color="grey"
+                        >
+                          Click to Roll
+                        </Text>
                       </>
                     )}
                     {enemy_state === DungeonStatus.dead && (
@@ -2025,7 +2033,7 @@ export function DungeonApp() {
                         spacing="2%"
                         mb="5rem"
                       >
-                        <DiceRollText
+                        <HourGlassText
                           roll_one={roll_one.current}
                           roll_two={roll_two.current}
                           loading={false}
