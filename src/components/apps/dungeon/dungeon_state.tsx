@@ -500,9 +500,10 @@ export const HourGlassText = ({
             </Box>
             <Text
               className="font-face-sfpb"
+              justifyContent="center"
               style={{
-                marginTop: "2rem",
-                marginLeft: !isMobile ? "1.6rem" : "0rem",
+                marginTop: "1rem",
+                marginLeft: !isMobile ? "0.1rem" : "0rem",
               }}
               fontSize={18}
               textAlign="center"
