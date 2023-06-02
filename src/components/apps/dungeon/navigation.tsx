@@ -19,6 +19,8 @@ import delvingDeeper from "./sounds/Delving_Deeper.mp3";
 import hackNSlash from "./sounds/Hack_n_Slash.mp3";
 import enterTheDungeon from "./sounds/Enter_the_Dungeon.mp3";
 import dungeonCrawling from "./sounds/Dungeon_Crawling.mp3";
+import orcsAndGoblins from "./sounds/Orcs_n_Goblins.mp3";
+import glimmerGreen from "./sounds/Glimmer-Green_Spire.mp3";
 import MusicPlayer from "./musicPlayer";
 
 // dungeon utils
@@ -48,6 +50,8 @@ export function Navigation({
         { src: hackNSlash, name: "Hack N Slash" },
         { src: enterTheDungeon, name: "Enter the Dungeon" },
         { src: dungeonCrawling, name: "Dungeon Crawling" },
+        { src: orcsAndGoblins, name: "Orcs and Goblins" },
+        { src: glimmerGreen, name: "Glimmer Green" },
     ];
 
     // This will be used to store the interval
