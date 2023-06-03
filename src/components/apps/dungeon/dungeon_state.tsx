@@ -489,29 +489,34 @@ export const HourGlassText = ({
 
     if (loading) {
         return (
-          <VStack mt="1rem">
-            <Box mt="2%" width={hour_glass_size} display="flex" justifyContent="center">
-              <img
-                src={hour_glass}
-                alt="Hourglass"
-                width="100%"
-                height="auto"
-              />
-            </Box>
-            <Text
-              className="font-face-sfpb"
-              justifyContent="center"
-              style={{
-                marginTop: "1rem",
-                marginLeft: !isMobile ? "0.1rem" : "0rem",
-              }}
-              fontSize={18}
-              textAlign="center"
-              color="grey"
-            >
-              Loading
-            </Text>
-          </VStack>
+            <VStack mt="1rem">
+                <Box
+                    mt="2%"
+                    width={hour_glass_size}
+                    display="flex"
+                    justifyContent="center"
+                >
+                    <img
+                        src={hour_glass}
+                        alt="Hourglass"
+                        width="100%"
+                        height="auto"
+                    />
+                </Box>
+                <Text
+                    className="font-face-sfpb"
+                    justifyContent="center"
+                    style={{
+                        marginTop: "1rem",
+                        marginLeft: !isMobile ? "0.1rem" : "0rem",
+                    }}
+                    fontSize={18}
+                    textAlign="center"
+                    color="grey"
+                >
+                    Loading
+                </Text>
+            </VStack>
         );
     }
 
@@ -519,7 +524,12 @@ export const HourGlassText = ({
     if (advantage) {
         return (
             <VStack mt="1rem">
-                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                <Text
+                    className="font-face-sfpb"
+                    fontSize={DUNGEON_FONT_SIZE}
+                    textAlign="center"
+                    color="white"
+                >
                     {" "}
                     You Rolled With Advantage:{" "}
                 </Text>
@@ -527,13 +537,21 @@ export const HourGlassText = ({
                     <img
                         height={dice_roll_size}
                         width={dice_roll_size}
-                        src={roll_one > roll_two ? red_dice_array[roll_one - 1] : blue_dice_array[roll_one - 1]}
+                        src={
+                            roll_one > roll_two
+                                ? red_dice_array[roll_one - 1]
+                                : blue_dice_array[roll_one - 1]
+                        }
                         alt={""}
                     />
                     <img
                         height={dice_roll_size}
                         width={dice_roll_size}
-                        src={roll_two > roll_one ? red_dice_array[roll_two - 1] : blue_dice_array[roll_two - 1]}
+                        src={
+                            roll_two > roll_one
+                                ? red_dice_array[roll_two - 1]
+                                : blue_dice_array[roll_two - 1]
+                        }
                         alt={""}
                     />
                 </HStack>
@@ -544,11 +562,20 @@ export const HourGlassText = ({
     // otherwise just return the first dice
     return (
         <VStack mt="1rem">
-            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+            <Text
+                className="font-face-sfpb"
+                fontSize={DUNGEON_FONT_SIZE}
+                textAlign="center"
+                color="white"
+            >
                 {" "}
-                {/* You Rolled:{" "} */}
             </Text>
-            <img height={dice_roll_size} width={dice_roll_size} src={red_dice_array[roll_one - 1]} alt={""} />
+            <img
+                height={dice_roll_size}
+                width={dice_roll_size}
+                src={red_dice_array[roll_one - 1]}
+                alt={""}
+            />
         </VStack>
     );
 };
