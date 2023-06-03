@@ -1,0 +1,27 @@
+.volume-slider {
+    width: 6rem;
+    transform: rotate(-90deg);
+    margin-left: -2.1rem;
+    margin-top: 1.2rem;
+    height: 7px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  
+  .volume-slider {
+    background: #ffffff;
+  }
+  
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 20px; /* Set a specific slider handle width */
+    height: 20px; /* Slider handle height */
+    background: #8b8b8b; /* gray background */
+    cursor: pointer; /* Cursor on hover */
+    border-radius: 60%; /* Rounded slider handle (optional) */
+    margin-left: -1px;
+    position: relative;
+  }
+  
+
