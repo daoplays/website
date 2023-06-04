@@ -758,14 +758,12 @@ export function ShopScreen({
 
                         <HStack alignItems="center">
                             <Box width="15%">
-                                
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
                             <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        
                                         Buy Key (1 Shiny Trinket)
                                     </Text>
                                 </div>
@@ -808,14 +806,12 @@ export function ShopScreen({
 
                         <HStack alignItems="center">
                             <Box width="15%">
-                                
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
                             <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        
                                         Buy Key (1.5 SOL)
                                     </Text>
                                 </div>
@@ -833,7 +829,6 @@ export function ShopScreen({
                         <>
                             {xp_req !== null && player_data !== null && xp_req > 0 && bignum_to_num(player_data.num_xp) < xp_req && (
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                    
                                     {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP
                                 </Text>
                             )}
@@ -883,15 +878,8 @@ export function ShopScreen({
         return (
             <div className="font-face-sfpb">
                 <HStack>
-                    <Text
-                        mt="1rem"
-                        className="font-face-sfpb"
-                        fontSize={DUNGEON_FONT_SIZE}
-                        textAlign="center"
-                        color="white"
-                        mb="1rem"
-                    >
-                    Quantity
+                    <Text mt="1rem" className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb="1rem">
+                        Quantity
                     </Text>
                     <NumberInput
                         fontSize={DUNGEON_FONT_SIZE}
@@ -903,7 +891,6 @@ export function ShopScreen({
                         borderColor="white"
                         min={1}
                         max={100}
-                        
                     >
                         <NumberInputField
                             autoFocus={true}
@@ -917,7 +904,7 @@ export function ShopScreen({
                 </HStack>
             </div>
         );
-    }
+    };
 
     const PotionText = (): JSX.Element | null => {
         return (
@@ -934,7 +921,7 @@ export function ShopScreen({
                                 </Box>
                                 <Box>
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        Potion Of Power
+                                        Attack Potion
                                     </Text>
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
                                         10 LOOT
@@ -977,21 +964,19 @@ export function ShopScreen({
                                 Potion of Power - Roll two dice in the next Room and pick the highest value as your attack
                             </Text>
                             <VStack>
-
-                            <PotionQuantity/>
-                            <Box
-                                as="button"
-                                onClick={() => {
-                                    MintPotion(0);
-                                }}
-                                borderWidth="1px"
-                                borderColor="white"
-                            >
-                                
-                                <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
-                                    Purchase
-                                </Text>
-                            </Box>
+                                <PotionQuantity />
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        MintPotion(0);
+                                    }}
+                                    borderWidth="1px"
+                                    borderColor="white"
+                                >
+                                    <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
+                                        Purchase
+                                    </Text>
+                                </Box>
                             </VStack>
                         </VStack>
                     )}
@@ -1008,22 +993,21 @@ export function ShopScreen({
                                 Potion of Luck - Find double the LOOT for 10 minutes after drinking
                             </Text>
                             <VStack>
-                            <PotionQuantity/>
+                                <PotionQuantity />
 
-                            <Box
-                                as="button"
-                                onClick={() => {
-                                    MintPotion(1);
-                                }}
-                                borderWidth="1px"
-                                borderColor="white"
-                            >
-                                <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
-                                    Purchase
-                                </Text>
-                            </Box>
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        MintPotion(1);
+                                    }}
+                                    borderWidth="1px"
+                                    borderColor="white"
+                                >
+                                    <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
+                                        Purchase
+                                    </Text>
+                                </Box>
                             </VStack>
-
                         </VStack>
                     )}
                 </Box>

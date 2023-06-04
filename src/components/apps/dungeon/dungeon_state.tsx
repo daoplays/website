@@ -1,4 +1,5 @@
 import { Box, Center, Text, HStack, VStack } from "@chakra-ui/react";
+import { isMobile } from "react-device-detect";
 
 //  dungeon constants
 import { DUNGEON_FONT_SIZE, levels } from "./constants";
@@ -685,18 +686,35 @@ export const DisplayPlayerSuccessText = ({
                             {loot_bonus ? "(x2 bonus)" : ""}
                         </Text>
                     </HStack>
+                    {!isMobile &&
+                        <HStack alignContent="center" mt="1rem">
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                Escape to claim {total_loot.toFixed(2)}
+                            </Text>
 
-                    <HStack alignContent="center" mt="1rem">
-                        <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            Escape to claim {total_loot.toFixed(2)}
-                        </Text>
+                            <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
 
-                        <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                Or explore further to try and find more
+                            </Text>
+                        </HStack>
+                    }
+                    {isMobile &&
+                        <VStack  alignContent="center" mt="1rem">
+                            <HStack alignContent="center">
+                                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                    Escape to claim {total_loot.toFixed(2)}
+                                </Text>
 
-                        <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            Or explore further to try and find more
-                        </Text>
-                    </HStack>
+                                <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                            </HStack>
+                            
+                            <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                Or explore further to try and find more
+                            </Text>
+                        
+                        </VStack>
+                    }
                 </VStack>
             </Center>
         );
