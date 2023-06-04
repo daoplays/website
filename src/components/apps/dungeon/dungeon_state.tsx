@@ -518,10 +518,11 @@ export const DiceRollText = ({
     }
 
     let level : number = GetCharacterLevel(player_data);
-    let bonus_roll : string = (level / 2).toFixed(0);
+    let bonus_roll : string = (Math.floor(level / 2)).toFixed(0);
 
     let advantage = roll_two > 0;
     let critical_miss = false;
+
     if (advantage) {
         if (roll_one === 1 && roll_two === 1 )
             critical_miss = true;
@@ -708,7 +709,7 @@ export const DisplayPlayerSuccessText = ({
 
                                 <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
                             </HStack>
-                            
+
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                 Or explore further to try and find more
                             </Text>
