@@ -934,7 +934,7 @@ export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
         next_xp = levels[current_level];
     }
 
-    let xp_string = next_xp >= 0 ? "XP " + (next_xp - current_xp) + "/" + (next_xp - levels[current_level - 1]) : ""; 
+    let xp_string = next_xp >= 0 ? "XP " + (current_xp - levels[current_level - 1]) + "/" + (next_xp - levels[current_level - 1]) : ""; 
 
     return (
         <Box width="20%">
