@@ -758,15 +758,15 @@ export function ShopScreen({
 
                         <HStack alignItems="center">
                             <Box width="15%">
-                                {" "}
+                                
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
                             <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        {" "}
-                                        Buy Key (1 Shiny Trinket){" "}
+                                        
+                                        Buy Key (1 Shiny Trinket)
                                     </Text>
                                 </div>
                             </Button>
@@ -808,15 +808,15 @@ export function ShopScreen({
 
                         <HStack alignItems="center">
                             <Box width="15%">
-                                {" "}
+                                
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
                             <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        {" "}
-                                        Buy Key (1.5 SOL){" "}
+                                        
+                                        Buy Key (1.5 SOL)
                                     </Text>
                                 </div>
                             </Button>
@@ -833,7 +833,7 @@ export function ShopScreen({
                         <>
                             {xp_req !== null && player_data !== null && xp_req > 0 && bignum_to_num(player_data.num_xp) < xp_req && (
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                    {" "}
+                                    
                                     {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP
                                 </Text>
                             )}
@@ -1036,7 +1036,7 @@ export function ShopScreen({
             <Center width="100%">
                 <Box width="80%">
                     <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb="1rem">
-                        These are music boxes from across the land of Limare. Each one plays its own special tune.{" "}
+                        These are music boxes from across the land of Limare. Each one plays its own special tune.
                     </Text>
                     <Center>
                         <HStack>
@@ -1060,7 +1060,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 LOOT"}{" "}
+                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1088,7 +1088,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 2500
                                             ? "2500 XP required"
-                                            : "1000 LOOT"}{" "}
+                                            : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1116,7 +1116,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 4500
                                             ? "4500 XP required"
-                                            : "1000 LOOT"}{" "}
+                                            : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1144,7 +1144,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 7000
                                             ? "7000 XP required"
-                                            : "1000 LOOT"}{" "}
+                                            : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1162,7 +1162,7 @@ export function ShopScreen({
                     <div className="font-face-sfpb">
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                             Unfortunately my contact at the Great Library was attacked by bandits recently... Hopefully these will be back
-                            in stock soon{" "}
+                            in stock soon
                         </Text>
                     </div>
                 </Box>
@@ -1196,7 +1196,7 @@ export function ShopScreen({
                                 Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}
                             </Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 LOOT"}{" "}
+                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 LOOT"}
                             </Text>
                         </Box>
                     </VStack>
@@ -1262,7 +1262,7 @@ export function ShopScreen({
 
                         <div className="font-face-sfpb">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                You have found {bought_item_name?.slice(0, 17)}!{" "}
+                                You have found {bought_item_name?.slice(0, 17)}!
                             </Text>
                         </div>
                     </HStack>
@@ -1270,7 +1270,7 @@ export function ShopScreen({
                         <Box width="100%">
                             <div className="font-face-sfpb">
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                    {bought_item_description} View it{" "}
+                                    {bought_item_description} View it
                                     <a
                                         className="one"
                                         target="_blank"
@@ -1298,7 +1298,7 @@ export function ShopScreen({
                     <Box width="100%">
                         <div className="font-face-sfpb">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                View it{" "}
+                                View it
                                 <a
                                     className="one"
                                     target="_blank"

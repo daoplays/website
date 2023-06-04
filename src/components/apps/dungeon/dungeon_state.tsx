@@ -1,7 +1,8 @@
 import { Box, Center, Text, HStack, VStack } from "@chakra-ui/react";
 
 //  dungeon constants
-import { DUNGEON_FONT_SIZE } from "./constants";
+import { DUNGEON_FONT_SIZE, levels } from "./constants";
+import { PlayerData } from "./utils";
 
 //enemies
 import assassin from "./images/Assassin.gif";
@@ -473,14 +474,32 @@ const DungeonPlayerDefeatedText: string[][] = [
     ["The werewolf has defeated you.", "The werewolf leaps on you faster than you can react and tears you to shreds"],
 ];
 
+export function GetCharacterLevel(player_data : PlayerData | null): number {
+
+    if (player_data == null)
+        return 1;
+
+        let current_level = 1;
+        for (let i = 0; i < levels.length; i++) {
+            if (player_data.character_xp[player_data.player_character] >= levels[i]) {
+                current_level = i + 1;
+            }
+        }
+    return (
+        current_level
+    );
+}
+
 export const DiceRollText = ({
     roll_one,
     roll_two,
     loading,
+    player_data
 }: {
     roll_one: number;
     roll_two: number;
     loading: boolean;
+    player_data : PlayerData | null
 }) => {
     let dice_size: string | number = "75px";
 
@@ -497,13 +516,19 @@ export const DiceRollText = ({
         );
     }
 
+    let level : number = GetCharacterLevel(player_data);
+    let bonus_roll : string = (level / 2).toFixed(0);
+
     let advantage = roll_two > 0;
+    let critical_miss = false;
     if (advantage) {
+        if (roll_one === 1 && roll_two === 1 )
+            critical_miss = true;
+
         return (
             <VStack mt="1rem">
                 <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    {" "}
-                    You Rolled With Advantage:{" "}
+                    You Rolled With Advantage:
                 </Text>
                 <HStack>
                     <img
@@ -519,18 +544,40 @@ export const DiceRollText = ({
                         alt={""}
                     />
                 </HStack>
+                {!critical_miss &&
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                        +{bonus_roll} Power Roll
+                    </Text>
+                }
+                {critical_miss &&
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                        Critical Miss!
+                    </Text>
+                }
             </VStack>
         );
     }
+
+    if (roll_one === 1)
+        critical_miss = true;
 
     // otherwise just return the first dice
     return (
         <VStack mt="1rem">
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                {" "}
-                You Rolled:{" "}
+                You Rolled:
             </Text>
             <img height={dice_size} width={dice_size} src={red_dice_array[roll_one - 1]} alt={""} />
+            {!critical_miss &&
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    +{bonus_roll} Power Roll
+                </Text>
+            }
+            {critical_miss &&
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    Critical Miss!
+                </Text>
+            }
         </VStack>
     );
 };
@@ -856,20 +903,34 @@ export const DisplayPlayer = ({
 };
 
 export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
+
+    let current_level = 1;
+    for (let i = 0; i < levels.length; i++) {
+        if (current_xp >= levels[i]) {
+            current_level = i + 1;
+        }
+    }
+    let next_xp = -1; 
+    if (current_level < levels.length) {
+        next_xp = levels[current_level];
+    }
+
+    let xp_string = next_xp >= 0 ? "XP " + (next_xp - current_xp) + "/" + (next_xp - levels[current_level - 1]) : ""; 
+
     return (
-        <Box width="10%">
+        <Box width="20%">
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                XP {current_xp}
+                Lvl {current_level} {xp_string}
             </Text>
         </Box>
     );
 };
 
-export const DisplayLVL = ({ current_level }: { current_level: number }) => {
+export const DisplayRoom = ({ current_room }: { current_room: number }) => {
     return (
         <Box width="10%">
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                Lvl. {current_level > 0 ? current_level : ""}
+                Room {current_room > 0 ? current_room : ""}
             </Text>
         </Box>
     );

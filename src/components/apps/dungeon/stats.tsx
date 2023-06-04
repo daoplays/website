@@ -300,7 +300,7 @@ function PlayerStats({
                                     <br />
                                     Dungeon
                                     <br />
-                                    Streak{" "}
+                                    Streak
                                 </Text>
                             </VStack>
 
@@ -319,7 +319,7 @@ function PlayerStats({
                                     <br />
                                     Explored
                                     <br />
-                                    Today{" "}
+                                    Today
                                 </Text>
                             </VStack>
 
@@ -338,7 +338,7 @@ function PlayerStats({
                                     <br />
                                     Levels
                                     <br />
-                                    Explored{" "}
+                                    Explored
                                 </Text>
                             </VStack>
 
@@ -359,7 +359,7 @@ function PlayerStats({
                                 >
                                     Total
                                     <br />
-                                    Looted{" "}
+                                    Looted
                                 </Text>
                             </VStack>
 
@@ -378,7 +378,7 @@ function PlayerStats({
                                     <br />
                                     Dungeon
                                     <br />
-                                    Clears{" "}
+                                    Clears
                                 </Text>
                             </VStack>
 
@@ -392,7 +392,7 @@ function PlayerStats({
                                 >
                                     Total Levels
                                     <br />
-                                    Survived/Killed{" "}
+                                    Survived/Killed
                                 </Text>
                             </VStack>
                         </HStack>
@@ -415,7 +415,7 @@ function PlayerStats({
                                         >
                                             Daily Dungeon
                                             <br />
-                                            Streak{" "}
+                                            Streak
                                         </Text>
                                     </VStack>
 
@@ -436,7 +436,7 @@ function PlayerStats({
                                         >
                                             Total
                                             <br />
-                                            Looted{" "}
+                                            Looted
                                         </Text>
                                     </VStack>
                                 </VStack>
@@ -455,7 +455,7 @@ function PlayerStats({
                                         >
                                             Levels Explored
                                             <br />
-                                            Today{" "}
+                                            Today
                                         </Text>
                                     </VStack>
 
@@ -472,7 +472,7 @@ function PlayerStats({
                                         >
                                             Total Dungeon
                                             <br />
-                                            Clears{" "}
+                                            Clears
                                         </Text>
                                     </VStack>
                                 </VStack>
@@ -491,7 +491,7 @@ function PlayerStats({
                                         >
                                             Total Levels
                                             <br />
-                                            Explored{" "}
+                                            Explored
                                         </Text>
                                     </VStack>
 
@@ -505,7 +505,7 @@ function PlayerStats({
                                         >
                                             Total Levels
                                             <br />
-                                            Survived/Killed{" "}
+                                            Survived/Killed
                                         </Text>
                                     </VStack>
                                 </VStack>
@@ -609,15 +609,15 @@ function PlayerStats({
                                 <td>XP</td>
                                 <td>{player_data?.character_xp[0]} XP</td>
                                 <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[1]}{" "}
+                                    {player_data?.character_xp[1]}
                                 </td>
                                 <td>{player_data?.character_xp[2]} XP</td>
                                 <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[0]}{" "}
+                                    {player_data?.character_xp[0]}
                                 </td>
                                 <td>{player_data?.character_xp[1]} XP</td>
                                 <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[2]}{" "}
+                                    {player_data?.character_xp[2]}
                                 </td>
                             </tr>
                             <tr>
@@ -1525,7 +1525,7 @@ export function StatsScreen({
                                         fontSize={DUNGEON_FONT_SIZE}
                                         color="white"
                                     >
-                                        Total Loot <br />{" "}
+                                        Total Loot <br />
                                         {total_volume.toFixed(2)}
                                     </Text>
                                 </Box>
