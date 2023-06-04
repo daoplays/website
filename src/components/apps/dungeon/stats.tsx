@@ -46,77 +46,6 @@ import ranger_emoji from "./emojis/Ranger.gif";
 import wizard_emoji from "./emojis/Wizard.gif";
 import "../dungeon/css/style.css";
 
-function HorizontalBar({
-    title,
-    x1,
-    x2,
-}: {
-    title: string;
-    x1: number[];
-    x2: number[];
-}) {
-    const isMobile = useMediaQuery({ query: "(max-width: 500px)" });
-    const isTab = useMediaQuery({ query: "(max-width: 900px)" });
-
-    var trace1 = {
-        x: x1,
-        //y: ['giraffes'],
-        orientation: "h",
-        marker: {
-            color: "rgb(167,251,93,255)",
-            width: 1,
-        },
-        type: "bar",
-        text: x1[0].toFixed(3),
-        textposition: "auto",
-        name: "Win",
-        hoverinfo: "Win",
-    };
-
-    var trace2 = {
-        x: x2,
-        //y: ['giraffes'],
-        orientation: "h",
-        type: "bar",
-        marker: {
-            color: "rgb(126,165,248,255)",
-            width: 1,
-        },
-        text: x2[0].toFixed(3),
-        textposition: "auto",
-        name: "Lose",
-    };
-
-    var data = [trace1, trace2];
-
-    var layout = {
-        height: 300,
-        width: isMobile ? 340 : isTab ? 500 : 500,
-        title: title,
-        barmode: "stack",
-        showlegend: false,
-        plot_bgcolor: "black",
-        paper_bgcolor: "black",
-        margin: {
-            t: 40,
-        },
-        font: {
-            family: "SFPixelate",
-            size: isMobile ? 10 : isTab ? 18 : 18,
-            color: "white",
-        },
-        yaxis: {
-            showticklabels: false,
-            showline: false,
-        },
-        xaxis: {
-            showticklabels: false,
-        },
-    };
-
-    return <PlotlyChart data={data} layout={layout} />;
-}
-
 function PieChart({
     values,
     labels,
@@ -300,7 +229,7 @@ function PlayerStats({
                                     <br />
                                     Dungeon
                                     <br />
-                                    Streak{" "}
+                                    Streak
                                 </Text>
                             </VStack>
 
@@ -319,7 +248,7 @@ function PlayerStats({
                                     <br />
                                     Explored
                                     <br />
-                                    Today{" "}
+                                    Today
                                 </Text>
                             </VStack>
 
@@ -338,7 +267,7 @@ function PlayerStats({
                                     <br />
                                     Levels
                                     <br />
-                                    Explored{" "}
+                                    Explored
                                 </Text>
                             </VStack>
 
@@ -359,7 +288,7 @@ function PlayerStats({
                                 >
                                     Total
                                     <br />
-                                    Looted{" "}
+                                    Looted
                                 </Text>
                             </VStack>
 
@@ -378,7 +307,7 @@ function PlayerStats({
                                     <br />
                                     Dungeon
                                     <br />
-                                    Clears{" "}
+                                    Clears
                                 </Text>
                             </VStack>
 
@@ -392,7 +321,7 @@ function PlayerStats({
                                 >
                                     Total Levels
                                     <br />
-                                    Survived/Killed{" "}
+                                    Survived/Killed
                                 </Text>
                             </VStack>
                         </HStack>
@@ -415,7 +344,7 @@ function PlayerStats({
                                         >
                                             Daily Dungeon
                                             <br />
-                                            Streak{" "}
+                                            Streak
                                         </Text>
                                     </VStack>
 
@@ -436,7 +365,7 @@ function PlayerStats({
                                         >
                                             Total
                                             <br />
-                                            Looted{" "}
+                                            Looted
                                         </Text>
                                     </VStack>
                                 </VStack>
@@ -455,7 +384,7 @@ function PlayerStats({
                                         >
                                             Levels Explored
                                             <br />
-                                            Today{" "}
+                                            Today
                                         </Text>
                                     </VStack>
 
@@ -472,7 +401,7 @@ function PlayerStats({
                                         >
                                             Total Dungeon
                                             <br />
-                                            Clears{" "}
+                                            Clears
                                         </Text>
                                     </VStack>
                                 </VStack>
@@ -491,7 +420,7 @@ function PlayerStats({
                                         >
                                             Total Levels
                                             <br />
-                                            Explored{" "}
+                                            Explored
                                         </Text>
                                     </VStack>
 
@@ -505,7 +434,7 @@ function PlayerStats({
                                         >
                                             Total Levels
                                             <br />
-                                            Survived/Killed{" "}
+                                            Survived/Killed
                                         </Text>
                                     </VStack>
                                 </VStack>
@@ -609,15 +538,15 @@ function PlayerStats({
                                 <td>XP</td>
                                 <td>{player_data?.character_xp[0]} XP</td>
                                 <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[1]}{" "}
+                                    {player_data?.character_xp[1]}
                                 </td>
                                 <td>{player_data?.character_xp[2]} XP</td>
                                 <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[0]}{" "}
+                                    {player_data?.character_xp[0]}
                                 </td>
                                 <td>{player_data?.character_xp[1]} XP</td>
                                 <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[2]}{" "}
+                                    {player_data?.character_xp[2]}
                                 </td>
                             </tr>
                             <tr>
@@ -1110,188 +1039,6 @@ function PlayerStats({
     );
 }
 
-function nFormatter(num: number, digits: number) {
-    const lookup = [
-        { value: 1, symbol: "" },
-        { value: 1e3, symbol: "k" },
-        { value: 1e6, symbol: "M" },
-        { value: 1e9, symbol: "G" },
-        { value: 1e12, symbol: "T" },
-        { value: 1e15, symbol: "P" },
-        { value: 1e18, symbol: "E" },
-    ];
-    const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-    var item = lookup
-        .slice()
-        .reverse()
-        .find(function (item) {
-            return num >= item.value;
-        });
-    return item
-        ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol
-        : "0";
-}
-
-function GameStats({ plays, wins }: { plays: number[]; wins: number[] }) {
-    const isMobile = useMediaQuery({ query: "(max-width: 500px)" });
-
-    if (plays.length === 0) return <></>;
-
-    let tier_1_plays = plays[0] + plays[1] + plays[2];
-    let tier_1_wins = wins[0] + wins[1] + wins[2];
-
-    let tier_2_plays = plays[3] + plays[4] + plays[5] + plays[6];
-    let tier_2_wins = wins[3] + wins[4] + wins[5] + wins[6];
-
-    let decimals = 3;
-    if (isMobile) decimals = 2;
-
-    return (
-        <Center marginBottom="5rem">
-            <Box width={isMobile ? "95%" : "80%"}>
-                <div
-                    className="font-face-sfpb"
-                    style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}
-                >
-                    <h2
-                        className="mt-5"
-                        style={{ fontSize: DEFAULT_FONT_SIZE }}
-                    >
-                        Per Level Play Statistics
-                    </h2>
-                    <br />
-
-                    <Table className="custom-centered-table">
-                        <thead>
-                            <tr>
-                                <th>Level</th>
-                                <th>1</th>
-                                <th>2</th>
-                                <th>3</th>
-                                <th>4</th>
-                                <th>5</th>
-                                <th>6</th>
-                                <th>7</th>
-                            </tr>
-                        </thead>
-                        <tbody
-                            style={{
-                                backgroundColor: "black",
-                            }}
-                        >
-                            <tr>
-                                <td>Plays</td>
-                                <td>{nFormatter(plays[0], 0)}</td>
-                                <td>{nFormatter(plays[1], 0)}</td>
-                                <td>{nFormatter(plays[2], 0)}</td>
-                                <td>{nFormatter(plays[3], 0)}</td>
-                                <td>{nFormatter(plays[4], 1)}</td>
-                                <td>{nFormatter(plays[5], 1)}</td>
-                                <td>{nFormatter(plays[6], 1)}</td>
-                            </tr>
-                            <tr>
-                                <td>Wins</td>
-                                <td>{nFormatter(wins[0], 0)}</td>
-                                <td>{nFormatter(wins[1], 0)}</td>
-                                <td>{nFormatter(wins[2], 0)}</td>
-                                <td>{nFormatter(wins[3], 1)}</td>
-                                <td>{nFormatter(wins[4], 1)}</td>
-                                <td>{nFormatter(wins[5], 1)}</td>
-                                <td>{nFormatter(wins[6], 1)}</td>
-                            </tr>
-                            <tr>
-                                <td>%</td>
-                                <td>
-                                    {(wins[0] / plays[0]).toFixed(decimals)}
-                                </td>
-                                <td>
-                                    {(wins[1] / plays[1]).toFixed(decimals)}
-                                </td>
-                                <td>
-                                    {(wins[2] / plays[2]).toFixed(decimals)}
-                                </td>
-                                <td>
-                                    {(wins[3] / plays[3]).toFixed(decimals)}
-                                </td>
-                                <td>
-                                    {(wins[4] / plays[4]).toFixed(decimals)}
-                                </td>
-                                <td>
-                                    {(wins[5] / plays[5]).toFixed(decimals)}
-                                </td>
-                                <td>
-                                    {(wins[6] / plays[6]).toFixed(decimals)}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Expec. %</td>
-                                <td>0.66</td>
-                                <td>0.66</td>
-                                <td>0.66</td>
-                                <td>0.5</td>
-                                <td>0.5</td>
-                                <td>0.5</td>
-                                <td>0.5</td>
-                            </tr>
-                        </tbody>
-                    </Table>
-
-                    <h2
-                        className="mt-5"
-                        style={{ fontSize: DEFAULT_FONT_SIZE }}
-                    >
-                        Per Tier Play Statistics
-                    </h2>
-                    <br />
-
-                    <Table className="custom-centered-table">
-                        <thead>
-                            <tr>
-                                <th>Tier</th>
-                                <th>1</th>
-                                <th>2</th>
-                            </tr>
-                        </thead>
-                        <tbody
-                            style={{
-                                backgroundColor: "black",
-                            }}
-                        >
-                            <tr>
-                                <td>Plays</td>
-                                <td>{nFormatter(tier_1_plays, 1)}</td>
-                                <td>{nFormatter(tier_2_plays, 1)}</td>
-                            </tr>
-                            <tr>
-                                <td>Wins</td>
-                                <td>{nFormatter(tier_1_wins, 1)}</td>
-                                <td>{nFormatter(tier_2_wins, 1)}</td>
-                            </tr>
-                            <tr>
-                                <td>%</td>
-                                <td>
-                                    {(tier_1_wins / tier_1_plays).toFixed(
-                                        decimals
-                                    )}
-                                </td>
-                                <td>
-                                    {(tier_2_wins / tier_2_plays).toFixed(
-                                        decimals
-                                    )}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Expec. %</td>
-                                <td>0.66</td>
-                                <td>0.5</td>
-                            </tr>
-                        </tbody>
-                    </Table>
-                </div>
-            </Box>
-        </Center>
-    );
-}
 
 export function StatsScreen({
     AchievementData,
@@ -1311,13 +1058,6 @@ export function StatsScreen({
     const [total_plays, setTotalPlays] = useState<number>(0);
     const [total_volume, setTotalVolume] = useState<number>(0);
     const [total_users, setTotalUsers] = useState<number>(0);
-    const [plays_data, setPlaysData] = useState<number[]>([]);
-    const [wins_data, setWinsData] = useState<number[]>([]);
-
-    const [tier_1_wins, setTier1Wins] = useState<number>(0);
-    const [tier_2_wins, setTier2Wins] = useState<number>(0);
-    const [tier_1_losses, setTier1Losses] = useState<number>(0);
-    const [tier_2_losses, setTier2Losses] = useState<number>(0);
 
     console.log("in stats", player_data);
     const FetchData = useCallback(async () => {
@@ -1358,41 +1098,11 @@ export function StatsScreen({
         setTotalPlays(main_stats["total_games"]);
         setTotalVolume(main_stats["total_volume"]);
         setTotalUsers(main_stats["total_users"]);
-        setPlaysData(main_stats["plays"]);
-        setWinsData(main_stats["wins"]);
 
-        let tier_1_wins =
-            main_stats["wins"][0] +
-            main_stats["wins"][1] +
-            main_stats["wins"][2];
-        let tier_1_plays =
-            main_stats["plays"][0] +
-            main_stats["plays"][1] +
-            main_stats["plays"][2];
-        setTier1Wins(tier_1_wins / tier_1_plays);
-        setTier1Losses((tier_1_plays - tier_1_wins) / tier_1_plays);
-
-        let tier_2_wins =
-            main_stats["wins"][3] +
-            main_stats["wins"][4] +
-            main_stats["wins"][5] +
-            main_stats["wins"][6];
-        let tier_2_plays =
-            main_stats["plays"][3] +
-            main_stats["plays"][4] +
-            main_stats["plays"][5] +
-            main_stats["plays"][6];
-
-        setTier2Wins(tier_2_wins / tier_2_plays);
-        setTier2Losses((tier_2_plays - tier_2_wins) / tier_2_plays);
     }, [
         setVolumeData,
         setUserData,
         setCharacterData,
-        setTier1Wins,
-        setTier1Losses,
-        setTier2Wins,
-        setTier2Losses,
         setTotalUsers,
     ]);
 
@@ -1525,7 +1235,7 @@ export function StatsScreen({
                                         fontSize={DUNGEON_FONT_SIZE}
                                         color="white"
                                     >
-                                        Total Loot <br />{" "}
+                                        Total Loot <br />
                                         {total_volume.toFixed(2)}
                                     </Text>
                                 </Box>
@@ -1573,26 +1283,7 @@ export function StatsScreen({
                             />
                         </HStack>
                     </Center>
-
-                    <Center className="responsivePage">
-                        <HStack className="responsiveGraph">
-                            <HorizontalBar
-                                title="Tier 1 W/L"
-                                x1={[tier_1_wins]}
-                                x2={[tier_1_losses]}
-                            />
-                            <HorizontalBar
-                                title="Tier 2 W/L"
-                                x1={[tier_2_wins]}
-                                x2={[tier_2_losses]}
-                            />
-                        </HStack>
-                    </Center>
                 </Tab>
-                <Tab eventKey="games" title="GAMES" tabClassName="custom-tab">
-                    <GameStats plays={plays_data} wins={wins_data} />
-                </Tab>
-
                 <Tab eventKey="perils" title="PLAYER" tabClassName="custom-tab">
                     <PlayerStats
                         AchievementData={AchievementData}
