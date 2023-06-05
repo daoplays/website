@@ -520,7 +520,8 @@ export const DiceRollText = ({
     }
 
     let level : number = GetCharacterLevel(player_data);
-    let bonus_roll : string = (Math.floor(level / 2)).toFixed(0);
+    let power_rest : number = player_data === null ? 0 : player_data?.rest_status[player_data?.player_character].power_bonus;
+    let bonus_roll : string = (Math.floor(level / 2) + power_rest).toFixed(0);
 
     let advantage = roll_two > 0;
     let critical_miss = false;
