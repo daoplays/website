@@ -502,6 +502,7 @@ export const HourGlassText = ({
     loading: boolean;
     player_data : PlayerData | null
 }) => {
+    let hour_glass_size: string | number = isMobile ? "2.5rem" : "5rem";
     let dice_roll_size: string | number = isMobile ? "64px" : "112px";
 
     if (loading) {
