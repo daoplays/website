@@ -853,22 +853,22 @@ export function DungeonApp() {
                     if (DEBUG) {
                         console.log("player killed enemy");
                     }
-                    setTimeout(() => {
+                    
                         setPlayerState(DungeonStatus.alive);
                         setEnemyState(DungeonStatus.dead);
                         //Victory sound plays
                         playAudio(VictoryAudio)
-                    }, 1000);
+                    
                 } else {
                     if (DEBUG) {
                         console.log("enemy killed player");
                     }
-                    setTimeout(() => {
+                    
                         setPlayerState(DungeonStatus.dead);
                         setEnemyState(DungeonStatus.alive);
                         //player death audio
                         playAudio(PlayerDeathAudio)
-                    }, 1000);
+                    
                 }
 
                 if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
