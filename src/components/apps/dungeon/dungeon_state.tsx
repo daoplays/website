@@ -525,7 +525,7 @@ export const HourGlassText = ({
                     className="font-face-sfpb"
                     style={{
                         marginTop: "2rem",
-                        marginLeft: !isMobile ? "1.6rem" : "0rem",
+                        marginLeft: !isMobile ? "0.1rem" : "0rem",
                     }}
                     fontSize={18}
                     textAlign="center"
