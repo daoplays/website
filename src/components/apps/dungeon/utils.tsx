@@ -431,7 +431,7 @@ export class RestData {
     constructor(
         readonly energy: number,
         readonly rest_time_remaining: bignum,
-        readonly luck_bonus: number,
+        readonly power_bonus: number,
         readonly loot_bonus: number,
         readonly health_bonus: number,
         readonly xp_bonus: number
@@ -441,7 +441,7 @@ export class RestData {
         [
             ["energy", u8],
             ["rest_time_remaining", i64],
-            ["luck_bonus", u8],
+            ["power_bonus", u8],
             ["loot_bonus", u8],
             ["health_bonus", u8],
             ["xp_bonus", u8],
@@ -450,7 +450,7 @@ export class RestData {
             new RestData(
                 args.energy!,
                 args.rest_time_remaining!,
-                args.luck_bonus!,
+                args.power_bonus!,
                 args.loot_bonus!,
                 args.health_bonus!,
                 args.xp_bonus!
