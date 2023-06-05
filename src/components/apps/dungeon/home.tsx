@@ -1973,7 +1973,8 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            Rest
+                            {ranger_resting ? "Resting" : "Rest"}
+
                         </Text>
                     </Box>
                 </VStack>
@@ -2040,7 +2041,8 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            Rest
+                            {wizard_resting ? "Resting" : "Rest"}
+
                         </Text>
                     </Box>
                 </VStack>
