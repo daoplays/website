@@ -99,6 +99,7 @@ import {
     serialise_drink_potion_instruction,
     PlayerData,
     request_key_freeplays_data,
+    serialise_rest_instruction,
 } from "./utils";
 
 import {
@@ -224,6 +225,11 @@ export function DungeonApp() {
     const [new_achievements, setNewAchievements] = useState<number[] | null>(null);
     const new_achievements_ref = useRef<number[]>([]);
     const achievement_interations = useRef<number>(-1);
+
+    // rest state
+    const rest_character = useRef<DungeonCharacter>(DungeonCharacter.knight);
+    const [rest_state, setRestState] = useState<number>(0);
+    const [show_rest, setShowRest] = useState<boolean>(false);
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState<string>("");
@@ -483,6 +489,82 @@ export function DungeonApp() {
                                 </Text>
                             </div>
                         </Box>
+                    </Modal.Footer>
+                </Modal>
+            </>
+        );
+    }
+
+    function RestModal() {
+        const handleClose = () => {
+            setShowRest(false);
+        };
+
+        if (show_rest === false) return <></>;
+
+        return (
+            <>
+                <Modal centered show={show_rest} animation={false} onHide={handleClose}>
+                    <div className="font-face-sfpb">
+                        <Modal.Header style={{ backgroundColor: "black" }} closeButton>
+                            <Modal.Title style={{ fontSize: 30, color: "white", fontWeight: "semibold" }}>Rest</Modal.Title>
+                        </Modal.Header>
+                    </div>
+                    <div className="font-face-sfpb text-center">
+                        <Modal.Body style={{ backgroundColor: "black", fontSize: 20, color: "white", fontWeight: "semibold" }}>
+                            <HStack>
+                                <Box
+                                    as="button"
+                                    borderWidth="1px"
+                                    borderColor={rest_state === 0 ? "white" : "black"}
+                                    onClick={() => setRestState(0)}
+                                >
+                                    <Text className="font-face-sfpb" fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                                        XP
+                                    </Text>
+                                </Box>
+                                <Box
+                                    as="button"
+                                    borderWidth="1px"
+                                    borderColor={rest_state === 1 ? "white" : "black"}
+                                    onClick={() => setRestState(1)}
+                                >
+                                    <Text className="font-face-sfpb" fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                                        Loot
+                                    </Text>
+                                </Box>
+                                <Box
+                                    as="button"
+                                    borderWidth="1px"
+                                    borderColor={rest_state === 2 ? "white" : "black"}
+                                    onClick={() => setRestState(2)}
+                                >
+                                    <Text className="font-face-sfpb" fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                                        Power
+                                    </Text>
+                                </Box>
+                            </HStack>
+                        </Modal.Body>
+                    </div>
+
+                    <Modal.Footer style={{ alignItems: "center", justifyContent: "center", backgroundColor: "black" }}>
+                        <HStack>
+                            <Box as="button" onClick={(e: any) => Rest(0)}>
+                                <Text className="font-face-sfpb" fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                                    1 Hour
+                                </Text>
+                            </Box>
+                            <Box as="button" onClick={(e: any) => Rest(1)}>
+                                <Text className="font-face-sfpb" fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                                    4 Hours
+                                </Text>
+                            </Box>
+                            <Box as="button" onClick={(e: any) => Rest(2)}>
+                                <Text className="font-face-sfpb" fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                                    8 Hours
+                                </Text>
+                            </Box>
+                        </HStack>
                     </Modal.Footer>
                 </Modal>
             </>
@@ -942,6 +1024,9 @@ export function DungeonApp() {
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
+        if (current_player_data !== null && current_player_data?.rest_status[player_character].rest_time_remaining > Date.now() / 1000 + 60)
+            return;
+
         setProcessingTransaction(true);
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
@@ -1084,7 +1169,7 @@ export function DungeonApp() {
 
         last_advantage.current = advantage;
         last_loot_bonus.current = loot_bonus;
-    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus]);
+    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus, current_player_data]);
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
@@ -1254,6 +1339,74 @@ export function DungeonApp() {
             check_sol_balance.current = true;
         },
         [wallet, bearer_token]
+    );
+
+    const Rest = useCallback(
+        async (which: number) => {
+            setTransactionFailed(false);
+            num_state_checks.current = 0;
+
+            if (wallet.publicKey === null || wallet.signTransaction === undefined || wallet.signMessage === undefined) return;
+
+            setProcessingTransaction(true);
+
+            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+
+            const instruction_data = serialise_rest_instruction(DungeonInstruction.rest, rest_character.current, rest_state, which);
+
+            var account_vector = [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
+
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            transaction.add(play_instruction);
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    setProcessingTransaction(false);
+                    return;
+                }
+
+                let signature = transaction_response.result;
+
+                if (DEBUG) {
+                    console.log("play signature: ", signature);
+                }
+
+                current_signature.current = signature;
+                signature_check_count.current = 0;
+            } catch (error) {
+                setProcessingTransaction(false);
+                console.log(error);
+                return;
+            }
+
+            if (DEBUG) {
+                console.log("In Play - setting state");
+            }
+
+            check_user_state.current = true;
+            check_sol_balance.current = true;
+        },
+        [wallet, bearer_token, rest_state]
     );
 
     const ClaimAchievement = useCallback(
@@ -1598,6 +1751,12 @@ export function DungeonApp() {
 
     const CharacterSelect = () => {
         //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", num_plays,initial_num_plays.current, "dataaccount:", data_account_status, "initial status", initial_status.current, initial_status.current === DungeonStatus.unknown);
+
+        let now = Date.now() / 1000 + 60;
+        let knight_resting: boolean = current_player_data !== null && current_player_data?.rest_status[0].rest_time_remaining > now;
+        let ranger_resting: boolean = current_player_data !== null && current_player_data?.rest_status[1].rest_time_remaining > now;
+        let wizard_resting: boolean = current_player_data !== null && current_player_data?.rest_status[2].rest_time_remaining > now;
+
         return (
             <HStack width="100%">
                 <VStack width="33%">
@@ -1613,8 +1772,13 @@ export function DungeonApp() {
                             width="100%"
                         >
                             <Box>
-                                <Button variant="link" size="md" onClick={SelectKnight}>
-                                    <img style={{ imageRendering: "pixelated" }} src={knight} width="10000" alt={""} />
+                                <Button variant="link" disabled={knight_resting} size="md" onClick={knight_resting ? undefined: SelectKnight}>
+                                    <img
+                                        style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={knight}
+                                        width="10000"
+                                        alt={""}
+                                    />
                                 </Button>
                             </Box>
                         </Box>
@@ -1622,13 +1786,40 @@ export function DungeonApp() {
                     {player_character !== DungeonCharacter.knight && (
                         <Box width="100%">
                             <Box>
-                                <Button variant="link" size="md" onClick={SelectKnight}>
-                                    <img style={{ imageRendering: "pixelated" }} src={knight} width="10000" alt={""} />
+                                <Button variant="link" disabled={knight_resting} size="md" onClick={knight_resting ? undefined: SelectKnight}>
+                                    <img
+                                        style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={knight}
+                                        width="10000"
+                                        alt={""}
+                                    />
                                 </Button>
                             </Box>
                         </Box>
                     )}
                     <CharacterXP character={DungeonCharacter.knight} />
+                    <Text
+                            className="font-face-sfpb"
+                            fontSize={DUNGEON_FONT_SIZE}
+                            textAlign="center"
+                            color="white"
+                        >
+                            Energy {current_player_data !== null ? current_player_data?.rest_status[0].energy : ""}/100
+                    </Text>
+                    <Box
+                        as="button"
+                        disabled={knight_resting}
+                        borderWidth={knight_resting ? "0px" : "1px"}
+                        borderColor={knight_resting ? "black" : "white"}
+                        onClick={() => {
+                            rest_character.current = DungeonCharacter.knight;
+                            setShowRest(true);
+                        }}
+                    >
+                        <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            {knight_resting ? "Resting" : "Rest"}
+                        </Text>
+                    </Box>
                 </VStack>
 
                 <VStack width="33%">
@@ -1644,8 +1835,13 @@ export function DungeonApp() {
                             width="100%"
                         >
                             <Box>
-                                <Button variant="link" size="md" onClick={SelectRanger}>
-                                    <img style={{ imageRendering: "pixelated" }} src={ranger} width="10000" alt={""} />
+                                <Button variant="link" disabled={ranger_resting} size="md" onClick={ranger_resting ? undefined: SelectRanger}>
+                                    <img
+                                        style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={ranger}
+                                        width="10000"
+                                        alt={""}
+                                    />
                                 </Button>
                             </Box>
                         </Box>
@@ -1653,13 +1849,45 @@ export function DungeonApp() {
                     {player_character !== DungeonCharacter.ranger && (
                         <Box width="100%">
                             <Box>
-                                <Button variant="link" size="md" onClick={SelectRanger}>
-                                    <img style={{ imageRendering: "pixelated" }} src={ranger} width="10000" alt={""} />
+                                <Button variant="link" disabled={ranger_resting} size="md" onClick={ranger_resting ? undefined: SelectRanger}>
+                                    <img
+                                        style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={ranger}
+                                        width="10000"
+                                        alt={""}
+                                    />
                                 </Button>
                             </Box>
                         </Box>
                     )}
                     <CharacterXP character={DungeonCharacter.ranger} />
+                    <Text
+                            className="font-face-sfpb"
+                            fontSize={DUNGEON_FONT_SIZE}
+                            textAlign="center"
+                            color="white"
+                        >
+                            Energy {current_player_data !== null ? current_player_data?.rest_status[1].energy : ""}/100
+                    </Text>
+                    <Box
+                        as="button"
+                        disabled={ranger_resting}
+                        borderWidth={ranger_resting ? "0px" : "1px"}
+                        borderColor={ranger_resting ? "black" : "white"}
+                        onClick={() => {
+                            rest_character.current = DungeonCharacter.ranger;
+                            setShowRest(true);
+                        }}
+                    >
+                        <Text
+                            className="font-face-sfpb"
+                            fontSize={DUNGEON_FONT_SIZE}
+                            textAlign="center"
+                            color="white"
+                        >
+                            Rest
+                        </Text>
+                    </Box>
                 </VStack>
 
                 <VStack width="33%">
@@ -1675,8 +1903,13 @@ export function DungeonApp() {
                             width="100%"
                         >
                             <Box>
-                                <Button variant="link" size="md" onClick={SelectWizard}>
-                                    <img style={{ imageRendering: "pixelated" }} src={wizard} width="10000" alt={""} />
+                                <Button variant="link" disabled={wizard_resting} size="md" onClick={wizard_resting ? undefined: SelectWizard}>
+                                    <img
+                                        style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={wizard}
+                                        width="10000"
+                                        alt={""}
+                                    />
                                 </Button>
                             </Box>
                         </Box>
@@ -1684,13 +1917,45 @@ export function DungeonApp() {
                     {player_character !== DungeonCharacter.wizard && (
                         <Box width="100%">
                             <Box>
-                                <Button variant="link" size="md" onClick={SelectWizard}>
-                                    <img style={{ imageRendering: "pixelated" }} src={wizard} width="10000" alt={""} />
+                                <Button variant="link" disabled={wizard_resting} size="md" onClick={wizard_resting ? undefined: SelectWizard}>
+                                    <img
+                                        style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={wizard}
+                                        width="10000"
+                                        alt={""}
+                                    />
                                 </Button>
                             </Box>
                         </Box>
                     )}
                     <CharacterXP character={DungeonCharacter.wizard} />
+                    <Text
+                            className="font-face-sfpb"
+                            fontSize={DUNGEON_FONT_SIZE}
+                            textAlign="center"
+                            color="white"
+                        >
+                            Energy {current_player_data !== null ? current_player_data?.rest_status[2].energy : ""}/100
+                    </Text>
+                    <Box
+                        as="button"
+                        disabled={wizard_resting}
+                        borderWidth={wizard_resting ? "0px" : "1px"}
+                        borderColor={wizard_resting ? "black" : "white"}
+                        onClick={() => {
+                            rest_character.current = DungeonCharacter.wizard;
+                            setShowRest(true);
+                        }}
+                    >
+                        <Text
+                            className="font-face-sfpb"
+                            fontSize={DUNGEON_FONT_SIZE}
+                            textAlign="center"
+                            color="white"
+                        >
+                            Rest
+                        </Text>
+                    </Box>
                 </VStack>
             </HStack>
         );
@@ -2158,6 +2423,7 @@ export function DungeonApp() {
         <>
             <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance} bearer_token={bearer_token} />
             {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN) && <AchievementsModal />}
+            {screen === Screen.HOME_SCREEN && <RestModal />}
 
             <Box width="100%" mb="2%">
                 <Center>

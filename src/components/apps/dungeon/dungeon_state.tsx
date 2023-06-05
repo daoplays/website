@@ -146,6 +146,8 @@ export const enum DungeonInstruction {
     claim_achievement = 4,
     drink_potion = 5,
     buy_potion = 6,
+    build_home = 7,
+    rest = 8
 }
 
 export const enum DungeonCharacter {
@@ -934,6 +936,7 @@ export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
         next_xp = levels[current_level];
     }
 
+    //console.log(current_xp, current_level, levels[current_level - 1], current_xp - levels[current_level - 1] )
     let xp_string = next_xp >= 0 ? "XP " + (current_xp - levels[current_level - 1]) + "/" + (next_xp - levels[current_level - 1]) : ""; 
 
     return (
