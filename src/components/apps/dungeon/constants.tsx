@@ -1,7 +1,7 @@
 import { isMobile } from "react-device-detect";
 import { PublicKey } from "@solana/web3.js";
 
-const DEV_RPC_NODE = "https://black-damp-river.solana-devnet.quiknode.pro/c5447e06dd58dec2f4568518d8fb2fd8625b1d95";
+const DEV_RPC_NODE = "https://api.devnet.solana.com/";
 export const DEV_WSS_NODE = process.env.REACT_APP_DEVNET_WSS_URL;
 
 const PROD_RPC_NODE = "https://practical-fragrant-wind.solana-mainnet.quiknode.pro/99ae430d9ebfdeba7c6dc64be19e93e2a5210e7a";
@@ -49,8 +49,8 @@ if (isMobile) {
     EMOJI_SIZE = 20;
 }
 
-export const PROD = true;
-export const TEST = false;
+export const PROD = false;
+export const TEST = true;
 export const DEBUG = false;
 
 export var network_string = "devnet";

@@ -36,6 +36,7 @@ import hallway2 from "./images/Hallway2.gif";
 
 //buttons
 import enter_button from "./images/Enter_Button.png";
+import RollButton from "./images/RollButton.gif"
 
 // shop items
 import key from "./images/Key.png";
@@ -115,7 +116,7 @@ import {
     DungeonCharacterEmoji,
     DungeonEnemyEmoji,
     GoldEmoji,
-    DiceRollText,
+    HourGlassText,
     DungeonInstruction,
 } from "./dungeon_state";
 
@@ -849,7 +850,7 @@ export function DungeonApp() {
             if (level === 0) {
                 return;
             }
-            const timer = setTimeout(() => {
+            
                 if (level === 1) {
                     if (DEBUG) {
                         console.log("player killed enemy");
@@ -886,17 +887,11 @@ export function DungeonApp() {
 
                 animateLevel.current = 0;
                 CheckNewPlayAchievements();
-            }, 5000);
-
-            return () => clearTimeout(timer);
+            
         },
         [current_level, player_character, current_enemy, CheckNewPlayAchievements, playAudio]
     );
 
-    // Replace the previous useEffect with this one
-    useEffect(() => {
-        handleAnimation(animateLevel.current);
-    }, [handleAnimation]);
 
     const set_JWT_token = useCallback(async () => {
         console.log("Setting new JWT token");
@@ -1894,7 +1889,13 @@ export function DungeonApp() {
                         <HStack>
                             <Box width="20%"></Box>
                             <DisplayXP
-                                current_xp={current_player_data === null ? 0 : current_player_data?.character_xp[player_character]}
+                                current_xp={
+                                    current_player_data === null
+                                        ? 0
+                                        : current_player_data?.character_xp[
+                                              player_character
+                                          ]
+                                }
                             />
                             <Box width="25%"></Box>
                             <DisplayRoom current_room={current_level} />
@@ -1925,7 +1926,11 @@ export function DungeonApp() {
                                 </Box>
                                 <Box width="10%"></Box>
                                 <Box width="15%">
-                                    <DisplayEnemy player_state={player_state} enemy_state={enemy_state} current_enemy={current_enemy} />
+                                    <DisplayEnemy
+                                        player_state={player_state}
+                                        enemy_state={enemy_state}
+                                        current_enemy={current_enemy}
+                                    />
                                 </Box>
                                 <Box width="30%"></Box>
                             </HStack>
@@ -1936,7 +1941,12 @@ export function DungeonApp() {
                     <VStack width="100%" alignItems="center">
                         {transaction_failed && (
                             <Center>
-                                <Text className="font-face-sfpb" fontSize={font_size} textAlign="center" color="red">
+                                <Text
+                                    className="font-face-sfpb"
+                                    fontSize={font_size}
+                                    textAlign="center"
+                                    color="red"
+                                >
                                     Transaction Failed. <br />
                                     Please Refresh.
                                 </Text>
@@ -1946,10 +1956,13 @@ export function DungeonApp() {
                         {player_state === DungeonStatus.dead && (
                             <>
                                 <VStack alignItems="center" spacing="2%">
-                                    <DiceRollText
+                                    <HourGlassText
                                         roll_one={roll_one.current}
                                         roll_two={roll_two.current}
-                                        loading={enemy_state === DungeonStatus.unknown}
+                                        loading={
+                                            enemy_state ===
+                                            DungeonStatus.unknown
+                                        }
                                         player_data={current_player_data}
                                     />
 
@@ -1973,13 +1986,27 @@ export function DungeonApp() {
                                             </HStack>
 
                                             <HStack alignItems="center">
-                                                <Button variant="link" size="md" onClick={handleExit} mr="5rem">
-                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
+                                                <Button
+                                                    variant="link"
+                                                    size="md"
+                                                    onClick={handleExit}
+                                                    mr="5rem"
+                                                >
+                                                    <Text
+                                                        className="font-face-sfpb"
+                                                        textAlign="center"
+                                                        fontSize={font_size}
+                                                        color="white"
+                                                    >
                                                         Exit
                                                     </Text>
                                                 </Button>
                                                 <Button
-                                                    disabled={processing_transaction ? true : false}
+                                                    disabled={
+                                                        processing_transaction
+                                                            ? true
+                                                            : false
+                                                    }
                                                     variant="link"
                                                     size="md"
                                                     onClick={handleRetry}
@@ -1988,7 +2015,9 @@ export function DungeonApp() {
                                                     <Text
                                                         className="font-face-sfpb"
                                                         textAlign="center"
-                                                        fontSize={DEFAULT_FONT_SIZE}
+                                                        fontSize={
+                                                            DEFAULT_FONT_SIZE
+                                                        }
                                                         color="white"
                                                     >
                                                         Retry
@@ -2000,112 +2029,169 @@ export function DungeonApp() {
                                 </VStack>
                             </>
                         )}
-                        {player_state === DungeonStatus.alive && current_level > 0 && (
-                            <>
-                                {enemy_state === DungeonStatus.unknown && (
-                                    <DiceRollText
-                                        roll_one={roll_one.current}
-                                        roll_two={roll_two.current}
-                                        loading={true}
-                                        player_data={current_player_data}
-                                    />
-                                )}
-                                {enemy_state === DungeonStatus.alive && (
-                                    <DisplayEnemyAppearsText
-                                        current_enemy={current_enemy}
-                                        current_level={current_level}
-                                        num_plays={num_plays.current}
-                                    />
-                                )}
-                                {enemy_state === DungeonStatus.dead && (
-                                    <VStack width="100%" alignItems="center" spacing="2%" mb="5rem">
-                                        <DiceRollText
+                        {player_state === DungeonStatus.alive &&
+                            current_level > 0 && (
+                                <>
+                                    {enemy_state === DungeonStatus.unknown && (
+                                        <HourGlassText
                                             roll_one={roll_one.current}
                                             roll_two={roll_two.current}
-                                            loading={false}
+                                            loading={true}
                                             player_data={current_player_data}
                                         />
+                                    )}
+                                    {enemy_state === DungeonStatus.alive && (
+                                        <>
+                                            <DisplayEnemyAppearsText
+                                                current_enemy={current_enemy}
+                                                current_level={current_level}
+                                                num_plays={num_plays.current}
+                                            />
+                                            <Box
+                                                mt="2%"
+                                                display="flex"
+                                                justifyContent="center"
+                                            >
+                                                <img
+                                                    src={RollButton}
+                                                    onClick={() =>
+                                                        handleAnimation(
+                                                            animateLevel.current,
+                                                        )
+                                                    }
+                                                    alt="Roll Button"
+                                                    width={isMobile ? "64px" : "112px"}
+                                                    height={isMobile ? "64px" : "112px"}
+                                                />
+                                            </Box>
+                                        </>
+                                    )}
+                                    {enemy_state === DungeonStatus.dead && (
+                                        <VStack
+                                            width="100%"
+                                            alignItems="center"
+                                            spacing="2%"
+                                            mb="5rem"
+                                        >
+                                            <HourGlassText
+                                                roll_one={roll_one.current}
+                                                roll_two={roll_two.current}
+                                                loading={false}
+                                                player_data={
+                                                    current_player_data
+                                                }
+                                            />
 
-                                        <DisplayPlayerSuccessText
-                                            current_level={current_level}
-                                            current_enemy={current_enemy}
-                                            last_loot={last_loot}
-                                            num_plays={num_plays.current}
-                                            total_loot={total_loot}
-                                            loot_bonus={last_loot_bonus.current}
-                                        />
+                                            <DisplayPlayerSuccessText
+                                                current_level={current_level}
+                                                current_enemy={current_enemy}
+                                                last_loot={last_loot}
+                                                num_plays={num_plays.current}
+                                                total_loot={total_loot}
+                                                loot_bonus={
+                                                    last_loot_bonus.current
+                                                }
+                                            />
 
-                                        {current_level < 7 && (
-                                            <Center>
-                                                <VStack>
-                                                    <HStack mb="1rem">
+                                            {current_level < 7 && (
+                                                <Center>
+                                                    <VStack>
+                                                        <HStack mb="1rem">
+                                                            <Text
+                                                                className="font-face-sfpb"
+                                                                textAlign="center"
+                                                                fontSize={
+                                                                    DUNGEON_FONT_SIZE
+                                                                }
+                                                                color="white"
+                                                            >
+                                                                Drink a Potion
+                                                            </Text>
+                                                            <PotionButtons />
+                                                        </HStack>
+
+                                                        <HStack>
+                                                            <Button
+                                                                disabled={
+                                                                    processing_transaction
+                                                                        ? true
+                                                                        : false
+                                                                }
+                                                                variant="link"
+                                                                size="md"
+                                                                onClick={
+                                                                    handleEscape
+                                                                }
+                                                                mr="3rem"
+                                                            >
+                                                                <Text
+                                                                    className="font-face-sfpb"
+                                                                    textAlign="center"
+                                                                    fontSize={
+                                                                        font_size
+                                                                    }
+                                                                    color="white"
+                                                                >
+                                                                    Escape
+                                                                </Text>
+                                                            </Button>
+
+                                                            <Button
+                                                                disabled={
+                                                                    processing_transaction
+                                                                        ? true
+                                                                        : false
+                                                                }
+                                                                variant="link"
+                                                                size="md"
+                                                                onClick={
+                                                                    handleExploreFurther
+                                                                }
+                                                                ml="10rem"
+                                                            >
+                                                                <Text
+                                                                    className="font-face-sfpb"
+                                                                    textAlign="center"
+                                                                    fontSize={
+                                                                        font_size
+                                                                    }
+                                                                    color="white"
+                                                                >
+                                                                    Explore
+                                                                    Further
+                                                                </Text>
+                                                            </Button>
+                                                        </HStack>
+                                                    </VStack>
+                                                </Center>
+                                            )}
+                                            {current_level >= 7 && (
+                                                <Center>
+                                                    <Button
+                                                        disabled={
+                                                            processing_transaction
+                                                                ? true
+                                                                : false
+                                                        }
+                                                        variant="link"
+                                                        size="md"
+                                                        onClick={Quit}
+                                                    >
                                                         <Text
                                                             className="font-face-sfpb"
                                                             textAlign="center"
-                                                            fontSize={DUNGEON_FONT_SIZE}
+                                                            fontSize={font_size}
                                                             color="white"
                                                         >
-                                                            Drink a Potion
+                                                            Retire
                                                         </Text>
-                                                        <PotionButtons />
-                                                    </HStack>
-
-                                                    <HStack>
-                                                        <Button
-                                                            disabled={processing_transaction ? true : false}
-                                                            variant="link"
-                                                            size="md"
-                                                            onClick={handleEscape}
-                                                            mr="3rem"
-                                                        >
-                                                            <Text
-                                                                className="font-face-sfpb"
-                                                                textAlign="center"
-                                                                fontSize={font_size}
-                                                                color="white"
-                                                            >
-                                                                Escape
-                                                            </Text>
-                                                        </Button>
-
-                                                        <Button
-                                                            disabled={processing_transaction ? true : false}
-                                                            variant="link"
-                                                            size="md"
-                                                            onClick={handleExploreFurther}
-                                                            ml="10rem"
-                                                        >
-                                                            <Text
-                                                                className="font-face-sfpb"
-                                                                textAlign="center"
-                                                                fontSize={font_size}
-                                                                color="white"
-                                                            >
-                                                                Explore Further
-                                                            </Text>
-                                                        </Button>
-                                                    </HStack>
-                                                </VStack>
-                                            </Center>
-                                        )}
-                                        {current_level >= 7 && (
-                                            <Center>
-                                                <Button
-                                                    disabled={processing_transaction ? true : false}
-                                                    variant="link"
-                                                    size="md"
-                                                    onClick={Quit}
-                                                >
-                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                        Retire
-                                                    </Text>
-                                                </Button>
-                                            </Center>
-                                        )}
-                                    </VStack>
-                                )}
-                            </>
-                        )}
+                                                    </Button>
+                                                </Center>
+                                            )}
+                                        </VStack>
+                                    )}
+                                </>
+                            )}
                     </VStack>
                 </VStack>
             </>
