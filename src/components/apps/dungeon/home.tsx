@@ -2064,6 +2064,16 @@ export function DungeonApp() {
                                                     height={isMobile ? "64px" : "112px"}
                                                 />
                                             </Box>
+                                            <Text
+                                                                className="font-face-sfpb"
+                                                                textAlign="center"
+                                                                fontSize={
+                                                                    DUNGEON_FONT_SIZE
+                                                                }
+                                                                color="grey"
+                                                            >
+                                                                Click to Roll
+                                                            </Text>
                                         </>
                                     )}
                                     {enemy_state === DungeonStatus.dead && (
