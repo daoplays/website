@@ -206,7 +206,7 @@ export function ShopScreen({
             let loot_token_account = await getAssociatedTokenAddress(
                 LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let loot_amount = await request_token_amount(bearer_token, loot_token_account);
@@ -292,7 +292,7 @@ export function ShopScreen({
             let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
                 PREPAID_WHITELIST_TOKEN, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
@@ -308,7 +308,7 @@ export function ShopScreen({
             let xp_whitelist_account_key = await getAssociatedTokenAddress(
                 XP_WHITELIST_TOKEN, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let xp_token_amount = await request_token_amount(bearer_token, xp_whitelist_account_key);
@@ -426,24 +426,24 @@ export function ShopScreen({
 
             let nft_meta_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_master_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_account_key = await getAssociatedTokenAddress(
                 nft_mint_pubkey, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let loot_token_account = await getAssociatedTokenAddress(
                 LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
@@ -451,7 +451,7 @@ export function ShopScreen({
             const create_token_data = serialise_mint_from_collection_instruction(
                 ShopInstruction.mint_from_collection,
                 which_collection,
-                which_from_collection
+                which_from_collection,
             );
             const init_data = serialise_basic_instruction(ShopInstruction.init);
 
@@ -535,7 +535,7 @@ export function ShopScreen({
 
             return;
         },
-        [wallet, bearer_token, check_sol_balance]
+        [wallet, bearer_token, check_sol_balance],
     );
 
     const MintPotion = useCallback(
@@ -549,7 +549,7 @@ export function ShopScreen({
             let loot_token_account = await getAssociatedTokenAddress(
                 LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let quantity = parseInt(potion_quantity);
@@ -603,7 +603,7 @@ export function ShopScreen({
             check_sol_balance.current = true;
             check_loot_balance.current = true;
         },
-        [wallet, bearer_token, check_user_state, check_sol_balance, potion_quantity]
+        [wallet, bearer_token, check_user_state, check_sol_balance, potion_quantity],
     );
 
     const MintKey = useCallback(async () => {
@@ -620,35 +620,35 @@ export function ShopScreen({
         let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
         let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
             [Buffer.from("key_meta"), nft_mint_pubkey.toBuffer()],
-            SHOP_PROGRAM
+            SHOP_PROGRAM,
         )[0];
 
         let nft_meta_key = PublicKey.findProgramAddressSync(
             [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-            METAPLEX_META
+            METAPLEX_META,
         )[0];
 
         let nft_master_key = PublicKey.findProgramAddressSync(
             [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-            METAPLEX_META
+            METAPLEX_META,
         )[0];
 
         let nft_account_key = await getAssociatedTokenAddress(
             nft_mint_pubkey, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let xp_whitelist_account_key = await getAssociatedTokenAddress(
             XP_WHITELIST_TOKEN, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
             PREPAID_WHITELIST_TOKEN, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
@@ -990,7 +990,7 @@ export function ShopScreen({
                                 color="white"
                                 mb="1rem"
                             >
-                                Potion of Luck - Find double the LOOT for 10 minutes after drinking
+                                Potion of Luck - Find 1-3 extra LOOT per room for 10 minutes after drinking
                             </Text>
                             <VStack>
                                 <PotionQuantity />

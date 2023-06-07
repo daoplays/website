@@ -44,7 +44,7 @@ import wizard from "./images/Wizard.gif";
 import corpse from "./images/Corpse.png";
 
 import loot from "./images/loot.png";
-import dice_roll from "./images/die_roll.gif";
+import hour_glass from "./images/Hourglass.gif";
 
 import rd20_1 from "./dice_images/r1.png";
 import rd20_2 from "./dice_images/r2.png";
@@ -146,6 +146,8 @@ export const enum DungeonInstruction {
     claim_achievement = 4,
     drink_potion = 5,
     buy_potion = 6,
+    build_home = 7,
+    rest = 8,
 }
 
 export const enum DungeonCharacter {
@@ -475,57 +477,69 @@ const DungeonPlayerDefeatedText: string[][] = [
     ["The werewolf has defeated you.", "The werewolf leaps on you faster than you can react and tears you to shreds"],
 ];
 
-export function GetCharacterLevel(player_data : PlayerData | null): number {
+export function GetCharacterLevel(player_data: PlayerData | null): number {
+    if (player_data == null) return 1;
 
-    if (player_data == null)
-        return 1;
-
-        let current_level = 1;
-        for (let i = 0; i < levels.length; i++) {
-            if (player_data.character_xp[player_data.player_character] >= levels[i]) {
-                current_level = i + 1;
-            }
+    let current_level = 1;
+    for (let i = 0; i < levels.length; i++) {
+        if (player_data.character_xp[player_data.player_character] >= levels[i]) {
+            current_level = i + 1;
         }
-    return (
-        current_level
-    );
+    }
+    return current_level;
 }
 
 export const DiceRollText = ({
     roll_one,
     roll_two,
     loading,
-    player_data
+    player_data,
 }: {
     roll_one: number;
     roll_two: number;
     loading: boolean;
-    player_data : PlayerData | null
+    player_data: PlayerData | null;
 }) => {
-    let dice_size: string | number = "75px";
+    let hour_glass_size: string | number = isMobile ? "2.5rem" : "5rem";
+    let dice_roll_size: string | number = isMobile ? "64px" : "112px";
 
     if (loading) {
         return (
             <VStack mt="1rem">
-            <Box width="30px" height="30px">
-                <img src={dice_roll} width="auto" alt={""} style={{ maxHeight: "30px", maxWidth: "30px" }} />
-            </Box>
-            <Text className="font-face-sfpb" fontSize={10} textAlign="center" color="grey">
+                <Box mt="2%" width={hour_glass_size} display="flex" justifyContent="center">
+                    <img
+                        src={hour_glass}
+                        alt="Hourglass"
+                        width={dice_roll_size}
+                        height={dice_roll_size}
+                        style={{ imageRendering: "pixelated" }}
+                    />
+                </Box>
+                <Text
+                    className="font-face-sfpb"
+                    style={{
+                        marginTop: "2rem",
+                        marginLeft: !isMobile ? "0.1rem" : "0rem",
+                    }}
+                    fontSize={18}
+                    textAlign="center"
+                    color="grey"
+                >
                     Loading
-            </Text>
+                </Text>
             </VStack>
         );
     }
 
-    let level : number = GetCharacterLevel(player_data);
-    let bonus_roll : string = (Math.floor(level / 2)).toFixed(0);
+    let level: number = GetCharacterLevel(player_data);
+    let power_rest: number = player_data === null ? 0 : player_data?.rest_status[player_data?.player_character].power_bonus;
+    let bonus_roll: string = (Math.floor(level / 2) + power_rest).toFixed(0);
 
     let advantage = roll_two > 0;
     let critical_miss = false;
 
     if (advantage) {
-        if (roll_one === 1 && roll_two === 1 )
-            critical_miss = true;
+        if (roll_one === 1 && roll_two === 1) critical_miss = true;
 
         return (
             <VStack mt="1rem">
@@ -534,52 +548,48 @@ export const DiceRollText = ({
                 </Text>
                 <HStack>
                     <img
-                        height={dice_size}
-                        width={dice_size}
+                        height={dice_roll_size}
+                        width={dice_roll_size}
                         src={roll_one > roll_two ? red_dice_array[roll_one - 1] : blue_dice_array[roll_one - 1]}
                         alt={""}
                     />
                     <img
-                        height={dice_size}
-                        width={dice_size}
+                        height={dice_roll_size}
+                        width={dice_roll_size}
                         src={roll_two > roll_one ? red_dice_array[roll_two - 1] : blue_dice_array[roll_two - 1]}
                         alt={""}
                     />
                 </HStack>
-                {!critical_miss &&
+                {!critical_miss && (
                     <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                         +{bonus_roll} Power Roll
                     </Text>
-                }
-                {critical_miss &&
+                )}
+                {critical_miss && (
                     <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                         Critical Miss!
                     </Text>
-                }
+                )}
             </VStack>
         );
     }
 
-    if (roll_one === 1)
-        critical_miss = true;
+    if (roll_one === 1) critical_miss = true;
 
     // otherwise just return the first dice
     return (
         <VStack mt="1rem">
-            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                You Rolled:
-            </Text>
-            <img height={dice_size} width={dice_size} src={red_dice_array[roll_one - 1]} alt={""} />
-            {!critical_miss &&
+            <img height={dice_roll_size} width={dice_roll_size} src={red_dice_array[roll_one - 1]} alt={""} />
+            {!critical_miss && (
                 <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                     +{bonus_roll} Power Roll
                 </Text>
-            }
-            {critical_miss &&
+            )}
+            {critical_miss && (
                 <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                     Critical Miss!
                 </Text>
-            }
+            )}
         </VStack>
     );
 };
@@ -687,7 +697,7 @@ export const DisplayPlayerSuccessText = ({
                             {loot_bonus ? "(x2 bonus)" : ""}
                         </Text>
                     </HStack>
-                    {!isMobile &&
+                    {!isMobile && (
                         <HStack alignContent="center" mt="1rem">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                 Escape to claim {total_loot.toFixed(2)}
@@ -699,23 +709,27 @@ export const DisplayPlayerSuccessText = ({
                                 Or explore further to try and find more
                             </Text>
                         </HStack>
-                    }
-                    {isMobile &&
-                        <VStack  alignContent="center" mt="1rem">
+                    )}
+                    {isMobile && (
+                        <VStack alignContent="center" mt="1rem">
                             <HStack alignContent="center">
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                     Escape to claim {total_loot.toFixed(2)}
                                 </Text>
 
-                                <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                                <img
+                                    src={loot}
+                                    width="auto"
+                                    alt={""}
+                                    style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }}
+                                />
                             </HStack>
 
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                                 Or explore further to try and find more
                             </Text>
-                        
                         </VStack>
-                    }
+                    )}
                 </VStack>
             </Center>
         );
@@ -723,30 +737,34 @@ export const DisplayPlayerSuccessText = ({
 
     // otherwise  we retire
     return (
-        <div className="font-face-sfpb">
-            <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
+        <Center className="font-face-sfpb" width="100%">
+            <VStack width="100%">
+                <EnemyDefeatedText current_enemy={current_enemy} current_level={current_level} num_plays={num_plays} />
 
-            <Center>
                 <HStack alignContent="center" mt="1rem">
                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                         You found {last_loot.toFixed(2)}
                     </Text>
 
                     <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+
+                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                        {loot_bonus ? "(x2 bonus)" : ""}
+                    </Text>
                 </HStack>
-            </Center>
 
-            <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                Looking around you realise your job is done and there is nothing left to kill
-            </Text>
-            <HStack alignContent="center" mt="1rem">
-                <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Retire to claim your current loot {total_loot.toFixed(2)}
+                <Text mt="1rem" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    Looking around you realise your job is done and there is nothing left to kill
                 </Text>
+                <HStack alignContent="center" mt="1rem">
+                    <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                        Retire to claim your current loot {total_loot.toFixed(2)}
+                    </Text>
 
-                <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
-            </HStack>
-        </div>
+                    <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
+                </HStack>
+            </VStack>
+        </Center>
     );
 };
 
@@ -922,19 +940,19 @@ export const DisplayPlayer = ({
 };
 
 export const DisplayXP = ({ current_xp }: { current_xp: number }) => {
-
     let current_level = 1;
     for (let i = 0; i < levels.length; i++) {
         if (current_xp >= levels[i]) {
             current_level = i + 1;
         }
     }
-    let next_xp = -1; 
+    let next_xp = -1;
     if (current_level < levels.length) {
         next_xp = levels[current_level];
     }
 
-    let xp_string = next_xp >= 0 ? "XP " + (current_xp - levels[current_level - 1]) + "/" + (next_xp - levels[current_level - 1]) : ""; 
+    //console.log(current_xp, current_level, levels[current_level - 1], current_xp - levels[current_level - 1] )
+    let xp_string = next_xp >= 0 ? "XP " + (current_xp - levels[current_level - 1]) + "/" + (next_xp - levels[current_level - 1]) : "";
 
     return (
         <Box width="20%">

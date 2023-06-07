@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { brands, solid } from "@fortawesome/fontawesome-svg-core/import.macro"; // <-- import styles to be used
 import { Screen } from "./constants";
 
-import { MuteButton } from './mute';
+import { MuteButton } from "./mute";
 
 import delvingDeeper from "./sounds/Delving_Deeper.mp3";
 import hackNSlash from "./sounds/Hack_n_Slash.mp3";
@@ -162,54 +162,58 @@ export function Navigation({
 
         return (
             <>
-            
-          <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
-            <Flex justifyContent="space-between" alignItems="center">
-              <Box width="30%" display="flex" alignItems="center">
-                {wallet.publicKey !== null && <WalletConnected />}
-                <div className="font-face-sfpb">
-                  <Text fontSize="16px" color="white">
-                    {balance
-                      ? "Balance: " + balance.toFixed(3) + " SOL"
-                      : "                                 "}
-                  </Text>
-                </div>
-              </Box>
-              <Box display="flex" mr="7%" justifyContent="flex-end">
-                <HStack spacing="29%">
-                  <a href="https://twitter.com/sol_dungeon">
-                    <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
-                  </a>
-                  <a href="https://discord.gg/soldungeon">
-                    <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
-                  </a>
-                        <MuteButton  />
-                      
-                  <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
-                </HStack>
-              </Box>
-            </Flex>
-            <Drawer isOpen={isOpen} placement="right" onClose={onClose} closeOnOverlayClick={true} >
-              <DrawerOverlay  />
-              <DrawerContent maxWidth={"25%"} maxHeight="fit-content" borderColor="white" borderWidth="2px">
-                <DrawerBody bg="black" backgroundColor="#171923" >
-                  <VStack spacing="24px">
-                    {NavBar.map((button, index) => (
-                      <Button variant="link"  key={index} size="md" style={addMargin(index)} onClick={button.onClick} sx={{outline: "none !important"}} textTransform={'uppercase'} >
-                        <div className="font-face-sfpb">
-                          <Text fontSize="16px" color="white"  _hover={{textDecoration: "underline"}}>
-                            {button.text}
-                          </Text>
-                        </div>
-                      </Button>
-                    ))}
-                  </VStack>
-                </DrawerBody>
-              </DrawerContent>
-            </Drawer>
-            
-          </Box>
-          </>
+                <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
+                    <Flex justifyContent="space-between" alignItems="center">
+                        <Box width="30%" display="flex" alignItems="center">
+                            {wallet.publicKey !== null && <WalletConnected />}
+                            <div className="font-face-sfpb">
+                                <Text fontSize="16px" color="white">
+                                    {balance ? "Balance: " + balance.toFixed(3) + " SOL" : "                                 "}
+                                </Text>
+                            </div>
+                        </Box>
+                        <Box display="flex" mr="7%" justifyContent="flex-end">
+                            <HStack spacing="29%">
+                                <a href="https://twitter.com/sol_dungeon">
+                                    <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
+                                </a>
+                                <a href="https://discord.gg/soldungeon">
+                                    <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
+                                </a>
+                                <MuteButton />
+
+                                <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
+                            </HStack>
+                        </Box>
+                    </Flex>
+                    <Drawer isOpen={isOpen} placement="right" onClose={onClose} closeOnOverlayClick={true}>
+                        <DrawerOverlay />
+                        <DrawerContent maxWidth={"25%"} maxHeight="fit-content" borderColor="white" borderWidth="2px">
+                            <DrawerBody bg="black" backgroundColor="#171923">
+                                <VStack spacing="24px">
+                                    {NavBar.map((button, index) => (
+                                        <Button
+                                            variant="link"
+                                            key={index}
+                                            size="md"
+                                            style={addMargin(index)}
+                                            onClick={button.onClick}
+                                            sx={{ outline: "none !important" }}
+                                            textTransform={"uppercase"}
+                                        >
+                                            <div className="font-face-sfpb">
+                                                <Text fontSize="16px" color="white" _hover={{ textDecoration: "underline" }}>
+                                                    {button.text}
+                                                </Text>
+                                            </div>
+                                        </Button>
+                                    ))}
+                                </VStack>
+                            </DrawerBody>
+                        </DrawerContent>
+                    </Drawer>
+                </Box>
+            </>
         );
     }
 
@@ -239,8 +243,7 @@ export function Navigation({
                                 <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
                             </a>
 
-                        <MuteButton  />
-                    
+                            <MuteButton />
 
                             <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                             <Drawer isOpen={isOpen} placement="right" onClose={onClose}>

@@ -16,8 +16,9 @@ export function OddsScreen() {
                         </h2>
                         <br />
                         Each Room in the DUNGEON spawns a Peril. Most Perils are Enemies you will need to fight, but some are Traps such as
-                        falling boulders, or spike pits. Each type of Peril has its own Power, with some Perils being stronger
-                        than others. As your characters level up they will gain +Power to their rolls every other level to help you explore deeper into the dungeon.
+                        falling boulders, or spike pits. Each type of Peril has its own Power, with some Perils being stronger than others.
+                        As your characters level up they will gain +Power to their rolls every other level to help you explore deeper into
+                        the dungeon.
                         <h2 className="mt-5" style={{ fontSize: DEFAULT_FONT_SIZE }}>
                             Tier 1 Probability Table (levels 1-3)
                         </h2>
