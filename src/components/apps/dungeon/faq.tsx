@@ -8,66 +8,67 @@ export function FAQScreen() {
             <Center mb="5rem">
                 <Box width="80%">
                     <div className="font-face-sfp" style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}>
-
                         <h2 className="mt-5 font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
                             WHAT IS THIS?
                         </h2>
-
                         <br />
-                        DUNGEONS & DEGENS is a retro RPG designed specifically for Web3 degens.
-                        Explore the Dungeon to earn XP and find $LOOT, then spend it on Consumables to boost your progress or Limited Edition Collectibles!
-                        The game is constantly updated with more content and new uses for $LOOT.
-
+                        DUNGEONS & DEGENS is a retro RPG designed specifically for Web3 degens. Explore the Dungeon to earn XP and find
+                        $LOOT, then spend it on Consumables to boost your progress or Limited Edition Collectibles! The game is constantly
+                        updated with more content and new uses for $LOOT.
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
                             WHAT BLOCKCHAIN IS THE GAME ON?
                         </h2>
-
                         <br />
-                        DUNGEONS & DEGENS runs entirely on the Solana blockchain. It is the only network that can settle transactions fast enough to handle all the game logic entirely on-chain.
-                        <br/><br/>
+                        DUNGEONS & DEGENS runs entirely on the Solana blockchain. It is the only network that can settle transactions fast
+                        enough to handle all the game logic entirely on-chain.
+                        <br />
+                        <br />
                         The program address is: FUjAo5wevsyS2jpe2XnkYN3SyQVbxAjoy8fuWrw3wjUk
-                        <br/><br/>
+                        <br />
+                        <br />
                         $LOOT is an SPL token. The token address is: FGXnWVQuc35M8XLG4egciVhZXqhy3XawbY2V8TpfHHag
-
-
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
                             HOW DOES IT WORK?
                         </h2>
                         <br />
                         <ul>
                             <li>Step 1: Connect with a Solana wallet. We recommend Solflare.</li>
-                            <li>Step 2: Select a Hero then Enter the Dungeon. A 0.002 SOL entry fee is required. The first time you play a little bit more will be required to create your game data account.</li>
                             <li>
-                            Step 3: On Room 1, one of many possible Perils will spawn. Wait for your Die Roll to resolve on-chain.
+                                Step 2: Select a Hero then Enter the Dungeon. A 0.002 SOL entry fee is required. The first time you play a
+                                little bit more will be required to create your game data account.
                             </li>
-                            <li>Step 4: If successful, you may choose to Escape with the $LOOT you have found or to Explore the next Room. Deeper Rooms contain bigger $LOOT rewards but also have more dangerous Perils.</li>
+                            <li>Step 3: On Room 1, one of many possible Perils will spawn. Wait for your Die Roll to resolve on-chain.</li>
+                            <li>
+                                Step 4: If successful, you may choose to Escape with the $LOOT you have found or to Explore the next Room.
+                                Deeper Rooms contain bigger $LOOT rewards but also have more dangerous Perils.
+                            </li>
                             <li>Step 5: If unsuccessful, your Hero dies and the $LOOT accumulated during that run is lost.</li>
-                            <li>
-                            Step 6: Spend $LOOT at the Shop on upgrades, boosts, and collectibles.
-                            </li>
+                            <li>Step 6: Spend $LOOT at the Shop on upgrades, boosts, and collectibles.</li>
                         </ul>
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
                             DUNGEON KEYS
                         </h2>
                         <br />
-                            Dungeon Key NFTs grant a number of Free Entries to the Dungeon every day. They can be purchased in the SHOP for 2 SOL each, while supplies last.
-                            <br/><br/>
-                            Free Entries per Day:
-                            <ul>
-                                <li>Bronze - 10</li>
-                                <li>Silver - 20</li>
-                                <li>Gold - 30</li>
-                            </ul>
-                            <br/>
-                            To use the Free Plays, connect with a wallet holding a Dungeon Key, click the key symbol, enter its Key Number, then click Apply.
+                        Dungeon Key NFTs grant a number of Free Entries to the Dungeon every day. They can be purchased in the SHOP for 2
+                        SOL each, while supplies last.
+                        <br />
+                        <br />
+                        Free Entries per Day:
+                        <ul>
+                            <li>Bronze - 10</li>
+                            <li>Silver - 20</li>
+                            <li>Gold - 30</li>
+                        </ul>
+                        <br />
+                        To use the Free Plays, connect with a wallet holding a Dungeon Key, click the key symbol, enter its Key Number, then
+                        click Apply.
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
                             WHAT GAMES INSPIRED DUNGEONS & DEGENS?
                         </h2>
-                        
                         <br />
-                        
                         Too many to list but some of the most influential ones are:
-                        <br/><br/>
+                        <br />
+                        <br />
                         <ul>
                             <li> Dungeons & Dragons 5th ed. </li>
                             <li> Ultima 2</li>
@@ -77,9 +78,8 @@ export function FAQScreen() {
                             <li> DeFi Kingdoms</li>
                             <li> Degen Coin Flip</li>
                         </ul>
-                        <br/>
+                        <br />
                         These games provide lessons not just in lore, art, and gameplay, but also in UX and good governance.
-
                         <h2 className="mt-5  font-face-sfpb" style={{ fontSize: DEFAULT_FONT_SIZE }}>
                             HOW DOES THE ARENA WORK
                         </h2>

@@ -206,7 +206,7 @@ export function ShopScreen({
             let loot_token_account = await getAssociatedTokenAddress(
                 LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let loot_amount = await request_token_amount(bearer_token, loot_token_account);
@@ -292,7 +292,7 @@ export function ShopScreen({
             let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
                 PREPAID_WHITELIST_TOKEN, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let token_amount = await request_token_amount(bearer_token, prepaid_whitelist_account_key);
@@ -308,7 +308,7 @@ export function ShopScreen({
             let xp_whitelist_account_key = await getAssociatedTokenAddress(
                 XP_WHITELIST_TOKEN, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let xp_token_amount = await request_token_amount(bearer_token, xp_whitelist_account_key);
@@ -426,24 +426,24 @@ export function ShopScreen({
 
             let nft_meta_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_master_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_account_key = await getAssociatedTokenAddress(
                 nft_mint_pubkey, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let loot_token_account = await getAssociatedTokenAddress(
                 LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
@@ -451,7 +451,7 @@ export function ShopScreen({
             const create_token_data = serialise_mint_from_collection_instruction(
                 ShopInstruction.mint_from_collection,
                 which_collection,
-                which_from_collection
+                which_from_collection,
             );
             const init_data = serialise_basic_instruction(ShopInstruction.init);
 
@@ -535,7 +535,7 @@ export function ShopScreen({
 
             return;
         },
-        [wallet, bearer_token, check_sol_balance]
+        [wallet, bearer_token, check_sol_balance],
     );
 
     const MintPotion = useCallback(
@@ -549,7 +549,7 @@ export function ShopScreen({
             let loot_token_account = await getAssociatedTokenAddress(
                 LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let quantity = parseInt(potion_quantity);
@@ -603,7 +603,7 @@ export function ShopScreen({
             check_sol_balance.current = true;
             check_loot_balance.current = true;
         },
-        [wallet, bearer_token, check_user_state, check_sol_balance, potion_quantity]
+        [wallet, bearer_token, check_user_state, check_sol_balance, potion_quantity],
     );
 
     const MintKey = useCallback(async () => {
@@ -620,35 +620,35 @@ export function ShopScreen({
         let dungeon_key_data_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], SHOP_PROGRAM)[0];
         let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
             [Buffer.from("key_meta"), nft_mint_pubkey.toBuffer()],
-            SHOP_PROGRAM
+            SHOP_PROGRAM,
         )[0];
 
         let nft_meta_key = PublicKey.findProgramAddressSync(
             [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-            METAPLEX_META
+            METAPLEX_META,
         )[0];
 
         let nft_master_key = PublicKey.findProgramAddressSync(
             [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-            METAPLEX_META
+            METAPLEX_META,
         )[0];
 
         let nft_account_key = await getAssociatedTokenAddress(
             nft_mint_pubkey, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let xp_whitelist_account_key = await getAssociatedTokenAddress(
             XP_WHITELIST_TOKEN, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let prepaid_whitelist_account_key = await getAssociatedTokenAddress(
             PREPAID_WHITELIST_TOKEN, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
@@ -758,15 +758,13 @@ export function ShopScreen({
 
                         <HStack alignItems="center">
                             <Box width="15%">
-                                {" "}
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
                             <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        {" "}
-                                        Buy Key (1 Shiny Trinket){" "}
+                                        Buy Key (1 Shiny Trinket)
                                     </Text>
                                 </div>
                             </Button>
@@ -808,15 +806,13 @@ export function ShopScreen({
 
                         <HStack alignItems="center">
                             <Box width="15%">
-                                {" "}
                                 <img style={{ imageRendering: "pixelated" }} src={key} width="100" alt={""} />
                             </Box>
 
                             <Button variant="link" size="lg" onClick={MintKey}>
                                 <div className="font-face-sfpb">
                                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        {" "}
-                                        Buy Key (1.5 SOL){" "}
+                                        Buy Key (1.5 SOL)
                                     </Text>
                                 </div>
                             </Button>
@@ -833,7 +829,6 @@ export function ShopScreen({
                         <>
                             {xp_req !== null && player_data !== null && xp_req > 0 && bignum_to_num(player_data.num_xp) < xp_req && (
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                    {" "}
                                     {invalid_shop_text[user_num_keys.current]} Come back when you have {xp_req} XP
                                 </Text>
                             )}
@@ -883,15 +878,8 @@ export function ShopScreen({
         return (
             <div className="font-face-sfpb">
                 <HStack>
-                    <Text
-                        mt="1rem"
-                        className="font-face-sfpb"
-                        fontSize={DUNGEON_FONT_SIZE}
-                        textAlign="center"
-                        color="white"
-                        mb="1rem"
-                    >
-                    Quantity
+                    <Text mt="1rem" className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb="1rem">
+                        Quantity
                     </Text>
                     <NumberInput
                         fontSize={DUNGEON_FONT_SIZE}
@@ -903,7 +891,6 @@ export function ShopScreen({
                         borderColor="white"
                         min={1}
                         max={100}
-                        
                     >
                         <NumberInputField
                             autoFocus={true}
@@ -917,7 +904,7 @@ export function ShopScreen({
                 </HStack>
             </div>
         );
-    }
+    };
 
     const PotionText = (): JSX.Element | null => {
         return (
@@ -934,7 +921,7 @@ export function ShopScreen({
                                 </Box>
                                 <Box>
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        Potion Of Power
+                                        Attack Potion
                                     </Text>
                                     <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
                                         10 LOOT
@@ -977,21 +964,19 @@ export function ShopScreen({
                                 Potion of Power - Roll two dice in the next Room and pick the highest value as your attack
                             </Text>
                             <VStack>
-
-                            <PotionQuantity/>
-                            <Box
-                                as="button"
-                                onClick={() => {
-                                    MintPotion(0);
-                                }}
-                                borderWidth="1px"
-                                borderColor="white"
-                            >
-                                
-                                <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
-                                    Purchase
-                                </Text>
-                            </Box>
+                                <PotionQuantity />
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        MintPotion(0);
+                                    }}
+                                    borderWidth="1px"
+                                    borderColor="white"
+                                >
+                                    <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
+                                        Purchase
+                                    </Text>
+                                </Box>
                             </VStack>
                         </VStack>
                     )}
@@ -1005,25 +990,24 @@ export function ShopScreen({
                                 color="white"
                                 mb="1rem"
                             >
-                                Potion of Luck - Find double the LOOT for 10 minutes after drinking
+                                Potion of Luck - Find 1-3 extra LOOT per room for 10 minutes after drinking
                             </Text>
                             <VStack>
-                            <PotionQuantity/>
+                                <PotionQuantity />
 
-                            <Box
-                                as="button"
-                                onClick={() => {
-                                    MintPotion(1);
-                                }}
-                                borderWidth="1px"
-                                borderColor="white"
-                            >
-                                <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
-                                    Purchase
-                                </Text>
-                            </Box>
+                                <Box
+                                    as="button"
+                                    onClick={() => {
+                                        MintPotion(1);
+                                    }}
+                                    borderWidth="1px"
+                                    borderColor="white"
+                                >
+                                    <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
+                                        Purchase
+                                    </Text>
+                                </Box>
                             </VStack>
-
                         </VStack>
                     )}
                 </Box>
@@ -1036,7 +1020,7 @@ export function ShopScreen({
             <Center width="100%">
                 <Box width="80%">
                     <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb="1rem">
-                        These are music boxes from across the land of Limare. Each one plays its own special tune.{" "}
+                        These are music boxes from across the land of Limare. Each one plays its own special tune.
                     </Text>
                     <Center>
                         <HStack>
@@ -1060,7 +1044,7 @@ export function ShopScreen({
                                         Remaining: {shop_data === null ? " " : 250 - shop_data.music_boxes_bought[0]}
                                     </Text>
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 LOOT"}{" "}
+                                        {player_data !== null && player_data.num_xp < 1100 ? "1100 XP required" : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1088,7 +1072,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 2500
                                             ? "2500 XP required"
-                                            : "1000 LOOT"}{" "}
+                                            : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1116,7 +1100,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 4500
                                             ? "4500 XP required"
-                                            : "1000 LOOT"}{" "}
+                                            : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1144,7 +1128,7 @@ export function ShopScreen({
                                     <Text className="font-face-sfpb" color="grey" fontSize="10px">
                                         {player_data !== null && bignum_to_num(player_data.num_xp) < 7000
                                             ? "7000 XP required"
-                                            : "1000 LOOT"}{" "}
+                                            : "1000 LOOT"}
                                     </Text>
                                 </Box>
                             </VStack>
@@ -1162,7 +1146,7 @@ export function ShopScreen({
                     <div className="font-face-sfpb">
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                             Unfortunately my contact at the Great Library was attacked by bandits recently... Hopefully these will be back
-                            in stock soon{" "}
+                            in stock soon
                         </Text>
                     </div>
                 </Box>
@@ -1196,7 +1180,7 @@ export function ShopScreen({
                                 Remaining: {shop_data === null ? " " : 250 - shop_data.paintings_bought[0]}
                             </Text>
                             <Text className="font-face-sfpb" color="grey" fontSize="10px">
-                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 LOOT"}{" "}
+                                {player_data !== null && bignum_to_num(player_data.num_xp) < 2000 ? "2000 XP required" : "2000 LOOT"}
                             </Text>
                         </Box>
                     </VStack>
@@ -1262,7 +1246,7 @@ export function ShopScreen({
 
                         <div className="font-face-sfpb">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                You have found {bought_item_name?.slice(0, 17)}!{" "}
+                                You have found {bought_item_name?.slice(0, 17)}!
                             </Text>
                         </div>
                     </HStack>
@@ -1270,7 +1254,7 @@ export function ShopScreen({
                         <Box width="100%">
                             <div className="font-face-sfpb">
                                 <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                    {bought_item_description} View it{" "}
+                                    {bought_item_description} View it
                                     <a
                                         className="one"
                                         target="_blank"
@@ -1298,7 +1282,7 @@ export function ShopScreen({
                     <Box width="100%">
                         <div className="font-face-sfpb">
                             <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                View it{" "}
+                                View it
                                 <a
                                     className="one"
                                     target="_blank"

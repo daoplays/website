@@ -36,6 +36,12 @@ import hallway2 from "./images/Hallway2.gif";
 
 //buttons
 import enter_button from "./images/Enter_Button.png";
+import RollButton from "./images/RollButton.gif";
+
+// rest beds
+import loot_bed from "./images/LootBed.png";
+import xp_bed from "./images/XPBed.png";
+import power_bed from "./images/PowerBed.png";
 
 // shop items
 import key from "./images/Key.png";
@@ -74,6 +80,7 @@ import {
     DATA_ACCOUNT_SEED,
     LOOT_TOKEN_MINT,
     POTION_SIZE,
+    levels,
 } from "./constants";
 
 // dungeon utils
@@ -97,7 +104,8 @@ import {
     request_dungeon_program_data,
     serialise_drink_potion_instruction,
     PlayerData,
-    request_key_freeplays_data
+    request_key_freeplays_data,
+    serialise_rest_instruction,
 } from "./utils";
 
 import {
@@ -107,7 +115,7 @@ import {
     DisplayEnemy,
     DisplayPlayer,
     DisplayXP,
-    DisplayLVL,
+    DisplayRoom,
     DungeonEnemy,
     DungeonCharacter,
     DungeonStatus,
@@ -223,6 +231,11 @@ export function DungeonApp() {
     const [new_achievements, setNewAchievements] = useState<number[] | null>(null);
     const new_achievements_ref = useRef<number[]>([]);
     const achievement_interations = useRef<number>(-1);
+
+    // rest state
+    const rest_character = useRef<DungeonCharacter>(DungeonCharacter.knight);
+    const [rest_state, setRestState] = useState<number>(0);
+    const [show_rest, setShowRest] = useState<boolean>(false);
 
     // if we have a key then discounts can be applied
     const [discount_key_index, setDiscountKeyIndex] = useState<string>("");
@@ -488,6 +501,125 @@ export function DungeonApp() {
         );
     }
 
+    function RestModal() {
+        const handleClose = () => {
+            setShowRest(false);
+        };
+
+        if (show_rest === false) return <></>;
+
+        return (
+            <>
+                <Modal centered show={show_rest} animation={false} onHide={handleClose}>
+                    <div className="font-face-sfpb">
+                        <Modal.Header style={{ backgroundColor: "black" }} closeButton>
+                            <Modal.Title style={{ fontSize: 30, color: "white", fontWeight: "semibold" }}>Rest at the Inn</Modal.Title>
+                        </Modal.Header>
+                    </div>
+                    <div className="font-face-sfpb text-center">
+                        <Modal.Body style={{ backgroundColor: "black", fontSize: 20, color: "white", fontWeight: "semibold" }}>
+                            <HStack>
+                                <VStack>
+                                    <Box
+                                        as="button"
+                                        borderWidth="1px"
+                                        borderColor={rest_state === 0 ? "blue" : "black"}
+                                        onClick={() => setRestState(0)}
+                                    >
+                                        <img style={{ imageRendering: "pixelated" }} src={xp_bed} width={400} alt={"generic"} />
+                                    </Box>
+                                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                        XP
+                                    </Text>
+                                    <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
+                                        50% chance to gain +1 XP per room
+                                    </Text>
+                                </VStack>
+                                <VStack>
+                                    <Box
+                                        as="button"
+                                        borderWidth="1px"
+                                        borderColor={rest_state === 1 ? "green" : "black"}
+                                        onClick={() => setRestState(1)}
+                                    >
+                                        <img style={{ imageRendering: "pixelated" }} src={loot_bed} width={400} alt={"generic"} />
+                                    </Box>
+                                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                        Loot
+                                    </Text>
+                                    <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
+                                        +35% Loot per room
+                                    </Text>
+                                </VStack>
+                                <VStack>
+                                    <Box
+                                        as="button"
+                                        borderWidth="1px"
+                                        borderColor={rest_state === 2 ? "green" : "black"}
+                                        onClick={() => setRestState(2)}
+                                    >
+                                        <img style={{ imageRendering: "pixelated" }} src={power_bed} width={400} alt={"generic"} />
+                                    </Box>
+                                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                        Power
+                                    </Text>
+                                    <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
+                                        +1 Power per room
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                        </Modal.Body>
+                    </div>
+
+                    <Modal.Footer style={{ alignItems: "center", justifyContent: "center", backgroundColor: "black" }}>
+                        <Center width="100%">
+                            <VStack width="100%">
+                                <HStack width="100%">
+                                    <VStack width="33%">
+                                        <Box as="button" onClick={(e: any) => Rest(0)}>
+                                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                                1h
+                                                <br />
+                                                (4 LOOT)
+                                            </Text>
+                                        </Box>
+                                        <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
+                                            +5 Energy
+                                        </Text>
+                                    </VStack>
+                                    <VStack width="33%">
+                                        <Box as="button" onClick={(e: any) => Rest(1)}>
+                                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                                4h
+                                                <br />
+                                                (20 LOOT)
+                                            </Text>
+                                        </Box>
+                                        <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
+                                            +25 Energy
+                                        </Text>
+                                    </VStack>
+                                    <VStack width="33%">
+                                        <Box as="button" onClick={(e: any) => Rest(2)}>
+                                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                                                8h
+                                                <br />
+                                                (40 LOOT)
+                                            </Text>
+                                        </Box>
+                                        <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
+                                            +60 Energy
+                                        </Text>
+                                    </VStack>
+                                </HStack>
+                            </VStack>
+                        </Center>
+                    </Modal.Footer>
+                </Modal>
+            </>
+        );
+    }
+
     const CheckSignature = useCallback(async () => {
         if (current_signature.current === null) return;
 
@@ -567,7 +699,7 @@ export function DungeonApp() {
 
                 if (dungeon_program_data !== null) {
                     let ema_value = new BN(dungeon_program_data?.current_ema_value).toNumber() / 1e6;
-                    
+
                     setLootPerDay(24 * 60 * ema_value);
                 }
             } catch (error) {
@@ -580,7 +712,7 @@ export function DungeonApp() {
 
                 if (player_data === null) {
                     num_state_checks.current += 1;
-                    setDataAccountStatus(AccountStatus.unknown);
+                    setDataAccountStatus(AccountStatus.not_created);
                     return;
                 }
 
@@ -619,7 +751,7 @@ export function DungeonApp() {
                         "num_plays",
                         current_num_plays,
                         "num_xp",
-                        current_xp
+                        current_xp,
                     );
                 }
 
@@ -649,7 +781,7 @@ export function DungeonApp() {
 
                 let loot_bonus_time = bignum_to_num(player_data.bonus_loot_activation_time);
                 let current_time = Date.now() / 1000;
-        
+
                 setLootBonus(player_data.bonus_loot === 1 && (current_time - loot_bonus_time) / 60 < 10.1);
 
                 if (update_status_effects.current) {
@@ -659,11 +791,12 @@ export function DungeonApp() {
                 roll_one.current = player_data.dice_one;
                 roll_two.current = player_data.dice_two;
 
-
                 // just check the freeplay key if the amount remaining is greater than zero
                 if (current_key_mint !== null && key_freeplays > 0) {
-
-                    let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), current_key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+                    let key_freeplays_account = PublicKey.findProgramAddressSync(
+                        [Buffer.from("key_freeplays"), current_key_mint.toBytes()],
+                        DUNGEON_PROGRAM,
+                    )[0];
 
                     let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
 
@@ -692,7 +825,7 @@ export function DungeonApp() {
                 // get the achievement data
                 let achievement_data_key = PublicKey.findProgramAddressSync(
                     [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-                    DUNGEON_PROGRAM
+                    DUNGEON_PROGRAM,
                 )[0];
                 let achievement_data = await request_player_achievement_data(bearer_token, achievement_data_key);
 
@@ -786,7 +919,7 @@ export function DungeonApp() {
                 "num_plays",
                 num_plays.current,
                 "init num plays",
-                initial_num_plays.current
+                initial_num_plays.current,
             );
         }
 
@@ -838,7 +971,7 @@ export function DungeonApp() {
                 }
             }
         },
-        [muteState, volume]
+        [muteState, volume],
     );
 
     // New function to handle animation
@@ -847,54 +980,45 @@ export function DungeonApp() {
             if (level === 0) {
                 return;
             }
-            const timer = setTimeout(() => {
-                if (level === 1) {
-                    if (DEBUG) {
-                        console.log("player killed enemy");
-                    }
-                    setPlayerState(DungeonStatus.alive);
-                    setEnemyState(DungeonStatus.dead);
-
-                    //Victory sound plays
-                    playAudio(VictoryAudio);
-                } else {
-                    if (DEBUG) {
-                        console.log("enemy killed player");
-                    }
-                    setPlayerState(DungeonStatus.dead);
-                    setEnemyState(DungeonStatus.alive);
-
-                    //player death audio
-                    playAudio(PlayerDeathAudio);
+            if (level === 1) {
+                if (DEBUG) {
+                    console.log("player killed enemy");
                 }
+                setPlayerState(DungeonStatus.alive);
+                setEnemyState(DungeonStatus.dead);
 
-                if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
-                    const message: NewDiscordMessage = {
-                        message_type: level === 1 ? "defeated" : "killed_by",
-                        emoji_1: DungeonCharacterEmoji[player_character],
-                        emoji_2: DungeonEnemyEmoji[current_enemy],
-                        level: current_level,
-                        sol_amount: 0,
-                        achievement_name: "",
-                    };
-
-                    post_discord_message(message);
-                    discord_play_message_sent.current = true;
+                //Victory sound plays
+                playAudio(VictoryAudio);
+            } else {
+                if (DEBUG) {
+                    console.log("enemy killed player");
                 }
+                setPlayerState(DungeonStatus.dead);
+                setEnemyState(DungeonStatus.alive);
 
-                animateLevel.current = 0;
-                CheckNewPlayAchievements();
-            }, 5000);
+                //player death audio
+                playAudio(PlayerDeathAudio);
+            }
 
-            return () => clearTimeout(timer);
+            if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
+                const message: NewDiscordMessage = {
+                    message_type: level === 1 ? "defeated" : "killed_by",
+                    emoji_1: DungeonCharacterEmoji[player_character],
+                    emoji_2: DungeonEnemyEmoji[current_enemy],
+                    level: current_level,
+                    sol_amount: 0,
+                    achievement_name: "",
+                };
+
+                post_discord_message(message);
+                discord_play_message_sent.current = true;
+            }
+
+            animateLevel.current = 0;
+            CheckNewPlayAchievements();
         },
-        [current_level, player_character, current_enemy, CheckNewPlayAchievements, playAudio]
+        [current_level, player_character, current_enemy, CheckNewPlayAchievements, playAudio],
     );
-
-    // Replace the previous useEffect with this one
-    useEffect(() => {
-        handleAnimation(animateLevel.current);
-    }, [handleAnimation]);
 
     const set_JWT_token = useCallback(async () => {
         console.log("Setting new JWT token");
@@ -940,19 +1064,22 @@ export function DungeonApp() {
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
+        if (current_player_data !== null && current_player_data?.rest_status[player_character].rest_time_remaining > Date.now() / 1000 + 60)
+            return;
+
         setProcessingTransaction(true);
 
         let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
             [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-            DUNGEON_PROGRAM
+            DUNGEON_PROGRAM,
         )[0];
 
         let loot_token_account = await getAssociatedTokenAddress(
             LOOT_TOKEN_MINT, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
@@ -989,7 +1116,7 @@ export function DungeonApp() {
         let free_play_token_account = await getAssociatedTokenAddress(
             FREE_PLAY_MINT, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         account_vector.push({ pubkey: free_play_token_account, isSigner: false, isWritable: true });
@@ -1000,22 +1127,24 @@ export function DungeonApp() {
         if (current_key_mint && current_key_index) {
             let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("key_meta"), current_key_mint.toBuffer()],
-                SHOP_PROGRAM
+                SHOP_PROGRAM,
             )[0];
 
             let key_token_account = await getAssociatedTokenAddress(
                 current_key_mint, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let dungeon_key_metaplex_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), current_key_mint.toBuffer()],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
-            let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), current_key_mint.toBytes()], DUNGEON_PROGRAM)[0];
-
+            let key_freeplays_account = PublicKey.findProgramAddressSync(
+                [Buffer.from("key_freeplays"), current_key_mint.toBytes()],
+                DUNGEON_PROGRAM,
+            )[0];
 
             // accounts for discount key
             account_vector.push({ pubkey: current_key_mint, isSigner: false, isWritable: false });
@@ -1023,7 +1152,6 @@ export function DungeonApp() {
             account_vector.push({ pubkey: dungeon_key_meta_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: dungeon_key_metaplex_account, isSigner: false, isWritable: false });
             account_vector.push({ pubkey: key_freeplays_account, isSigner: false, isWritable: true });
-
         }
 
         const play_instruction = new TransactionInstruction({
@@ -1081,7 +1209,7 @@ export function DungeonApp() {
 
         last_advantage.current = advantage;
         last_loot_bonus.current = loot_bonus;
-    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus]);
+    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus, current_player_data]);
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
@@ -1095,13 +1223,13 @@ export function DungeonApp() {
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
             [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-            DUNGEON_PROGRAM
+            DUNGEON_PROGRAM,
         )[0];
 
         let loot_token_account = await getAssociatedTokenAddress(
             LOOT_TOKEN_MINT, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let ref_code = searchParams.get("ref");
@@ -1218,7 +1346,6 @@ export function DungeonApp() {
             transaction.add(play_instruction);
 
             try {
-
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
@@ -1251,7 +1378,83 @@ export function DungeonApp() {
             check_user_state.current = true;
             check_sol_balance.current = true;
         },
-        [wallet, bearer_token]
+        [wallet, bearer_token],
+    );
+
+    const Rest = useCallback(
+        async (which: number) => {
+            setTransactionFailed(false);
+            num_state_checks.current = 0;
+
+            if (wallet.publicKey === null || wallet.signTransaction === undefined || wallet.signMessage === undefined) return;
+
+            setProcessingTransaction(true);
+
+            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true, // allow owner off curve
+            );
+            const instruction_data = serialise_rest_instruction(DungeonInstruction.rest, rest_character.current, rest_state, which);
+
+            var account_vector = [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
+                { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
+                { pubkey: loot_token_account, isSigner: false, isWritable: true },
+                { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
+
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            transaction.add(play_instruction);
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    setProcessingTransaction(false);
+                    return;
+                }
+
+                let signature = transaction_response.result;
+
+                if (DEBUG) {
+                    console.log("play signature: ", signature);
+                }
+
+                current_signature.current = signature;
+                signature_check_count.current = 0;
+            } catch (error) {
+                setProcessingTransaction(false);
+                console.log(error);
+                return;
+            }
+
+            if (DEBUG) {
+                console.log("In Play - setting state");
+            }
+
+            check_user_state.current = true;
+            check_sol_balance.current = true;
+        },
+        [wallet, bearer_token, rest_state],
     );
 
     const ClaimAchievement = useCallback(
@@ -1267,7 +1470,7 @@ export function DungeonApp() {
             let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
             let player_achievement_key = PublicKey.findProgramAddressSync(
                 [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-                DUNGEON_PROGRAM
+                DUNGEON_PROGRAM,
             )[0];
 
             let shop_program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
@@ -1277,18 +1480,18 @@ export function DungeonApp() {
 
             let nft_meta_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_master_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_account_key = await getAssociatedTokenAddress(
                 nft_mint_pubkey, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             const instruction_data = serialise_claim_achievement_instruction(DungeonInstruction.claim_achievement, which);
@@ -1382,7 +1585,7 @@ export function DungeonApp() {
 
             if (PROD) post_discord_message(message);
         },
-        [wallet, player_character, bearer_token]
+        [wallet, player_character, bearer_token],
     );
 
     const ApplyKey = useCallback(async () => {
@@ -1412,7 +1615,7 @@ export function DungeonApp() {
         let key_token_account = await getAssociatedTokenAddress(
             key_mint, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let token_amount = await request_token_amount(bearer_token, key_token_account);
@@ -1423,33 +1626,31 @@ export function DungeonApp() {
         }
 
         let max_freeplays = 10;
-        if (key_type === KeyType.Silver)
-            max_freeplays = 20;
-        if (key_type === KeyType.Gold)
-            max_freeplays = 30;   
+        if (key_type === KeyType.Silver) max_freeplays = 20;
+        if (key_type === KeyType.Gold) max_freeplays = 30;
 
         // get remaining freeplays
-        let key_freeplays_account = PublicKey.findProgramAddressSync([Buffer.from("key_freeplays"), key_mint.toBytes()], DUNGEON_PROGRAM)[0];
+        let key_freeplays_account = PublicKey.findProgramAddressSync(
+            [Buffer.from("key_freeplays"), key_mint.toBytes()],
+            DUNGEON_PROGRAM,
+        )[0];
 
         let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
 
         if (freeplay_data === null) {
             //console.log("no free play account found, setting to ", max_freeplays);
             setKeyFreePlays(max_freeplays);
-        }
-        else {
+        } else {
             let current_time = Date.now() / 1000;
             let current_date = Math.floor(current_time / 24 / 60 / 60);
             //console.log("free plays remaining", freeplay_data.freeplays_remaining, freeplay_data.last_date, current_date);
             if (current_date === freeplay_data.last_date) {
                 setKeyFreePlays(freeplay_data.freeplays_remaining);
-            }
-            else
-            {
+            } else {
                 setKeyFreePlays(max_freeplays);
             }
         }
-        
+
         setCurrentKeyMint(key_mint);
         setCurrentKeyIndex(key_index);
     }, [wallet, discount_key_index, bearer_token]);
@@ -1496,7 +1697,6 @@ export function DungeonApp() {
     };
 
     const PotionButtons = () => {
-
         let loot_bonus_time = current_player_data ? bignum_to_num(current_player_data?.bonus_loot_activation_time) : 0;
         let current_time = Date.now() / 1000;
         let loot_bonus_valid = loot_bonus && (current_time - loot_bonus_time) / 60 < 10.1;
@@ -1506,7 +1706,9 @@ export function DungeonApp() {
                 <HStack align="bottom" spacing="3px">
                     <Box
                         as="button"
-                        disabled={advantage || current_player_data === null || current_player_data?.num_advantage_potions === 0 ? true : false}
+                        disabled={
+                            advantage || current_player_data === null || current_player_data?.num_advantage_potions === 0 ? true : false
+                        }
                         onClick={() => DrinkPotion(0)}
                         borderWidth="1px"
                         borderColor={advantage ? "green" : "white"}
@@ -1527,14 +1729,18 @@ export function DungeonApp() {
                 <HStack align="bottom" spacing="3px">
                     <Box
                         as="button"
-                        disabled={loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? true : false}
+                        disabled={
+                            loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0
+                                ? true
+                                : false
+                        }
                         onClick={() => DrinkPotion(1)}
                         borderWidth="1px"
                         borderColor={loot_bonus_valid ? "green" : "white"}
                     >
                         <img
                             style={{
-                                imageRendering: "pixelated"
+                                imageRendering: "pixelated",
                             }}
                             src={luck_potion}
                             width={POTION_SIZE}
@@ -1544,7 +1750,7 @@ export function DungeonApp() {
                     <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" :"14px"}>
                                 {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
                     </Text>
-                    </HStack>
+                </HStack>
             </HStack>
         );
     };
@@ -1564,92 +1770,263 @@ export function DungeonApp() {
         setWhichCharacter(DungeonCharacter.wizard);
     }, [playAudio]);
 
+    const CharacterXP = (character: { character: DungeonCharacter }) => {
+        if (current_player_data === null) {
+            return (
+                <Box width="100%">
+                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                        Lvl 1
+                    </Text>
+                </Box>
+            );
+        }
+
+        let current_level = 1;
+        for (let i = 0; i < levels.length; i++) {
+            if (current_player_data.character_xp[character.character] >= levels[i]) {
+                current_level = i + 1;
+            }
+        }
+
+        return (
+            <Box width="100%">
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    Lvl {current_level}
+                </Text>
+            </Box>
+        );
+    };
+
+    const RestEnergy = (character: { character: DungeonCharacter }) => {
+        if (current_player_data === null) {
+            return (
+                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    Energy / 100
+                </Text>
+            );
+        }
+
+        let rest_colour = "white";
+        if (current_player_data?.rest_status[character.character].loot_bonus > 0) rest_colour = "yellow";
+        else if (current_player_data?.rest_status[character.character].power_bonus > 0) rest_colour = "green";
+        else if (current_player_data?.rest_status[character.character].xp_bonus > 0) rest_colour = "blue";
+
+        return (
+            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color={rest_colour}>
+                Energy {current_player_data?.rest_status[character.character].energy}/100
+            </Text>
+        );
+    };
+
     const CharacterSelect = () => {
         //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", num_plays,initial_num_plays.current, "dataaccount:", data_account_status, "initial status", initial_status.current, initial_status.current === DungeonStatus.unknown);
-        return (
-            <HStack>
-                {player_character === DungeonCharacter.knight && (
-                    <Box
-                        style={{
-                            backgroundImage: `url(${selector})`,
-                            backgroundPosition: "center",
-                            backgroundSize: "contain",
-                            backgroundRepeat: "no-repeat",
-                            imageRendering: "pixelated",
-                        }}
-                        width="100%"
-                    >
-                        <Box>
-                            <Button variant="link" size="md" onClick={SelectKnight}>
-                                <img style={{ imageRendering: "pixelated" }} src={knight} width="7000" alt={""} />
-                            </Button>
-                        </Box>
-                    </Box>
-                )}
-                {player_character !== DungeonCharacter.knight && (
-                    <Box width="100%">
-                        <Box>
-                            <Button variant="link" size="md" onClick={SelectKnight}>
-                                <img style={{ imageRendering: "pixelated" }} src={knight} width="7000" alt={""} />
-                            </Button>
-                        </Box>
-                    </Box>
-                )}
 
-                {player_character === DungeonCharacter.ranger && (
+        let now = Date.now() / 1000 + 60;
+        let knight_resting: boolean = current_player_data !== null && current_player_data?.rest_status[0].rest_time_remaining > now;
+        let ranger_resting: boolean = current_player_data !== null && current_player_data?.rest_status[1].rest_time_remaining > now;
+        let wizard_resting: boolean = current_player_data !== null && current_player_data?.rest_status[2].rest_time_remaining > now;
+
+        return (
+            <HStack width="100%">
+                <VStack width="33%">
+                    {player_character === DungeonCharacter.knight && (
+                        <Box
+                            style={{
+                                backgroundImage: `url(${selector})`,
+                                backgroundPosition: "center",
+                                backgroundSize: "contain",
+                                backgroundRepeat: "no-repeat",
+                                imageRendering: "pixelated",
+                            }}
+                            width="100%"
+                        >
+                            <Box>
+                                <Button
+                                    variant="link"
+                                    disabled={knight_resting}
+                                    size="md"
+                                    onClick={knight_resting ? undefined : SelectKnight}
+                                >
+                                    <img
+                                        style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={knight}
+                                        width="10000"
+                                        alt={""}
+                                    />
+                                </Button>
+                            </Box>
+                        </Box>
+                    )}
+                    {player_character !== DungeonCharacter.knight && (
+                        <Box width="100%">
+                            <Box>
+                                <Button
+                                    variant="link"
+                                    disabled={knight_resting}
+                                    size="md"
+                                    onClick={knight_resting ? undefined : SelectKnight}
+                                >
+                                    <img
+                                        style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={knight}
+                                        width="10000"
+                                        alt={""}
+                                    />
+                                </Button>
+                            </Box>
+                        </Box>
+                    )}
+                    <CharacterXP character={DungeonCharacter.knight} />
+                    <RestEnergy character={DungeonCharacter.knight} />
+
                     <Box
-                        style={{
-                            backgroundImage: `url(${selector})`,
-                            backgroundPosition: "center",
-                            backgroundSize: "contain",
-                            backgroundRepeat: "no-repeat",
-                            imageRendering: "pixelated",
+                        as="button"
+                        disabled={knight_resting}
+                        borderWidth={knight_resting ? "0px" : "1px"}
+                        borderColor={knight_resting ? "black" : "white"}
+                        onClick={() => {
+                            rest_character.current = DungeonCharacter.knight;
+                            setShowRest(true);
                         }}
-                        width="100%"
                     >
-                        <Box>
-                            <Button variant="link" size="md" onClick={SelectRanger}>
-                                <img style={{ imageRendering: "pixelated" }} src={ranger} width="7000" alt={""} />
-                            </Button>
-                        </Box>
+                        <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            {knight_resting ? "Resting" : "Rest"}
+                        </Text>
                     </Box>
-                )}
-                {player_character !== DungeonCharacter.ranger && (
-                    <Box width="100%">
-                        <Box>
-                            <Button variant="link" size="md" onClick={SelectRanger}>
-                                <img style={{ imageRendering: "pixelated" }} src={ranger} width="7000" alt={""} />
-                            </Button>
+                </VStack>
+
+                <VStack width="33%">
+                    {player_character === DungeonCharacter.ranger && (
+                        <Box
+                            style={{
+                                backgroundImage: `url(${selector})`,
+                                backgroundPosition: "center",
+                                backgroundSize: "contain",
+                                backgroundRepeat: "no-repeat",
+                                imageRendering: "pixelated",
+                            }}
+                            width="100%"
+                        >
+                            <Box>
+                                <Button
+                                    variant="link"
+                                    disabled={ranger_resting}
+                                    size="md"
+                                    onClick={ranger_resting ? undefined : SelectRanger}
+                                >
+                                    <img
+                                        style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={ranger}
+                                        width="10000"
+                                        alt={""}
+                                    />
+                                </Button>
+                            </Box>
                         </Box>
-                    </Box>
-                )}
-                {player_character === DungeonCharacter.wizard && (
+                    )}
+                    {player_character !== DungeonCharacter.ranger && (
+                        <Box width="100%">
+                            <Box>
+                                <Button
+                                    variant="link"
+                                    disabled={ranger_resting}
+                                    size="md"
+                                    onClick={ranger_resting ? undefined : SelectRanger}
+                                >
+                                    <img
+                                        style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={ranger}
+                                        width="10000"
+                                        alt={""}
+                                    />
+                                </Button>
+                            </Box>
+                        </Box>
+                    )}
+                    <CharacterXP character={DungeonCharacter.ranger} />
+                    <RestEnergy character={DungeonCharacter.ranger} />
                     <Box
-                        style={{
-                            backgroundImage: `url(${selector})`,
-                            backgroundPosition: "center",
-                            backgroundSize: "contain",
-                            backgroundRepeat: "no-repeat",
-                            imageRendering: "pixelated",
+                        as="button"
+                        disabled={ranger_resting}
+                        borderWidth={ranger_resting ? "0px" : "1px"}
+                        borderColor={ranger_resting ? "black" : "white"}
+                        onClick={() => {
+                            rest_character.current = DungeonCharacter.ranger;
+                            setShowRest(true);
                         }}
-                        width="100%"
                     >
-                        <Box>
-                            <Button variant="link" size="md" onClick={SelectWizard}>
-                                <img style={{ imageRendering: "pixelated" }} src={wizard} width="7000" alt={""} />
-                            </Button>
-                        </Box>
+                        <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            {ranger_resting ? "Resting" : "Rest"}
+                        </Text>
                     </Box>
-                )}
-                {player_character !== DungeonCharacter.wizard && (
-                    <Box width="100%">
-                        <Box>
-                            <Button variant="link" size="md" onClick={SelectWizard}>
-                                <img style={{ imageRendering: "pixelated" }} src={wizard} width="7000" alt={""} />
-                            </Button>
+                </VStack>
+
+                <VStack width="33%">
+                    {player_character === DungeonCharacter.wizard && (
+                        <Box
+                            style={{
+                                backgroundImage: `url(${selector})`,
+                                backgroundPosition: "center",
+                                backgroundSize: "contain",
+                                backgroundRepeat: "no-repeat",
+                                imageRendering: "pixelated",
+                            }}
+                            width="100%"
+                        >
+                            <Box>
+                                <Button
+                                    variant="link"
+                                    disabled={wizard_resting}
+                                    size="md"
+                                    onClick={wizard_resting ? undefined : SelectWizard}
+                                >
+                                    <img
+                                        style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={wizard}
+                                        width="10000"
+                                        alt={""}
+                                    />
+                                </Button>
+                            </Box>
                         </Box>
+                    )}
+                    {player_character !== DungeonCharacter.wizard && (
+                        <Box width="100%">
+                            <Box>
+                                <Button
+                                    variant="link"
+                                    disabled={wizard_resting}
+                                    size="md"
+                                    onClick={wizard_resting ? undefined : SelectWizard}
+                                >
+                                    <img
+                                        style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                        src={wizard}
+                                        width="10000"
+                                        alt={""}
+                                    />
+                                </Button>
+                            </Box>
+                        </Box>
+                    )}
+                    <CharacterXP character={DungeonCharacter.wizard} />
+                    <RestEnergy character={DungeonCharacter.wizard} />
+
+                    <Box
+                        as="button"
+                        disabled={wizard_resting}
+                        borderWidth={wizard_resting ? "0px" : "1px"}
+                        borderColor={wizard_resting ? "black" : "white"}
+                        onClick={() => {
+                            rest_character.current = DungeonCharacter.wizard;
+                            setShowRest(true);
+                        }}
+                    >
+                        <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                            {wizard_resting ? "Resting" : "Rest"}
+                        </Text>
                     </Box>
-                )}
+                </VStack>
             </HStack>
         );
     };
@@ -1710,6 +2087,7 @@ export function DungeonApp() {
 
         let visible = true;
 
+        //console.log("have made it here in CS", visible);
 
         // if i don't need to make an account but player status is unknown return nothing
         if (
@@ -1720,12 +2098,12 @@ export function DungeonApp() {
             visible = false;
         }
 
-        //console.log("have made it here in CS 2");
+        //console.log("have made it here in CS 2", visible);
         // if i am alive or exploring and  the level is > 0 never show this
         if (data_account_status === AccountStatus.unknown || (current_level > 0 && currentStatus === DungeonStatus.alive)) {
             visible = false;
         }
-        //console.log("have made it here in CS");
+        //console.log("have made it here in CS 3", visible);
         return (
           <>
             <Box width="100%">
@@ -1847,7 +2225,7 @@ export function DungeonApp() {
                 "enemy",
                 current_enemy,
                 "enemy_state",
-                DungeonStatusString[enemy_state]
+                DungeonStatusString[enemy_state],
             );
         }
 
@@ -1859,12 +2237,12 @@ export function DungeonApp() {
                 <VStack width="100%">
                     <Box width="100%">
                         <HStack>
-                            <Box width="25%"></Box>
-                            <DisplayLVL current_level={current_level} />
-                            <Box width="30%"></Box>
+                            <Box width="20%"></Box>
                             <DisplayXP
                                 current_xp={current_player_data === null ? 0 : current_player_data?.character_xp[player_character]}
                             />
+                            <Box width="25%"></Box>
+                            <DisplayRoom current_room={current_level} />
                             <Box width="25%"></Box>
                         </HStack>
                     </Box>
@@ -1884,7 +2262,6 @@ export function DungeonApp() {
                             <HStack>
                                 <Box width="30%"></Box>
                                 <Box width="15%">
-                                    {" "}
                                     <DisplayPlayer
                                         player_state={player_state}
                                         player_character={player_character}
@@ -1893,12 +2270,7 @@ export function DungeonApp() {
                                 </Box>
                                 <Box width="10%"></Box>
                                 <Box width="15%">
-                                    {" "}
-                                    <DisplayEnemy
-                                        player_state={player_state}
-                                        enemy_state={enemy_state}
-                                        current_enemy={current_enemy}
-                                    />{" "}
+                                    <DisplayEnemy player_state={player_state} enemy_state={enemy_state} current_enemy={current_enemy} />
                                 </Box>
                                 <Box width="30%"></Box>
                             </HStack>
@@ -1908,12 +2280,12 @@ export function DungeonApp() {
 
                     <VStack width="100%" alignItems="center">
                         {transaction_failed && (
-                                <Center>
-                                    <Text className="font-face-sfpb" fontSize={font_size} textAlign="center" color="red">
-                                        Transaction Failed. <br />
-                                        Please Refresh.
-                                    </Text>
-                                </Center>
+                            <Center>
+                                <Text className="font-face-sfpb" fontSize={font_size} textAlign="center" color="red">
+                                    Transaction Failed. <br />
+                                    Please Refresh.
+                                </Text>
+                            </Center>
                         )}
 
                         {player_state === DungeonStatus.dead && (
@@ -1923,6 +2295,7 @@ export function DungeonApp() {
                                         roll_one={roll_one.current}
                                         roll_two={roll_two.current}
                                         loading={enemy_state === DungeonStatus.unknown}
+                                        player_data={current_player_data}
                                     />
 
                                     <DisplayPlayerFailedText
@@ -1933,12 +2306,17 @@ export function DungeonApp() {
                                     <Center>
                                         <VStack>
                                             <HStack mb="1rem">
-                                                <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                                                <Text
+                                                    className="font-face-sfpb"
+                                                    textAlign="center"
+                                                    fontSize={DUNGEON_FONT_SIZE}
+                                                    color="white"
+                                                >
                                                     Drink a Potion
                                                 </Text>
                                                 <PotionButtons />
                                             </HStack>
-                                        
+
                                             <HStack alignItems="center">
                                                 <Button variant="link" size="md" onClick={handleExit} mr="5rem">
                                                     <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
@@ -1952,11 +2330,15 @@ export function DungeonApp() {
                                                     onClick={handleRetry}
                                                     ml="5rem"
                                                 >
-                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DEFAULT_FONT_SIZE} color="white">
+                                                    <Text
+                                                        className="font-face-sfpb"
+                                                        textAlign="center"
+                                                        fontSize={DEFAULT_FONT_SIZE}
+                                                        color="white"
+                                                    >
                                                         Retry
                                                     </Text>
                                                 </Button>
-
                                             </HStack>
                                         </VStack>
                                     </Center>
@@ -1970,14 +2352,34 @@ export function DungeonApp() {
                                         roll_one={roll_one.current}
                                         roll_two={roll_two.current}
                                         loading={true}
+                                        player_data={current_player_data}
                                     />
                                 )}
                                 {enemy_state === DungeonStatus.alive && (
-                                    <DisplayEnemyAppearsText
-                                        current_enemy={current_enemy}
-                                        current_level={current_level}
-                                        num_plays={num_plays.current}
-                                    />
+                                    <>
+                                        <DisplayEnemyAppearsText
+                                            current_enemy={current_enemy}
+                                            current_level={current_level}
+                                            num_plays={num_plays.current}
+                                        />
+                                        <Box
+                                            as="button"
+                                            onClick={() => handleAnimation(animateLevel.current)}
+                                            mt="2%"
+                                            display="flex"
+                                            justifyContent="center"
+                                        >
+                                            <img
+                                                src={RollButton}
+                                                alt="Roll Button"
+                                                width={isMobile ? "64px" : "112px"}
+                                                height={isMobile ? "64px" : "112px"}
+                                            />
+                                        </Box>
+                                        <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="grey">
+                                            Click to Roll
+                                        </Text>
+                                    </>
                                 )}
                                 {enemy_state === DungeonStatus.dead && (
                                     <VStack width="100%" alignItems="center" spacing="2%" mb="5rem">
@@ -1985,6 +2387,7 @@ export function DungeonApp() {
                                             roll_one={roll_one.current}
                                             roll_two={roll_two.current}
                                             loading={false}
+                                            player_data={current_player_data}
                                         />
 
                                         <DisplayPlayerSuccessText
@@ -2000,12 +2403,17 @@ export function DungeonApp() {
                                             <Center>
                                                 <VStack>
                                                     <HStack mb="1rem">
-                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
+                                                        <Text
+                                                            className="font-face-sfpb"
+                                                            textAlign="center"
+                                                            fontSize={DUNGEON_FONT_SIZE}
+                                                            color="white"
+                                                        >
                                                             Drink a Potion
                                                         </Text>
                                                         <PotionButtons />
                                                     </HStack>
-                                                
+
                                                     <HStack>
                                                         <Button
                                                             disabled={processing_transaction ? true : false}
@@ -2014,9 +2422,14 @@ export function DungeonApp() {
                                                             onClick={handleEscape}
                                                             mr="3rem"
                                                         >
-                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                                    Escape
-                                                                </Text>
+                                                            <Text
+                                                                className="font-face-sfpb"
+                                                                textAlign="center"
+                                                                fontSize={font_size}
+                                                                color="white"
+                                                            >
+                                                                Escape
+                                                            </Text>
                                                         </Button>
 
                                                         <Button
@@ -2026,11 +2439,15 @@ export function DungeonApp() {
                                                             onClick={handleExploreFurther}
                                                             ml="10rem"
                                                         >
-                                                                <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                                    Explore Further
-                                                                </Text>
+                                                            <Text
+                                                                className="font-face-sfpb"
+                                                                textAlign="center"
+                                                                fontSize={font_size}
+                                                                color="white"
+                                                            >
+                                                                Explore Further
+                                                            </Text>
                                                         </Button>
-
                                                     </HStack>
                                                 </VStack>
                                             </Center>
@@ -2043,9 +2460,9 @@ export function DungeonApp() {
                                                     size="md"
                                                     onClick={Quit}
                                                 >
-                                                        <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
-                                                            Retire
-                                                        </Text>
+                                                    <Text className="font-face-sfpb" textAlign="center" fontSize={font_size} color="white">
+                                                        Retire
+                                                    </Text>
                                                 </Button>
                                             </Center>
                                         )}
@@ -2105,6 +2522,7 @@ export function DungeonApp() {
         <>
             <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance} bearer_token={bearer_token} />
             {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN) && <AchievementsModal />}
+            {screen === Screen.HOME_SCREEN && <RestModal />}
 
             <Box width="100%" mb="2%">
                 <Center>
@@ -2133,7 +2551,13 @@ export function DungeonApp() {
                             {screen === Screen.ACHIEVEMENT_SCREEN && (
                                 <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
                             )}
-                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} loot_per_day={loot_per_day.toFixed(2)} player_data={current_player_data}/>}
+                            {screen === Screen.STATS_SCREEN && (
+                                <StatsScreen
+                                    AchievementData={achievement_data}
+                                    loot_per_day={loot_per_day.toFixed(2)}
+                                    player_data={current_player_data}
+                                />
+                            )}
                             {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN || screen === Screen.DEATH_SCREEN) && (
                                 <UnconnectedPage />
                             )}
@@ -2160,7 +2584,13 @@ export function DungeonApp() {
                             {screen === Screen.ACHIEVEMENT_SCREEN && (
                                 <AchievementsScreen AchievementState={achievement_status} ClaimAchievement={ClaimAchievement} />
                             )}
-                            {screen === Screen.STATS_SCREEN && <StatsScreen AchievementData={achievement_data} loot_per_day={loot_per_day.toFixed(2)} player_data={current_player_data}/>}
+                            {screen === Screen.STATS_SCREEN && (
+                                <StatsScreen
+                                    AchievementData={achievement_data}
+                                    loot_per_day={loot_per_day.toFixed(2)}
+                                    player_data={current_player_data}
+                                />
+                            )}
                             {screen === Screen.DM_SCREEN && <DMScreen bearer_token={bearer_token} />}
                         </>
                     )}

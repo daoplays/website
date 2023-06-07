@@ -1,9 +1,9 @@
 import { Button, Box, Flex } from "@chakra-ui/react";
-import { FC, useEffect, useState } from "react";
-import { createContext } from "react";
+import { FC, useState, useContext, createContext } from "react";
 import soundOnImg from "./images/Sound_On.png";
 import soundOffImg from "./images/Sound_Off.png";
 import "./css/mute.css";
+import VolumeSlider from "./slider";
 
 enum MuteState {
     Unmuted,
@@ -18,7 +18,20 @@ interface MuteButtonProps {
     setVolume: (value: number) => void;
 }
 
-export const MuteButton: FC<MuteButtonProps> = ({ muteState, toggleMute, volume, setVolume }) => {
+export const MuteContext = createContext<MuteButtonProps>({
+    muteState: MuteState.Unmuted,
+    toggleMute: () => {},
+    volume: 35,
+    setVolume: () => {},
+});
+
+export const MuteButton: FC = () => {
+    const { muteState, toggleMute, setVolume } = useContext(MuteContext);
+
+    const handleVolumeChange = (newVolume: number) => {
+        setVolume(newVolume);
+    };
+
     let content;
     switch (muteState) {
         case MuteState.Muted:
@@ -32,14 +45,7 @@ export const MuteButton: FC<MuteButtonProps> = ({ muteState, toggleMute, volume,
                 <Flex direction="column" alignItems="center" className="volume-slider-flex">
                     <img src={soundOnImg} alt="Sound On" />
                     <Box width="1.5rem" height="0.3rem" marginTop="2rem">
-                        <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={volume}
-                            onChange={(e) => setVolume(Number(e.target.value))}
-                            style={{ width: "4rem", transform: "rotate(-90deg)", marginLeft: "-1rem" }}
-                        />
+                        <VolumeSlider onInput={handleVolumeChange} />
                     </Box>
                 </Flex>
             );
@@ -53,20 +59,9 @@ export const MuteButton: FC<MuteButtonProps> = ({ muteState, toggleMute, volume,
     );
 };
 
-export const MuteContext = createContext<MuteButtonProps>({
-    muteState: MuteState.Unmuted,
-    toggleMute: () => {},
-    volume: 50,
-    setVolume: () => {},
-});
-
 export const MuteProvider = ({ children, isMuted: initialMuted }: React.PropsWithChildren<{ isMuted: boolean }>) => {
     const [muteState, setMuteState] = useState(initialMuted ? MuteState.Muted : MuteState.Unmuted);
-    const [volume, setVolume] = useState(50);
-
-    useEffect(() => {
-        // console.log('mute provider')
-    }, []);
+    const [volume, setVolume] = useState(35);
 
     const toggleMute = () => {
         setMuteState((prevState) => {

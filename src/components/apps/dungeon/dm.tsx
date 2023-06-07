@@ -272,7 +272,7 @@ export function DMScreen({ bearer_token }: { bearer_token: string }) {
             let nft_account_key = await getAssociatedTokenAddress(
                 key_meta_data.key_mint, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             // check the user actually owns the token
@@ -305,23 +305,23 @@ export function DMScreen({ bearer_token }: { bearer_token: string }) {
             let dm_user_account = PublicKey.findProgramAddressSync([wallet.publicKey.toBuffer()], DM_PROGRAM)[0];
             let dungeon_key_data_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("key_meta"), nft_mint_pubkey.toBuffer()],
-                SHOP_PROGRAM
+                SHOP_PROGRAM,
             )[0];
 
             let nft_meta_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_master_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_account_key = await getAssociatedTokenAddress(
                 nft_mint_pubkey, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             const burn_token_data = serialise_basic_instruction(DMInstruction.burn_token);
@@ -395,24 +395,24 @@ export function DMScreen({ bearer_token }: { bearer_token: string }) {
 
         let nft_meta_key = PublicKey.findProgramAddressSync(
             [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-            METAPLEX_META
+            METAPLEX_META,
         )[0];
 
         let nft_master_key = PublicKey.findProgramAddressSync(
             [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-            METAPLEX_META
+            METAPLEX_META,
         )[0];
 
         let nft_account_key = await getAssociatedTokenAddress(
             nft_mint_pubkey, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let whitelist_account_key = await getAssociatedTokenAddress(
             WHITELIST_TOKEN, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         const create_dm_data = serialise_DM_Mint_instruction(DMInstruction.create_dm, dm_name);
@@ -528,7 +528,7 @@ export function DMScreen({ bearer_token }: { bearer_token: string }) {
             let dm_token_account_key = await getAssociatedTokenAddress(
                 dm_mint, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             account_vector.push({ pubkey: dm_mint, isSigner: false, isWritable: false });
@@ -591,7 +591,7 @@ export function DMScreen({ bearer_token }: { bearer_token: string }) {
         let dm_token_account = await getAssociatedTokenAddress(
             dm_data.dm_mint, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let token_amount = await request_token_amount(bearer_token, dm_token_account);
@@ -618,7 +618,7 @@ export function DMScreen({ bearer_token }: { bearer_token: string }) {
         let whitelist_account_key = await getAssociatedTokenAddress(
             WHITELIST_TOKEN, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let token_amount = await request_token_amount(bearer_token, whitelist_account_key);
@@ -823,7 +823,7 @@ export function DMScreen({ bearer_token }: { bearer_token: string }) {
             console.log(wallet.publicKey.toString());
             console.log(
                 "Founder? ",
-                wallet.publicKey.toString() === FOUNDER_1_KEY.toString() || wallet.publicKey.toString() === FOUNDER_2_KEY.toString()
+                wallet.publicKey.toString() === FOUNDER_1_KEY.toString() || wallet.publicKey.toString() === FOUNDER_2_KEY.toString(),
             );
         }
 
