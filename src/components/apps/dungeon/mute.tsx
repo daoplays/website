@@ -19,75 +19,62 @@ interface MuteButtonProps {
 }
 
 export const MuteContext = createContext<MuteButtonProps>({
-  muteState: MuteState.Unmuted,
-  toggleMute: () => {},
-  volume: 35,
-  setVolume: () => {},
+    muteState: MuteState.Unmuted,
+    toggleMute: () => {},
+    volume: 35,
+    setVolume: () => {},
 });
 
 export const MuteButton: FC = () => {
-  const { muteState, toggleMute, setVolume } = useContext(MuteContext);
+    const { muteState, toggleMute, setVolume } = useContext(MuteContext);
 
-  const handleVolumeChange = (newVolume: number) => {
-    setVolume(newVolume);
-  };
+    const handleVolumeChange = (newVolume: number) => {
+        setVolume(newVolume);
+    };
 
-  let content;
-  switch (muteState) {
-    case MuteState.Muted:
-      content = <img src={soundOffImg} alt="Sound Off" />;
-      break;
-    case MuteState.Unmuted:
-      content = <img src={soundOnImg} alt="Sound On" />;
-      break;
-    case MuteState.VolumeSlider:
-      content = (
-        <Flex
-          direction="column"
-          alignItems="center"
-          className="volume-slider-flex"
-        >
-          <img src={soundOnImg} alt="Sound On" />
-          <Box width="1.5rem" height="0.3rem" marginTop="2rem">
-            <VolumeSlider onInput={handleVolumeChange} />
-          </Box>
-        </Flex>
-      );
-      break;
-  }
+    let content;
+    switch (muteState) {
+        case MuteState.Muted:
+            content = <img src={soundOffImg} alt="Sound Off" />;
+            break;
+        case MuteState.Unmuted:
+            content = <img src={soundOnImg} alt="Sound On" />;
+            break;
+        case MuteState.VolumeSlider:
+            content = (
+                <Flex direction="column" alignItems="center" className="volume-slider-flex">
+                    <img src={soundOnImg} alt="Sound On" />
+                    <Box width="1.5rem" height="0.3rem" marginTop="2rem">
+                        <VolumeSlider onInput={handleVolumeChange} />
+                    </Box>
+                </Flex>
+            );
+            break;
+    }
 
-  return (
-    <Button size="md" onClick={toggleMute} className="mute-button">
-      <div className="font-face-sfpb">{content}</div>
-    </Button>
-  );
+    return (
+        <Button size="md" onClick={toggleMute} className="mute-button">
+            <div className="font-face-sfpb">{content}</div>
+        </Button>
+    );
 };
 
-export const MuteProvider = ({
-  children,
-  isMuted: initialMuted,
-}: React.PropsWithChildren<{ isMuted: boolean }>) => {
-  const [muteState, setMuteState] = useState(
-    initialMuted ? MuteState.Muted : MuteState.Unmuted
-  );
-  const [volume, setVolume] = useState(35);
+export const MuteProvider = ({ children, isMuted: initialMuted }: React.PropsWithChildren<{ isMuted: boolean }>) => {
+    const [muteState, setMuteState] = useState(initialMuted ? MuteState.Muted : MuteState.Unmuted);
+    const [volume, setVolume] = useState(35);
 
-  const toggleMute = () => {
-    setMuteState((prevState) => {
-      switch (prevState) {
-        case MuteState.Unmuted:
-          return MuteState.Muted;
-        case MuteState.Muted:
-          return MuteState.VolumeSlider;
-        case MuteState.VolumeSlider:
-          return MuteState.Unmuted;
-      }
-    });
-  };
+    const toggleMute = () => {
+        setMuteState((prevState) => {
+            switch (prevState) {
+                case MuteState.Unmuted:
+                    return MuteState.Muted;
+                case MuteState.Muted:
+                    return MuteState.VolumeSlider;
+                case MuteState.VolumeSlider:
+                    return MuteState.Unmuted;
+            }
+        });
+    };
 
-  return (
-    <MuteContext.Provider value={{ muteState, toggleMute, volume, setVolume }}>
-      {children}
-    </MuteContext.Provider>
-  );
+    return <MuteContext.Provider value={{ muteState, toggleMute, volume, setVolume }}>{children}</MuteContext.Provider>;
 };

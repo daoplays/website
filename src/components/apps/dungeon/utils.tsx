@@ -163,7 +163,7 @@ interface SignatureResponseData {
                 confirmations: number;
                 err: string | null;
                 slot: number;
-            }
+            },
         ];
     } | null;
 }
@@ -223,7 +223,7 @@ class InstructionNoArgs {
     static readonly struct = new BeetStruct<InstructionNoArgs>(
         [["instruction", u8]],
         (args) => new InstructionNoArgs(args.instruction!),
-        "InstructionNoArgs"
+        "InstructionNoArgs",
     );
 }
 
@@ -423,7 +423,7 @@ class DungeonData {
             ["current_minute", i64],
         ],
         (args) => new DungeonData(args.current_ema_value!, args.this_minutes_loot!, args.current_minute!),
-        "DungeonData"
+        "DungeonData",
     );
 }
 
@@ -434,7 +434,7 @@ export class RestData {
         readonly power_bonus: number,
         readonly loot_bonus: number,
         readonly health_bonus: number,
-        readonly xp_bonus: number
+        readonly xp_bonus: number,
     ) {}
 
     static readonly struct = new BeetStruct<RestData>(
@@ -447,15 +447,8 @@ export class RestData {
             ["xp_bonus", u8],
         ],
         (args) =>
-            new RestData(
-                args.energy!,
-                args.rest_time_remaining!,
-                args.power_bonus!,
-                args.loot_bonus!,
-                args.health_bonus!,
-                args.xp_bonus!
-            ),
-        "RestData"
+            new RestData(args.energy!, args.rest_time_remaining!, args.power_bonus!, args.loot_bonus!, args.health_bonus!, args.xp_bonus!),
+        "RestData",
     );
 }
 
@@ -478,8 +471,8 @@ export class PlayerData {
         readonly bonus_loot_activation_time: bignum,
         readonly dice_one: number,
         readonly dice_two: number,
-        readonly rest_status : RestData[],
-        readonly extra_space: bignum[]
+        readonly rest_status: RestData[],
+        readonly extra_space: bignum[],
     ) {}
 
     static readonly struct = new BeetStruct<PlayerData>(
@@ -524,9 +517,9 @@ export class PlayerData {
                 args.dice_one!,
                 args.dice_two!,
                 args.rest_status!,
-                args.extra_space!
+                args.extra_space!,
             ),
-        "PlayerData"
+        "PlayerData",
     );
 }
 
@@ -550,7 +543,7 @@ export class AchievementData {
 
         readonly total_lamports_claimed: bignum,
 
-        readonly n_interactions: number
+        readonly n_interactions: number,
     ) {}
 
     static readonly struct = new BeetStruct<AchievementData>(
@@ -591,9 +584,9 @@ export class AchievementData {
                 args.games_played_today!,
                 args.total_days_played!,
                 args.total_lamports_claimed!,
-                args.n_interactions!
+                args.n_interactions!,
             ),
-        "AchievementData"
+        "AchievementData",
     );
 }
 
@@ -606,7 +599,7 @@ class KeyFreePlayData {
             ["freeplays_remaining", u8],
         ],
         (args) => new KeyFreePlayData(args.last_date!, args.freeplays_remaining!),
-        "KeyFreePlayData"
+        "KeyFreePlayData",
     );
 }
 
@@ -620,7 +613,7 @@ class DungeonPlayInstruction {
             ["bet_size", u8],
         ],
         (args) => new DungeonPlayInstruction(args.instruction!, args.character!, args.bet_size!),
-        "DungeonPlayInstruction"
+        "DungeonPlayInstruction",
     );
 }
 
@@ -633,7 +626,7 @@ class DungeonQuitInstruction {
             ["ref_code", utf8String],
         ],
         (args) => new DungeonQuitInstruction(args.instruction!, args.ref_code!),
-        "DungeonQuitInstruction"
+        "DungeonQuitInstruction",
     );
 }
 
@@ -647,7 +640,7 @@ class DungeonDrinkPotionInstruction {
             ["quantity", u8],
         ],
         (args) => new DungeonDrinkPotionInstruction(args.instruction!, args.which_potion!, args.quantity!),
-        "DungeonDrinkPotionInstruction"
+        "DungeonDrinkPotionInstruction",
     );
 }
 
@@ -661,7 +654,7 @@ class DungeonBuyPotionInstruction {
             ["quantity", u8],
         ],
         (args) => new DungeonBuyPotionInstruction(args.instruction!, args.which_potion!, args.quantity!),
-        "DungeonBuyPotionInstruction"
+        "DungeonBuyPotionInstruction",
     );
 }
 
@@ -675,7 +668,7 @@ class DungeonExploreInstruction {
             ["character", u8],
         ],
         (args) => new DungeonExploreInstruction(args.instruction!, args.seed!, args.character!),
-        "DungeonExploreInstruction"
+        "DungeonExploreInstruction",
     );
 }
 
@@ -688,7 +681,7 @@ class DungeonClaimAchievementInstruction {
             ["achievement", u8],
         ],
         (args) => new DungeonClaimAchievementInstruction(args.instruction!, args.achievement!),
-        "DungeonClaimAchievementInstruction"
+        "DungeonClaimAchievementInstruction",
     );
 }
 
@@ -701,13 +694,11 @@ class DungeonRestInstruction {
             ["character", u8],
             ["rest_type", u8],
             ["rest_length", u8],
-
         ],
         (args) => new DungeonRestInstruction(args.instruction!, args.character!, args.rest_type!, args.rest_length!),
-        "DungeonRestInstruction"
+        "DungeonRestInstruction",
     );
 }
-
 
 export async function request_player_account_data(bearer: string, pubkey: PublicKey): Promise<PlayerData | null> {
     let account_data = await request_raw_account_data(bearer, pubkey);
@@ -820,7 +811,7 @@ class ShopMintFromCollectionInstruction {
             ["which_from_collection", u8],
         ],
         (args) => new ShopMintFromCollectionInstruction(args.instruction!, args.which_collection!, args.which_from_collection!),
-        "ShopMintFromCollectionInstruction"
+        "ShopMintFromCollectionInstruction",
     );
 }
 
@@ -834,7 +825,7 @@ export class KeyDataFromMint {
             ["key_index", u16],
         ],
         (args) => new KeyDataFromMint(args.key_mint!, args.key_type!, args.key_index!),
-        "KeyDataFromMint"
+        "KeyDataFromMint",
     );
 }
 
@@ -847,7 +838,7 @@ class KeyDataFromIndex {
             ["key_mint", publicKey],
         ],
         (args) => new KeyDataFromIndex(args.key_type!, args.key_mint!),
-        "KeyDataFromIndex"
+        "KeyDataFromIndex",
     );
 }
 
@@ -857,7 +848,7 @@ export class ShopData {
         readonly key_types_bought: number[],
         readonly music_boxes_bought: number[],
         readonly paintings_bought: number[],
-        readonly lore_pages_bought: number[]
+        readonly lore_pages_bought: number[],
     ) {}
 
     static readonly struct = new BeetStruct<ShopData>(
@@ -874,9 +865,9 @@ export class ShopData {
                 args.key_types_bought!,
                 args.music_boxes_bought!,
                 args.paintings_bought!,
-                args.lore_pages_bought!
+                args.lore_pages_bought!,
             ),
-        "ShopData"
+        "ShopData",
     );
 }
 
@@ -986,7 +977,7 @@ export async function run_keyData_GPA(bearer: string, key_index: number): Promis
 export function serialise_mint_from_collection_instruction(
     instruction: number,
     which_collection: number,
-    which_from_collection: number
+    which_from_collection: number,
 ): Buffer {
     const data = new ShopMintFromCollectionInstruction(instruction, which_collection, which_from_collection);
     const [buf] = ShopMintFromCollectionInstruction.struct.serialize(data);
@@ -1006,7 +997,7 @@ class DMManagerData {
         readonly last_fees: bignum,
 
         readonly dm_fees: bignum[],
-        readonly founders_fees: bignum[]
+        readonly founders_fees: bignum[],
     ) {}
 
     static readonly struct = new BeetStruct<DMManagerData>(
@@ -1020,7 +1011,7 @@ class DMManagerData {
         ],
         (args) =>
             new DMManagerData(args.total_dms!, args.dms_minted!, args.total_fees!, args.last_fees!, args.dm_fees!, args.founders_fees!),
-        "DMManagerData"
+        "DMManagerData",
     );
 }
 
@@ -1034,7 +1025,7 @@ class DMData {
             ["total_fees_raised", u64],
         ],
         (args) => new DMData(args.dm_index!, args.dm_mint!, args.total_fees_raised!),
-        "DMData"
+        "DMData",
     );
 }
 
@@ -1053,7 +1044,7 @@ class DM_Mint_Instruction {
             ["name", utf8String],
         ],
         (args) => new DM_Mint_Instruction(args.instruction!, args.name!),
-        "DM_Mint_Instruction"
+        "DM_Mint_Instruction",
     );
 }
 
@@ -1110,7 +1101,7 @@ export class ListingData {
         readonly quantity: number,
         readonly price: bignum,
         readonly seller_account: PublicKey,
-        readonly seed: number
+        readonly seed: number,
     ) {}
 
     static readonly struct = new BeetStruct<ListingData>(
@@ -1122,7 +1113,7 @@ export class ListingData {
             ["seed", u32],
         ],
         (args) => new ListingData(args.item!, args.quantity!, args.price!, args.seller_account!, args.seed!),
-        "ListingData"
+        "ListingData",
     );
 }
 
@@ -1167,7 +1158,7 @@ class Marketplace_List_Instruction {
         readonly item: number,
         readonly quantity: number,
         readonly price: bignum,
-        readonly seed: number
+        readonly seed: number,
     ) {}
 
     static readonly struct = new BeetStruct<Marketplace_List_Instruction>(
@@ -1179,7 +1170,7 @@ class Marketplace_List_Instruction {
             ["seed", u32],
         ],
         (args) => new Marketplace_List_Instruction(args.instruction!, args.item!, args.quantity!, args.price!, args.seed!),
-        "Marketplace_List_Instruction"
+        "Marketplace_List_Instruction",
     );
 }
 /*
@@ -1211,7 +1202,7 @@ class Marketplace_Buy_Instruction {
             ["quantity", u16],
         ],
         (args) => new Marketplace_Buy_Instruction(args.instruction!, args.quantity!),
-        "Marketplace_Buy_Instruction"
+        "Marketplace_Buy_Instruction",
     );
 }
 
@@ -1220,7 +1211,7 @@ export function serialise_Marketplace_list_instruction(
     item: number,
     quantity: number,
     price: bignum,
-    seed: number
+    seed: number,
 ): Buffer {
     const data = new Marketplace_List_Instruction(instruction, item, quantity, price, seed);
     const [buf] = Marketplace_List_Instruction.struct.serialize(data);
@@ -1270,7 +1261,7 @@ export class GameData {
         readonly seed: number,
         readonly max_rounds: number,
         readonly round_winners: number[],
-        readonly spare_data: number[]
+        readonly spare_data: number[],
     ) {}
 
     static readonly struct = new BeetStruct<GameData>(
@@ -1319,9 +1310,9 @@ export class GameData {
                 args.seed!,
                 args.max_rounds!,
                 args.round_winners!,
-                args.spare_data!
+                args.spare_data!,
             ),
-        "GameData"
+        "GameData",
     );
 }
 
@@ -1373,7 +1364,7 @@ class Arena_CreateGame_Instruction {
         readonly bid_size: bignum,
         readonly seed: number,
         readonly character: number,
-        readonly game_speed: number
+        readonly game_speed: number,
     ) {}
 
     static readonly struct = new BeetStruct<Arena_CreateGame_Instruction>(
@@ -1385,7 +1376,7 @@ class Arena_CreateGame_Instruction {
             ["game_speed", u8],
         ],
         (args) => new Arena_CreateGame_Instruction(args.instruction!, args.bid_size!, args.seed!, args.character!, args.game_speed!),
-        "Arena_CreateGame_Instruction"
+        "Arena_CreateGame_Instruction",
     );
 }
 
@@ -1398,7 +1389,7 @@ class Arena_JoinGame_Instruction {
             ["character", u8],
         ],
         (args) => new Arena_JoinGame_Instruction(args.instruction!, args.character!),
-        "Arena_JoinGame_Instruction"
+        "Arena_JoinGame_Instruction",
     );
 }
 
@@ -1411,7 +1402,7 @@ class Arena_Move_Instruction {
             ["move", uniformFixedSizeArray(u8, 32)],
         ],
         (args) => new Arena_Move_Instruction(args.instruction!, args.move!),
-        "Arena_Move_Instruction"
+        "Arena_Move_Instruction",
     );
 }
 
@@ -1421,7 +1412,7 @@ class Arena_Reveal_Instruction {
         readonly move_one: number,
         readonly salt_one: string,
         readonly move_two: number,
-        readonly salt_two: string
+        readonly salt_two: string,
     ) {}
 
     static readonly struct = new FixableBeetStruct<Arena_Reveal_Instruction>(
@@ -1433,7 +1424,7 @@ class Arena_Reveal_Instruction {
             ["salt_two", utf8String],
         ],
         (args) => new Arena_Reveal_Instruction(args.instruction!, args.move_one!, args.salt_one!, args.move_two!, args.salt_two!),
-        "Arena_Reveal_Instruction"
+        "Arena_Reveal_Instruction",
     );
 }
 
@@ -1442,7 +1433,7 @@ export function serialise_Arena_CreateGame_instruction(
     bid_size: bignum,
     seed: number,
     character: number,
-    game_speed: number
+    game_speed: number,
 ): Buffer {
     const data = new Arena_CreateGame_Instruction(instruction, bid_size, seed, character, game_speed);
     const [buf] = Arena_CreateGame_Instruction.struct.serialize(data);
@@ -1469,7 +1460,7 @@ export function serialise_Arena_Reveal_instruction(
     move_one: number,
     salt_one: string,
     move_two: number,
-    salt_two: string
+    salt_two: string,
 ): Buffer {
     const data = new Arena_Reveal_Instruction(instruction, move_one, salt_one, move_two, salt_two);
     const [buf] = Arena_Reveal_Instruction.struct.serialize(data);

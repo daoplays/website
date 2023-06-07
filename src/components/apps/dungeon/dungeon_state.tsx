@@ -500,19 +500,13 @@ export const DiceRollText = ({
     loading: boolean;
     player_data: PlayerData | null;
 }) => {
-
     let hour_glass_size: string | number = isMobile ? "2.5rem" : "5rem";
     let dice_roll_size: string | number = isMobile ? "64px" : "112px";
 
     if (loading) {
         return (
             <VStack mt="1rem">
-                <Box
-                    mt="2%"
-                    width={hour_glass_size}
-                    display="flex"
-                    justifyContent="center"
-                >
+                <Box mt="2%" width={hour_glass_size} display="flex" justifyContent="center">
                     <img
                         src={hour_glass}
                         alt="Hourglass"

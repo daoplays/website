@@ -2352,10 +2352,15 @@ export function DungeonApp() {
                                             current_level={current_level}
                                             num_plays={num_plays.current}
                                         />
-                                        <Box as="button" onClick={() => handleAnimation(animateLevel.current)} mt="2%" display="flex" justifyContent="center">
+                                        <Box
+                                            as="button"
+                                            onClick={() => handleAnimation(animateLevel.current)}
+                                            mt="2%"
+                                            display="flex"
+                                            justifyContent="center"
+                                        >
                                             <img
                                                 src={RollButton}
-                                                
                                                 alt="Roll Button"
                                                 width={isMobile ? "64px" : "112px"}
                                                 height={isMobile ? "64px" : "112px"}

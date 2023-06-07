@@ -46,15 +46,7 @@ import ranger_emoji from "./emojis/Ranger.gif";
 import wizard_emoji from "./emojis/Wizard.gif";
 import "../dungeon/css/style.css";
 
-function PieChart({
-    values,
-    labels,
-    title,
-}: {
-    values: number[];
-    labels: string[];
-    title: string;
-}) {
+function PieChart({ values, labels, title }: { values: number[]; labels: string[]; title: string }) {
     const isMobile = useMediaQuery({ query: "(max-width: 500px)" });
     const isTab = useMediaQuery({ query: "(max-width: 900px)" });
 
@@ -65,11 +57,7 @@ function PieChart({
             values: values,
             labels: labels,
             marker: {
-                colors: [
-                    "rgba(124, 124, 124, 255)",
-                    "rgb(167,251,93,255)",
-                    "rgb(126,165,248,255)",
-                ],
+                colors: ["rgba(124, 124, 124, 255)", "rgb(167,251,93,255)", "rgb(126,165,248,255)"],
             },
             type: "pie",
         },
@@ -91,28 +79,14 @@ function PieChart({
 }
 
 function wins(AchievementData: AchievementData, enemy: DungeonEnemy): number {
-    return (
-        AchievementData.enemies_win[enemy] +
-        AchievementData.enemies_win[32 + enemy] +
-        AchievementData.enemies_win[64 + enemy]
-    );
+    return AchievementData.enemies_win[enemy] + AchievementData.enemies_win[32 + enemy] + AchievementData.enemies_win[64 + enemy];
 }
 
 function losses(AchievementData: AchievementData, enemy: DungeonEnemy): number {
-    return (
-        AchievementData.enemies_lose[enemy] +
-        AchievementData.enemies_lose[32 + enemy] +
-        AchievementData.enemies_lose[64 + enemy]
-    );
+    return AchievementData.enemies_lose[enemy] + AchievementData.enemies_lose[32 + enemy] + AchievementData.enemies_lose[64 + enemy];
 }
 
-function WinLoss({
-    AchievementData,
-    enemy,
-}: {
-    AchievementData: AchievementData;
-    enemy: DungeonEnemy;
-}) {
+function WinLoss({ AchievementData, enemy }: { AchievementData: AchievementData; enemy: DungeonEnemy }) {
     let w: number = wins(AchievementData, enemy);
     let l: number = losses(AchievementData, enemy);
 
@@ -127,11 +101,7 @@ function WinLoss({
     );
 }
 
-function TotalWinLoss({
-    AchievementData,
-}: {
-    AchievementData: AchievementData;
-}) {
+function TotalWinLoss({ AchievementData }: { AchievementData: AchievementData }) {
     let w: number = 0;
     let l: number = 0;
 
@@ -151,21 +121,11 @@ function TotalWinLoss({
     );
 }
 
-function CharacterWinLoss({
-    AchievementData,
-    player_character,
-}: {
-    AchievementData: AchievementData;
-    player_character: DungeonCharacter;
-}) {
+function CharacterWinLoss({ AchievementData, player_character }: { AchievementData: AchievementData; player_character: DungeonCharacter }) {
     let w: number = 0;
     let l: number = 0;
 
-    for (
-        let i = 0 + player_character * 32;
-        i < 32 + player_character * 32;
-        i += 1
-    ) {
+    for (let i = 0 + player_character * 32; i < 32 + player_character * 32; i += 1) {
         w += AchievementData.enemies_win[i];
         l += AchievementData.enemies_lose[i];
     }
@@ -182,20 +142,10 @@ function CharacterWinLoss({
 }
 
 function Clears(AchievementData: AchievementData): number {
-    return (
-        AchievementData.levels_won[6] +
-        AchievementData.levels_won[13] +
-        AchievementData.levels_won[20]
-    );
+    return AchievementData.levels_won[6] + AchievementData.levels_won[13] + AchievementData.levels_won[20];
 }
 
-function PlayerStats({
-    AchievementData,
-    player_data,
-}: {
-    AchievementData: AchievementData | null;
-    player_data: PlayerData | null;
-}) {
+function PlayerStats({ AchievementData, player_data }: { AchievementData: AchievementData | null; player_data: PlayerData | null }) {
     const isMobile = useMediaQuery({ query: "(max-width: 500px)" });
 
     if (AchievementData === null) return <></>;
@@ -208,23 +158,14 @@ function PlayerStats({
     return (
         <Center width="100%">
             <Box width="100%">
-                <div
-                    className="font-face-sfpb"
-                    style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}
-                >
+                <div className="font-face-sfpb" style={{ color: "white", fontSize: DUNGEON_FONT_SIZE }}>
                     {!isMobile && (
                         <HStack width="100%" spacing="10%" mb="2rem">
                             <VStack align="center">
-                                <Text
-                                    align="center"
-                                    fontSize={DEFAULT_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                     {AchievementData.play_streak}
                                 </Text>
-                                <Text
-                                    align="center"
-                                    fontSize={DUNGEON_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                     Daily
                                     <br />
                                     Dungeon
@@ -234,16 +175,10 @@ function PlayerStats({
                             </VStack>
 
                             <VStack align="center">
-                                <Text
-                                    align="center"
-                                    fontSize={DEFAULT_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                     {AchievementData.games_played_today}
                                 </Text>
-                                <Text
-                                    align="center"
-                                    fontSize={DUNGEON_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                     Levels
                                     <br />
                                     Explored
@@ -253,16 +188,10 @@ function PlayerStats({
                             </VStack>
 
                             <VStack align="center">
-                                <Text
-                                    align="center"
-                                    fontSize={DEFAULT_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                     {AchievementData.games_played}
                                 </Text>
-                                <Text
-                                    align="center"
-                                    fontSize={DUNGEON_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                     Total
                                     <br />
                                     Levels
@@ -272,20 +201,10 @@ function PlayerStats({
                             </VStack>
 
                             <VStack align="center">
-                                <Text
-                                    align="center"
-                                    fontSize={DEFAULT_FONT_SIZE}
-                                >
-                                    {(
-                                        bignum_to_num(
-                                            AchievementData.total_lamports_claimed
-                                        ) / 1e9
-                                    ).toFixed(3)}
+                                <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
+                                    {(bignum_to_num(AchievementData.total_lamports_claimed) / 1e9).toFixed(3)}
                                 </Text>
-                                <Text
-                                    align="center"
-                                    fontSize={DUNGEON_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                     Total
                                     <br />
                                     Looted
@@ -293,16 +212,10 @@ function PlayerStats({
                             </VStack>
 
                             <VStack align="center">
-                                <Text
-                                    align="center"
-                                    fontSize={DEFAULT_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                     {Clears(AchievementData)}
                                 </Text>
-                                <Text
-                                    align="center"
-                                    fontSize={DUNGEON_FONT_SIZE}
-                                >
+                                <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                     Total
                                     <br />
                                     Dungeon
@@ -312,13 +225,8 @@ function PlayerStats({
                             </VStack>
 
                             <VStack align="center">
-                                <TotalWinLoss
-                                    AchievementData={AchievementData}
-                                />
-                                <Text
-                                    align="center"
-                                    fontSize={DUNGEON_FONT_SIZE}
-                                >
+                                <TotalWinLoss AchievementData={AchievementData} />
+                                <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                     Total Levels
                                     <br />
                                     Survived/Killed
@@ -332,16 +240,10 @@ function PlayerStats({
                             <HStack spacing="1rem" mb="2rem">
                                 <VStack align="center">
                                     <VStack align="center">
-                                        <Text
-                                            align="center"
-                                            fontSize={DEFAULT_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                             {AchievementData.play_streak}
                                         </Text>
-                                        <Text
-                                            align="center"
-                                            fontSize={DUNGEON_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                             Daily Dungeon
                                             <br />
                                             Streak
@@ -349,20 +251,10 @@ function PlayerStats({
                                     </VStack>
 
                                     <VStack align="center">
-                                        <Text
-                                            align="center"
-                                            fontSize={DEFAULT_FONT_SIZE}
-                                        >
-                                            {(
-                                                bignum_to_num(
-                                                    AchievementData.total_lamports_claimed
-                                                ) / 1e9
-                                            ).toFixed(3)}
+                                        <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
+                                            {(bignum_to_num(AchievementData.total_lamports_claimed) / 1e9).toFixed(3)}
                                         </Text>
-                                        <Text
-                                            align="center"
-                                            fontSize={DUNGEON_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                             Total
                                             <br />
                                             Looted
@@ -372,16 +264,10 @@ function PlayerStats({
 
                                 <VStack align="center">
                                     <VStack align="center">
-                                        <Text
-                                            align="center"
-                                            fontSize={DEFAULT_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                             {AchievementData.games_played_today}
                                         </Text>
-                                        <Text
-                                            align="center"
-                                            fontSize={DUNGEON_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                             Levels Explored
                                             <br />
                                             Today
@@ -389,16 +275,10 @@ function PlayerStats({
                                     </VStack>
 
                                     <VStack align="center">
-                                        <Text
-                                            align="center"
-                                            fontSize={DEFAULT_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                             {Clears(AchievementData)}
                                         </Text>
-                                        <Text
-                                            align="center"
-                                            fontSize={DUNGEON_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                             Total Dungeon
                                             <br />
                                             Clears
@@ -408,16 +288,10 @@ function PlayerStats({
 
                                 <VStack align="center">
                                     <VStack align="center">
-                                        <Text
-                                            align="center"
-                                            fontSize={DEFAULT_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DEFAULT_FONT_SIZE}>
                                             {AchievementData.games_played}
                                         </Text>
-                                        <Text
-                                            align="center"
-                                            fontSize={DUNGEON_FONT_SIZE}
-                                        >
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                             Total Levels
                                             <br />
                                             Explored
@@ -425,13 +299,8 @@ function PlayerStats({
                                     </VStack>
 
                                     <VStack align="center">
-                                        <TotalWinLoss
-                                            AchievementData={AchievementData}
-                                        />
-                                        <Text
-                                            align="center"
-                                            fontSize={DUNGEON_FONT_SIZE}
-                                        >
+                                        <TotalWinLoss AchievementData={AchievementData} />
+                                        <Text align="center" fontSize={DUNGEON_FONT_SIZE}>
                                             Total Levels
                                             <br />
                                             Survived/Killed
@@ -537,67 +406,31 @@ function PlayerStats({
                             <tr>
                                 <td>XP</td>
                                 <td>{player_data?.character_xp[0]} XP</td>
-                                <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[1]}
-                                </td>
+                                <td style={{ visibility: "hidden" }}>{player_data?.character_xp[1]}</td>
                                 <td>{player_data?.character_xp[2]} XP</td>
-                                <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[0]}
-                                </td>
+                                <td style={{ visibility: "hidden" }}>{player_data?.character_xp[0]}</td>
                                 <td>{player_data?.character_xp[1]} XP</td>
-                                <td style={{ visibility: "hidden" }}>
-                                    {player_data?.character_xp[2]}
-                                </td>
+                                <td style={{ visibility: "hidden" }}>{player_data?.character_xp[2]}</td>
                             </tr>
                             <tr>
                                 <td>Levels Survived/Killed</td>
                                 <td>
-                                    <CharacterWinLoss
-                                        AchievementData={AchievementData}
-                                        player_character={
-                                            DungeonCharacter.knight
-                                        }
-                                    />
+                                    <CharacterWinLoss AchievementData={AchievementData} player_character={DungeonCharacter.knight} />
                                 </td>
                                 <td style={{ visibility: "hidden" }}>
-                                    <CharacterWinLoss
-                                        AchievementData={AchievementData}
-                                        player_character={
-                                            DungeonCharacter.ranger
-                                        }
-                                    />
+                                    <CharacterWinLoss AchievementData={AchievementData} player_character={DungeonCharacter.ranger} />
                                 </td>
                                 <td>
-                                    <CharacterWinLoss
-                                        AchievementData={AchievementData}
-                                        player_character={
-                                            DungeonCharacter.wizard
-                                        }
-                                    />
+                                    <CharacterWinLoss AchievementData={AchievementData} player_character={DungeonCharacter.wizard} />
                                 </td>
                                 <td style={{ visibility: "hidden" }}>
-                                    <CharacterWinLoss
-                                        AchievementData={AchievementData}
-                                        player_character={
-                                            DungeonCharacter.knight
-                                        }
-                                    />
+                                    <CharacterWinLoss AchievementData={AchievementData} player_character={DungeonCharacter.knight} />
                                 </td>
                                 <td>
-                                    <CharacterWinLoss
-                                        AchievementData={AchievementData}
-                                        player_character={
-                                            DungeonCharacter.ranger
-                                        }
-                                    />
+                                    <CharacterWinLoss AchievementData={AchievementData} player_character={DungeonCharacter.ranger} />
                                 </td>
                                 <td style={{ visibility: "hidden" }}>
-                                    <CharacterWinLoss
-                                        AchievementData={AchievementData}
-                                        player_character={
-                                            DungeonCharacter.wizard
-                                        }
-                                    />
+                                    <CharacterWinLoss AchievementData={AchievementData} player_character={DungeonCharacter.wizard} />
                                 </td>
                             </tr>
                         </tbody>
@@ -709,46 +542,25 @@ function PlayerStats({
                             >
                                 <tr>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.BoulderTrap}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.BoulderTrap} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.GiantRat}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.GiantRat} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.GiantSpider}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.GiantSpider} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Goblins}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Goblins} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.GreenSlime}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.GreenSlime} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Mimic}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Mimic} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.SpikeTrap}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.SpikeTrap} />
                                     </td>
                                 </tr>
                             </tbody>
@@ -857,46 +669,25 @@ function PlayerStats({
                             >
                                 <tr>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.BlueSlime}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.BlueSlime} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Elves}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Elves} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.GiantBlueSlime}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.GiantBlueSlime} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Orc}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Orc} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Skeletons}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Skeletons} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.SkeletonKnight}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.SkeletonKnight} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.SkeletonWizard}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.SkeletonWizard} />
                                     </td>
                                 </tr>
                             </tbody>
@@ -994,40 +785,22 @@ function PlayerStats({
                             >
                                 <tr>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Carnivine}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Carnivine} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.GiantGreenSlime}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.GiantGreenSlime} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Werewolf}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Werewolf} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Assassin}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Assassin} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.DM}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.DM} />
                                     </td>
                                     <td>
-                                        <WinLoss
-                                            AchievementData={AchievementData}
-                                            enemy={DungeonEnemy.Shade}
-                                        />
+                                        <WinLoss AchievementData={AchievementData} enemy={DungeonEnemy.Shade} />
                                     </td>
                                 </tr>
                             </tbody>
@@ -1038,7 +811,6 @@ function PlayerStats({
         </Center>
     );
 }
-
 
 export function StatsScreen({
     AchievementData,
@@ -1062,9 +834,7 @@ export function StatsScreen({
     console.log("in stats", player_data);
     const FetchData = useCallback(async () => {
         let daily_data = await (
-            await fetch(
-                "https://raw.githubusercontent.com/SolDungeon/chart_data/main/daily_data.csv"
-            ).then((res) => res.text())
+            await fetch("https://raw.githubusercontent.com/SolDungeon/chart_data/main/daily_data.csv").then((res) => res.text())
         ).split("\n");
 
         //console.log(daily_data);
@@ -1088,9 +858,9 @@ export function StatsScreen({
         setVolumeData(interactions_from_file);
         setUserData(users_from_file);
 
-        let main_stats = await await fetch(
-            "https://raw.githubusercontent.com/SolDungeon/chart_data/main/main_stats.json"
-        ).then((res) => res.json());
+        let main_stats = await await fetch("https://raw.githubusercontent.com/SolDungeon/chart_data/main/main_stats.json").then((res) =>
+            res.json(),
+        );
 
         //console.log(main_stats);
 
@@ -1098,29 +868,13 @@ export function StatsScreen({
         setTotalPlays(main_stats["total_games"]);
         setTotalVolume(main_stats["total_volume"]);
         setTotalUsers(main_stats["total_users"]);
-
-    }, [
-        setVolumeData,
-        setUserData,
-        setCharacterData,
-        setTotalUsers,
-    ]);
+    }, [setVolumeData, setUserData, setCharacterData, setTotalUsers]);
 
     useEffect(() => {
         FetchData();
     }, [FetchData]);
 
-    function LongPlot({
-        title,
-        x_data,
-        y_data,
-        y2_data,
-    }: {
-        title: string;
-        x_data: string[];
-        y_data: number[];
-        y2_data: number[];
-    }) {
+    function LongPlot({ title, x_data, y_data, y2_data }: { title: string; x_data: string[]; y_data: number[]; y2_data: number[] }) {
         const isMobile = useMediaQuery({ query: "(max-width: 500px)" });
         const isTab = useMediaQuery({ query: "(max-width: 900px)" });
 
@@ -1188,86 +942,30 @@ export function StatsScreen({
     //console.log("active tab", activeTab)
     return (
         <Container className="responsivePage" style={{ marginBottom: "5rem" }}>
-            <Tabs
-                className="custom-tab"
-                activeKey={activeTab}
-                onSelect={(eventKey) => setActiveTab(eventKey)}
-            >
+            <Tabs className="custom-tab" activeKey={activeTab} onSelect={(eventKey) => setActiveTab(eventKey)}>
                 <Tab eventKey="home" title="OVERVIEW" tabClassName="custom-tab">
                     <Center className="responsivePage">
                         <HStack className="responsiveGraph">
-                            <LongPlot
-                                title="Dungeons & Degens Daily Data"
-                                x_data={dates}
-                                y_data={volume_data}
-                                y2_data={user_data}
-                            />
-                            <VStack
-                                className="lineGraphVstack"
-                                alignItems="left"
-                            >
-                                <Box
-                                    width="100%"
-                                    mr="2rem"
-                                    p="2px"
-                                    borderWidth="2px"
-                                    borderColor="white"
-                                >
-                                    <Text
-                                        className="font-face-sfpb"
-                                        textAlign="center"
-                                        fontSize={DUNGEON_FONT_SIZE}
-                                        color="white"
-                                    >
+                            <LongPlot title="Dungeons & Degens Daily Data" x_data={dates} y_data={volume_data} y2_data={user_data} />
+                            <VStack className="lineGraphVstack" alignItems="left">
+                                <Box width="100%" mr="2rem" p="2px" borderWidth="2px" borderColor="white">
+                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
                                         Total Games <br /> {total_plays}
                                     </Text>
                                 </Box>
-                                <Box
-                                    width="100%"
-                                    ml="2rem"
-                                    p="2px"
-                                    borderWidth="2px"
-                                    borderColor="white"
-                                >
-                                    <Text
-                                        className="font-face-sfpb"
-                                        textAlign="center"
-                                        fontSize={DUNGEON_FONT_SIZE}
-                                        color="white"
-                                    >
+                                <Box width="100%" ml="2rem" p="2px" borderWidth="2px" borderColor="white">
+                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
                                         Total Loot <br />
                                         {total_volume.toFixed(2)}
                                     </Text>
                                 </Box>
-                                <Box
-                                    width="100%"
-                                    ml="2rem"
-                                    p="2px"
-                                    borderWidth="2px"
-                                    borderColor="white"
-                                >
-                                    <Text
-                                        className="font-face-sfpb"
-                                        textAlign="center"
-                                        fontSize={DUNGEON_FONT_SIZE}
-                                        color="white"
-                                    >
+                                <Box width="100%" ml="2rem" p="2px" borderWidth="2px" borderColor="white">
+                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
                                         Total Users <br /> {total_users}
                                     </Text>
                                 </Box>
-                                <Box
-                                    width="100%"
-                                    ml="2rem"
-                                    p="2px"
-                                    borderWidth="2px"
-                                    borderColor="white"
-                                >
-                                    <Text
-                                        className="font-face-sfpb"
-                                        textAlign="center"
-                                        fontSize={DUNGEON_FONT_SIZE}
-                                        color="white"
-                                    >
+                                <Box width="100%" ml="2rem" p="2px" borderWidth="2px" borderColor="white">
+                                    <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="white">
                                         LOOT / day <br /> {loot_per_day}
                                     </Text>
                                 </Box>
@@ -1276,19 +974,12 @@ export function StatsScreen({
                     </Center>
                     <Center className="responsivePage">
                         <HStack className="responsiveGraph">
-                            <PieChart
-                                values={character_data}
-                                labels={["Knight", "Ranger", "Wizard"]}
-                                title="Character Choices"
-                            />
+                            <PieChart values={character_data} labels={["Knight", "Ranger", "Wizard"]} title="Character Choices" />
                         </HStack>
                     </Center>
                 </Tab>
                 <Tab eventKey="perils" title="PLAYER" tabClassName="custom-tab">
-                    <PlayerStats
-                        AchievementData={AchievementData}
-                        player_data={player_data}
-                    />
+                    <PlayerStats AchievementData={AchievementData} player_data={player_data} />
                 </Tab>
             </Tabs>
         </Container>

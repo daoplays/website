@@ -174,13 +174,13 @@ export function MarketplaceScreen({ bearer_token }: { bearer_token: string }) {
             let item_buyer_account = await getAssociatedTokenAddress(
                 item_mint_account, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let item_marketplace_account = await getAssociatedTokenAddress(
                 item_mint_account, // mint
                 marketplace_account, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             const instruction_data = serialise_Marketplace_buy_instruction(MarketplaceInstruction.buy_item, desired_quantities[index]);
@@ -230,7 +230,7 @@ export function MarketplaceScreen({ bearer_token }: { bearer_token: string }) {
                 return;
             }
         },
-        [wallet, listings, desired_quantities, bearer_token]
+        [wallet, listings, desired_quantities, bearer_token],
     );
 
     const ListItemOnMarketplace = useCallback(async () => {
@@ -246,13 +246,13 @@ export function MarketplaceScreen({ bearer_token }: { bearer_token: string }) {
         let item_seller_account = await getAssociatedTokenAddress(
             item_mint_account, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let item_marketplace_account = await getAssociatedTokenAddress(
             item_mint_account, // mint
             marketplace_account, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let price_bn = new BN(list_price);
