@@ -990,7 +990,7 @@ export function ShopScreen({
                                 color="white"
                                 mb="1rem"
                             >
-                                Potion of Luck - Find double the LOOT for 10 minutes after drinking
+                                Potion of Luck - Find 1-3 extra LOOT per room for 10 minutes after drinking
                             </Text>
                             <VStack>
                                 <PotionQuantity />

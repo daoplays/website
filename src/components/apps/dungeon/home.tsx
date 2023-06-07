@@ -36,6 +36,7 @@ import hallway2 from "./images/Hallway2.gif";
 
 //buttons
 import enter_button from "./images/Enter_Button.png";
+import RollButton from "./images/RollButton.gif";
 
 // rest beds
 import loot_bed from "./images/LootBed.png";
@@ -531,7 +532,7 @@ export function DungeonApp() {
                                         XP
                                     </Text>
                                     <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                        +1 XP per game
+                                        50% chance to gain +1 XP per room
                                     </Text>
                                 </VStack>
                                 <VStack>
@@ -547,7 +548,7 @@ export function DungeonApp() {
                                         Loot
                                     </Text>
                                     <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                        +1 Loot per game
+                                        +35% Loot per room
                                     </Text>
                                 </VStack>
                                 <VStack>
@@ -563,7 +564,7 @@ export function DungeonApp() {
                                         Power
                                     </Text>
                                     <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                        +1 Power per game
+                                        +1 Power per room
                                     </Text>
                                 </VStack>
                             </HStack>
@@ -750,7 +751,7 @@ export function DungeonApp() {
                         "num_plays",
                         current_num_plays,
                         "num_xp",
-                        current_xp
+                        current_xp,
                     );
                 }
 
@@ -794,7 +795,7 @@ export function DungeonApp() {
                 if (current_key_mint !== null && key_freeplays > 0) {
                     let key_freeplays_account = PublicKey.findProgramAddressSync(
                         [Buffer.from("key_freeplays"), current_key_mint.toBytes()],
-                        DUNGEON_PROGRAM
+                        DUNGEON_PROGRAM,
                     )[0];
 
                     let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
@@ -824,7 +825,7 @@ export function DungeonApp() {
                 // get the achievement data
                 let achievement_data_key = PublicKey.findProgramAddressSync(
                     [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-                    DUNGEON_PROGRAM
+                    DUNGEON_PROGRAM,
                 )[0];
                 let achievement_data = await request_player_achievement_data(bearer_token, achievement_data_key);
 
@@ -918,7 +919,7 @@ export function DungeonApp() {
                 "num_plays",
                 num_plays.current,
                 "init num plays",
-                initial_num_plays.current
+                initial_num_plays.current,
             );
         }
 
@@ -970,7 +971,7 @@ export function DungeonApp() {
                 }
             }
         },
-        [muteState, volume]
+        [muteState, volume],
     );
 
     // New function to handle animation
@@ -979,54 +980,45 @@ export function DungeonApp() {
             if (level === 0) {
                 return;
             }
-            const timer = setTimeout(() => {
-                if (level === 1) {
-                    if (DEBUG) {
-                        console.log("player killed enemy");
-                    }
-                    setPlayerState(DungeonStatus.alive);
-                    setEnemyState(DungeonStatus.dead);
-
-                    //Victory sound plays
-                    playAudio(VictoryAudio);
-                } else {
-                    if (DEBUG) {
-                        console.log("enemy killed player");
-                    }
-                    setPlayerState(DungeonStatus.dead);
-                    setEnemyState(DungeonStatus.alive);
-
-                    //player death audio
-                    playAudio(PlayerDeathAudio);
+            if (level === 1) {
+                if (DEBUG) {
+                    console.log("player killed enemy");
                 }
+                setPlayerState(DungeonStatus.alive);
+                setEnemyState(DungeonStatus.dead);
 
-                if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
-                    const message: NewDiscordMessage = {
-                        message_type: level === 1 ? "defeated" : "killed_by",
-                        emoji_1: DungeonCharacterEmoji[player_character],
-                        emoji_2: DungeonEnemyEmoji[current_enemy],
-                        level: current_level,
-                        sol_amount: 0,
-                        achievement_name: "",
-                    };
-
-                    post_discord_message(message);
-                    discord_play_message_sent.current = true;
+                //Victory sound plays
+                playAudio(VictoryAudio);
+            } else {
+                if (DEBUG) {
+                    console.log("enemy killed player");
                 }
+                setPlayerState(DungeonStatus.dead);
+                setEnemyState(DungeonStatus.alive);
 
-                animateLevel.current = 0;
-                CheckNewPlayAchievements();
-            }, 5000);
+                //player death audio
+                playAudio(PlayerDeathAudio);
+            }
 
-            return () => clearTimeout(timer);
+            if (current_level > 0 && PROD && discord_play_message_sent.current === false) {
+                const message: NewDiscordMessage = {
+                    message_type: level === 1 ? "defeated" : "killed_by",
+                    emoji_1: DungeonCharacterEmoji[player_character],
+                    emoji_2: DungeonEnemyEmoji[current_enemy],
+                    level: current_level,
+                    sol_amount: 0,
+                    achievement_name: "",
+                };
+
+                post_discord_message(message);
+                discord_play_message_sent.current = true;
+            }
+
+            animateLevel.current = 0;
+            CheckNewPlayAchievements();
         },
-        [current_level, player_character, current_enemy, CheckNewPlayAchievements, playAudio]
+        [current_level, player_character, current_enemy, CheckNewPlayAchievements, playAudio],
     );
-
-    // Replace the previous useEffect with this one
-    useEffect(() => {
-        handleAnimation(animateLevel.current);
-    }, [handleAnimation]);
 
     const set_JWT_token = useCallback(async () => {
         console.log("Setting new JWT token");
@@ -1081,13 +1073,13 @@ export function DungeonApp() {
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
             [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-            DUNGEON_PROGRAM
+            DUNGEON_PROGRAM,
         )[0];
 
         let loot_token_account = await getAssociatedTokenAddress(
             LOOT_TOKEN_MINT, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
@@ -1124,7 +1116,7 @@ export function DungeonApp() {
         let free_play_token_account = await getAssociatedTokenAddress(
             FREE_PLAY_MINT, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         account_vector.push({ pubkey: free_play_token_account, isSigner: false, isWritable: true });
@@ -1135,23 +1127,23 @@ export function DungeonApp() {
         if (current_key_mint && current_key_index) {
             let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("key_meta"), current_key_mint.toBuffer()],
-                SHOP_PROGRAM
+                SHOP_PROGRAM,
             )[0];
 
             let key_token_account = await getAssociatedTokenAddress(
                 current_key_mint, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             let dungeon_key_metaplex_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), current_key_mint.toBuffer()],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let key_freeplays_account = PublicKey.findProgramAddressSync(
                 [Buffer.from("key_freeplays"), current_key_mint.toBytes()],
-                DUNGEON_PROGRAM
+                DUNGEON_PROGRAM,
             )[0];
 
             // accounts for discount key
@@ -1231,13 +1223,13 @@ export function DungeonApp() {
         let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
         let player_achievement_key = PublicKey.findProgramAddressSync(
             [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-            DUNGEON_PROGRAM
+            DUNGEON_PROGRAM,
         )[0];
 
         let loot_token_account = await getAssociatedTokenAddress(
             LOOT_TOKEN_MINT, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let ref_code = searchParams.get("ref");
@@ -1386,7 +1378,7 @@ export function DungeonApp() {
             check_user_state.current = true;
             check_sol_balance.current = true;
         },
-        [wallet, bearer_token]
+        [wallet, bearer_token],
     );
 
     const Rest = useCallback(
@@ -1403,7 +1395,7 @@ export function DungeonApp() {
             let loot_token_account = await getAssociatedTokenAddress(
                 LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
             const instruction_data = serialise_rest_instruction(DungeonInstruction.rest, rest_character.current, rest_state, which);
 
@@ -1462,7 +1454,7 @@ export function DungeonApp() {
             check_user_state.current = true;
             check_sol_balance.current = true;
         },
-        [wallet, bearer_token, rest_state]
+        [wallet, bearer_token, rest_state],
     );
 
     const ClaimAchievement = useCallback(
@@ -1478,7 +1470,7 @@ export function DungeonApp() {
             let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
             let player_achievement_key = PublicKey.findProgramAddressSync(
                 [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-                DUNGEON_PROGRAM
+                DUNGEON_PROGRAM,
             )[0];
 
             let shop_program_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], SHOP_PROGRAM)[0];
@@ -1488,18 +1480,18 @@ export function DungeonApp() {
 
             let nft_meta_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer()],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_master_key = PublicKey.findProgramAddressSync(
                 [Buffer.from("metadata"), METAPLEX_META.toBuffer(), nft_mint_pubkey.toBuffer(), Buffer.from("edition")],
-                METAPLEX_META
+                METAPLEX_META,
             )[0];
 
             let nft_account_key = await getAssociatedTokenAddress(
                 nft_mint_pubkey, // mint
                 wallet.publicKey, // owner
-                true // allow owner off curve
+                true, // allow owner off curve
             );
 
             const instruction_data = serialise_claim_achievement_instruction(DungeonInstruction.claim_achievement, which);
@@ -1593,7 +1585,7 @@ export function DungeonApp() {
 
             if (PROD) post_discord_message(message);
         },
-        [wallet, player_character, bearer_token]
+        [wallet, player_character, bearer_token],
     );
 
     const ApplyKey = useCallback(async () => {
@@ -1623,7 +1615,7 @@ export function DungeonApp() {
         let key_token_account = await getAssociatedTokenAddress(
             key_mint, // mint
             wallet.publicKey, // owner
-            true // allow owner off curve
+            true, // allow owner off curve
         );
 
         let token_amount = await request_token_amount(bearer_token, key_token_account);
@@ -1640,7 +1632,7 @@ export function DungeonApp() {
         // get remaining freeplays
         let key_freeplays_account = PublicKey.findProgramAddressSync(
             [Buffer.from("key_freeplays"), key_mint.toBytes()],
-            DUNGEON_PROGRAM
+            DUNGEON_PROGRAM,
         )[0];
 
         let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
@@ -1805,31 +1797,26 @@ export function DungeonApp() {
         );
     };
 
-    const RestEnergy = (character : {character : DungeonCharacter}) => {
-
+    const RestEnergy = (character: { character: DungeonCharacter }) => {
         if (current_player_data === null) {
-            return(
+            return (
                 <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                    Energy  / 100
+                    Energy / 100
                 </Text>
             );
-            
         }
 
         let rest_colour = "white";
-        if (current_player_data?.rest_status[character.character].loot_bonus > 0)
-            rest_colour = "yellow"
-        else if (current_player_data?.rest_status[character.character].power_bonus > 0)
-            rest_colour = "green"
-        else if (current_player_data?.rest_status[character.character].xp_bonus > 0)
-            rest_colour = "blue"
+        if (current_player_data?.rest_status[character.character].loot_bonus > 0) rest_colour = "yellow";
+        else if (current_player_data?.rest_status[character.character].power_bonus > 0) rest_colour = "green";
+        else if (current_player_data?.rest_status[character.character].xp_bonus > 0) rest_colour = "blue";
 
-        return(
+        return (
             <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color={rest_colour}>
                 Energy {current_player_data?.rest_status[character.character].energy}/100
-            </Text> 
+            </Text>
         );
-    }
+    };
 
     const CharacterSelect = () => {
         //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", num_plays,initial_num_plays.current, "dataaccount:", data_account_status, "initial status", initial_status.current, initial_status.current === DungeonStatus.unknown);
@@ -1838,10 +1825,6 @@ export function DungeonApp() {
         let knight_resting: boolean = current_player_data !== null && current_player_data?.rest_status[0].rest_time_remaining > now;
         let ranger_resting: boolean = current_player_data !== null && current_player_data?.rest_status[1].rest_time_remaining > now;
         let wizard_resting: boolean = current_player_data !== null && current_player_data?.rest_status[2].rest_time_remaining > now;
-
-        
-
-
 
         return (
             <HStack width="100%">
@@ -1894,7 +1877,7 @@ export function DungeonApp() {
                         </Box>
                     )}
                     <CharacterXP character={DungeonCharacter.knight} />
-                    <RestEnergy character={DungeonCharacter.knight}/>
+                    <RestEnergy character={DungeonCharacter.knight} />
 
                     <Box
                         as="button"
@@ -1961,7 +1944,7 @@ export function DungeonApp() {
                         </Box>
                     )}
                     <CharacterXP character={DungeonCharacter.ranger} />
-                    <RestEnergy character={DungeonCharacter.ranger}/>
+                    <RestEnergy character={DungeonCharacter.ranger} />
                     <Box
                         as="button"
                         disabled={ranger_resting}
@@ -1974,7 +1957,6 @@ export function DungeonApp() {
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                             {ranger_resting ? "Resting" : "Rest"}
-
                         </Text>
                     </Box>
                 </VStack>
@@ -2028,7 +2010,7 @@ export function DungeonApp() {
                         </Box>
                     )}
                     <CharacterXP character={DungeonCharacter.wizard} />
-                    <RestEnergy character={DungeonCharacter.wizard}/>
+                    <RestEnergy character={DungeonCharacter.wizard} />
 
                     <Box
                         as="button"
@@ -2042,7 +2024,6 @@ export function DungeonApp() {
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
                             {wizard_resting ? "Resting" : "Rest"}
-
                         </Text>
                     </Box>
                 </VStack>
@@ -2234,7 +2215,7 @@ export function DungeonApp() {
                 "enemy",
                 current_enemy,
                 "enemy_state",
-                DungeonStatusString[enemy_state]
+                DungeonStatusString[enemy_state],
             );
         }
 
@@ -2365,11 +2346,25 @@ export function DungeonApp() {
                                     />
                                 )}
                                 {enemy_state === DungeonStatus.alive && (
-                                    <DisplayEnemyAppearsText
-                                        current_enemy={current_enemy}
-                                        current_level={current_level}
-                                        num_plays={num_plays.current}
-                                    />
+                                    <>
+                                        <DisplayEnemyAppearsText
+                                            current_enemy={current_enemy}
+                                            current_level={current_level}
+                                            num_plays={num_plays.current}
+                                        />
+                                        <Box as="button" onClick={() => handleAnimation(animateLevel.current)} mt="2%" display="flex" justifyContent="center">
+                                            <img
+                                                src={RollButton}
+                                                
+                                                alt="Roll Button"
+                                                width={isMobile ? "64px" : "112px"}
+                                                height={isMobile ? "64px" : "112px"}
+                                            />
+                                        </Box>
+                                        <Text className="font-face-sfpb" textAlign="center" fontSize={DUNGEON_FONT_SIZE} color="grey">
+                                            Click to Roll
+                                        </Text>
+                                    </>
                                 )}
                                 {enemy_state === DungeonStatus.dead && (
                                     <VStack width="100%" alignItems="center" spacing="2%" mb="5rem">
