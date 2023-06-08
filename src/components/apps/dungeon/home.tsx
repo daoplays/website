@@ -1223,7 +1223,7 @@ export function DungeonApp() {
 
         last_advantage.current = advantage;
         last_loot_bonus.current = loot_bonus;
-    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus, current_player_data]);
+    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus, current_player_data, setPlaying, isPlaying]);
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
