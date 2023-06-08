@@ -179,9 +179,14 @@ export function Navigation({
                         </Box>
                         <Box display="flex" mr="9.5%" justifyContent="flex-end">
                             <HStack spacing="29%">
-                            
-                                <img src={large_door} style={{maxWidth:'none'}} width={24} alt={"generic"} />
-                                
+                                <img
+                                    src={large_door}
+                                    onClick={() => setScreen(Screen.HOME_SCREEN)}
+                                    style={{ maxWidth: "none", cursor: "pointer" }}
+                                    width={24}
+                                    alt={"generic"}
+                                />
+
                                 <a href="https://twitter.com/sol_dungeon">
                                     <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
                                 </a>
