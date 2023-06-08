@@ -282,7 +282,7 @@ export function DungeonApp() {
     const discord_play_message_sent = useRef<boolean>(false);
 
     // Checking Mute state
-    const { muteState, volume } = useContext(MuteContext);
+    const { muteState, volume, isPlaying, setPlaying } = useContext(MuteContext);
 
     useEffect(() => {
         if (discount_error === null) return;
@@ -1200,7 +1200,15 @@ export function DungeonApp() {
         setScreen(Screen.DUNGEON_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.alive);
-        //setProcessingTransaction(false);
+        
+        if(!isPlaying){
+            const audioElement = document.getElementsByTagName("audio")[0];
+            if (audioElement) {
+                audioElement.play();
+                setPlaying(true)
+            }
+        }
+
         check_user_state.current = true;
         check_sol_balance.current = true;
         check_achievements.current = true;

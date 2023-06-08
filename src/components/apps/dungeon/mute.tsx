@@ -16,6 +16,8 @@ interface MuteButtonProps {
     toggleMute: () => void;
     volume: number;
     setVolume: (value: number) => void;
+    isPlaying: boolean;
+    setPlaying: (value: boolean) => void;
 }
 
 export const MuteContext = createContext<MuteButtonProps>({
@@ -23,6 +25,8 @@ export const MuteContext = createContext<MuteButtonProps>({
     toggleMute: () => {},
     volume: 35,
     setVolume: () => {},
+    isPlaying: false,
+    setPlaying: () => {},
 });
 
 export const MuteButton: FC = () => {
@@ -62,6 +66,7 @@ export const MuteButton: FC = () => {
 export const MuteProvider = ({ children, isMuted: initialMuted }: React.PropsWithChildren<{ isMuted: boolean }>) => {
     const [muteState, setMuteState] = useState(initialMuted ? MuteState.Muted : MuteState.Unmuted);
     const [volume, setVolume] = useState(35);
+    const [isPlaying, setPlaying] = useState(false);
 
     const toggleMute = () => {
         setMuteState((prevState) => {
@@ -76,5 +81,5 @@ export const MuteProvider = ({ children, isMuted: initialMuted }: React.PropsWit
         });
     };
 
-    return <MuteContext.Provider value={{ muteState, toggleMute, volume, setVolume }}>{children}</MuteContext.Provider>;
+    return <MuteContext.Provider value={{ muteState, toggleMute, volume, setVolume, isPlaying, setPlaying }}>{children}</MuteContext.Provider>;
 };
