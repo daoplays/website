@@ -298,16 +298,21 @@ export function DungeonApp() {
         setShowDiscountError(true);
     }, []);
 
-    function DiscountKeyInput() {
+    function DiscountKeyInput( { connect }: { connect: boolean }) {
         let key_size = "50";
         if (isMobile) {
             key_size = "40";
         }
+        const { setVisible } = useWalletModal();
+
+        const handleConnectWallet = useCallback(async () => {
+            setVisible(true);
+        }, [setVisible]);
 
         return (
             <>
                 <div style={{ marginTop: "1rem" }}></div>
-                <div style={{ margin: 0 }}>
+                <div style={{ margin: 0 }} onClick={connect ? () => {CloseDiscountError(); handleConnectWallet(); } : undefined}>
                     <Popover
                         returnFocusOnClose={false}
                         isOpen={show_discount_error}
@@ -2050,18 +2055,26 @@ export function DungeonApp() {
                     <Center>
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
-                                <Box width="27%">
-                                    <VStack>
+                                <Box width="38%">
+                                <VStack>
                                         <div className="font-face-sfpb">
-                                            <Text align="center" fontSize={font_size} color="white">
-                                                DUNGEON
+                                            <Text align="center" fontSize="20px" color="white">
+                                                Dungeon Keys provide
                                                 <br />
-                                                FEE:
-                                                <br />
-                                                0.002 SOL
+                                                Free Plays every day!
                                             </Text>
                                         </div>
-                                        <DiscountKeyInput />
+                                        <DiscountKeyInput connect={true} />
+                                        <div className="font-face-sfpb">
+                                            <Text align="center" fontSize={font_size} color="white">
+                                                <a
+                                                    href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                                                    style={{ color: "white", textDecoration: "none" }}
+                                                >
+                                                    Buy a Key
+                                                </a>
+                                            </Text>
+                                        </div>
                                     </VStack>
                                 </Box>
                                 <Box width="46%">
