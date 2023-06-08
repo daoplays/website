@@ -81,6 +81,7 @@ import {
     LOOT_TOKEN_MINT,
     POTION_SIZE,
     levels,
+    DiscountKeyInputProps,
 } from "./constants";
 
 // dungeon utils
@@ -298,7 +299,7 @@ export function DungeonApp() {
         setShowDiscountError(true);
     }, []);
 
-    function DiscountKeyInput( { connect }: { connect: boolean }) {
+    const DiscountKeyInput: React.FC<DiscountKeyInputProps> = ({ connect }) => {
         let key_size = "50";
         if (isMobile) {
             key_size = "40";
@@ -2055,8 +2056,8 @@ export function DungeonApp() {
                     <Center>
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
-                                <Box width="38%">
-                                <VStack>
+                                <Box width="41%">
+                                <VStack mr="6%">
                                         <div className="font-face-sfpb">
                                             <Text align="center" fontSize="20px" color="white">
                                                 Dungeon Keys provide
@@ -2140,7 +2141,7 @@ export function DungeonApp() {
                                                 Free Plays every day!
                                             </Text>
                                         </div>
-                                        <DiscountKeyInput />
+                                        <DiscountKeyInput connect={false} />
                                         <div className="font-face-sfpb">
                                             <Text align="center" fontSize={font_size} color="white">
                                                 <a
