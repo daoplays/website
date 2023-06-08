@@ -2105,84 +2105,90 @@ export function DungeonApp() {
         }
         //console.log("have made it here in CS 3", visible);
         return (
-          <>
-            <Box width="100%">
-              <Center>
-                <VStack alignItems="center" spacing="3%" mt="2%">
-                  <HStack alignItems="center" spacing="1%">
-                    <Box
-                      width="27%"
-                      visibility={visible ? "visible" : "hidden"}
-                    >
-                      <VStack>
-                        <div className="font-face-sfpb">
-                          <Text align="center" fontSize="20px" color="white">
-                            Dungeon Keys provide
-                            <br />
-                            Free Plays every day!
-                          </Text>
-                        </div>
-                        <DiscountKeyInput />
-                        <div className="font-face-sfpb">
-                          <Text
-                            align="center"
-                            fontSize={font_size}
-                            color="white"
-                          >
-                            <a href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko" style={{ color: 'white', textDecoration: 'none' }}>
-                            Buy a Key
-                            </a>
-                          </Text>
-                        </div>
-                      </VStack>
-                    </Box>
-                    <Box width="46%">
-                      <LargeDoor />
-                    </Box>
-                    <Box
-                      width="27%"
-                      visibility={visible ? "visible" : "hidden"}
-                    >
-                      <VStack align="center">
-                        <div className="font-face-sfpb">
-                          <Text align="center" fontSize="26px" color="white">
-                            Entry Fee:
-                            <br />
-                            0.002 SOL
-                          </Text>
+            <>
+                <Box width="100%">
+                    <Center>
+                        <VStack alignItems="center" spacing="3%" mt="2%">
+                            <HStack alignItems="center" spacing="1%">
+                                <Box width="27%" visibility={visible ? "visible" : "hidden"}>
+                                    <VStack>
+                                        <div className="font-face-sfpb">
+                                            <Text align="center" fontSize="20px" color="white">
+                                                Dungeon Keys provide
+                                                <br />
+                                                Free Plays every day!
+                                            </Text>
+                                        </div>
+                                        <DiscountKeyInput />
+                                        <div className="font-face-sfpb">
+                                            <Text align="center" fontSize={font_size} color="white">
+                                                <a
+                                                    href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                                                    style={{ color: "white", textDecoration: "none" }}
+                                                >
+                                                    Buy a Key
+                                                </a>
+                                            </Text>
+                                        </div>
+                                    </VStack>
+                                </Box>
+                                <Box width="46%">
+                                    <LargeDoor />
+                                </Box>
+                                <Box width="27%" visibility={visible ? "visible" : "hidden"}>
+                                    <VStack align="center">
+                                        <div className="font-face-sfpb">
+                                            {key_freeplays <= 0 && (
+                                                <Text align="center" fontSize={font_size} color="white">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.002 SOL
+                                                </Text>
+                                            )}
+                                            {key_freeplays > 0 && (
+                                                <Text align="center" fontSize={font_size} color="white">
+                                                    DUNGEON
+                                                    <br />
+                                                    FEE:
+                                                    <br />
+                                                    0.000 SOL
+                                                </Text>
+                                            )}
 
-                          <Button variant="link" size="md" onClick={Play}>
-                            <img
-                              style={{ imageRendering: "pixelated" }}
-                              onClick={handleEnterBtn}
-                              src={enter_button}
-                              width={"60%"}
-                              alt={""}
-                            />
-                          </Button>
-                        </div>
-                        <PotionButtons />
-                      </VStack>
-                    </Box>
-                  </HStack>
+                                            <Button variant="link" size="md" onClick={Play}>
+                                                <img
+                                                    style={{ imageRendering: "pixelated" }}
+                                                    onClick={handleEnterBtn}
+                                                    src={enter_button}
+                                                    width={"60%"}
+                                                    alt={""}
+                                                />
+                                            </Button>
+                                        </div>
+                                        <PotionButtons />
+                                    </VStack>
+                                </Box>
+                            </HStack>
 
-                  <HStack visibility={visible ? "visible" : "hidden"}>
-                    <Box width="33%" mt="2rem" />
-                    <Box width="33%" mt="2rem">
-                      <CharacterSelect />
-                      <div className="font-face-sfpb">
-                        <Text align="center" fontSize="29px" color="white" onClick={() => setScreen(Screen.FAQ_SCREEN)}>
-                          HOW TO PLAY
-                        </Text>
-                      </div>
-                    </Box>
+                            <HStack visibility={visible ? "visible" : "hidden"}>
+                                <Box width="33%" mt="2rem" />
+                                <Box width="33%" mt="2rem">
+                                    <CharacterSelect />
+                                    <div className="font-face-sfpb">
+                                        <Text align="center" fontSize="29px" style={{ cursor: 'pointer', marginTop:'0.7rem' }} color="white" onClick={() => setScreen(Screen.FAQ_SCREEN)}>
+                                            HOW TO PLAY
+                                        </Text>
+                                    </div>
+                                </Box>
 
-                    <Box width="33%" mt="2rem" />
-                  </HStack>
-                </VStack>
-              </Center>
-            </Box>
-          </>
+                                <Box width="33%" mt="2rem" />
+                            </HStack>
+                        </VStack>
+                    </Center>
+                </Box>
+            </>
         );
     };
 
