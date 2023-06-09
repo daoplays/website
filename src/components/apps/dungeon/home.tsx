@@ -79,8 +79,9 @@ import {
     MAIN_ACCOUNT_SEED,
     DATA_ACCOUNT_SEED,
     LOOT_TOKEN_MINT,
-    EMOJI_SIZE,
+    POTION_SIZE,
     levels,
+    DiscountKeyInputProps,
 } from "./constants";
 
 // dungeon utils
@@ -282,7 +283,7 @@ export function DungeonApp() {
     const discord_play_message_sent = useRef<boolean>(false);
 
     // Checking Mute state
-    const { muteState, volume } = useContext(MuteContext);
+    const { muteState, volume, isPlaying, setPlaying } = useContext(MuteContext);
 
     useEffect(() => {
         if (discount_error === null) return;
@@ -298,16 +299,21 @@ export function DungeonApp() {
         setShowDiscountError(true);
     }, []);
 
-    function DiscountKeyInput() {
+    const DiscountKeyInput: React.FC<DiscountKeyInputProps> = ({ connect }) => {
         let key_size = "50";
         if (isMobile) {
             key_size = "40";
         }
+        const { setVisible } = useWalletModal();
+
+        const handleConnectWallet = useCallback(async () => {
+            setVisible(true);
+        }, [setVisible]);
 
         return (
             <>
                 <div style={{ marginTop: "1rem" }}></div>
-                <div style={{ margin: 0 }}>
+                <div style={{ margin: 0 }} onClick={connect ? () => {CloseDiscountError(); handleConnectWallet(); } : undefined}>
                     <Popover
                         returnFocusOnClose={false}
                         isOpen={show_discount_error}
@@ -1200,7 +1206,15 @@ export function DungeonApp() {
         setScreen(Screen.DUNGEON_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.alive);
-        //setProcessingTransaction(false);
+        
+        if(!isPlaying){
+            const audioElement = document.getElementsByTagName("audio")[0];
+            if (audioElement) {
+                audioElement.play();
+                setPlaying(true)
+            }
+        }
+
         check_user_state.current = true;
         check_sol_balance.current = true;
         check_achievements.current = true;
@@ -1209,7 +1223,7 @@ export function DungeonApp() {
 
         last_advantage.current = advantage;
         last_loot_bonus.current = loot_bonus;
-    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus, current_player_data]);
+    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus, current_player_data, setPlaying, isPlaying]);
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
@@ -1718,12 +1732,12 @@ export function DungeonApp() {
                                 imageRendering: "pixelated",
                             }}
                             src={power_potion}
-                            width={EMOJI_SIZE}
+                            width={POTION_SIZE}
                             alt={""}
                         />
                     </Box>
-                    <Text pt={EMOJI_SIZE / 2} className="font-face-sfpb" color="white" fontSize="10px">
-                        {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
+                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" :"14px"}>
+                            {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
                     </Text>
                 </HStack>
                 <HStack align="bottom" spacing="3px">
@@ -1743,12 +1757,12 @@ export function DungeonApp() {
                                 imageRendering: "pixelated",
                             }}
                             src={luck_potion}
-                            width={EMOJI_SIZE}
+                            width={POTION_SIZE}
                             alt={""}
                         />
                     </Box>
-                    <Text pt={EMOJI_SIZE / 2} className="font-face-sfpb" color="white" fontSize="10px">
-                        {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
+                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" :"14px"}>
+                                {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
                     </Text>
                 </HStack>
             </HStack>
@@ -2048,18 +2062,26 @@ export function DungeonApp() {
                     <Center>
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
-                                <Box width="27%">
-                                    <VStack>
+                                <Box width="41%">
+                                <VStack mr="6%">
                                         <div className="font-face-sfpb">
-                                            <Text align="center" fontSize={font_size} color="white">
-                                                DUNGEON
+                                            <Text align="center" fontSize="20px" color="white">
+                                                Dungeon Keys provide
                                                 <br />
-                                                FEE:
-                                                <br />
-                                                0.002 SOL
+                                                Free Plays every day!
                                             </Text>
                                         </div>
-                                        <DiscountKeyInput />
+                                        <DiscountKeyInput connect={true} />
+                                        <div className="font-face-sfpb">
+                                            <Text align="center" fontSize={font_size} color="white">
+                                                <a
+                                                    href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                                                    style={{ color: "white", textDecoration: "none" }}
+                                                >
+                                                    Buy a Key
+                                                </a>
+                                            </Text>
+                                        </div>
                                     </VStack>
                                 </Box>
                                 <Box width="46%">
@@ -2091,7 +2113,7 @@ export function DungeonApp() {
             font_size = "15px";
         }
 
-        var visible = true;
+        let visible = true;
 
         //console.log("have made it here in CS", visible);
 
@@ -2119,6 +2141,31 @@ export function DungeonApp() {
                                 <Box width="27%" visibility={visible ? "visible" : "hidden"}>
                                     <VStack>
                                         <div className="font-face-sfpb">
+                                            <Text align="center" fontSize="20px" color="white">
+                                                Dungeon Keys provide
+                                                <br />
+                                                Free Plays every day!
+                                            </Text>
+                                        </div>
+                                        <DiscountKeyInput connect={false} />
+                                        <div className="font-face-sfpb">
+                                            <Text align="center" fontSize={font_size} color="white">
+                                                <a
+                                                    href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                                                    style={{ color: "white", textDecoration: "none" }}
+                                                >
+                                                    Buy a Key
+                                                </a>
+                                            </Text>
+                                        </div>
+                                    </VStack>
+                                </Box>
+                                <Box width="46%">
+                                    <LargeDoor />
+                                </Box>
+                                <Box width="27%" visibility={visible ? "visible" : "hidden"}>
+                                    <VStack align="center">
+                                        <div className="font-face-sfpb">
                                             {key_freeplays <= 0 && (
                                                 <Text align="center" fontSize={font_size} color="white">
                                                     DUNGEON
@@ -2137,21 +2184,6 @@ export function DungeonApp() {
                                                     0.000 SOL
                                                 </Text>
                                             )}
-                                        </div>
-                                        <DiscountKeyInput />
-                                    </VStack>
-                                </Box>
-                                <Box width="46%">
-                                    <LargeDoor />
-                                </Box>
-                                <Box width="27%" visibility={visible ? "visible" : "hidden"}>
-                                    <VStack align="center">
-                                        <div className="font-face-sfpb">
-                                            {/*
-                                        <Box borderWidth='2px'  borderColor="white" width="100%">
-                                        <Text align="center" fontSize={font_size} color="white"> Back Soon! </Text>
-                                        </Box>
-                                        */}
 
                                             <Button variant="link" size="md" onClick={Play}>
                                                 <img
@@ -2172,7 +2204,13 @@ export function DungeonApp() {
                                 <Box width="33%" mt="2rem" />
                                 <Box width="33%" mt="2rem">
                                     <CharacterSelect />
+                                    <div className="font-face-sfpb">
+                                        <Text align="center" fontSize="29px" style={{ cursor: 'pointer', marginTop:'0.7rem' }} color="white" onClick={() => setScreen(Screen.FAQ_SCREEN)}>
+                                            HOW TO PLAY
+                                        </Text>
+                                    </div>
                                 </Box>
+
                                 <Box width="33%" mt="2rem" />
                             </HStack>
                         </VStack>
