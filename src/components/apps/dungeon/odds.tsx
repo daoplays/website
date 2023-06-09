@@ -98,17 +98,17 @@ export function OddsScreen() {
                                 <tr>
                                     <td>Carnivine</td>
                                     <td>33</td>
-                                    <td>16</td>
+                                    <td>11</td>
                                 </tr>
                                 <tr>
                                     <td>Giant Green Slime</td>
                                     <td>33</td>
-                                    <td>14</td>
+                                    <td>9</td>
                                 </tr>
                                 <tr>
                                     <td>Werewolf</td>
                                     <td>34</td>
-                                    <td>18</td>
+                                    <td>13</td>
                                 </tr>
                             </tbody>
                         </Table>
@@ -132,57 +132,57 @@ export function OddsScreen() {
                                 <tr>
                                     <td>Blue Slime</td>
                                     <td>15</td>
-                                    <td>14</td>
+                                    <td>11</td>
                                 </tr>
                                 <tr>
                                     <td>Boulder Trap</td>
                                     <td>5</td>
-                                    <td>16</td>
+                                    <td>13</td>
                                 </tr>
                                 <tr>
                                     <td>Elves</td>
                                     <td>20</td>
-                                    <td>18</td>
+                                    <td>15</td>
                                 </tr>
                                 <tr>
                                     <td>Giant Blue Slime</td>
                                     <td>6</td>
-                                    <td>17</td>
+                                    <td>14</td>
                                 </tr>
                                 <tr>
                                     <td>Goblins</td>
                                     <td>6</td>
-                                    <td>10</td>
+                                    <td>7</td>
                                 </tr>
                                 <tr>
                                     <td>Mimic</td>
                                     <td>2</td>
-                                    <td>18</td>
+                                    <td>15</td>
                                 </tr>
                                 <tr>
                                     <td>Orc</td>
                                     <td>15</td>
-                                    <td>16</td>
+                                    <td>13</td>
                                 </tr>
                                 <tr>
                                     <td>Skeleton Knight</td>
                                     <td>15</td>
-                                    <td>20</td>
+                                    <td>17</td>
                                 </tr>
                                 <tr>
                                     <td>Skeletons</td>
                                     <td>6</td>
-                                    <td>12</td>
+                                    <td>9</td>
                                 </tr>
                                 <tr>
                                     <td>Skeleton Wizard</td>
                                     <td>5</td>
-                                    <td>19</td>
+                                    <td>16</td>
                                 </tr>
                                 <tr>
                                     <td>Spike Trap</td>
                                     <td>5</td>
-                                    <td>16</td>
+                                    <td>12</td>
                                 </tr>
                             </tbody>
                         </Table>
@@ -206,17 +206,17 @@ export function OddsScreen() {
                                 <tr>
                                     <td>Assassin</td>
                                     <td>48</td>
-                                    <td>24</td>
+                                    <td>20</td>
                                 </tr>
                                 <tr>
                                     <td>Dungeon Master</td>
                                     <td>4</td>
-                                    <td>28</td>
+                                    <td>22</td>
                                 </tr>
                                 <tr>
                                     <td>Shade</td>
                                     <td>48</td>
-                                    <td>26</td>
+                                    <td>19</td>
                                 </tr>
                             </tbody>
                         </Table>

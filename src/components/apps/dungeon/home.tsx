@@ -313,7 +313,17 @@ export function DungeonApp() {
         return (
             <>
                 <div style={{ marginTop: "1rem" }}></div>
-                <div style={{ margin: 0 }} onClick={connect ? () => {CloseDiscountError(); handleConnectWallet(); } : undefined}>
+                <div
+                    style={{ margin: 0 }}
+                    onClick={
+                        connect
+                            ? () => {
+                                  CloseDiscountError();
+                                  handleConnectWallet();
+                              }
+                            : undefined
+                    }
+                >
                     <Popover
                         returnFocusOnClose={false}
                         isOpen={show_discount_error}
@@ -393,7 +403,7 @@ export function DungeonApp() {
                 </div>
             </>
         );
-    }
+    };
 
     function Disclaimer() {
         const { setVisible } = useWalletModal();
@@ -1206,12 +1216,12 @@ export function DungeonApp() {
         setScreen(Screen.DUNGEON_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.alive);
-        
-        if(!isPlaying){
+
+        if (!isPlaying) {
             const audioElement = document.getElementsByTagName("audio")[0];
             if (audioElement) {
                 audioElement.play();
-                setPlaying(true)
+                setPlaying(true);
             }
         }
 
@@ -1223,7 +1233,18 @@ export function DungeonApp() {
 
         last_advantage.current = advantage;
         last_loot_bonus.current = loot_bonus;
-    }, [wallet, player_character, current_key_index, current_key_mint, bearer_token, advantage, loot_bonus, current_player_data, setPlaying, isPlaying]);
+    }, [
+        wallet,
+        player_character,
+        current_key_index,
+        current_key_mint,
+        bearer_token,
+        advantage,
+        loot_bonus,
+        current_player_data,
+        setPlaying,
+        isPlaying,
+    ]);
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
@@ -1736,8 +1757,8 @@ export function DungeonApp() {
                             alt={""}
                         />
                     </Box>
-                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" :"14px"}>
-                            {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
+                    <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" : "14px"}>
+                        {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
                     </Text>
                 </HStack>
                 <HStack align="bottom" spacing="3px">
@@ -1761,8 +1782,8 @@ export function DungeonApp() {
                             alt={""}
                         />
                     </Box>
-                    <Text pt={POTION_SIZE/2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" :"14px"}>
-                                {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
+                    <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" : "14px"}>
+                        {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
                     </Text>
                 </HStack>
             </HStack>
@@ -1840,6 +1861,21 @@ export function DungeonApp() {
         let ranger_resting: boolean = current_player_data !== null && current_player_data?.rest_status[1].rest_time_remaining > now;
         let wizard_resting: boolean = current_player_data !== null && current_player_data?.rest_status[2].rest_time_remaining > now;
 
+        let knight_rest_time =
+            current_player_data !== null
+                ? ((bignum_to_num(current_player_data?.rest_status[0].rest_time_remaining) - now) / 60.0 + 1).toFixed(0)
+                : "";
+
+        let ranger_rest_time =
+            current_player_data !== null
+                ? ((bignum_to_num(current_player_data?.rest_status[1].rest_time_remaining) - now) / 60.0 + 1).toFixed(0)
+                : "";
+
+        let wizard_rest_time =
+            current_player_data !== null
+                ? ((bignum_to_num(current_player_data?.rest_status[2].rest_time_remaining) - now) / 60.0 + 1).toFixed(0)
+                : "";
+
         return (
             <HStack width="100%">
                 <VStack width="33%">
@@ -1904,7 +1940,7 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {knight_resting ? "Resting" : "Rest"}
+                            {knight_resting ? knight_rest_time + " min" : "Rest"}
                         </Text>
                     </Box>
                 </VStack>
@@ -1970,7 +2006,7 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {ranger_resting ? "Resting" : "Rest"}
+                            {ranger_resting ? ranger_rest_time + " min" : "Rest"}
                         </Text>
                     </Box>
                 </VStack>
@@ -2037,7 +2073,7 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {wizard_resting ? "Resting" : "Rest"}
+                            {wizard_resting ? wizard_rest_time + " min" : "Rest"}
                         </Text>
                     </Box>
                 </VStack>
@@ -2057,7 +2093,7 @@ export function DungeonApp() {
                         <VStack alignItems="center" spacing="3%" mt="2%">
                             <HStack alignItems="center" spacing="1%">
                                 <Box width="41%">
-                                <VStack mr="6%">
+                                    <VStack mr="6%">
                                         <div className="font-face-sfpb">
                                             <Text align="center" fontSize="20px" color="white">
                                                 Dungeon Keys provide
@@ -2199,7 +2235,13 @@ export function DungeonApp() {
                                 <Box width="33%" mt="2rem">
                                     <CharacterSelect />
                                     <div className="font-face-sfpb">
-                                        <Text align="center" fontSize="29px" style={{ cursor: 'pointer', marginTop:'0.7rem' }} color="white" onClick={() => setScreen(Screen.FAQ_SCREEN)}>
+                                        <Text
+                                            align="center"
+                                            fontSize="29px"
+                                            style={{ cursor: "pointer", marginTop: "0.7rem" }}
+                                            color="white"
+                                            onClick={() => setScreen(Screen.FAQ_SCREEN)}
+                                        >
                                             HOW TO PLAY
                                         </Text>
                                     </div>

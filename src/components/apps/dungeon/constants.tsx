@@ -97,4 +97,4 @@ export const levels: number[] = [
 
 export interface DiscountKeyInputProps {
     connect: boolean;
-  }
+}
