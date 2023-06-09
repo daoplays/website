@@ -250,6 +250,8 @@ export function DungeonApp() {
 
     const [screen, setScreen] = useState<Screen>(Screen.HOME_SCREEN);
 
+    const [screenHistory, setScreenHistory] = useState<number[]>([]);
+
     const [player_character, setWhichCharacter] = useState<DungeonCharacter>(DungeonCharacter.knight);
     const [enemy_state, setEnemyState] = useState<DungeonStatus>(DungeonStatus.unknown);
     const [player_state, setPlayerState] = useState<DungeonStatus>(DungeonStatus.unknown);
@@ -285,11 +287,35 @@ export function DungeonApp() {
     // Checking Mute state
     const { muteState, volume, isPlaying, setPlaying } = useContext(MuteContext);
 
+    // Back Navigation Var
+    let isBackNavigation = false;
+
     useEffect(() => {
         if (discount_error === null) return;
 
         setShowDiscountError(true);
     }, [discount_error, setDiscountError]);
+
+    const navigateTo = (newScreen: number) => {
+        if (!isBackNavigation) {
+          setScreenHistory((prevHistory) => [...prevHistory, newScreen]);
+        }
+        isBackNavigation = false;
+        setScreen(newScreen);
+      };
+
+      const goBack = () => {
+        setScreenHistory((prevHistory) => {
+          if (prevHistory.length > 1) {
+            const updatedHistory = prevHistory.slice(0, -1);
+            setScreen(updatedHistory[updatedHistory.length - 1]);
+            return updatedHistory;
+          }
+          return prevHistory;
+        });
+      };
+      
+      
 
     const CloseDiscountError = useCallback(async () => {
         setShowDiscountError(false);
@@ -901,7 +927,7 @@ export function DungeonApp() {
         current_interaction.current = null;
         initial_status.current = DungeonStatus.unknown;
         setTransactionFailed(false);
-        setScreen(Screen.HOME_SCREEN);
+        navigateTo(Screen.HOME_SCREEN);
         setCurrentLevel(0);
         num_plays.current = -1;
         setDataAccountStatus(AccountStatus.unknown);
@@ -947,7 +973,7 @@ export function DungeonApp() {
             current_level > 0 &&
             currentStatus === DungeonStatus.alive
         ) {
-            setScreen(Screen.DUNGEON_SCREEN);
+            navigateTo(Screen.DUNGEON_SCREEN);
         }
 
         // if we aren't alive and numplays is still initial num plays we shouldn't display the enemy
@@ -1213,7 +1239,7 @@ export function DungeonApp() {
             console.log("In Play - setting state");
         }
 
-        setScreen(Screen.DUNGEON_SCREEN);
+        navigateTo(Screen.DUNGEON_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.alive);
 
@@ -1324,7 +1350,7 @@ export function DungeonApp() {
             console.log("In quit, setting state");
         }
 
-        setScreen(Screen.HOME_SCREEN);
+        navigateTo(Screen.HOME_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         //setProcessingTransaction(false);
         check_user_state.current = true;
@@ -1694,7 +1720,7 @@ export function DungeonApp() {
         if (DEBUG) {
             console.log("In reset - setting state");
         }
-        setScreen(Screen.HOME_SCREEN);
+        navigateTo(Screen.HOME_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         return;
     }, []);
@@ -1703,7 +1729,7 @@ export function DungeonApp() {
         if (DEBUG) {
             console.log("In show death - setting state");
         }
-        setScreen(Screen.DEATH_SCREEN);
+        navigateTo(Screen.DEATH_SCREEN);
         setEnemyState(DungeonStatus.unknown);
         return;
     }, []);
@@ -2240,7 +2266,7 @@ export function DungeonApp() {
                                             fontSize="29px"
                                             style={{ cursor: "pointer", marginTop: "0.7rem" }}
                                             color="white"
-                                            onClick={() => setScreen(Screen.FAQ_SCREEN)}
+                                            onClick={() => navigateTo(Screen.FAQ_SCREEN)}
                                         >
                                             HOW TO PLAY
                                         </Text>
@@ -2590,7 +2616,7 @@ export function DungeonApp() {
 
     return (
         <>
-            <Navigation setScreen={setScreen} check_sol_balance={check_sol_balance} bearer_token={bearer_token} />
+            <Navigation navigateTo={navigateTo} goBack={goBack} check_sol_balance={check_sol_balance} bearer_token={bearer_token} />
             {(screen === Screen.HOME_SCREEN || screen === Screen.DUNGEON_SCREEN) && <AchievementsModal />}
             {screen === Screen.HOME_SCREEN && <RestModal />}
 

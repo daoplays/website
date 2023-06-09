@@ -1,5 +1,4 @@
 import React, { useCallback, useState, useEffect, useRef } from "react";
-import { SetStateAction } from "react";
 
 import { Box, Button, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
@@ -29,14 +28,17 @@ import { WalletConnected, request_current_balance } from "./utils";
 import "./css/style.css";
 import "./css/fonts.css";
 import "./css/wallet.css";
+import BackButton from "../back_button";
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 export function Navigation({
-    setScreen,
+    navigateTo,
+    goBack,
     check_sol_balance,
     bearer_token,
 }: {
-    setScreen: React.Dispatch<SetStateAction<number>>;
+    navigateTo: (newScreen: number) => void;
+    goBack: () => void;
     check_sol_balance: React.MutableRefObject<boolean>;
     bearer_token: string;
 }) {
@@ -96,49 +98,49 @@ export function Navigation({
     }, [wallet]);
 
     const ShowFAQ = useCallback(async () => {
-        setScreen(Screen.FAQ_SCREEN);
+        navigateTo(Screen.FAQ_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowOdds = useCallback(async () => {
-        setScreen(Screen.ODDS_SCREEN);
+        navigateTo(Screen.ODDS_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowHelp = useCallback(async () => {
-        setScreen(Screen.HELP_SCREEN);
+        navigateTo(Screen.HELP_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowHome = useCallback(async () => {
-        setScreen(Screen.HOME_SCREEN);
+        navigateTo(Screen.HOME_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowShop = useCallback(async () => {
-        setScreen(Screen.SHOP_SCREEN);
+        navigateTo(Screen.SHOP_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowDM = useCallback(async () => {
-        setScreen(Screen.DM_SCREEN);
+        navigateTo(Screen.DM_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowAchievements = useCallback(async () => {
-        setScreen(Screen.ACHIEVEMENT_SCREEN);
+        navigateTo(Screen.ACHIEVEMENT_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowStats = useCallback(async () => {
-        setScreen(Screen.STATS_SCREEN);
+        navigateTo(Screen.STATS_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const ShowArena = useCallback(async () => {
-        setScreen(Screen.ARENA_SCREEN);
+        navigateTo(Screen.ARENA_SCREEN);
         return;
-    }, [setScreen]);
+    }, [navigateTo]);
 
     const addMargin = (index: number) => {
         if (index === 0) {
@@ -177,11 +179,12 @@ export function Navigation({
                                 </Text>
                             </div>
                         </Box>
+                        <BackButton goBack={goBack}  />
                         <Box display="flex" mr="9.5%" justifyContent="flex-end">
                             <HStack spacing="29%">
                                 <img
                                     src={large_door}
-                                    onClick={() => setScreen(Screen.HOME_SCREEN)}
+                                    onClick={() => navigateTo(Screen.HOME_SCREEN)}
                                     style={{ maxWidth: "none", cursor: "pointer" }}
                                     width={24}
                                     alt={"generic"}
