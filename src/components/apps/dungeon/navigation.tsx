@@ -239,54 +239,57 @@ export function Navigation({
         //const btnRef = React.useRef()
 
         return (
-            <Box width="98%" ml="1%" mt="1%" mb="1rem" mr="1%">
-                <HStack>
-                    {wallet.publicKey && (
-                        <Box width="70%">
-                            <HStack>
-                                <WalletConnected />
+            <>
+                <BackButton goBack={goBack} />
+                <Box width="98%" ml="1%" mt="1%" mb="1rem" mr="1%">
+                    <HStack>
+                        {wallet.publicKey && (
+                            <Box width="70%">
+                                <HStack>
+                                    <WalletConnected />
+                                </HStack>
+                            </Box>
+                        )}
+                        {!wallet.publicKey && <Box width="75%"></Box>}
+
+                        <Box width="25%">
+                            <HStack spacing="12%">
+                                <a href="https://twitter.com/sol_dungeon">
+                                    <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
+                                </a>
+
+                                <a href="https://discord.gg/HeKJZZEaPn">
+                                    <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
+                                </a>
+
+                                <MuteButton />
+
+                                <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
+                                <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+                                    <DrawerOverlay />
+                                    <DrawerContent>
+                                        <DrawerCloseButton color="white" />
+
+                                        <DrawerBody bg="black">
+                                            <VStack spacing="24px">
+                                                {NavBar.map((button, index) => (
+                                                    <Button variant="link" key={index} size="md" onClick={button.onClick}>
+                                                        <div className="font-face-sfpb">
+                                                            <Text fontSize="16px" color="white">
+                                                                {button.text}
+                                                            </Text>
+                                                        </div>
+                                                    </Button>
+                                                ))}
+                                            </VStack>
+                                        </DrawerBody>
+                                    </DrawerContent>
+                                </Drawer>
                             </HStack>
                         </Box>
-                    )}
-                    {!wallet.publicKey && <Box width="75%"></Box>}
-
-                    <Box width="25%">
-                        <HStack spacing="12%">
-                            <a href="https://twitter.com/sol_dungeon">
-                                <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
-                            </a>
-
-                            <a href="https://discord.gg/HeKJZZEaPn">
-                                <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
-                            </a>
-
-                            <MuteButton />
-
-                            <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
-                            <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
-                                <DrawerOverlay />
-                                <DrawerContent>
-                                    <DrawerCloseButton color="white" />
-
-                                    <DrawerBody bg="black">
-                                        <VStack spacing="24px">
-                                            {NavBar.map((button, index) => (
-                                                <Button variant="link" key={index} size="md" onClick={button.onClick}>
-                                                    <div className="font-face-sfpb">
-                                                        <Text fontSize="16px" color="white">
-                                                            {button.text}
-                                                        </Text>
-                                                    </div>
-                                                </Button>
-                                            ))}
-                                        </VStack>
-                                    </DrawerBody>
-                                </DrawerContent>
-                            </Drawer>
-                        </HStack>
-                    </Box>
-                </HStack>
-            </Box>
+                    </HStack>
+                </Box>
+            </>
         );
     }
 

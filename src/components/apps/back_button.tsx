@@ -1,6 +1,7 @@
 import React from "react";
 import backButtonImage from "./dungeon/images/Back.png";
 import { Button } from "@chakra-ui/react";
+import { isMobile } from "react-device-detect";
 
 interface BackButtonProps {
     goBack: () => void;
@@ -14,12 +15,12 @@ const BackButton: React.FC<BackButtonProps> = ({ goBack }) => {
             style={{
                 display: "inline",
                 position: "fixed",
-                marginTop: "2.3%",
-                marginLeft: "1.3rem",
+                marginTop: isMobile ? "5.3%" : "2.3%",
+                marginLeft: isMobile ? "0.6rem" : "1.3rem",
             }}
             onClick={goBack}
         >
-            <img src={backButtonImage} width={50} height={50} alt={""} />
+            <img src={backButtonImage} width={isMobile ? 25 : 50} height={isMobile ? 25 : 50} alt={""} />
         </Button>
     );
 };
