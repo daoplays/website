@@ -694,7 +694,7 @@ export const DisplayPlayerSuccessText = ({
                         <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
 
                         <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {loot_bonus ? "(x2 bonus)" : ""}
+                            {loot_bonus ? "(with Luck bonus)" : ""}
                         </Text>
                     </HStack>
                     {!isMobile && (
@@ -749,7 +749,7 @@ export const DisplayPlayerSuccessText = ({
                     <img src={loot} width="auto" alt={""} style={{ maxHeight: DUNGEON_FONT_SIZE, maxWidth: DUNGEON_FONT_SIZE }} />
 
                     <Text fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                        {loot_bonus ? "(x2 bonus)" : ""}
+                        {loot_bonus ? "(with Luck bonus)" : ""}
                     </Text>
                 </HStack>
 

@@ -1826,6 +1826,12 @@ export function DungeonApp() {
         let ranger_resting: boolean = current_player_data !== null && current_player_data?.rest_status[1].rest_time_remaining > now;
         let wizard_resting: boolean = current_player_data !== null && current_player_data?.rest_status[2].rest_time_remaining > now;
 
+        let knight_rest_time = current_player_data !== null ? ((bignum_to_num(current_player_data?.rest_status[0].rest_time_remaining) - now)/60.0 + 1).toFixed(0) : "";
+
+        let ranger_rest_time = current_player_data !== null ? ((bignum_to_num(current_player_data?.rest_status[1].rest_time_remaining) - now)/60.0 + 1).toFixed(0) : "";
+
+        let wizard_rest_time = current_player_data !== null ? ((bignum_to_num(current_player_data?.rest_status[2].rest_time_remaining) - now)/60.0 + 1).toFixed(0) : "";
+
         return (
             <HStack width="100%">
                 <VStack width="33%">
@@ -1890,7 +1896,7 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {knight_resting ? "Resting" : "Rest"}
+                            {knight_resting ? knight_rest_time + " min" : "Rest"}
                         </Text>
                     </Box>
                 </VStack>
@@ -1956,7 +1962,7 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {ranger_resting ? "Resting" : "Rest"}
+                            {ranger_resting ? ranger_rest_time + " min"  : "Rest"}
                         </Text>
                     </Box>
                 </VStack>
@@ -2023,7 +2029,7 @@ export function DungeonApp() {
                         }}
                     >
                         <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {wizard_resting ? "Resting" : "Rest"}
+                            {wizard_resting ? wizard_rest_time + " min"  : "Rest"}
                         </Text>
                     </Box>
                 </VStack>
