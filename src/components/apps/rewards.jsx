@@ -22,12 +22,7 @@ import {
     useConnection,
     useWallet,
 } from '@solana/wallet-adapter-react';
-import {
-    getPhantomWallet,
-    getSolflareWallet,
-    getSolletWallet,
-    getSolletExtensionWallet,
-} from '@solana/wallet-adapter-wallets';
+import { PhantomWalletAdapter, SolflareWalletAdapter, BackpackWalletAdapter } from "@solana/wallet-adapter-wallets";
 import {
     WalletModalProvider,
     WalletMultiButton,
@@ -1010,15 +1005,7 @@ function Rewards()
 {
     const network = 'devnet';
     const endpoint = web3.clusterApiUrl(network);
-    const wallets = useMemo(() => 
-    [
-        getPhantomWallet(),
-        getSolflareWallet(),
-        getSolletWallet({ network }),
-        getSolletExtensionWallet({ network }),
-    ],
-    [network]
-    );
+    const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()], []);
 
 
     return(
