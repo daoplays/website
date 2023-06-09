@@ -169,6 +169,7 @@ export function Navigation({
 
         return (
             <>
+                <BackButton goBack={goBack} />
                 <Box width="100%" ml="1%" mt="1%" mb="1%" mr="1%">
                     <Flex justifyContent="space-between" alignItems="center">
                         <Box width="30%" display="flex" alignItems="center">
@@ -179,7 +180,7 @@ export function Navigation({
                                 </Text>
                             </div>
                         </Box>
-                        <BackButton goBack={goBack}  />
+
                         <Box display="flex" mr="9.5%" justifyContent="flex-end">
                             <HStack spacing="29%">
                                 <img
