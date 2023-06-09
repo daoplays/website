@@ -14,10 +14,13 @@ import { Screen } from "./constants";
 
 import { MuteButton } from "./mute";
 
+import large_door from "./images/Large_Door.gif";
 import delvingDeeper from "./sounds/Delving_Deeper.mp3";
 import hackNSlash from "./sounds/Hack_n_Slash.mp3";
 import enterTheDungeon from "./sounds/Enter_the_Dungeon.mp3";
 import dungeonCrawling from "./sounds/Dungeon_Crawling.mp3";
+import orcsAndGoblins from "./sounds/Orcs_n_Goblins.mp3";
+import glimmerGreen from "./sounds/Glimmer-Green_Spire.mp3";
 import MusicPlayer from "./musicPlayer";
 
 // dungeon utils
@@ -47,6 +50,8 @@ export function Navigation({
         { src: hackNSlash, name: "Hack N Slash" },
         { src: enterTheDungeon, name: "Enter the Dungeon" },
         { src: dungeonCrawling, name: "Dungeon Crawling" },
+        { src: orcsAndGoblins, name: "Orcs and Goblins" },
+        { src: glimmerGreen, name: "Glimmer Green" },
     ];
 
     // This will be used to store the interval
@@ -172,8 +177,16 @@ export function Navigation({
                                 </Text>
                             </div>
                         </Box>
-                        <Box display="flex" mr="7%" justifyContent="flex-end">
+                        <Box display="flex" mr="9.5%" justifyContent="flex-end">
                             <HStack spacing="29%">
+                                <img
+                                    src={large_door}
+                                    onClick={() => setScreen(Screen.HOME_SCREEN)}
+                                    style={{ maxWidth: "none", cursor: "pointer" }}
+                                    width={24}
+                                    alt={"generic"}
+                                />
+
                                 <a href="https://twitter.com/sol_dungeon">
                                     <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
                                 </a>

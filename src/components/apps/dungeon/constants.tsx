@@ -42,11 +42,13 @@ export const DATA_ACCOUNT_SEED = "data_account";
 export var DEFAULT_FONT_SIZE = "30px";
 export var DUNGEON_FONT_SIZE = "20px";
 export var EMOJI_SIZE = 24;
+export let POTION_SIZE = 55;
 
 if (isMobile) {
     DEFAULT_FONT_SIZE = "15px";
     DUNGEON_FONT_SIZE = "10px";
     EMOJI_SIZE = 20;
+    POTION_SIZE = 20;
 }
 
 export const PROD = true;
@@ -92,3 +94,7 @@ export const enum KeyType {
 export const levels: number[] = [
     0, 100, 210, 331, 464, 610, 771, 948, 1143, 1357, 1593, 1853, 2138, 2452, 2797, 3177, 3594, 4054, 4559, 5115,
 ];
+
+export interface DiscountKeyInputProps {
+    connect: boolean;
+  }
