@@ -49,7 +49,7 @@ import Outright_img from "../posts/4_CharityICO/outrightaction_logo.jpg";
 
 require("@solana/wallet-adapter-react-ui/styles.css");
 
-function WalletNotConnected() {
+export function WalletNotConnected() {
     return (
         <Box mb="10px" mt="3rem">
             <Center mb="4rem">
@@ -64,7 +64,7 @@ function WalletNotConnected() {
     );
 }
 
-function WalletConnected({
+export function WalletConnected({
     publicKey,
     tokenKey,
     balance,
@@ -148,7 +148,7 @@ class Join_ICO_Instruction {
     );
 }
 
-class CharityData {
+export class CharityData {
     constructor(
         readonly charity_totals: bignum[],
         readonly donated_total: bignum,
@@ -168,13 +168,13 @@ class CharityData {
     );
 }
 
-function bignum_to_num(bn: bignum): number {
+export function bignum_to_num(bn: bignum): number {
     let value = new BN(bn).toNumber();
 
     return value;
 }
 
-function GetCharityStats() {
+export function GetCharityStats() {
     const [total_donated, setTotalDonated] = useState<number>(0);
     const [average_price, setAveragePrice] = useState<number>(0);
     const [donation_array, setDonationArray] = useState<number[]>([]);
@@ -226,7 +226,7 @@ function GetCharityStats() {
     return { total_donated, donation_array, average_price, n_donations };
 }
 
-function useSolanaAccount() {
+export function useSolanaAccount() {
     const [balance, setBalance] = useState<number>(0);
     const [token_pubkey, setTokenAccount] = useState<PublicKey | null>(null);
     const [token_amount, setTokenAmount] = useState<number>(0);
@@ -355,7 +355,7 @@ function StatsBlock({ total_donated, n_donations, average_price }: { total_donat
     );
 }
 
-function CharityInfoBlock({ which_charity }: { which_charity: string }) {
+export function CharityInfoBlock({ which_charity }: { which_charity: string }) {
     return (
         <Flex>
             {which_charity === "UkraineERF" && (
