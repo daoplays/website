@@ -303,8 +303,8 @@ export function AirDropApp() {
             true, // allow owner off curve
         );
 
-        console.log("program token: ", program_token_key.toString(), program_token_key);
-        console.log("joiner token: ", joiner_token_key.toString(), joiner_token_key);
+        //console.log("program token: ", program_token_key.toString(), program_token_key);
+        //console.log("joiner token: ", joiner_token_key.toString(), joiner_token_key);
 
         const ico_instruction = new TransactionInstruction({
             keys: [
