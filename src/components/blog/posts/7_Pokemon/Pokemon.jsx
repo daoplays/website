@@ -19,6 +19,10 @@ function PostContent() {
 
             <h2 id="intro-header" className="mt-5" style={{fontSize: "22px"}}>Introduction</h2><br />
 
+            !!!Please Note!!! DaoPlays Pokemon has been taken offline.  Many thanks to everyone that took part! We hope to build on the experiment in the future.
+
+            <br/><br/>
+
             Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and formed DaoPlays as a vehicle through which we could share what we learn with others along the way.  Since then we have been writing a series of blog posts, building towards the release of our first app : DaoPlays Pokemon.
             
             <br/><br/>

@@ -13,11 +13,6 @@ function Navigation() {
           </NavLink>
           <div>
             <ul className="navbar-nav ml-auto">
-            <li className="nav-item">
-                <NavLink className="nav-link" to="/pokemon">
-                  Pokemon
-                </NavLink>
-              </li>
               <li className="nav-item">
                 <NavLink className="nav-link" to="/blog">
                   Blog

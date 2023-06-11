@@ -14,22 +14,22 @@ import { MdFiberManualRecord } from "react-icons/md";
 import Plot from 'react-plotly.js';
 import bs58 from "bs58";
 
-import badge_1 from "./pokemon/badge_1_boulder.png"
-import badge_2 from "./pokemon/badge_2_cascade.png"
-import badge_3 from "./pokemon/badge_3_thunder.png"
-import badge_4 from "./pokemon/badge_4_rainbow.png"
-import badge_5 from "./pokemon/badge_5_soul.png"
-import badge_6 from "./pokemon/badge_6_marsh.png"
-import badge_7 from "./pokemon/badge_7_volcano.png"
-import badge_8 from "./pokemon/badge_8_earth.png"
+import badge_1 from "./badge_1_boulder.png"
+import badge_2 from "./badge_2_cascade.png"
+import badge_3 from "./badge_3_thunder.png"
+import badge_4 from "./badge_4_rainbow.png"
+import badge_5 from "./badge_5_soul.png"
+import badge_6 from "./badge_6_marsh.png"
+import badge_7 from "./badge_7_volcano.png"
+import badge_8 from "./badge_8_earth.png"
 
-import UkraineERF_img from "./blog/posts/4_CharityICO/ukraine_logo.jpg"
-import WaterOrg_img from "./blog/posts/4_CharityICO/waterorg_logo.jpeg"
-import EvidenceAction_img from "./blog/posts/4_CharityICO/evidenceaction_logo.jpeg"
-import GWC_img from "./blog/posts/4_CharityICO/girlswhocode_logo.jpeg"
-import LifeYouCanSave_img from "./blog/posts/4_CharityICO/thelifeyoucansave_logo.jpeg"
-import OneTreePlanted_img from "./blog/posts/4_CharityICO/onetreeplanted_logo.jpg"
-import Outright_img from "./blog/posts/4_CharityICO/outrightaction_logo.jpg"
+import UkraineERF_img from "../blog/posts/4_CharityICO/ukraine_logo.jpg"
+import WaterOrg_img from "../blog/posts/4_CharityICO/waterorg_logo.jpeg"
+import EvidenceAction_img from "../blog/posts/4_CharityICO/evidenceaction_logo.jpeg"
+import GWC_img from "../blog/posts/4_CharityICO/girlswhocode_logo.jpeg"
+import LifeYouCanSave_img from "../blog/posts/4_CharityICO/thelifeyoucansave_logo.jpeg"
+import OneTreePlanted_img from "../blog/posts/4_CharityICO/onetreeplanted_logo.jpg"
+import Outright_img from "../blog/posts/4_CharityICO/outrightaction_logo.jpg"
 
 import { LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 
