@@ -15,6 +15,10 @@ function PostContent() {
             <h1 className="h5 text-center mb-1 pt-0 font-weight-bold text-secondary">September 11 2022</h1>
             <br />
 
+            !!!Please Note!!! DaoPlays Pokemon has been taken offline.  Many thanks to everyone that took part! We hope to build on the experiment in the future.
+
+            <br/><br/>
+
             Earlier this year we decided that we wanted to teach ourselves about blockchain technology, and the first result of that is DaoPlays Pokemon: inspired by the 2016 event 'Twitch Plays Pokemon', it allows users to play through the original Pokemon Red as a decentralized gaming community. Players vote for which move they want to take using 'Play Tokens', and the votes contained within every new block produced on the Solana blockchain will determine the next move taken, resulting in a new move roughly once per second.
 
             <br/><br/>

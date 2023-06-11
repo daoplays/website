@@ -128,7 +128,7 @@ const Charity = {
     TheLifeYouCanSave: 6,
 };
 
-class Join_ICO_Instruction {
+export class Join_ICO_Instruction {
     constructor(
         readonly instruction: number,
         readonly amount_charity: bignum,
@@ -303,7 +303,15 @@ export function useSolanaAccount() {
     return { balance, token_pubkey, token_amount, supporter_pubkey, supporter_amount };
 }
 
-function StatsBlock({ total_donated, n_donations, average_price }: { total_donated: number; n_donations: number; average_price: number }) {
+export function StatsBlock({
+    total_donated,
+    n_donations,
+    average_price,
+}: {
+    total_donated: number;
+    n_donations: number;
+    average_price: number;
+}) {
     return (
         <Flex flexDirection="column">
             <Box mt="1rem" mb="1rem">
