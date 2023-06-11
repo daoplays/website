@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import { Link } from "react-router-dom";
 import {Card, Image} from 'react-bootstrap';
 import {IconButton, ChakraProvider, theme, Box, HStack, Flex, Button, Text, VStack, Center, Alert, AlertIcon, Divider,
@@ -229,6 +229,8 @@ function GetCharityStats()
     const [total_donated, setTotalDonated] = useState(null);
     const [donation_array, setDonationArray] = useState([]);
     const [n_donations, setNDonations] = useState(null);
+    const check_interval = useRef<number | null>(null);
+
 
     const init = useCallback(async () => 
     {       
@@ -287,9 +289,20 @@ function GetCharityStats()
     }, []);
 
     useEffect(() => {
-          setInterval(init, 3000);
-        
-      }, [init]);
+        if (check_interval.current === null) {
+            check_interval.current = window.setInterval(init, 1000000);
+        } else {
+            window.clearInterval(check_interval.current);
+            check_interval.current = null;
+        }
+        // here's the cleanup function
+        return () => {
+            if (check_interval.current !== null) {
+                window.clearInterval(check_interval.current);
+                check_interval.current = null;
+            }
+        };
+    }, [init]);
 
     return { total_donated, donation_array, n_donations };
 }
@@ -304,6 +317,7 @@ function GetBidderStats()
     const [is_winner, setIsWinner] = useState(false);
     const [tokens_remaining, setTokensRemaining] = useState(null);
     const [time_selected, setTimeSelected] = useState(null);
+    const check_interval = useRef<number | null>(null);
 
 
     const wallet = useWallet();
@@ -445,14 +459,20 @@ function GetBidderStats()
     }, [wallet]);
 
     useEffect(() => {
-        if (wallet.publicKey && !bid_intervalId) {
-            bid_intervalId = setInterval(init, 3000);
+        if (check_interval.current === null) {
+            check_interval.current = window.setInterval(init, 1000000);
+        } else {
+            window.clearInterval(check_interval.current);
+            check_interval.current = null;
         }
-        else{
-            clearInterval(bid_intervalId);
-            bid_intervalId = null;
-        }        
-      }, [init, wallet]);
+        // here's the cleanup function
+        return () => {
+            if (check_interval.current !== null) {
+                window.clearInterval(check_interval.current);
+                check_interval.current = null;
+            }
+        };
+    }, [init]);
 
     return {current_bid, n_bidders, bid_index, total_bid, is_winner, tokens_remaining, time_selected};
 }
