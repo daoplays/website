@@ -307,7 +307,6 @@ function GetCharityStats()
     return { total_donated, donation_array, n_donations };
 }
 
-let bid_intervalId;
 function GetBidderStats() 
 {
     const [current_bid, setCurrentBid] = useState(null);
