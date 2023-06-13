@@ -3,9 +3,12 @@
     color: #fff; /* White text */
     position: absolute;
     top: -15px;
-    left: 45%;
+  
     /* transform: translateX(-50%); */
-    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw !important;
     background: transparent;
     transition: none;
 }
