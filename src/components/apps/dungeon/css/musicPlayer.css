@@ -1,11 +1,14 @@
 /* Define the background color of the entire player and placement */
 .music-player {
     color: #fff; /* White text */
-    position: fixed;
-    top: 0;
-    left: 45%;
+    position: absolute;
+    top: -15px;
+  
     /* transform: translateX(-50%); */
-    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw !important;
     background: transparent;
     transition: none;
 }
@@ -143,8 +146,25 @@ button[aria-label="Enable loop"] {
     }
 
     .music-player {
-        top: -8px;
-        left: 28%;
-        position: fixed;
+        top: -8px !important;
+        left: 48% !important;
+        transform: translateX(-50%);
+        position: absolute;
+    }
+}
+@media only screen and (max-width: 900px) {
+    .music-player {
+        top: -16px;
+        left: 50%;
+        transform: translateX(-50%);
+        position: absolute;
+    }
+}
+@media only screen and (max-width: 350px) {
+    .music-player {
+        top: -12px;
+        left: 52% !important;
+        transform: translateX(-50%);
+        position: absolute;
     }
 }
