@@ -3,12 +3,11 @@
     color: #fff; /* White text */
     position: absolute;
     top: -15px;
-  
+
     /* transform: translateX(-50%); */
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100vw !important;
     background: transparent;
     transition: none;
 }
