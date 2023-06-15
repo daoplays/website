@@ -99,6 +99,16 @@ const daoplays_pokemon = {
 
 };
 
+const token_2022_intro = {
+    title:"An Overview of the Solana SPL Token 2022 program (part 1)",
+    sub_title:"August 16 2022",
+    post_text:"The first in a series of posts that introduces the Token-2022 program.  In this part we create an on-chain mint that can handle a subset of the extensions, including automatic transfer fees.",
+    image:"solana.jpg",
+    second_div: NoDiv,
+    display_image: !isMobile
+
+};
+
 function RowCard({title, sub_title, post_text, image, second_div, display_image}) 
 {
     const SecondDivComponent = higherOrderComponent(second_div);
@@ -148,6 +158,13 @@ function Home() {
         <Container  >
 
             <Col>
+
+                <Link to="/blog/intro_token_2022">
+                    <RowCard {...token_2022_intro}/>
+                </Link>
+
+                <br />
+
                 <Link to="/blog/pokemon_guide">
                     <RowCard {...daoplays_pokemon}/>
                 </Link>

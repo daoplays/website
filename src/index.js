@@ -24,7 +24,7 @@ import {
     CharityAuction,
     Rewards,
     Verified,
-    IceCreamPost
+    IntroToken2022
 
 } from "./components";
 
@@ -46,7 +46,7 @@ root.render(
         <Route path="/pokemon/token_launch" element={<PokeTokenLaunchPage />} />
         <Route path="/rewards" element={<Rewards />} />
         <Route path="/verified" element={<Verified />} />
-        <Route path="/blog/ice_cream" element={<IceCreamPost />} />
+        <Route path="/blog/intro_token_2022" element={<IntroToken2022 />} />
 
 
     </Routes>
