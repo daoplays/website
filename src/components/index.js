@@ -13,5 +13,5 @@ export { default as PokemonPost } from "./blog/posts/7_Pokemon/Pokemon";
 export { default as PokeTokenLaunchPage} from "./pokemon/token_launch_page";
 export { default as Rewards} from "./apps/rewards";
 export { default as Verified} from "./apps/verified";
-export { default as IceCreamPost} from "./blog/posts/8_IceCream/ice_cream";
+export { default as IntroToken2022} from "./blog/posts/8_Intro_Tokens2022/intro_tokens_2022";
 

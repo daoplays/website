@@ -70,10 +70,10 @@ function Posts() {
     };
 
     const token_2022_intro = {
-        title:"An Introduction to SPL Token 2022",
+        title:"An Overview of the Solana SPL Token 2022 program (part 1)",
         sub_title:"August 16 2022",
-        post_text:"In this post we are going to build on our previous posts to build a charitable token auction program, where a users chance of winning is proportional to the size of their bid. They will also be able to decide how much of their bid we keep, and how much we donate to charity, as well as selecting which charity we donate to from a set of provided options.",
-        image:"givingblock.jpg",
+        post_text:"The first in a series of posts that introduces the Token-2022 program.  In this part we create an on-chain mint that can handle a subset of the extensions, including automatic transfer fees.",
+        image:"solana.jpg",
         display_image: !isMobile
     
     };
