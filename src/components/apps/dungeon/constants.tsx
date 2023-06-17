@@ -51,8 +51,8 @@ if (isMobile) {
     POTION_SIZE = 20;
 }
 
-export const PROD = true;
-export const TEST = false;
+export const PROD = false;
+export const TEST = true;
 export const DEBUG = false;
 
 export var network_string = "devnet";
