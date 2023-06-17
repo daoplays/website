@@ -40,3 +40,17 @@
     padding: 0 0px !important;
     border-radius: 0px !important;
 }
+
+
+@media screen and (max-width:900px) {
+    .wallet-disconnect-button {
+        background-color: black !important;
+        color: white !important;
+        font-family: "SFPixelate" !important;
+        font-size: 10px !important;
+        height: 20px !important;
+        line-height: 20px !important;
+        padding-left: 0px !important;
+        margin-left: 1px !important;
+    }  
+}
