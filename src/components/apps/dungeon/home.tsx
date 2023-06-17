@@ -1040,8 +1040,8 @@ export function DungeonApp() {
 
     const set_JWT_token = useCallback(async () => {
         console.log("Setting new JWT token");
-        // let token = await get_JWT_token();
-        setBearerToken("token");
+        let token = await get_JWT_token();
+        setBearerToken(token["token"]);
     }, []);
 
     // interval for checking JWT
