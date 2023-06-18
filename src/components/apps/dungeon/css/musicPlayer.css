@@ -1,11 +1,13 @@
 /* Define the background color of the entire player and placement */
 .music-player {
     color: #fff; /* White text */
-    position: fixed;
-    top: 0;
-    left: 45%;
-    /* transform: translateX(-50%); */
-    display: block;
+    position: absolute;
+    top: -15px;
+    left: 51%;
+    transform: translateX(-50%) !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     background: transparent;
     transition: none;
 }
@@ -94,8 +96,7 @@ button[aria-label="Forward"] {
 .music-player .rhap_rewind-button,
 .music-player .rhap_forward-button {
     /* button styles here */
-
-    transform: scale(0.7);
+    width: 50px ;
 }
 
 .music-player button {
@@ -137,14 +138,46 @@ button[aria-label="Enable loop"] {
     .music-player .rhap_rewind-button,
     .music-player .rhap_forward-button {
         /* button styles here */
-        width: 20px;
+        width: 20px !important;
         height: 20px;
         transform: scale(0.6);
     }
 
     .music-player {
-        top: -8px;
-        left: 28%;
-        position: fixed;
+        top: -8px !important;
+        left: 48% !important;
+        transform: translateX(-50%);
+        position: absolute;
+    }
+}
+@media only screen and (max-width: 900px) {
+    .music-player {
+        top: -16px;
+        left: 52%;
+        transform: translateX(-50%);
+        position: absolute;
+    }
+    .music-player .rhap_play-pause-button,
+.music-player .rhap_skip-button,
+.music-player .rhap_rewind-button,
+.music-player .rhap_forward-button {
+    /* button styles here */
+    width: 40px ;
+}
+
+}
+@media only screen and (max-width: 350px) {
+    .music-player {
+        top: -12px;
+        left: 52% !important;
+        transform: translateX(-50%);
+        position: absolute;
+    }
+    .music-player .rhap_play-pause-button,
+    .music-player .rhap_skip-button,
+    .music-player .rhap_rewind-button,
+    .music-player .rhap_forward-button {
+        /* button styles here */
+        width:20px !important;
     }
 }

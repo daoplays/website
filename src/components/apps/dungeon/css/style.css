@@ -31,6 +31,11 @@ a.one:active {
 .rowElementsTitle {
     width: 27%;
 }
+/* Scroll effect for website */
+body {
+    height: 100vh !important;
+    overflow-y: scroll !important;
+}
 
 /* HOME PAGE */
 @media screen and (max-width: 1200px) {
@@ -54,6 +59,7 @@ a.one:active {
         align-items: center !important;
         flex-direction: column !important;
         width: 80% !important;
+        text-align: center !important;
     }
     .responsiveGraph div {
     }

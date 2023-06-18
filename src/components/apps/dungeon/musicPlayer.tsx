@@ -7,6 +7,7 @@ import Next from "./images/Next.png";
 import Prev from "./images/Prev.png";
 import Play from "./images/Play.png";
 import Pause from "./images/Pause.png";
+import { Center } from "@chakra-ui/react";
 
 interface MusicTrack {
     src: string;
@@ -19,7 +20,7 @@ interface MusicPlayerProps {
 
 const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
     const [audioSrc, setAudioSrc] = useState<string>(tracks[0].src);
-    const { volume, muteState } = useContext(MuteContext);
+    const { volume, muteState, setPlaying } = useContext(MuteContext);
 
     useEffect(() => {
         const audioElement = document.getElementsByTagName("audio")[0];
@@ -29,6 +30,14 @@ const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
             audioElement.volume = volume / 100;
         }
     }, [volume, muteState]);
+
+    const handleAudioPlay = () => {
+        setPlaying(true);
+    };
+
+    const handleAudioPause = () => {
+        setPlaying(false);
+    };
 
     const handleMusicButtonClick = (direction: "next" | "previous") => {
         // Find the index of the current audio source in the tracks array
@@ -50,30 +59,35 @@ const MusicPlayer = ({ tracks }: MusicPlayerProps) => {
             const audioElement = document.getElementsByTagName("audio")[0];
             if (audioElement) {
                 audioElement.play();
+                setPlaying(true);
             }
         }, 100);
     };
 
     return (
         <>
-            <ReactAudioPlayer
-                src={audioSrc}
-                layout="horizontal"
-                autoPlay={false}
-                className="music-player"
-                onClickNext={() => handleMusicButtonClick("next")}
-                onClickPrevious={() => handleMusicButtonClick("previous")}
-                onEnded={() => handleMusicButtonClick("next")}
-                showSkipControls={true}
-                showDownloadProgress={false}
-                showFilledProgress={false}
-                customIcons={{
-                    next: <img src={Next} alt="Next" />,
-                    previous: <img src={Prev} alt="Prev" />,
-                    play: <img src={Play} alt="Play" />,
-                    pause: <img src={Pause} alt="Pause" />,
-                }}
-            />
+            <Center>
+                <ReactAudioPlayer
+                    src={audioSrc}
+                    layout="horizontal"
+                    autoPlay={false}
+                    className="music-player"
+                    onClickNext={() => handleMusicButtonClick("next")}
+                    onClickPrevious={() => handleMusicButtonClick("previous")}
+                    onEnded={() => handleMusicButtonClick("next")}
+                    onPlay={handleAudioPlay}
+                    onPause={handleAudioPause}
+                    showSkipControls={true}
+                    showDownloadProgress={false}
+                    showFilledProgress={false}
+                    customIcons={{
+                        next: <img src={Next} alt="Next" />,
+                        previous: <img src={Prev} alt="Prev" />,
+                        play: <img src={Play} alt="Play" />,
+                        pause: <img src={Pause} alt="Pause" />,
+                    }}
+                />
+            </Center>
         </>
     );
 };

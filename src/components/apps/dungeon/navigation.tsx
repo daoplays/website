@@ -12,12 +12,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { brands, solid } from "@fortawesome/fontawesome-svg-core/import.macro"; // <-- import styles to be used
 import { Screen } from "./constants";
 
-import { MuteButton, MuteContext } from "./mute";
+import { MuteButton } from "./mute";
 
+import large_door from "./images/Large_Door.gif";
 import delvingDeeper from "./sounds/Delving_Deeper.mp3";
 import hackNSlash from "./sounds/Hack_n_Slash.mp3";
 import enterTheDungeon from "./sounds/Enter_the_Dungeon.mp3";
 import dungeonCrawling from "./sounds/Dungeon_Crawling.mp3";
+import orcsAndGoblins from "./sounds/Orcs_n_Goblins.mp3";
+import glimmerGreen from "./sounds/Glimmer-Green_Spire.mp3";
 import MusicPlayer from "./musicPlayer";
 
 // dungeon utils
@@ -47,6 +50,8 @@ export function Navigation({
         { src: hackNSlash, name: "Hack N Slash" },
         { src: enterTheDungeon, name: "Enter the Dungeon" },
         { src: dungeonCrawling, name: "Dungeon Crawling" },
+        { src: orcsAndGoblins, name: "Orcs and Goblins" },
+        { src: glimmerGreen, name: "Glimmer Green" },
     ];
 
     // This will be used to store the interval
@@ -178,19 +183,24 @@ export function Navigation({
                                 </Text>
                             </div>
                         </Box>
-                        <Box display="flex" mr="7%" justifyContent="flex-end">
+                        <Box display="flex" mr="9.5%" justifyContent="flex-end">
                             <HStack spacing="29%">
+                                <img
+                                    src={large_door}
+                                    onClick={() => setScreen(Screen.HOME_SCREEN)}
+                                    style={{ maxWidth: "none", cursor: "pointer" }}
+                                    width={24}
+                                    alt={"generic"}
+                                />
+
                                 <a href="https://twitter.com/sol_dungeon">
                                     <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
                                 </a>
                                 <a href="https://discord.gg/soldungeon">
                                     <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
                                 </a>
-                                <MuteContext.Consumer>
-                                    {({ muteState, toggleMute, volume, setVolume }) => (
-                                        <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
-                                    )}
-                                </MuteContext.Consumer>
+                                <MuteButton />
+
                                 <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                             </HStack>
                         </Box>
@@ -252,11 +262,7 @@ export function Navigation({
                                 <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
                             </a>
 
-                            <MuteContext.Consumer>
-                                {({ muteState, toggleMute, volume, setVolume }) => (
-                                    <MuteButton muteState={muteState} toggleMute={toggleMute} volume={volume} setVolume={setVolume} />
-                                )}
-                            </MuteContext.Consumer>
+                            <MuteButton />
 
                             <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                             <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
