@@ -7,7 +7,6 @@ import { useDisclosure, Drawer, DrawerBody, DrawerOverlay, DrawerContent, Drawer
 
 import { useWallet } from "@solana/wallet-adapter-react";
 
-import { isMobile } from "react-device-detect";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { brands, solid } from "@fortawesome/fontawesome-svg-core/import.macro"; // <-- import styles to be used
 import { Screen } from "./constants";
