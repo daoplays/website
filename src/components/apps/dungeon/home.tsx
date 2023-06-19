@@ -419,7 +419,7 @@ export function DungeonApp() {
             <>
                 <Box as="button" onClick={handleConnectWallet}>
                     <div className="font-face-sfpb">
-                        <Text style={{ textDecoration: isTabletOrMobile ? "none":"underline", margin: isTabletOrMobile ? "30px 0" :0 }} fontSize={ isTabletOrMobile ? 25 : DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                        <Text style={{ textDecoration: isTabletOrMobile ? "none":"underline", margin: isTabletOrMobile ? "30px 0 0 0" :0 }} fontSize={ isTabletOrMobile ? 25 : DEFAULT_FONT_SIZE} textAlign="center" color="white">
                             CONNECT
                             WALLET
                         </Text>
@@ -2136,6 +2136,11 @@ export function DungeonApp() {
                             </div>
                             <div>
                                 <Disclaimer />
+                            </div>
+                            <div style={{marginBottom:30}} className="font-face-sfpb">
+                                <Text align="center" fontSize="15px" color="white">
+                                    0.002 SOL per day
+                                </Text>
                             </div>
                             <div className="font-face-sfpb">
                                 <Text align="center" fontSize="15px" color="white">
