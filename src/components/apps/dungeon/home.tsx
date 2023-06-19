@@ -2139,7 +2139,7 @@ export function DungeonApp() {
                             </div>
                             <div style={{marginBottom:30}} className="font-face-sfpb">
                                 <Text align="center" fontSize="15px" color="white">
-                                    0.002 SOL per day
+                                    0.002 SOL per Play
                                 </Text>
                             </div>
                             <div className="font-face-sfpb">
