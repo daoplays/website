@@ -2313,7 +2313,7 @@ export function DungeonApp() {
                         </div>
                         <div className="freeKey">
                             <Text align="center" className="font-face-sfpb" fontSize={isTabletOrMobile ? 20 : font_size} color="white">
-                                Free Key
+                                Use Key
                             </Text>
                             <DiscountKeyInput connect={false} />
                         </div>
