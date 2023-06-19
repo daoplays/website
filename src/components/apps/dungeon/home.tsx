@@ -1739,49 +1739,113 @@ export function DungeonApp() {
         return (
             <HStack>
                 <HStack align="bottom" spacing="3px">
-                    <Box
-                        as="button"
-                        disabled={
-                            advantage || current_player_data === null || current_player_data?.num_advantage_potions === 0 ? true : false
-                        }
-                        onClick={() => DrinkPotion(0)}
-                        borderWidth="1px"
-                        borderColor={advantage ? "green" : "white"}
-                    >
-                        <img
-                            style={{
-                                imageRendering: "pixelated",
+                    {loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? (
+                        <a
+                            href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Box
+                                as="button"
+                                disabled={advantage || current_player_data === null || current_player_data?.num_advantage_potions === 0}
+                                onClick={() => {
+                                    if (current_player_data?.num_advantage_potions !== 0) {
+                                        DrinkPotion(0);
+                                    }
+                                }}
+                                borderWidth="1px"
+                                borderColor={advantage ? "green" : "white"}
+                            >
+                                <img
+                                    style={{
+                                        imageRendering: "pixelated",
+                                    }}
+                                    src={power_potion}
+                                    width={POTION_SIZE}
+                                    alt={""}
+                                />
+                            </Box>
+                        </a>
+                    ) : (
+                        <Box
+                            as="button"
+                            disabled={advantage || current_player_data === null || current_player_data?.num_advantage_potions === 0}
+                            onClick={() => {
+                                if (current_player_data?.num_advantage_potions !== 0) {
+                                    DrinkPotion(0);
+                                }
                             }}
-                            src={power_potion}
-                            width={POTION_SIZE}
-                            alt={""}
-                        />
-                    </Box>
+                            borderWidth="1px"
+                            borderColor={advantage ? "green" : "white"}
+                        >
+                            <img
+                                style={{
+                                    imageRendering: "pixelated",
+                                }}
+                                src={power_potion}
+                                width={POTION_SIZE}
+                                alt={""}
+                            />
+                        </Box>
+                    )}
+
                     <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" : "14px"}>
                         {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
                     </Text>
                 </HStack>
                 <HStack align="bottom" spacing="3px">
-                    <Box
-                        as="button"
-                        disabled={
-                            loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0
-                                ? true
-                                : false
-                        }
-                        onClick={() => DrinkPotion(1)}
-                        borderWidth="1px"
-                        borderColor={loot_bonus_valid ? "green" : "white"}
-                    >
-                        <img
-                            style={{
-                                imageRendering: "pixelated",
+                    {loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0 ? (
+                        <a
+                            href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Box
+                                as="button"
+                                disabled={
+                                    loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0
+                                }
+                                onClick={() => {
+                                    if (current_player_data?.num_bonus_loot_potions !== 0) {
+                                        DrinkPotion(1);
+                                    }
+                                }}
+                                borderWidth="1px"
+                                borderColor={loot_bonus_valid ? "green" : "white"}
+                            >
+                                <img
+                                    style={{
+                                        imageRendering: "pixelated",
+                                    }}
+                                    src={luck_potion}
+                                    width={POTION_SIZE}
+                                    alt={""}
+                                />
+                            </Box>
+                        </a>
+                    ) : (
+                        <Box
+                            as="button"
+                            disabled={loot_bonus_valid || current_player_data === null || current_player_data?.num_bonus_loot_potions === 0}
+                            onClick={() => {
+                                if (current_player_data?.num_bonus_loot_potions !== 0) {
+                                    DrinkPotion(1);
+                                }
                             }}
-                            src={luck_potion}
-                            width={POTION_SIZE}
-                            alt={""}
-                        />
-                    </Box>
+                            borderWidth="1px"
+                            borderColor={loot_bonus_valid ? "green" : "white"}
+                        >
+                            <img
+                                style={{
+                                    imageRendering: "pixelated",
+                                }}
+                                src={luck_potion}
+                                width={POTION_SIZE}
+                                alt={""}
+                            />
+                        </Box>
+                    )}
+
                     <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" : "14px"}>
                         {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
                     </Text>
