@@ -1074,177 +1074,183 @@ export function DungeonApp() {
         playAudio(dungeonTileAudio);
     };
 
-    const Play = useCallback(async () => {
-        setTransactionFailed(false);
-        num_state_checks.current = 0;
+    const Play = useCallback(
+        async (playmusic: boolean = false) => {
+            setTransactionFailed(false);
+            num_state_checks.current = 0;
 
-        if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
-        if (current_player_data !== null && current_player_data?.rest_status[player_character].rest_time_remaining > Date.now() / 1000 + 60)
-            return;
+            if (
+                current_player_data !== null &&
+                current_player_data?.rest_status[player_character].rest_time_remaining > Date.now() / 1000 + 60
+            )
+                return;
 
-        setProcessingTransaction(true);
+            setProcessingTransaction(true);
 
-        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
-        let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
-        let player_achievement_key = PublicKey.findProgramAddressSync(
-            [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-            DUNGEON_PROGRAM,
-        )[0];
-
-        let loot_token_account = await getAssociatedTokenAddress(
-            LOOT_TOKEN_MINT, // mint
-            wallet.publicKey, // owner
-            true, // allow owner off curve
-        );
-
-        let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
-
-        const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, 0);
-
-        var account_vector = [
-            { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-            { pubkey: player_data_key, isSigner: false, isWritable: true },
-            { pubkey: player_achievement_key, isSigner: false, isWritable: true },
-            { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
-            { pubkey: loot_token_account, isSigner: false, isWritable: true },
-        ];
-
-        if (PROD) {
-            account_vector.push({ pubkey: PYTH_BTC_PROD, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: PYTH_ETH_PROD, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: PYTH_SOL_PROD, isSigner: false, isWritable: false });
-        } else {
-            account_vector.push({ pubkey: PYTH_BTC_DEV, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: PYTH_ETH_DEV, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false });
-        }
-
-        account_vector.push({ pubkey: program_data_key, isSigner: false, isWritable: true });
-        account_vector.push({ pubkey: SYSTEM_KEY, isSigner: false, isWritable: false });
-
-        // next 3 accounts are for the free play tokens
-        account_vector.push({ pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
-        account_vector.push({ pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
-
-        account_vector.push({ pubkey: FREE_PLAY_MINT, isSigner: false, isWritable: true });
-
-        let free_play_token_account = await getAssociatedTokenAddress(
-            FREE_PLAY_MINT, // mint
-            wallet.publicKey, // owner
-            true, // allow owner off curve
-        );
-
-        account_vector.push({ pubkey: free_play_token_account, isSigner: false, isWritable: true });
-
-        account_vector.push({ pubkey: DM_PROGRAM, isSigner: false, isWritable: false });
-        account_vector.push({ pubkey: dm_data_key, isSigner: false, isWritable: true });
-
-        if (current_key_mint && current_key_index) {
-            let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
-                [Buffer.from("key_meta"), current_key_mint.toBuffer()],
-                SHOP_PROGRAM,
+            let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(MAIN_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
+            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+            let player_achievement_key = PublicKey.findProgramAddressSync(
+                [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
+                DUNGEON_PROGRAM,
             )[0];
 
-            let key_token_account = await getAssociatedTokenAddress(
-                current_key_mint, // mint
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
                 wallet.publicKey, // owner
                 true, // allow owner off curve
             );
 
-            let dungeon_key_metaplex_account = PublicKey.findProgramAddressSync(
-                [Buffer.from("metadata"), METAPLEX_META.toBuffer(), current_key_mint.toBuffer()],
-                METAPLEX_META,
-            )[0];
+            let dm_data_key = PublicKey.findProgramAddressSync([Buffer.from("data_account")], DM_PROGRAM)[0];
 
-            let key_freeplays_account = PublicKey.findProgramAddressSync(
-                [Buffer.from("key_freeplays"), current_key_mint.toBytes()],
-                DUNGEON_PROGRAM,
-            )[0];
+            const instruction_data = serialise_play_instruction(DungeonInstruction.play, player_character, 0);
 
-            // accounts for discount key
-            account_vector.push({ pubkey: current_key_mint, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: key_token_account, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: dungeon_key_meta_account, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: dungeon_key_metaplex_account, isSigner: false, isWritable: false });
-            account_vector.push({ pubkey: key_freeplays_account, isSigner: false, isWritable: true });
-        }
+            var account_vector = [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
+                { pubkey: player_achievement_key, isSigner: false, isWritable: true },
+                { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
+                { pubkey: loot_token_account, isSigner: false, isWritable: true },
+            ];
 
-        const play_instruction = new TransactionInstruction({
-            keys: account_vector,
-            programId: DUNGEON_PROGRAM,
-            data: instruction_data,
-        });
+            if (PROD) {
+                account_vector.push({ pubkey: PYTH_BTC_PROD, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: PYTH_ETH_PROD, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: PYTH_SOL_PROD, isSigner: false, isWritable: false });
+            } else {
+                account_vector.push({ pubkey: PYTH_BTC_DEV, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: PYTH_ETH_DEV, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: PYTH_SOL_DEV, isSigner: false, isWritable: false });
+            }
 
-        let txArgs = await get_current_blockhash(bearer_token);
+            account_vector.push({ pubkey: program_data_key, isSigner: false, isWritable: true });
+            account_vector.push({ pubkey: SYSTEM_KEY, isSigner: false, isWritable: false });
 
-        let transaction = new Transaction(txArgs);
-        transaction.feePayer = wallet.publicKey;
+            // next 3 accounts are for the free play tokens
+            account_vector.push({ pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
+            account_vector.push({ pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false });
 
-        transaction.add(play_instruction);
+            account_vector.push({ pubkey: FREE_PLAY_MINT, isSigner: false, isWritable: true });
 
-        try {
-            let signed_transaction = await wallet.signTransaction(transaction);
-            const encoded_transaction = bs58.encode(signed_transaction.serialize());
+            let free_play_token_account = await getAssociatedTokenAddress(
+                FREE_PLAY_MINT, // mint
+                wallet.publicKey, // owner
+                true, // allow owner off curve
+            );
 
-            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            account_vector.push({ pubkey: free_play_token_account, isSigner: false, isWritable: true });
 
-            if (transaction_response.result === "INVALID") {
-                console.log(transaction_response);
+            account_vector.push({ pubkey: DM_PROGRAM, isSigner: false, isWritable: false });
+            account_vector.push({ pubkey: dm_data_key, isSigner: false, isWritable: true });
+
+            if (current_key_mint && current_key_index) {
+                let dungeon_key_meta_account = PublicKey.findProgramAddressSync(
+                    [Buffer.from("key_meta"), current_key_mint.toBuffer()],
+                    SHOP_PROGRAM,
+                )[0];
+
+                let key_token_account = await getAssociatedTokenAddress(
+                    current_key_mint, // mint
+                    wallet.publicKey, // owner
+                    true, // allow owner off curve
+                );
+
+                let dungeon_key_metaplex_account = PublicKey.findProgramAddressSync(
+                    [Buffer.from("metadata"), METAPLEX_META.toBuffer(), current_key_mint.toBuffer()],
+                    METAPLEX_META,
+                )[0];
+
+                let key_freeplays_account = PublicKey.findProgramAddressSync(
+                    [Buffer.from("key_freeplays"), current_key_mint.toBytes()],
+                    DUNGEON_PROGRAM,
+                )[0];
+
+                // accounts for discount key
+                account_vector.push({ pubkey: current_key_mint, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: key_token_account, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: dungeon_key_meta_account, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: dungeon_key_metaplex_account, isSigner: false, isWritable: false });
+                account_vector.push({ pubkey: key_freeplays_account, isSigner: false, isWritable: true });
+            }
+
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            transaction.add(play_instruction);
+
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    setProcessingTransaction(false);
+                    return;
+                }
+
+                let signature = transaction_response.result;
+
+                if (DEBUG) {
+                    console.log("play signature: ", signature);
+                }
+
+                current_signature.current = signature;
+                signature_check_count.current = 0;
+            } catch (error) {
                 setProcessingTransaction(false);
+                console.log(error);
                 return;
             }
 
-            let signature = transaction_response.result;
-
             if (DEBUG) {
-                console.log("play signature: ", signature);
+                console.log("In Play - setting state");
             }
 
-            current_signature.current = signature;
-            signature_check_count.current = 0;
-        } catch (error) {
-            setProcessingTransaction(false);
-            console.log(error);
-            return;
-        }
+            setScreen(Screen.DUNGEON_SCREEN);
+            setEnemyState(DungeonStatus.unknown);
+            setPlayerState(DungeonStatus.alive);
 
-        if (DEBUG) {
-            console.log("In Play - setting state");
-        }
-
-        setScreen(Screen.DUNGEON_SCREEN);
-        setEnemyState(DungeonStatus.unknown);
-        setPlayerState(DungeonStatus.alive);
-
-        if (!isPlaying) {
-            const audioElement = document.getElementsByTagName("audio")[0];
-            if (audioElement) {
-                audioElement.play();
-                setPlaying(true);
+            if (!isPlaying && playmusic===true) {
+                const audioElement = document.getElementsByTagName("audio")[0];
+                if (audioElement) {
+                    audioElement.play();
+                    setPlaying(true);
+                }
             }
-        }
 
-        check_user_state.current = true;
-        check_sol_balance.current = true;
-        check_achievements.current = true;
-        discord_play_message_sent.current = false;
-        update_status_effects.current = true;
+            check_user_state.current = true;
+            check_sol_balance.current = true;
+            check_achievements.current = true;
+            discord_play_message_sent.current = false;
+            update_status_effects.current = true;
 
-        last_advantage.current = advantage;
-        last_loot_bonus.current = loot_bonus;
-    }, [
-        wallet,
-        player_character,
-        current_key_index,
-        current_key_mint,
-        bearer_token,
-        advantage,
-        loot_bonus,
-        current_player_data,
-        setPlaying,
-        isPlaying,
-    ]);
+            last_advantage.current = advantage;
+            last_loot_bonus.current = loot_bonus;
+        },
+        [
+            wallet,
+            player_character,
+            current_key_index,
+            current_key_mint,
+            bearer_token,
+            advantage,
+            loot_bonus,
+            current_player_data,
+            setPlaying,
+            isPlaying,
+        ],
+    );
 
     const Quit = useCallback(async () => {
         setTransactionFailed(false);
@@ -2279,7 +2285,7 @@ export function DungeonApp() {
                                                 </Text>
                                             )}
 
-                                            <Button variant="link" size="md" onClick={Play}>
+                                            <Button variant="link" size="md" onClick={() => Play(true)}>
                                                 <img
                                                     style={{ imageRendering: "pixelated" }}
                                                     onClick={handleEnterBtn}
