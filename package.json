@@ -41,6 +41,7 @@
     "history": "^5.1.0",
     "jsonwebtoken": "^9.0.0",
     "material-design-icons": "^3.0.1",
+    "openpgp": "^5.9.0",
     "plotly.js": "^2.12.1",
     "react": "^18.2.0",
     "react-app-rewired": "^2.2.1",
@@ -89,5 +90,8 @@
       "not dead",
       "not op_mini all"
     ]
+  },
+  "devDependencies": {
+    "@openpgp/web-stream-tools": "^0.0.13"
   }
 }

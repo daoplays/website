@@ -148,6 +148,8 @@ export const enum DungeonInstruction {
     buy_potion = 6,
     save_home = 7,
     rest = 8,
+    create_account = 9,
+    craft = 10,
 }
 
 export const enum DungeonCharacter {

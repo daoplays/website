@@ -120,12 +120,21 @@ interface BlockHash {
 
 export async function get_current_blockhash(bearer: string): Promise<BlockHash> {
     var body = { id: 1, jsonrpc: "2.0", method: "getLatestBlockhash" };
-    const blockhash_data_result = await postData(RPC_NODE, bearer, body);
+    let have_blockhash = false;
 
-    let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-    let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+    let hash_data: BlockHash = { blockhash: "", lastValidBlockHeight: 0 };
+    while (!have_blockhash) {
+        console.log("getting blockhash");
+        const blockhash_data_result = await postData(RPC_NODE, bearer, body);
 
-    let hash_data: BlockHash = { blockhash: blockhash, lastValidBlockHeight: last_valid };
+        if (blockhash_data_result["result"]["value"] == null) continue;
+
+        let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+        let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+
+        hash_data = { blockhash: blockhash, lastValidBlockHeight: last_valid };
+        have_blockhash = true;
+    }
 
     return hash_data;
 }
@@ -137,9 +146,10 @@ interface TransactionResponseData {
 }
 
 export async function send_transaction(bearer: string, encoded_transaction: string): Promise<TransactionResponseData> {
-    var body = { id: 1, jsonrpc: "2.0", method: "sendTransaction", params: [encoded_transaction, { skipPreflight: true }] };
+    var body = { id: 1, jsonrpc: "2.0", method: "sendTransaction", params: [encoded_transaction, { skipPreflight: false }] };
 
     var response_json = await postData(RPC_NODE, bearer, body);
+    console.log(response_json);
     let transaction_response: TransactionResponseData = response_json;
 
     let valid_json = check_json(response_json);
@@ -504,6 +514,16 @@ export class HouseStateData {
     );
 }
 
+export class PlayerAccountData {
+    constructor(readonly data: number[]) {}
+
+    static readonly struct = new FixableBeetStruct<PlayerAccountData>(
+        [["data", array(u8)]],
+        (args) => new PlayerAccountData(args.data!),
+        "PlayerAccountData",
+    );
+}
+
 export class PlayerData {
     constructor(
         readonly num_plays: bignum,
@@ -524,6 +544,8 @@ export class PlayerData {
         readonly dice_one: number,
         readonly dice_two: number,
         readonly rest_status: RestData[],
+        readonly stone_amount: number,
+        readonly wood_amount: number,
         readonly extra_space: bignum[],
     ) {}
 
@@ -547,7 +569,9 @@ export class PlayerData {
             ["dice_one", u8],
             ["dice_two", u8],
             ["rest_status", uniformFixedSizeArray(RestData.struct, 3)],
-            ["extra_space", uniformFixedSizeArray(u8, 41)],
+            ["stone_amount", u8],
+            ["wood_amount", u8],
+            ["extra_space", uniformFixedSizeArray(u8, 39)],
         ],
         (args) =>
             new PlayerData(
@@ -569,6 +593,8 @@ export class PlayerData {
                 args.dice_one!,
                 args.dice_two!,
                 args.rest_status!,
+                args.stone_amount!,
+                args.wood_amount!,
                 args.extra_space!,
             ),
         "PlayerData",
@@ -766,6 +792,34 @@ class DungeonSaveHomeInstruction {
     );
 }
 
+class DungeonCreateAccountInstruction {
+    constructor(readonly instruction: number, readonly character: string, readonly balance: bignum, readonly data: number[]) {}
+
+    static readonly struct = new FixableBeetStruct<DungeonCreateAccountInstruction>(
+        [
+            ["instruction", u8],
+            ["character", utf8String],
+            ["balance", u64],
+            ["data", array(u8)],
+        ],
+        (args) => new DungeonCreateAccountInstruction(args.instruction!, args.character!, args.balance!, args.data!),
+        "DungeonCreateAccountInstruction",
+    );
+}
+
+class DungeonGatherInstruction {
+    constructor(readonly instruction: number, readonly gather_type: number) {}
+
+    static readonly struct = new BeetStruct<DungeonGatherInstruction>(
+        [
+            ["instruction", u8],
+            ["gather_type", u8],
+        ],
+        (args) => new DungeonGatherInstruction(args.instruction!, args.gather_type!),
+        "DungeonGatherInstruction",
+    );
+}
+
 export async function request_player_account_data(bearer: string, pubkey: PublicKey): Promise<PlayerData | null> {
     let account_data = await request_raw_account_data(bearer, pubkey);
 
@@ -893,6 +947,25 @@ export function serialise_buy_potion_instruction(instruction: number, which_poti
 export function serialise_rest_instruction(instruction: number, character: number, rest_type: number, rest_length: number): Buffer {
     const data = new DungeonRestInstruction(instruction, character, rest_type, rest_length);
     const [buf] = DungeonRestInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_create_account_instruction(
+    instruction: number,
+    character: string,
+    balance: bignum,
+    encrypted_data: number[],
+): Buffer {
+    const data = new DungeonCreateAccountInstruction(instruction, character, balance, encrypted_data);
+    const [buf] = DungeonCreateAccountInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_gather_instruction(instruction: number, gather_type: number): Buffer {
+    const data = new DungeonGatherInstruction(instruction, gather_type);
+    const [buf] = DungeonGatherInstruction.struct.serialize(data);
 
     return buf;
 }
