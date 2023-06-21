@@ -64,28 +64,21 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
                 stone_balance: stone_balance,
             };
 
-            sendMessage("PlayerUI", "LoadPlayerData", JSON.stringify(player_data_json));
-        },
-        [sendMessage],
-    );
-
-    const setSolBalance = useCallback(
-        (sol_balance: string) => {
-            sendMessage("PlayerUI", "SetSolBalance", sol_balance);
+            sendMessage("PlayerManager", "LoadPlayerData", JSON.stringify(player_data_json));
         },
         [sendMessage],
     );
 
     const setWoodBalance = useCallback(
         (wood_balance: string) => {
-            sendMessage("PlayerUI", "SetWoodBalance", wood_balance);
+            sendMessage("PlayerManager", "SetWoodBalance", wood_balance);
         },
         [sendMessage],
     );
 
     const setStoneBalance = useCallback(
         (stone_balance: string) => {
-            sendMessage("PlayerUI", "SetStoneBalance", stone_balance);
+            sendMessage("PlayerManager", "SetStoneBalance", stone_balance);
         },
         [sendMessage],
     );
@@ -122,8 +115,17 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
                     return;
                 }
+                console.log(bignum_to_num(player_data.num_plays), bignum_to_num(player_state.current.num_plays));
+                if (bignum_to_num(player_state.current.num_plays) >= bignum_to_num(player_data.num_plays)) return;
 
-                if (player_state.current.num_plays <= player_data.num_plays) return;
+                console.log(
+                    "wood ",
+                    player_data.wood_amount,
+                    player_state.current.wood_amount,
+                    " stone ",
+                    player_data.stone_amount,
+                    player_state.current.stone_amount,
+                );
 
                 if (player_data.wood_amount > player_state.current.wood_amount) setWoodBalance(player_data.wood_amount.toString());
 
@@ -538,61 +540,64 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         };
     }, [addEventListener, removeEventListener, handleConfirmDataLoaded]);
 
-    const handleStartCrafting = useCallback(async () => {
-        console.log("detected start crafting");
+    const handleStartGathering = useCallback(
+        async (gathering_type: number) => {
+            console.log("detected start crafting", gathering_type);
 
-        if (user_keypair.current === null) return;
+            if (user_keypair.current === null) return;
 
-        let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+            let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
-        const instruction_data = serialise_gather_instruction(DungeonInstruction.craft, 0);
+            const instruction_data = serialise_gather_instruction(DungeonInstruction.craft, gathering_type);
 
-        var account_vector = [
-            { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
-            { pubkey: player_data_key, isSigner: false, isWritable: true },
+            var account_vector = [
+                { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
 
-            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
-        ];
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
 
-        const play_instruction = new TransactionInstruction({
-            keys: account_vector,
-            programId: DUNGEON_PROGRAM,
-            data: instruction_data,
-        });
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
 
-        let txArgs = await get_current_blockhash(bearer_token);
+            let txArgs = await get_current_blockhash(bearer_token);
 
-        let transaction = new Transaction(txArgs);
-        transaction.feePayer = user_keypair.current.publicKey;
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = user_keypair.current.publicKey;
 
-        transaction.add(play_instruction);
+            transaction.add(play_instruction);
 
-        transaction.sign(user_keypair.current);
+            transaction.sign(user_keypair.current);
 
-        console.log("sign with ", user_keypair.current.publicKey.toString());
-        try {
-            const encoded_transaction = bs58.encode(transaction.serialize());
+            console.log("sign with ", user_keypair.current.publicKey.toString());
+            try {
+                const encoded_transaction = bs58.encode(transaction.serialize());
 
-            var transaction_response = await send_transaction(bearer_token, encoded_transaction);
-            console.log("transaction response:", transaction_response);
-            if (transaction_response.result === "INVALID") {
-                console.log(transaction_response);
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+                console.log("transaction response:", transaction_response);
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    return;
+                }
+            } catch (error) {
+                console.log(error);
                 return;
             }
-        } catch (error) {
-            console.log(error);
-            return;
-        }
 
-        check_user_state.current = true;
-    }, [bearer_token]);
+            check_user_state.current = true;
+        },
+        [bearer_token],
+    );
 
     useEffect(() => {
-        addEventListener("StartCrafting", handleStartCrafting);
+        addEventListener("StartCrafting", handleStartGathering);
         return () => {
-            removeEventListener("StartCrafting", handleStartCrafting);
+            removeEventListener("StartCrafting", handleStartGathering);
         };
-    }, [addEventListener, removeEventListener, handleStartCrafting]);
+    }, [addEventListener, removeEventListener, handleStartGathering]);
 
     return (
         <>
