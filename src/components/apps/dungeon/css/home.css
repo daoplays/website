@@ -51,3 +51,45 @@
     right: -2px;
 }
   
+
+/* New Home Css */
+.homeBodyColumn{
+  display: flex;
+  justify-content:center;
+  align-items: center;
+  width: 100%;
+  flex-direction: column;
+  position: relative;
+  height: 90vh;
+
+}
+.homeContainer{
+  display: flex;
+  justify-content:flex-start;
+  align-items: center;
+  width: 100%;
+  flex-direction: column;
+  position: relative;
+height: 100%;
+}
+.freeKey
+{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 10px;
+}
+.characterSelectBody{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  width: 90%;
+  margin-top: 10px;
+}
+.howToPlay{
+  position: relative;
+  bottom: 90px;
+}

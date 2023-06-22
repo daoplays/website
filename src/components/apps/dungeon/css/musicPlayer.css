@@ -138,14 +138,14 @@ button[aria-label="Enable loop"] {
     .music-player .rhap_rewind-button,
     .music-player .rhap_forward-button {
         /* button styles here */
-        width: 20px !important;
+        width: 50px !important;
         height: 20px;
-        transform: scale(0.6);
+        
     }
 
     .music-player {
         top: -8px !important;
-        left: 48% !important;
+        left: 54% !important;
         transform: translateX(-50%);
         position: absolute;
     }
@@ -163,13 +163,14 @@ button[aria-label="Enable loop"] {
 .music-player .rhap_forward-button {
     /* button styles here */
     width: 40px ;
+
 }
 
 }
 @media only screen and (max-width: 350px) {
     .music-player {
         top: -12px;
-        left: 52% !important;
+        left: 54% !important;
         transform: translateX(-50%);
         position: absolute;
     }
@@ -178,6 +179,6 @@ button[aria-label="Enable loop"] {
     .music-player .rhap_rewind-button,
     .music-player .rhap_forward-button {
         /* button styles here */
-        width:20px !important;
+        width:50px !important;
     }
 }

@@ -6,6 +6,7 @@ import { ChakraProvider, Box, Button, HStack, Center, Text, VStack, Divider, Num
 import Modal from "react-bootstrap/Modal";
 
 import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverBody, PopoverArrow, PopoverCloseButton } from "@chakra-ui/react";
+import { useMediaQuery } from "react-responsive";
 
 import FocusLock from "react-focus-lock";
 
@@ -407,6 +408,8 @@ export function DungeonApp() {
 
     function Disclaimer() {
         const { setVisible } = useWalletModal();
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
 
         const handleConnectWallet = useCallback(async () => {
             setVisible(true);
@@ -416,9 +419,8 @@ export function DungeonApp() {
             <>
                 <Box as="button" onClick={handleConnectWallet}>
                     <div className="font-face-sfpb">
-                        <Text style={{ textDecoration: "underline" }} fontSize={DEFAULT_FONT_SIZE} textAlign="center" color="white">
+                        <Text style={{ textDecoration: isTabletOrMobile ? "none":"underline", margin: isTabletOrMobile ? "30px 0 0 0" :0 }} fontSize={ isTabletOrMobile ? 25 : DEFAULT_FONT_SIZE} textAlign="center" color="white">
                             CONNECT
-                            <br />
                             WALLET
                         </Text>
                     </div>
@@ -1709,22 +1711,31 @@ export function DungeonApp() {
     }, []);
 
     const LargeDoor = () => {
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         return (
             <>
                 <Center>
-                    <img style={{ imageRendering: "pixelated" }} src={large_door} width={400} alt={"generic"} />
+                    <img
+                        style={{ imageRendering: "pixelated", marginTop: isTabletOrMobile ? 10 : 0 }}
+                        src={large_door}
+                        width={isTabletOrMobile ? 220 : 400}
+                        alt={"generic"}
+                    />
                 </Center>
             </>
         );
     };
 
     const Title = () => {
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         return (
             <Box bg="black">
                 <img
                     style={{ imageRendering: "pixelated" }}
                     src={screen === Screen.ARENA_SCREEN ? arena_title : dungeon_title}
-                    width={isMobile ? "400" : "500"}
+                    width={isTabletOrMobile ? "260" : "500"}
                     alt={""}
                 />
             </Box>
@@ -1732,6 +1743,8 @@ export function DungeonApp() {
     };
 
     const PotionButtons = () => {
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         let loot_bonus_time = current_player_data ? bignum_to_num(current_player_data?.bonus_loot_activation_time) : 0;
         let current_time = Date.now() / 1000;
         let loot_bonus_valid = loot_bonus && (current_time - loot_bonus_time) / 60 < 10.1;
@@ -1753,11 +1766,11 @@ export function DungeonApp() {
                                 imageRendering: "pixelated",
                             }}
                             src={power_potion}
-                            width={POTION_SIZE}
+                            width={isTabletOrMobile ? 50 : POTION_SIZE}
                             alt={""}
                         />
                     </Box>
-                    <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" : "14px"}>
+                    <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isTabletOrMobile ? "10px" : "14px"}>
                         {current_player_data === null ? "" : "x" + current_player_data?.num_advantage_potions}
                     </Text>
                 </HStack>
@@ -1778,11 +1791,11 @@ export function DungeonApp() {
                                 imageRendering: "pixelated",
                             }}
                             src={luck_potion}
-                            width={POTION_SIZE}
+                            width={isTabletOrMobile ? 50 : POTION_SIZE}
                             alt={""}
                         />
                     </Box>
-                    <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isMobile ? "10px" : "14px"}>
+                    <Text pt={POTION_SIZE / 2} className="font-face-sfpb" color="white" fontSize={isTabletOrMobile ? "10px" : "14px"}>
                         {current_player_data === null ? "" : "x" + current_player_data?.num_bonus_loot_potions}
                     </Text>
                 </HStack>
@@ -1806,10 +1819,12 @@ export function DungeonApp() {
     }, [playAudio]);
 
     const CharacterXP = (character: { character: DungeonCharacter }) => {
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         if (current_player_data === null) {
             return (
                 <Box width="100%">
-                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                    <Text className="font-face-sfpb" fontSize={isTabletOrMobile ? 10 : DUNGEON_FONT_SIZE} textAlign="center" color="white">
                         Lvl 1
                     </Text>
                 </Box>
@@ -1825,7 +1840,7 @@ export function DungeonApp() {
 
         return (
             <Box width="100%">
-                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                <Text className="font-face-sfpb" fontSize={isTabletOrMobile ? 10 : DUNGEON_FONT_SIZE} textAlign="center" color="white">
                     Lvl {current_level}
                 </Text>
             </Box>
@@ -1833,9 +1848,11 @@ export function DungeonApp() {
     };
 
     const RestEnergy = (character: { character: DungeonCharacter }) => {
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         if (current_player_data === null) {
             return (
-                <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
+                <Text className="font-face-sfpb" fontSize={isTabletOrMobile ? 10 : DUNGEON_FONT_SIZE} textAlign="center" color="white">
                     Energy / 100
                 </Text>
             );
@@ -1847,13 +1864,15 @@ export function DungeonApp() {
         else if (current_player_data?.rest_status[character.character].xp_bonus > 0) rest_colour = "blue";
 
         return (
-            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color={rest_colour}>
+            <Text className="font-face-sfpb" fontSize={isTabletOrMobile ? 10 : DUNGEON_FONT_SIZE} textAlign="center" color={rest_colour}>
                 Energy {current_player_data?.rest_status[character.character].energy}/100
             </Text>
         );
     };
 
     const CharacterSelect = () => {
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", num_plays,initial_num_plays.current, "dataaccount:", data_account_status, "initial status", initial_status.current, initial_status.current === DungeonStatus.unknown);
 
         let now = Date.now() / 1000 + 60;
@@ -1875,264 +1894,342 @@ export function DungeonApp() {
             current_player_data !== null
                 ? ((bignum_to_num(current_player_data?.rest_status[2].rest_time_remaining) - now) / 60.0 + 1).toFixed(0)
                 : "";
-
         return (
-            <HStack width="100%">
-                <VStack width="33%">
-                    {player_character === DungeonCharacter.knight && (
+            <HStack className="characterSelectBody" width="100%">
+                <div className="characterSelectBody">
+                    <VStack width="33%">
+                        {player_character === DungeonCharacter.knight && (
+                            <Box
+                                style={{
+                                    backgroundImage: `url(${selector})`,
+                                    backgroundPosition: "center",
+                                    backgroundSize: "contain",
+                                    backgroundRepeat: "no-repeat",
+                                    imageRendering: "pixelated",
+                                }}
+                                width="100%"
+                            >
+                                <Box>
+                                    <Button
+                                        variant="link"
+                                        disabled={knight_resting}
+                                        size="md"
+                                        onClick={knight_resting ? undefined : SelectKnight}
+                                    >
+                                        <img
+                                            style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                            src={knight}
+                                            width="10000"
+                                            alt={""}
+                                        />
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )}
+                        {player_character !== DungeonCharacter.knight && (
+                            <Box width="100%">
+                                <Box>
+                                    <Button
+                                        variant="link"
+                                        disabled={knight_resting}
+                                        size="md"
+                                        onClick={knight_resting ? undefined : SelectKnight}
+                                    >
+                                        <img
+                                            style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                            src={knight}
+                                            width="10000"
+                                            alt={""}
+                                        />
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )}
+                        <CharacterXP character={DungeonCharacter.knight} />
+                        <RestEnergy character={DungeonCharacter.knight} />
+
                         <Box
-                            style={{
-                                backgroundImage: `url(${selector})`,
-                                backgroundPosition: "center",
-                                backgroundSize: "contain",
-                                backgroundRepeat: "no-repeat",
-                                imageRendering: "pixelated",
+                            as="button"
+                            disabled={knight_resting}
+                            borderWidth={knight_resting ? "0px" : "1px"}
+                            borderColor={knight_resting ? "black" : "white"}
+                            onClick={() => {
+                                rest_character.current = DungeonCharacter.knight;
+                                setShowRest(true);
                             }}
-                            width="100%"
                         >
-                            <Box>
-                                <Button
-                                    variant="link"
-                                    disabled={knight_resting}
-                                    size="md"
-                                    onClick={knight_resting ? undefined : SelectKnight}
-                                >
-                                    <img
-                                        style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
-                                        src={knight}
-                                        width="10000"
-                                        alt={""}
-                                    />
-                                </Button>
-                            </Box>
+                            <Text
+                                className="font-face-sfpb"
+                                fontSize={isTabletOrMobile ? 10 : DUNGEON_FONT_SIZE}
+                                textAlign="center"
+                                color="white"
+                            >
+                                {knight_resting ? knight_rest_time + " min" : "Rest"}
+                            </Text>
                         </Box>
-                    )}
-                    {player_character !== DungeonCharacter.knight && (
-                        <Box width="100%">
-                            <Box>
-                                <Button
-                                    variant="link"
-                                    disabled={knight_resting}
-                                    size="md"
-                                    onClick={knight_resting ? undefined : SelectKnight}
-                                >
-                                    <img
-                                        style={{ filter: knight_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
-                                        src={knight}
-                                        width="10000"
-                                        alt={""}
-                                    />
-                                </Button>
+                    </VStack>
+
+                    <VStack width="33%">
+                        {player_character === DungeonCharacter.ranger && (
+                            <Box
+                                style={{
+                                    backgroundImage: `url(${selector})`,
+                                    backgroundPosition: "center",
+                                    backgroundSize: "contain",
+                                    backgroundRepeat: "no-repeat",
+                                    imageRendering: "pixelated",
+                                }}
+                                width="100%"
+                            >
+                                <Box>
+                                    <Button
+                                        variant="link"
+                                        disabled={ranger_resting}
+                                        size="md"
+                                        onClick={ranger_resting ? undefined : SelectRanger}
+                                    >
+                                        <img
+                                            style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                            src={ranger}
+                                            width="10000"
+                                            alt={""}
+                                        />
+                                    </Button>
+                                </Box>
                             </Box>
-                        </Box>
-                    )}
-                    <CharacterXP character={DungeonCharacter.knight} />
-                    <RestEnergy character={DungeonCharacter.knight} />
-
-                    <Box
-                        as="button"
-                        disabled={knight_resting}
-                        borderWidth={knight_resting ? "0px" : "1px"}
-                        borderColor={knight_resting ? "black" : "white"}
-                        onClick={() => {
-                            rest_character.current = DungeonCharacter.knight;
-                            setShowRest(true);
-                        }}
-                    >
-                        <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {knight_resting ? knight_rest_time + " min" : "Rest"}
-                        </Text>
-                    </Box>
-                </VStack>
-
-                <VStack width="33%">
-                    {player_character === DungeonCharacter.ranger && (
+                        )}
+                        {player_character !== DungeonCharacter.ranger && (
+                            <Box width="100%">
+                                <Box>
+                                    <Button
+                                        variant="link"
+                                        disabled={ranger_resting}
+                                        size="md"
+                                        onClick={ranger_resting ? undefined : SelectRanger}
+                                    >
+                                        <img
+                                            style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                            src={ranger}
+                                            width="10000"
+                                            alt={""}
+                                        />
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )}
+                        <CharacterXP character={DungeonCharacter.ranger} />
+                        <RestEnergy character={DungeonCharacter.ranger} />
                         <Box
-                            style={{
-                                backgroundImage: `url(${selector})`,
-                                backgroundPosition: "center",
-                                backgroundSize: "contain",
-                                backgroundRepeat: "no-repeat",
-                                imageRendering: "pixelated",
+                            as="button"
+                            disabled={ranger_resting}
+                            borderWidth={ranger_resting ? "0px" : "1px"}
+                            borderColor={ranger_resting ? "black" : "white"}
+                            onClick={() => {
+                                rest_character.current = DungeonCharacter.ranger;
+                                setShowRest(true);
                             }}
-                            width="100%"
                         >
-                            <Box>
-                                <Button
-                                    variant="link"
-                                    disabled={ranger_resting}
-                                    size="md"
-                                    onClick={ranger_resting ? undefined : SelectRanger}
-                                >
-                                    <img
-                                        style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
-                                        src={ranger}
-                                        width="10000"
-                                        alt={""}
-                                    />
-                                </Button>
-                            </Box>
+                            <Text
+                                className="font-face-sfpb"
+                                fontSize={isTabletOrMobile ? 10 : DUNGEON_FONT_SIZE}
+                                textAlign="center"
+                                color="white"
+                            >
+                                {ranger_resting ? ranger_rest_time + " min" : "Rest"}
+                            </Text>
                         </Box>
-                    )}
-                    {player_character !== DungeonCharacter.ranger && (
-                        <Box width="100%">
-                            <Box>
-                                <Button
-                                    variant="link"
-                                    disabled={ranger_resting}
-                                    size="md"
-                                    onClick={ranger_resting ? undefined : SelectRanger}
-                                >
-                                    <img
-                                        style={{ filter: ranger_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
-                                        src={ranger}
-                                        width="10000"
-                                        alt={""}
-                                    />
-                                </Button>
-                            </Box>
-                        </Box>
-                    )}
-                    <CharacterXP character={DungeonCharacter.ranger} />
-                    <RestEnergy character={DungeonCharacter.ranger} />
-                    <Box
-                        as="button"
-                        disabled={ranger_resting}
-                        borderWidth={ranger_resting ? "0px" : "1px"}
-                        borderColor={ranger_resting ? "black" : "white"}
-                        onClick={() => {
-                            rest_character.current = DungeonCharacter.ranger;
-                            setShowRest(true);
-                        }}
-                    >
-                        <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {ranger_resting ? ranger_rest_time + " min" : "Rest"}
-                        </Text>
-                    </Box>
-                </VStack>
+                    </VStack>
 
-                <VStack width="33%">
-                    {player_character === DungeonCharacter.wizard && (
+                    <VStack width="33%">
+                        {player_character === DungeonCharacter.wizard && (
+                            <Box
+                                style={{
+                                    backgroundImage: `url(${selector})`,
+                                    backgroundPosition: "center",
+                                    backgroundSize: "contain",
+                                    backgroundRepeat: "no-repeat",
+                                    imageRendering: "pixelated",
+                                }}
+                                width="100%"
+                            >
+                                <Box>
+                                    <Button
+                                        variant="link"
+                                        disabled={wizard_resting}
+                                        size="md"
+                                        onClick={wizard_resting ? undefined : SelectWizard}
+                                    >
+                                        <img
+                                            style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                            src={wizard}
+                                            width="10000"
+                                            alt={""}
+                                        />
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )}
+                        {player_character !== DungeonCharacter.wizard && (
+                            <Box width="100%">
+                                <Box>
+                                    <Button
+                                        variant="link"
+                                        disabled={wizard_resting}
+                                        size="md"
+                                        onClick={wizard_resting ? undefined : SelectWizard}
+                                    >
+                                        <img
+                                            style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
+                                            src={wizard}
+                                            width="10000"
+                                            alt={""}
+                                        />
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )}
+                        <CharacterXP character={DungeonCharacter.wizard} />
+                        <RestEnergy character={DungeonCharacter.wizard} />
+
                         <Box
-                            style={{
-                                backgroundImage: `url(${selector})`,
-                                backgroundPosition: "center",
-                                backgroundSize: "contain",
-                                backgroundRepeat: "no-repeat",
-                                imageRendering: "pixelated",
+                            as="button"
+                            disabled={wizard_resting}
+                            borderWidth={wizard_resting ? "0px" : "1px"}
+                            borderColor={wizard_resting ? "black" : "white"}
+                            onClick={() => {
+                                rest_character.current = DungeonCharacter.wizard;
+                                setShowRest(true);
                             }}
-                            width="100%"
                         >
-                            <Box>
-                                <Button
-                                    variant="link"
-                                    disabled={wizard_resting}
-                                    size="md"
-                                    onClick={wizard_resting ? undefined : SelectWizard}
-                                >
-                                    <img
-                                        style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
-                                        src={wizard}
-                                        width="10000"
-                                        alt={""}
-                                    />
-                                </Button>
-                            </Box>
+                            <Text
+                                className="font-face-sfpb"
+                                fontSize={isTabletOrMobile ? 10 : DUNGEON_FONT_SIZE}
+                                textAlign="center"
+                                color="white"
+                            >
+                                {wizard_resting ? wizard_rest_time + " min" : "Rest"}
+                            </Text>
                         </Box>
-                    )}
-                    {player_character !== DungeonCharacter.wizard && (
-                        <Box width="100%">
-                            <Box>
-                                <Button
-                                    variant="link"
-                                    disabled={wizard_resting}
-                                    size="md"
-                                    onClick={wizard_resting ? undefined : SelectWizard}
-                                >
-                                    <img
-                                        style={{ filter: wizard_resting ? "grayscale(1)" : "", imageRendering: "pixelated" }}
-                                        src={wizard}
-                                        width="10000"
-                                        alt={""}
-                                    />
-                                </Button>
-                            </Box>
-                        </Box>
-                    )}
-                    <CharacterXP character={DungeonCharacter.wizard} />
-                    <RestEnergy character={DungeonCharacter.wizard} />
-
-                    <Box
-                        as="button"
-                        disabled={wizard_resting}
-                        borderWidth={wizard_resting ? "0px" : "1px"}
-                        borderColor={wizard_resting ? "black" : "white"}
-                        onClick={() => {
-                            rest_character.current = DungeonCharacter.wizard;
-                            setShowRest(true);
-                        }}
-                    >
-                        <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                            {wizard_resting ? wizard_rest_time + " min" : "Rest"}
-                        </Text>
-                    </Box>
-                </VStack>
+                    </VStack>
+                </div>
             </HStack>
         );
     };
 
     const UnconnectedPage = () => {
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         var font_size = DEFAULT_FONT_SIZE;
-        if (isMobile) {
+        if (isTabletOrMobile) {
             font_size = "15px";
         }
+
         return (
             <>
-                <Box width="100%">
-                    <Center>
-                        <VStack alignItems="center" spacing="3%" mt="2%">
-                            <HStack alignItems="center" spacing="1%">
-                                <Box width="41%">
-                                    <VStack mr="6%">
-                                        <div className="font-face-sfpb">
-                                            <Text align="center" fontSize="20px" color="white">
-                                                Dungeon Keys provide
-                                                <br />
-                                                Free Plays every day!
-                                            </Text>
-                                        </div>
-                                        <DiscountKeyInput connect={true} />
-                                        <div className="font-face-sfpb">
-                                            <Text align="center" fontSize={font_size} color="white">
-                                                <a
-                                                    href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
-                                                    style={{ color: "white", textDecoration: "none" }}
-                                                >
-                                                    Buy a Key
-                                                </a>
-                                            </Text>
-                                        </div>
-                                    </VStack>
-                                </Box>
-                                <Box width="46%">
-                                    <LargeDoor />
-                                </Box>
-                                <Box width="27%">
-                                    <Disclaimer />
-                                </Box>
-                            </HStack>
-                            {!isMobile && (
-                                <HStack visibility={"hidden"}>
-                                    <Box width="33%" mt="2rem" />
-                                    <Box width="33%" mt="2rem">
-                                        <CharacterSelect />
+                {isTabletOrMobile ? (
+                    <>
+                    <div  className="homeBodyColumn">
+
+                        <div className="homeContainer">
+                            <div>
+                                <LargeDoor />
+                            </div>
+                            <div>
+                                <Disclaimer />
+                            </div>
+                            <div style={{marginBottom:30}} className="font-face-sfpb">
+                                <Text align="center" fontSize="15px" color="white">
+                                    0.002 SOL per Play
+                                </Text>
+                            </div>
+                            <div className="font-face-sfpb">
+                                <Text align="center" fontSize="15px" color="white">
+                                    Dungeon Keys provide
+                                    <br />
+                                    Free Plays every day!
+                                </Text>
+                            </div>
+                            <div>
+                                <DiscountKeyInput connect={true} />
+                            </div>
+                            <div className="font-face-sfpb">
+                                <Text align="center" fontSize={25}  color="white">
+                                    <a
+                                        href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                                        style={{ color: "white", textDecoration: "none" }}
+                                    >
+                                        Buy a Key
+                                    </a>
+                                </Text>
+                            </div>
+                    </div>
+                    <div>
+
+
+                            <div className="howToPlay">
+                                <div className="font-face-sfpb">
+                                    <Text
+                                        align="center"
+                                        fontSize="29px"
+                                        style={{ cursor: "pointer" }}
+                                        color="white"
+                                        onClick={() => setScreen(Screen.FAQ_SCREEN)}
+                                    >
+                                        HOW TO PLAY
+                                    </Text>
+                                </div>
+                            </div>
+                    </div>
+
+                        </div>
+                    </>
+                ) : (
+                    <Box width="100%">
+                        <Center>
+                            <VStack alignItems="center" spacing="3%" mt="2%">
+                                <HStack alignItems="center" spacing="1%">
+                                    <Box width="41%">
+                                        <VStack mr="6%">
+                                            <div className="font-face-sfpb">
+                                                <Text align="center" fontSize="20px" color="white">
+                                                    Dungeon Keys provide
+                                                    <br />
+                                                    Free Plays every day!
+                                                </Text>
+                                            </div>
+                                            <DiscountKeyInput connect={true} />
+                                            <div className="font-face-sfpb">
+                                                <Text align="center" fontSize={font_size} color="white">
+                                                    <a
+                                                        href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                                                        style={{ color: "white", textDecoration: "none" }}
+                                                    >
+                                                        Buy a Key
+                                                    </a>
+                                                </Text>
+                                            </div>
+                                        </VStack>
                                     </Box>
-                                    <Box width="33%" mt="2rem" />
+                                    <Box width="46%">
+                                        <LargeDoor />
+                                    </Box>
+                                    <Box width="27%">
+                                        <Disclaimer />
+                                    </Box>
                                 </HStack>
-                            )}
-                        </VStack>
-                    </Center>
-                </Box>
+                                {!isMobile && (
+                                    <HStack visibility={"hidden"}>
+                                        <Box width="33%" mt="2rem" />
+                                        <Box width="33%" mt="2rem">
+                                            <CharacterSelect />
+                                        </Box>
+                                        <Box width="33%" mt="2rem" />
+                                    </HStack>
+                                )}
+                            </VStack>
+                        </Center>
+                    </Box>
+                )}
             </>
         );
     };
@@ -2162,96 +2259,173 @@ export function DungeonApp() {
             visible = false;
         }
         //console.log("have made it here in CS 3", visible);
+        const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
+
         return (
             <>
-                <Box width="100%">
-                    <Center>
-                        <VStack alignItems="center" spacing="3%" mt="2%">
-                            <HStack alignItems="center" spacing="1%">
-                                <Box width="27%" visibility={visible ? "visible" : "hidden"}>
-                                    <VStack>
-                                        <div className="font-face-sfpb">
-                                            <Text align="center" fontSize="20px" color="white">
-                                                Dungeon Keys provide
-                                                <br />
-                                                Free Plays every day!
-                                            </Text>
-                                        </div>
-                                        <DiscountKeyInput connect={false} />
-                                        <div className="font-face-sfpb">
-                                            <Text align="center" fontSize={font_size} color="white">
-                                                <a
-                                                    href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
-                                                    style={{ color: "white", textDecoration: "none" }}
-                                                >
-                                                    Buy a Key
-                                                </a>
-                                            </Text>
-                                        </div>
-                                    </VStack>
-                                </Box>
-                                <Box width="46%">
-                                    <LargeDoor />
-                                </Box>
-                                <Box width="27%" visibility={visible ? "visible" : "hidden"}>
-                                    <VStack align="center">
-                                        <div className="font-face-sfpb">
-                                            {key_freeplays <= 0 && (
-                                                <Text align="center" fontSize={font_size} color="white">
-                                                    DUNGEON
-                                                    <br />
-                                                    FEE:
-                                                    <br />
-                                                    0.002 SOL
-                                                </Text>
-                                            )}
-                                            {key_freeplays > 0 && (
-                                                <Text align="center" fontSize={font_size} color="white">
-                                                    DUNGEON
-                                                    <br />
-                                                    FEE:
-                                                    <br />
-                                                    0.000 SOL
-                                                </Text>
-                                            )}
+                {isTabletOrMobile ? (
+                    <div className="homeContainer">
+                        <div>
+                            <LargeDoor />
+                        </div>
 
-                                            <Button variant="link" size="md" onClick={Play}>
-                                                <img
-                                                    style={{ imageRendering: "pixelated" }}
-                                                    onClick={handleEnterBtn}
-                                                    src={enter_button}
-                                                    width={"60%"}
-                                                    alt={""}
-                                                />
-                                            </Button>
-                                        </div>
-                                        <PotionButtons />
-                                    </VStack>
-                                </Box>
-                            </HStack>
-
-                            <HStack visibility={visible ? "visible" : "hidden"}>
-                                <Box width="33%" mt="2rem" />
-                                <Box width="33%" mt="2rem">
-                                    <CharacterSelect />
-                                    <div className="font-face-sfpb">
+                        <div>
+                            <CharacterSelect />
+                        </div>
+                        <div>
+                            <Button variant="link" size="md" onClick={Play}>
+                                <img
+                                    style={{ imageRendering: "pixelated", margin: "20px 0" }}
+                                    onClick={handleEnterBtn}
+                                    src={enter_button}
+                                    width={"30%"}
+                                    alt={""}
+                                />
+                            </Button>
+                        </div>
+                        <div>
+                            <PotionButtons />
+                        </div>
+                        <div>
+                            <VStack align="center">
+                                <div className="font-face-sfpb">
+                                    {key_freeplays <= 0 && (
                                         <Text
                                             align="center"
-                                            fontSize="29px"
-                                            style={{ cursor: "pointer", marginTop: "0.7rem" }}
+                                            style={{ marginTop: 10 }}
+                                            fontSize={isTabletOrMobile ? 20 : font_size}
                                             color="white"
-                                            onClick={() => setScreen(Screen.FAQ_SCREEN)}
                                         >
-                                            HOW TO PLAY
+                                            DUNGEON FEE:
+                                            <br />
+                                            0.002 SOL
                                         </Text>
-                                    </div>
-                                </Box>
+                                    )}
+                                    {key_freeplays > 0 && (
+                                        <Text
+                                            align="center"
+                                            style={{ marginTop: 10 }}
+                                            fontSize={isTabletOrMobile ? 20 : font_size}
+                                            color="white"
+                                        >
+                                            DUNGEON FEE:
+                                            <br />
+                                            0.000 SOL
+                                        </Text>
+                                    )}
+                                </div>
+                            </VStack>
+                        </div>
+                        <div className="freeKey">
+                            <Text align="center" className="font-face-sfpb" fontSize={isTabletOrMobile ? 20 : font_size} color="white">
+                                Use Key
+                            </Text>
+                            <DiscountKeyInput connect={false} />
+                        </div>
+                        <div style={{marginBottom:100}}>
+                            <div className="font-face-sfpb">
+                                <Text
+                                    align="center"
+                                    fontSize="29px"
+                                    style={{ cursor: "pointer" }}
+                                    color="white"
+                                    onClick={() => setScreen(Screen.FAQ_SCREEN)}
+                                >
+                                    HOW TO PLAY
+                                </Text>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <Box width="100%">
+                        <Center>
+                            <VStack alignItems="center" spacing="3%" mt="2%">
+                                <HStack alignItems="center" spacing="1%">
+                                    <Box width="27%" visibility={visible ? "visible" : "hidden"}>
+                                        <VStack>
+                                            <div className="font-face-sfpb">
+                                                <Text align="center" fontSize="20px" color="white">
+                                                    Dungeon Keys provide
+                                                    <br />
+                                                    Free Plays every day!
+                                                </Text>
+                                            </div>
+                                            <DiscountKeyInput connect={false} />
+                                            <div className="font-face-sfpb">
+                                                <Text align="center" fontSize={font_size} color="white">
+                                                    <a
+                                                        href="https://www.tensor.trade/trade/324pg2gdtplnjjfr5yajhd6c7fnwycvlj4arspxvvjko"
+                                                        style={{ color: "white", textDecoration: "none" }}
+                                                    >
+                                                        Buy a Key
+                                                    </a>
+                                                </Text>
+                                            </div>
+                                        </VStack>
+                                    </Box>
+                                    <Box width="46%">
+                                        <LargeDoor />
+                                    </Box>
+                                    <Box width="27%" visibility={visible ? "visible" : "hidden"}>
+                                        <VStack align="center">
+                                            <div className="font-face-sfpb">
+                                                {key_freeplays <= 0 && (
+                                                    <Text align="center" fontSize={font_size} color="white">
+                                                        DUNGEON
+                                                        <br />
+                                                        FEE:
+                                                        <br />
+                                                        0.002 SOL
+                                                    </Text>
+                                                )}
+                                                {key_freeplays > 0 && (
+                                                    <Text align="center" fontSize={font_size} color="white">
+                                                        DUNGEON
+                                                        <br />
+                                                        FEE:
+                                                        <br />
+                                                        0.000 SOL
+                                                    </Text>
+                                                )}
 
-                                <Box width="33%" mt="2rem" />
-                            </HStack>
-                        </VStack>
-                    </Center>
-                </Box>
+                                                <Button variant="link" size="md" onClick={Play}>
+                                                    <img
+                                                        style={{ imageRendering: "pixelated" }}
+                                                        onClick={handleEnterBtn}
+                                                        src={enter_button}
+                                                        width={"60%"}
+                                                        alt={""}
+                                                    />
+                                                </Button>
+                                            </div>
+                                            <PotionButtons />
+                                        </VStack>
+                                    </Box>
+                                </HStack>
+
+                                <HStack visibility={visible ? "visible" : "hidden"}>
+                                    <Box width="33%" mt="2rem" />
+                                    <Box width="33%" mt="2rem">
+                                        <CharacterSelect />
+                                        <div className="font-face-sfpb">
+                                            <Text
+                                                align="center"
+                                                fontSize="29px"
+                                                style={{ cursor: "pointer", marginTop: "0.7rem" }}
+                                                color="white"
+                                                onClick={() => setScreen(Screen.FAQ_SCREEN)}
+                                            >
+                                                HOW TO PLAY
+                                            </Text>
+                                        </div>
+                                    </Box>
+
+                                    <Box width="33%" mt="2rem" />
+                                </HStack>
+                            </VStack>
+                        </Center>
+                    </Box>
+                )}
             </>
         );
     };
