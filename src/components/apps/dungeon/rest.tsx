@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction, SystemProgram } from "@solana/web3.js";
 import bs58 from "bs58";
 import BN from "bn.js";
 
@@ -49,6 +49,9 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
     const check_user_state = useRef<boolean>(true);
     const state_interval = useRef<number | null>(null);
 
+    const check_user_balance = useRef<boolean>(true);
+    const user_balance = useRef<number>(0);
+
     const { unityProvider, isLoaded, addEventListener, removeEventListener, sendMessage } = useUnityContext({
         loaderUrl: "/unitybuild/LevelEditor.loader.js",
         dataUrl: "/unitybuild/LevelEditor.data",
@@ -56,15 +59,16 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         codeUrl: "/unitybuild/LevelEditor.wasm",
     });
 
-    const setBalances = useCallback(
-        (sol_balance: string, wood_balance: string, stone_balance: string) => {
-            let player_data_json = {
-                sol_balance: sol_balance,
-                wood_balance: wood_balance,
-                stone_balance: stone_balance,
+    const setBalance = useCallback(
+        (pubkey: string, balance: number, decimals: number, uiAmount: number) => {
+            let account_data_json = {
+                pubkey: pubkey,
+                balance: balance,
+                decimals: decimals,
+                uiAmount: uiAmount,
             };
 
-            sendMessage("PlayerManager", "LoadPlayerData", JSON.stringify(player_data_json));
+            sendMessage("DataManager", "UpdateSolAccount", JSON.stringify(account_data_json));
         },
         [sendMessage],
     );
@@ -86,10 +90,23 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             return;
         }
 
-        if (!check_user_state.current) return;
+        if (!check_user_state.current && !check_user_balance.current) return;
 
         console.log("check user state");
-        let current_balance = await request_current_balance(bearer_token, user_keypair.current.publicKey);
+        if (check_user_balance.current) {
+            let new_balance = await request_current_balance(bearer_token, user_keypair.current.publicKey);
+
+            if (user_balance.current === 0 || new_balance !== user_balance.current) {
+                user_balance.current = new_balance;
+                check_user_balance.current = false;
+                setBalance(
+                    user_keypair.current.publicKey.toString(),
+                    Math.floor(user_balance.current * LAMPORTS_PER_SOL),
+                    9,
+                    user_balance.current,
+                );
+            }
+        }
 
         let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
@@ -105,7 +122,6 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
                 player_state.current = player_data;
                 check_user_state.current = false;
 
-                setBalances(current_balance.toFixed(4), player_data.wood_amount.toString(), player_data.stone_amount.toString());
                 let data_string = JSON.stringify(player_data);
                 console.log("have player data", player_data);
 
@@ -126,7 +142,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             console.log(error);
             player_state.current = null;
         }
-    }, [bearer_token, setBalances, UpdateDungeonData]);
+    }, [bearer_token, setBalance, UpdateDungeonData]);
 
     // interval for checking state
     useEffect(() => {
@@ -544,6 +560,66 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         },
         [bearer_token, CreatePlayerAccount, sendLoginConfirmation],
     );
+
+    const handleTransferSOL = useCallback(
+        async (amount: number) => {
+            console.log("Transfer sol", amount);
+            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+
+            if (user_keypair.current === null) return;
+
+            let amount_bn = BigInt(amount * LAMPORTS_PER_SOL);
+            const transfer_instruction = SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey: user_keypair.current.publicKey,
+                lamports: amount_bn,
+            });
+
+            let txArgs = await get_current_blockhash(bearer_token);
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            console.log(transaction.recentBlockhash, transaction.lastValidBlockHeight);
+
+            transaction.add(transfer_instruction);
+            console.log("send transaction");
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+                console.log("transaction response:", transaction_response);
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    return;
+                }
+            } catch (error) {
+                console.log(error);
+                return;
+            }
+
+            check_user_balance.current = true;
+        },
+        [wallet, bearer_token],
+    );
+
+    const handleTransferLOOT = useCallback(async () => {}, []);
+
+    useEffect(() => {
+        console.log("Have transfer sol event");
+        addEventListener("TransferSOL", handleTransferSOL);
+        return () => {
+            removeEventListener("TransferSOL", handleTransferSOL);
+        };
+    }, [addEventListener, removeEventListener, handleTransferSOL]);
+
+    useEffect(() => {
+        addEventListener("TransferLOOT", handleTransferLOOT);
+        return () => {
+            removeEventListener("TransferLOOT", handleTransferLOOT);
+        };
+    }, [addEventListener, removeEventListener, handleTransferLOOT]);
 
     useEffect(() => {
         addEventListener("SendSaveData", handleSaveData);
