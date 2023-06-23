@@ -49,7 +49,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
     const check_user_state = useRef<boolean>(true);
     const state_interval = useRef<number | null>(null);
 
-    const { unityProvider, addEventListener, removeEventListener, sendMessage } = useUnityContext({
+    const { unityProvider, isLoaded, addEventListener, removeEventListener, sendMessage } = useUnityContext({
         loaderUrl: "/unitybuild/LevelEditor.loader.js",
         dataUrl: "/unitybuild/LevelEditor.data",
         frameworkUrl: "/unitybuild/LevelEditor.framework.js",
@@ -69,16 +69,9 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         [sendMessage],
     );
 
-    const setWoodBalance = useCallback(
-        (wood_balance: string) => {
-            sendMessage("PlayerManager", "SetWoodBalance", wood_balance);
-        },
-        [sendMessage],
-    );
-
-    const setStoneBalance = useCallback(
-        (stone_balance: string) => {
-            sendMessage("PlayerManager", "SetStoneBalance", stone_balance);
+    const UpdateDungeonData = useCallback(
+        (data: string) => {
+            sendMessage("DataManager", "UpdateDungeonData", data);
         },
         [sendMessage],
     );
@@ -95,50 +88,45 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
         if (!check_user_state.current) return;
 
+        console.log("check user state");
         let current_balance = await request_current_balance(bearer_token, user_keypair.current.publicKey);
 
         let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
-        if (check_user_state.current) {
-            try {
-                let player_data = await request_player_account_data(bearer_token, player_data_key);
+        try {
+            let player_data = await request_player_account_data(bearer_token, player_data_key);
 
-                if (player_data === null) {
-                    return;
-                }
+            if (player_data === null) {
+                return;
+            }
 
-                if (player_state.current === null) {
-                    player_state.current = player_data;
-                    check_user_state.current = false;
-
-                    setBalances(current_balance.toFixed(4), player_data.wood_amount.toString(), player_data.stone_amount.toString());
-
-                    return;
-                }
-                console.log(bignum_to_num(player_data.num_plays), bignum_to_num(player_state.current.num_plays));
-                if (bignum_to_num(player_state.current.num_plays) >= bignum_to_num(player_data.num_plays)) return;
-
-                console.log(
-                    "wood ",
-                    player_data.wood_amount,
-                    player_state.current.wood_amount,
-                    " stone ",
-                    player_data.stone_amount,
-                    player_state.current.stone_amount,
-                );
-
-                if (player_data.wood_amount > player_state.current.wood_amount) setWoodBalance(player_data.wood_amount.toString());
-
-                if (player_data.stone_amount > player_state.current.stone_amount) setStoneBalance(player_data.stone_amount.toString());
-
+            if (player_state.current === null) {
+                console.log("current state is null, update");
                 player_state.current = player_data;
                 check_user_state.current = false;
-            } catch (error) {
-                console.log(error);
-                player_state.current = null;
+
+                setBalances(current_balance.toFixed(4), player_data.wood_amount.toString(), player_data.stone_amount.toString());
+                let data_string = JSON.stringify(player_data);
+                console.log("have player data", player_data);
+
+                UpdateDungeonData(data_string);
+                return;
             }
+            console.log(bignum_to_num(player_data.num_plays), bignum_to_num(player_state.current.num_plays));
+            if (bignum_to_num(player_state.current.num_plays) >= bignum_to_num(player_data.num_plays)) return;
+
+            let data_string = JSON.stringify(player_data);
+            console.log("have player data", player_data);
+
+            UpdateDungeonData(data_string);
+
+            player_state.current = player_data;
+            check_user_state.current = false;
+        } catch (error) {
+            console.log(error);
+            player_state.current = null;
         }
-    }, [bearer_token, setBalances, setWoodBalance, setStoneBalance]);
+    }, [bearer_token, setBalances, UpdateDungeonData]);
 
     // interval for checking state
     useEffect(() => {
@@ -157,11 +145,20 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         };
     }, [check_state]);
 
+    const sendLoginConfirmation = useCallback(
+        (message: string) => {
+            console.log("has unity loaded in sendLoginConfirmation", isLoaded);
+            sendMessage("ConnectUI", "ConfirmLogIn", message);
+        },
+        [sendMessage, isLoaded],
+    );
+
     const setLevelData = useCallback(
         (level: string) => {
+            console.log("has unity loaded in setLevelData", isLoaded);
             sendMessage("LevelEditor", "LoadFromBlockChain", level);
         },
-        [sendMessage],
+        [sendMessage, isLoaded],
     );
 
     const get_rest_state = useCallback(async () => {
@@ -246,7 +243,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         let layers_json = {
             layer_saves: layers_array,
         };
-        console.log(JSON.stringify(layers_json));
+        //console.log(JSON.stringify(layers_json));
 
         setLevelData(JSON.stringify(layers_json));
         check_rest_state.current = false;
@@ -369,17 +366,37 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
                 if (transaction_response.result === "INVALID") {
                     console.log(transaction_response);
+
+                    let message_json = {
+                        result_code: -1,
+                        result_message: "Transaction Failed, Try Again",
+                    };
+                    sendLoginConfirmation(JSON.stringify(message_json));
+
                     return;
                 }
             } catch (error) {
                 console.log(error);
+
+                let message_json = {
+                    result_code: -1,
+                    result_message: "Transaction Failed, Try Again",
+                };
+                sendLoginConfirmation(JSON.stringify(message_json));
+
                 return;
             }
 
             user_keypair.current = keypair;
             unity_initialised.current = true;
+
+            let message_json = {
+                result_code: 0,
+                result_message: "Login Succeeded",
+            };
+            sendLoginConfirmation(JSON.stringify(message_json));
         },
-        [wallet, bearer_token],
+        [wallet, bearer_token, sendLoginConfirmation],
     );
 
     // Save the level data
@@ -475,10 +492,24 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
                     } catch (error) {
                         console.log("error decrypting data, wrong password");
                         console.log(error);
+
+                        let message_json = {
+                            result_code: -1,
+                            result_message: "Incorrect Passphrase",
+                        };
+
+                        sendLoginConfirmation(JSON.stringify(message_json));
                         return;
                     }
 
                     unity_initialised.current = true;
+
+                    let message_json = {
+                        result_code: 0,
+                        result_message: "Login Succeeded",
+                    };
+
+                    sendLoginConfirmation(JSON.stringify(message_json));
 
                     return;
                 }
@@ -511,7 +542,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
             await CreatePlayerAccount(user_name.current, new_balance, Array.from(encrypted), accountKeypair);
         },
-        [bearer_token, CreatePlayerAccount],
+        [bearer_token, CreatePlayerAccount, sendLoginConfirmation],
     );
 
     useEffect(() => {
@@ -567,6 +598,8 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
             let transaction = new Transaction(txArgs);
             transaction.feePayer = user_keypair.current.publicKey;
+
+            console.log(transaction.recentBlockhash, transaction.lastValidBlockHeight);
 
             transaction.add(play_instruction);
 

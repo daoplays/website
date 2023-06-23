@@ -136,6 +136,8 @@ export async function get_current_blockhash(bearer: string): Promise<BlockHash> 
         have_blockhash = true;
     }
 
+    console.log("BH: ", hash_data);
+
     return hash_data;
 }
 
