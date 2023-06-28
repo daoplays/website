@@ -7,7 +7,6 @@ import { useDisclosure, Drawer, DrawerBody, DrawerOverlay, DrawerContent, Drawer
 
 import { useWallet } from "@solana/wallet-adapter-react";
 
-import { isMobile } from "react-device-detect";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { brands, solid } from "@fortawesome/fontawesome-svg-core/import.macro"; // <-- import styles to be used
 import { Screen } from "./constants";
@@ -22,13 +21,15 @@ import dungeonCrawling from "./sounds/Dungeon_Crawling.mp3";
 import orcsAndGoblins from "./sounds/Orcs_n_Goblins.mp3";
 import glimmerGreen from "./sounds/Glimmer-Green_Spire.mp3";
 import MusicPlayer from "./musicPlayer";
-
+import { useMediaQuery } from 'react-responsive'
 // dungeon utils
 import { WalletConnected, request_current_balance } from "./utils";
 
 import "./css/style.css";
 import "./css/fonts.css";
 import "./css/wallet.css";
+import "./css/navigation.css";
+
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 export function Navigation({
@@ -167,7 +168,7 @@ export function Navigation({
         { text: "FAQ", onClick: ShowFAQ },
         { text: "Help", onClick: ShowHelp },
     ];
-
+    const isTabletOrMobile = useMediaQuery({ query: '(max-width: 900px)' })
     function DesktopNavigation() {
         const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -241,8 +242,7 @@ export function Navigation({
         //const btnRef = React.useRef()
 
         return (
-            <Box width="98%" ml="1%" mt="1%" mb="1rem" mr="1%">
-                <HStack>
+            <Box className="navigationMobileBody" >
                     {wallet.publicKey && (
                         <Box width="70%">
                             <HStack>
@@ -252,19 +252,18 @@ export function Navigation({
                     )}
                     {!wallet.publicKey && <Box width="75%"></Box>}
 
-                    <Box width="25%">
-                        <HStack spacing="12%">
-                            <a href="https://twitter.com/sol_dungeon">
+                  
+                            {/* <a href="https://twitter.com/sol_dungeon">
                                 <FontAwesomeIcon color="white" icon={brands("twitter")} size="lg" />
                             </a>
 
                             <a href="https://discord.gg/HeKJZZEaPn">
                                 <FontAwesomeIcon color="white" icon={brands("discord")} size="lg" />
-                            </a>
+                            </a> */}
+                            <div className="navigationBtns"  >
+                            <MuteButton  />
 
-                            <MuteButton />
-
-                            <FontAwesomeIcon color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
+                            <FontAwesomeIcon  color="white" icon={solid("bars")} size="lg" onClick={onOpen} />
                             <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
                                 <DrawerOverlay />
                                 <DrawerContent>
@@ -285,23 +284,23 @@ export function Navigation({
                                     </DrawerBody>
                                 </DrawerContent>
                             </Drawer>
-                        </HStack>
-                    </Box>
-                </HStack>
+                            </div>
+
+                           
             </Box>
         );
     }
 
     return (
         <>
-            {!isMobile && (
+            {!isTabletOrMobile && (
                 <>
                     <DesktopNavigation />
                     <MusicPlayer tracks={MusicList} />
                 </>
             )}
 
-            {isMobile && (
+            {isTabletOrMobile && (
                 <>
                     <MobileNavigation />
                     <MusicPlayer tracks={MusicList} />
