@@ -148,7 +148,7 @@ interface TransactionResponseData {
 }
 
 export async function send_transaction(bearer: string, encoded_transaction: string): Promise<TransactionResponseData> {
-    var body = { id: 1, jsonrpc: "2.0", method: "sendTransaction", params: [encoded_transaction, { skipPreflight: false }] };
+    var body = { id: 1, jsonrpc: "2.0", method: "sendTransaction", params: [encoded_transaction, { skipPreflight: true }] };
 
     var response_json = await postData(RPC_NODE, bearer, body);
     console.log(response_json);
@@ -443,7 +443,7 @@ class DungeonData {
 export class RestData {
     constructor(
         readonly energy: number,
-        readonly rest_time_remaining: bignum,
+        readonly rest_end_time: bignum,
         readonly power_bonus: number,
         readonly loot_bonus: number,
         readonly health_bonus: number,
@@ -453,14 +453,13 @@ export class RestData {
     static readonly struct = new BeetStruct<RestData>(
         [
             ["energy", u8],
-            ["rest_time_remaining", i64],
+            ["rest_end_time", i64],
             ["power_bonus", u8],
             ["loot_bonus", u8],
             ["health_bonus", u8],
             ["xp_bonus", u8],
         ],
-        (args) =>
-            new RestData(args.energy!, args.rest_time_remaining!, args.power_bonus!, args.loot_bonus!, args.health_bonus!, args.xp_bonus!),
+        (args) => new RestData(args.energy!, args.rest_end_time!, args.power_bonus!, args.loot_bonus!, args.health_bonus!, args.xp_bonus!),
         "RestData",
     );
 }
@@ -528,11 +527,11 @@ export class PlayerAccountData {
 
 export class PlayerData {
     constructor(
-        readonly num_plays: bignum,
+        readonly num_interactions: bignum,
         readonly num_xp: bignum,
-        readonly in_progress: number,
+        readonly current_room: number,
         readonly player_status: number,
-        readonly dungeon_enemy: number,
+        readonly current_enemy: number,
         readonly player_character: number,
         readonly last_gold: bignum,
         readonly current_key: number,
@@ -553,11 +552,11 @@ export class PlayerData {
 
     static readonly struct = new BeetStruct<PlayerData>(
         [
-            ["num_plays", u64],
+            ["num_interactions", u64],
             ["num_xp", u64],
-            ["in_progress", u8],
+            ["current_room", u8],
             ["player_status", u8],
-            ["dungeon_enemy", u8],
+            ["current_enemy", u8],
             ["player_character", u8],
             ["last_gold", u64],
             ["current_key", u8],
@@ -577,11 +576,11 @@ export class PlayerData {
         ],
         (args) =>
             new PlayerData(
-                args.num_plays!,
+                args.num_interactions!,
                 args.num_xp!,
-                args.in_progress!,
+                args.current_room!,
                 args.player_status!,
-                args.dungeon_enemy!,
+                args.current_enemy!,
                 args.player_character!,
                 args.last_gold!,
                 args.current_key!,

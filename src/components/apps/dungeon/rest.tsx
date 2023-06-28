@@ -26,6 +26,8 @@ import {
     request_current_balance,
 } from "./utils";
 
+import { Play, Quit } from "./unity/dungeon_instructions";
+
 import { DungeonInstruction } from "./dungeon_state";
 import { createMessage, readMessage, decrypt, encrypt } from "openpgp";
 import { bignum } from "@metaplex-foundation/beet";
@@ -128,11 +130,12 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
                 UpdateDungeonData(data_string);
                 return;
             }
-            console.log(bignum_to_num(player_data.num_plays), bignum_to_num(player_state.current.num_plays));
-            if (bignum_to_num(player_state.current.num_plays) >= bignum_to_num(player_data.num_plays)) return;
+            console.log("have player data", player_data);
+
+            console.log(bignum_to_num(player_data.num_interactions), bignum_to_num(player_state.current.num_interactions));
+            if (bignum_to_num(player_state.current.num_interactions) >= bignum_to_num(player_data.num_interactions)) return;
 
             let data_string = JSON.stringify(player_data);
-            console.log("have player data", player_data);
 
             UpdateDungeonData(data_string);
 
@@ -172,7 +175,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
     const setLevelData = useCallback(
         (level: string) => {
             console.log("has unity loaded in setLevelData", isLoaded);
-            sendMessage("LevelEditor", "LoadFromBlockChain", level);
+            sendMessage("DataManager", "UpdateWorldData", level);
         },
         [sendMessage, isLoaded],
     );
@@ -188,7 +191,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             return;
         }
 
-        if (!check_rest_state.current && level_loaded.current) {
+        if (!check_rest_state.current) {
             return;
         }
         let player_home_key = PublicKey.findProgramAddressSync(
@@ -196,9 +199,10 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             DUNGEON_PROGRAM,
         )[0];
 
-        let house_data = await request_raw_account_data(bearer_token, player_home_key);
+        let house_data = await request_raw_account_data(bearer_token, player_home_key, "home data");
 
         if (house_data === null) {
+            console.log("Set some data to empty string");
             setLevelData("");
             check_rest_state.current = false;
             return;
@@ -257,7 +261,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         }
 
         let layers_json = {
-            layer_saves: layers_array,
+            level_data: layers_array,
         };
         //console.log(JSON.stringify(layers_json));
 
@@ -481,7 +485,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             // we do have an account
             if (balance === "null") {
                 let player_account_key = PublicKey.findProgramAddressSync([Buffer.from(user_name.current)], DUNGEON_PROGRAM)[0];
-                let player_account_data = await request_raw_account_data(bearer_token, player_account_key);
+                let player_account_data = await request_raw_account_data(bearer_token, player_account_key, "player account data");
 
                 if (player_account_data !== null) {
                     const [encrypted_data] = PlayerAccountData.struct.deserialize(player_account_data);
@@ -707,6 +711,31 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             removeEventListener("StartCrafting", handleStartGathering);
         };
     }, [addEventListener, removeEventListener, handleStartGathering]);
+
+    const handleDungeonInstruction = useCallback(
+        async (instruction_string: string) => {
+            console.log("detected dungeon instruction", instruction_string);
+
+            if (user_keypair.current === null) return;
+
+            let instruction_json = JSON.parse(instruction_string);
+
+            if (instruction_json["instruction"] === DungeonInstruction.play)
+                await Play(bearer_token, user_keypair.current, instruction_json);
+            else if (instruction_json["instruction"] === DungeonInstruction.quit)
+                await Quit(bearer_token, user_keypair.current, instruction_json);
+
+            check_user_state.current = true;
+        },
+        [bearer_token],
+    );
+
+    useEffect(() => {
+        addEventListener("SendDungeonInstruction", handleDungeonInstruction);
+        return () => {
+            removeEventListener("SendDungeonInstruction", handleDungeonInstruction);
+        };
+    }, [addEventListener, removeEventListener, handleDungeonInstruction]);
 
     return (
         <>

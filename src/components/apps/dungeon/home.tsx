@@ -205,7 +205,7 @@ export function DungeonApp() {
 
     // not all state should cause a rerender
     const update_status_effects = useRef<boolean>(true);
-    const num_plays = useRef<number>(-1);
+    const num_interactions = useRef<number>(-1);
     const last_advantage = useRef<boolean>(false);
     const last_loot_bonus = useRef<boolean>(false);
     const roll_one = useRef<number>(0);
@@ -258,7 +258,7 @@ export function DungeonApp() {
     const animateLevel = useRef(0);
 
     // refs to hold initial status
-    const initial_num_plays = useRef<number>(-1);
+    const initial_num_interactions = useRef<number>(-1);
 
     // refs for checking signatures
     const signature_interval = useRef<number | null>(null);
@@ -739,43 +739,43 @@ export function DungeonApp() {
                     initial_status.current = current_status;
                 }
 
-                let current_num_plays = new BN(player_data.num_plays).toNumber();
+                let current_num_interactions = new BN(player_data.num_interactions).toNumber();
 
-                if (current_interaction.current !== null && current_num_plays <= current_interaction.current) {
+                if (current_interaction.current !== null && current_num_interactions <= current_interaction.current) {
                     if (DEBUG) {
-                        console.log("num plays not increased", current_num_plays);
+                        console.log("num plays not increased", current_num_interactions);
                     }
                     return;
                 }
 
                 setPlayerData(player_data);
 
-                current_interaction.current = current_num_plays;
+                current_interaction.current = current_num_interactions;
 
-                num_plays.current = current_num_plays;
+                num_interactions.current = current_num_interactions;
 
                 let current_xp = new BN(player_data.num_xp).toNumber();
 
                 if (DEBUG) {
                     console.log(
                         "in init, progress: ",
-                        player_data.in_progress,
+                        player_data.current_room,
                         "enemy",
-                        player_data.dungeon_enemy,
+                        player_data.current_enemy,
                         "alive",
                         DungeonStatusString[player_data.player_status + 1],
-                        "num_plays",
-                        current_num_plays,
+                        "num_interactions",
+                        current_num_interactions,
                         "num_xp",
                         current_xp,
                     );
                 }
 
-                if (initial_num_plays.current === -1) {
-                    initial_num_plays.current = current_num_plays;
+                if (initial_num_interactions.current === -1) {
+                    initial_num_interactions.current = current_num_interactions;
                 }
 
-                if (current_num_plays === 0) {
+                if (current_num_interactions === 0) {
                     return;
                 }
 
@@ -783,9 +783,9 @@ export function DungeonApp() {
 
                 setWhichCharacter(player_data.player_character);
 
-                setCurrentEnemy(player_data.dungeon_enemy);
+                setCurrentEnemy(player_data.current_enemy);
 
-                setCurrentLevel(player_data.in_progress);
+                setCurrentLevel(player_data.current_room);
 
                 setCurrentStatus(current_status);
 
@@ -897,13 +897,13 @@ export function DungeonApp() {
             console.log("wallet things changed");
         }
 
-        initial_num_plays.current = -1;
+        initial_num_interactions.current = -1;
         current_interaction.current = null;
         initial_status.current = DungeonStatus.unknown;
         setTransactionFailed(false);
         setScreen(Screen.HOME_SCREEN);
         setCurrentLevel(0);
-        num_plays.current = -1;
+        num_interactions.current = -1;
         setDataAccountStatus(AccountStatus.unknown);
         setCurrentStatus(DungeonStatus.unknown);
         setPlayerState(DungeonStatus.unknown);
@@ -932,10 +932,10 @@ export function DungeonApp() {
                 current_enemy,
                 "currentStatus",
                 DungeonStatusString[currentStatus],
-                "num_plays",
-                num_plays.current,
+                "num_interactions",
+                num_interactions.current,
                 "init num plays",
-                initial_num_plays.current,
+                initial_num_interactions.current,
             );
         }
 
@@ -952,8 +952,8 @@ export function DungeonApp() {
 
         // if we aren't alive and numplays is still initial num plays we shouldn't display the enemy
         if (
-            num_plays.current > 1 &&
-            num_plays.current === initial_num_plays.current &&
+            num_interactions.current > 1 &&
+            num_interactions.current === initial_num_interactions.current &&
             data_account_status === AccountStatus.created &&
             currentStatus !== DungeonStatus.alive
         )
@@ -1080,7 +1080,7 @@ export function DungeonApp() {
 
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
-        if (current_player_data !== null && current_player_data?.rest_status[player_character].rest_time_remaining > Date.now() / 1000 + 60)
+        if (current_player_data !== null && current_player_data?.rest_status[player_character].rest_end_time > Date.now() / 1000 + 60)
             return;
 
         setProcessingTransaction(true);
@@ -1854,26 +1854,26 @@ export function DungeonApp() {
     };
 
     const CharacterSelect = () => {
-        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_plays", num_plays,initial_num_plays.current, "dataaccount:", data_account_status, "initial status", initial_status.current, initial_status.current === DungeonStatus.unknown);
+        //console.log("in characterSelect, progress: ", current_level, "enemy", current_enemy, "alive", currentStatus === 0, "num_interactions", num_interactions,initial_num_interactions.current, "dataaccount:", data_account_status, "initial status", initial_status.current, initial_status.current === DungeonStatus.unknown);
 
         let now = Date.now() / 1000 + 60;
-        let knight_resting: boolean = current_player_data !== null && current_player_data?.rest_status[0].rest_time_remaining > now;
-        let ranger_resting: boolean = current_player_data !== null && current_player_data?.rest_status[1].rest_time_remaining > now;
-        let wizard_resting: boolean = current_player_data !== null && current_player_data?.rest_status[2].rest_time_remaining > now;
+        let knight_resting: boolean = current_player_data !== null && current_player_data?.rest_status[0].rest_end_time > now;
+        let ranger_resting: boolean = current_player_data !== null && current_player_data?.rest_status[1].rest_end_time > now;
+        let wizard_resting: boolean = current_player_data !== null && current_player_data?.rest_status[2].rest_end_time > now;
 
         let knight_rest_time =
             current_player_data !== null
-                ? ((bignum_to_num(current_player_data?.rest_status[0].rest_time_remaining) - now) / 60.0 + 1).toFixed(0)
+                ? ((bignum_to_num(current_player_data?.rest_status[0].rest_end_time) - now) / 60.0 + 1).toFixed(0)
                 : "";
 
         let ranger_rest_time =
             current_player_data !== null
-                ? ((bignum_to_num(current_player_data?.rest_status[1].rest_time_remaining) - now) / 60.0 + 1).toFixed(0)
+                ? ((bignum_to_num(current_player_data?.rest_status[1].rest_end_time) - now) / 60.0 + 1).toFixed(0)
                 : "";
 
         let wizard_rest_time =
             current_player_data !== null
-                ? ((bignum_to_num(current_player_data?.rest_status[2].rest_time_remaining) - now) / 60.0 + 1).toFixed(0)
+                ? ((bignum_to_num(current_player_data?.rest_status[2].rest_end_time) - now) / 60.0 + 1).toFixed(0)
                 : "";
 
         return (
@@ -2151,7 +2151,9 @@ export function DungeonApp() {
         if (
             data_account_status === AccountStatus.created &&
             (initial_status.current === DungeonStatus.unknown ||
-                (num_plays.current === initial_num_plays.current && currentStatus === DungeonStatus.alive && current_level > 0))
+                (num_interactions.current === initial_num_interactions.current &&
+                    currentStatus === DungeonStatus.alive &&
+                    current_level > 0))
         ) {
             visible = false;
         }
@@ -2371,7 +2373,7 @@ export function DungeonApp() {
                                     <DisplayPlayerFailedText
                                         current_enemy={current_enemy}
                                         current_level={current_level}
-                                        num_plays={num_plays.current}
+                                        num_plays={num_interactions.current}
                                     />
                                     <Center>
                                         <VStack>
@@ -2430,7 +2432,7 @@ export function DungeonApp() {
                                         <DisplayEnemyAppearsText
                                             current_enemy={current_enemy}
                                             current_level={current_level}
-                                            num_plays={num_plays.current}
+                                            num_plays={num_interactions.current}
                                         />
                                         <Box
                                             as="button"
@@ -2464,7 +2466,7 @@ export function DungeonApp() {
                                             current_level={current_level}
                                             current_enemy={current_enemy}
                                             last_loot={last_loot}
-                                            num_plays={num_plays.current}
+                                            num_plays={num_interactions.current}
                                             total_loot={total_loot}
                                             loot_bonus={last_loot_bonus.current}
                                         />
