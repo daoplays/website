@@ -4,8 +4,6 @@ import { ChakraProvider, Box, HStack, Center, Text, VStack } from "@chakra-ui/re
 
 import { useMediaQuery } from "react-responsive";
 
-import { isMobile } from "react-device-detect";
-
 //import useSound from 'use-sound';
 
 import "react-h5-audio-player/lib/styles.css";
