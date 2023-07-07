@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useState, useMemo, useRef, Fragment } from "react";
 
 import { ChakraProvider, Box, HStack, Center, Text, VStack } from "@chakra-ui/react";
 
@@ -791,6 +791,7 @@ export function DungeonApp() {
 
     const {
         unityProvider,
+        requestFullscreen,
         isLoaded,
         addEventListener,
         removeEventListener,
@@ -1530,6 +1531,10 @@ export function DungeonApp() {
         };
     }, [addEventListener, removeEventListener, handleDungeonInstruction]);
 
+    function handleClickEnterFullscreen() {
+        requestFullscreen(true);
+    }
+
     return (
         <>
             <Navigation />
@@ -1548,7 +1553,16 @@ export function DungeonApp() {
                                 <div className="container">
                                     <div className={styles.container}>
                                         <div className={styles.unityWrapper}>
-                                            <Unity unityProvider={unityProvider} style={{ width: 1920, height: 1080 }} />
+                                            <Fragment>
+                                                <Unity unityProvider={unityProvider} style={{ width: 1920, height: 1080 }} />
+                                                <Box as="button" onClick={handleClickEnterFullscreen}>
+                                                    <div className="font-face-sfpb">
+                                                        <Text fontSize={25} textAlign="center" color="white">
+                                                            FullScreen
+                                                        </Text>
+                                                    </div>
+                                                </Box>
+                                            </Fragment>
                                         </div>
                                     </div>
 
