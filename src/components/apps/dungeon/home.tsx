@@ -74,6 +74,8 @@ export function DungeonApp() {
     const [bearer_token, setBearerToken] = useState<string>("");
     const bearer_interval = useRef<number | null>(null);
 
+    const [ready, setReady] = useState<boolean>(false);
+
     /*
     const DiscountKeyInput: React.FC<DiscountKeyInputProps> = ({ connect }) => {
         let key_size = "50";
@@ -191,7 +193,13 @@ export function DungeonApp() {
 
         return (
             <>
-                <Box as="button" onClick={handleConnectWallet}>
+                <Box
+                    as="button"
+                    onClick={() => {
+                        handleConnectWallet();
+                        setReady(true);
+                    }}
+                >
                     <div className="font-face-sfpb">
                         <Text
                             style={{ textDecoration: isTabletOrMobile ? "none" : "underline", margin: isTabletOrMobile ? "30px 0 0 0" : 0 }}
@@ -1535,26 +1543,38 @@ export function DungeonApp() {
         requestFullscreen(true);
     }
 
+    const isMobile = useMediaQuery({ query: "(max-width: 1920px)" });
+
+    let width = 1920;
+    let height = 1080;
+
+    if (isMobile) {
+        width = window.innerWidth;
+        height = window.innerHeight;
+    }
+
     return (
         <>
             <Navigation />
-
+            <Text color="white">
+                {width} vs {height}
+            </Text>
             <Box width="100%">
                 <Center>
-                    {!wallet.publicKey && (
+                    {!ready && (
                         <>
                             <UnconnectedPage />
                         </>
                     )}
 
-                    {wallet.publicKey && (
+                    {ready && (
                         <>
                             <div className="home">
                                 <div className="container">
                                     <div className={styles.container}>
                                         <div className={styles.unityWrapper}>
                                             <Fragment>
-                                                <Unity unityProvider={unityProvider} style={{ width: 1920, height: 1080 }} />
+                                                <Unity unityProvider={unityProvider} style={{ width: width, height: height }} />
                                                 <Box as="button" onClick={handleClickEnterFullscreen}>
                                                     <div className="font-face-sfpb">
                                                         <Text fontSize={25} textAlign="center" color="white">
