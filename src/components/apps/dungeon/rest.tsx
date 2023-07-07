@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction, SystemProgram } from "@solana/web3.js";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 import bs58 from "bs58";
 import BN from "bn.js";
 
 //  dungeon constants
-import { DUNGEON_PROGRAM, SYSTEM_KEY } from "./constants";
+import { DUNGEON_PROGRAM, SYSTEM_KEY, LOOT_TOKEN_MINT } from "./constants";
 
 // dungeon utils
 import {
@@ -24,9 +25,10 @@ import {
     request_player_account_data,
     PlayerData,
     request_current_balance,
+    request_token_amount,
 } from "./utils";
 
-import { Play, Quit } from "./unity/dungeon_instructions";
+import { Play, Quit, BuyItem } from "./unity/dungeon_instructions";
 
 import { DungeonInstruction } from "./dungeon_state";
 import { createMessage, readMessage, decrypt, encrypt } from "openpgp";
@@ -51,15 +53,32 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
     const check_user_state = useRef<boolean>(true);
     const state_interval = useRef<number | null>(null);
 
+    const check_loot_balance = useRef<boolean>(true);
     const check_user_balance = useRef<boolean>(true);
-    const user_balance = useRef<number>(0);
+    const user_sol_balance = useRef<number>(0);
+    const user_loot_balance = useRef<number>(0);
 
-    const { unityProvider, isLoaded, addEventListener, removeEventListener, sendMessage } = useUnityContext({
+    const {
+        unityProvider,
+        isLoaded,
+        addEventListener,
+        removeEventListener,
+        sendMessage,
+        UNSAFE__detachAndUnloadImmediate: detachAndUnloadImmediate,
+    } = useUnityContext({
         loaderUrl: "/unitybuild/LevelEditor.loader.js",
         dataUrl: "/unitybuild/LevelEditor.data",
         frameworkUrl: "/unitybuild/LevelEditor.framework.js",
         codeUrl: "/unitybuild/LevelEditor.wasm",
     });
+
+    useEffect(() => {
+        return () => {
+            detachAndUnloadImmediate().catch((reason) => {
+                console.log(reason);
+            });
+        };
+    }, [detachAndUnloadImmediate]);
 
     const setBalance = useCallback(
         (pubkey: string, balance: number, decimals: number, uiAmount: number) => {
@@ -71,6 +90,20 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             };
 
             sendMessage("DataManager", "UpdateSolAccount", JSON.stringify(account_data_json));
+        },
+        [sendMessage],
+    );
+
+    const setLootBalance = useCallback(
+        (pubkey: string, balance: number, decimals: number, uiAmount: number) => {
+            let account_data_json = {
+                pubkey: pubkey,
+                balance: balance,
+                decimals: decimals,
+                uiAmount: uiAmount,
+            };
+
+            sendMessage("DataManager", "UpdateLootAccount", JSON.stringify(account_data_json));
         },
         [sendMessage],
     );
@@ -98,15 +131,33 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         if (check_user_balance.current) {
             let new_balance = await request_current_balance(bearer_token, user_keypair.current.publicKey);
 
-            if (user_balance.current === 0 || new_balance !== user_balance.current) {
-                user_balance.current = new_balance;
+            if (user_sol_balance.current === 0 || new_balance !== user_sol_balance.current) {
+                user_sol_balance.current = new_balance;
                 check_user_balance.current = false;
                 setBalance(
                     user_keypair.current.publicKey.toString(),
-                    Math.floor(user_balance.current * LAMPORTS_PER_SOL),
+                    Math.floor(user_sol_balance.current * LAMPORTS_PER_SOL),
                     9,
-                    user_balance.current,
+                    user_sol_balance.current,
                 );
+            }
+        }
+
+        if (check_loot_balance.current) {
+            // get loot balance
+            let loot_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                user_keypair.current.publicKey, // owner
+                true, // allow owner off curve
+            );
+
+            let loot_amount = await request_token_amount(bearer_token, loot_token_account);
+            loot_amount = loot_amount / 1.0e6;
+
+            if (user_loot_balance.current === 0 || loot_amount !== user_loot_balance.current) {
+                user_loot_balance.current = loot_amount;
+                check_loot_balance.current = false;
+                setLootBalance(loot_token_account.toString(), Math.floor(user_loot_balance.current * 1e6), 6, user_loot_balance.current);
             }
         }
 
@@ -126,7 +177,13 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
                 let data_string = JSON.stringify(player_data);
                 console.log("have player data", player_data);
-
+                console.log("have player data string", data_string);
+                console.log(
+                    "gold: ",
+                    player_data.last_gold.toString(),
+                    player_data.total_gold.toString(),
+                    new BN(player_data.total_gold).toJSON,
+                );
                 UpdateDungeonData(data_string);
                 return;
             }
@@ -145,7 +202,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             console.log(error);
             player_state.current = null;
         }
-    }, [bearer_token, setBalance, UpdateDungeonData]);
+    }, [bearer_token, setBalance, setLootBalance, UpdateDungeonData]);
 
     // interval for checking state
     useEffect(() => {
@@ -202,7 +259,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
         let house_data = await request_raw_account_data(bearer_token, player_home_key, "home data");
 
         if (house_data === null) {
-            console.log("Set some data to empty string");
+            console.log("Set home data to empty string");
             setLevelData("");
             check_rest_state.current = false;
             return;
@@ -722,8 +779,13 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
 
             if (instruction_json["instruction"] === DungeonInstruction.play)
                 await Play(bearer_token, user_keypair.current, instruction_json);
-            else if (instruction_json["instruction"] === DungeonInstruction.quit)
+            else if (instruction_json["instruction"] === DungeonInstruction.quit) {
                 await Quit(bearer_token, user_keypair.current, instruction_json);
+                check_loot_balance.current = true;
+            } else if (instruction_json["instruction"] === DungeonInstruction.buy_potion) {
+                await BuyItem(bearer_token, user_keypair.current, instruction_json);
+                check_loot_balance.current = true;
+            }
 
             check_user_state.current = true;
         },
