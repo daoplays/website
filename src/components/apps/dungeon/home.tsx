@@ -10,13 +10,11 @@ import "react-h5-audio-player/lib/styles.css";
 import "./css/home.css";
 
 import { Keypair, PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
-import { getAssociatedTokenAddress } from "@solana/spl-token";
 
 import { WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { PhantomWalletAdapter, SolflareWalletAdapter, BackpackWalletAdapter } from "@solana/wallet-adapter-wallets";
 
 import { WalletModalProvider, useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { createMessage, readMessage, decrypt, encrypt } from "openpgp";
 
 import BN from "bn.js";
 import bs58 from "bs58";
@@ -27,31 +25,23 @@ import { Unity, useUnityContext } from "react-unity-webgl";
 import { bignum } from "@metaplex-foundation/beet";
 
 //  dungeon constants
-import { DEFAULT_FONT_SIZE, DUNGEON_PROGRAM, SYSTEM_KEY, DEBUG, LOOT_TOKEN_MINT } from "./constants";
+import { DEFAULT_FONT_SIZE, DUNGEON_PROGRAM, SYSTEM_KEY } from "./constants";
 
 // dungeon utils
 import {
-    request_player_account_data,
-    request_token_amount,
-    get_JWT_token,
     get_current_blockhash,
     send_transaction,
     bignum_to_num,
-    PlayerData,
-    request_current_balance,
     request_raw_account_data,
     serialise_save_home_instruction,
     HouseData,
     HouseStateData,
     u64Data,
     serialise_create_account_instruction,
-    PlayerAccountData,
     serialise_gather_instruction,
 } from "./utils";
 
 import { DungeonInstruction } from "./dungeon_state";
-
-import { Play, Quit, BuyItem } from "./unity/dungeon_instructions";
 
 // navigation
 import { Navigation } from "./navigation";
@@ -65,13 +55,12 @@ const styles = require("./css/unity.css");
 
 require("@solana/wallet-adapter-react-ui/styles.css");
 
+//var CryptoJS = require("crypto-js");
+
 export function DungeonApp() {
     const wallet = useWallet();
 
     // bearer token used to authorise RPC requests
-    const [bearer_token, setBearerToken] = useState<string>("");
-    const bearer_interval = useRef<number | null>(null);
-
     const [ready, setReady] = useState<boolean>(false);
 
     /*
@@ -426,7 +415,7 @@ export function DungeonApp() {
 */
     /*
     const check_state = useCallback(async () => {
-        if (bearer_token === "") {
+        if ("" === "") {
             console.log("no bearer token set in check_state");
             return;
         }
@@ -449,7 +438,7 @@ export function DungeonApp() {
 
         if (check_user_state.current) {
             try {
-                let dungeon_program_data = await request_dungeon_program_data(bearer_token, program_data_key);
+                let dungeon_program_data = await request_dungeon_program_data("", program_data_key);
 
                 if (dungeon_program_data !== null) {
                     let ema_value = new BN(dungeon_program_data?.current_ema_value).toNumber() / 1e6;
@@ -462,7 +451,7 @@ export function DungeonApp() {
             }
 
             try {
-                let player_data = await request_player_account_data(bearer_token, player_data_key);
+                let player_data = await request_player_account_data("", player_data_key);
 
                 if (player_data === null) {
                     num_state_checks.current += 1;
@@ -552,7 +541,7 @@ export function DungeonApp() {
                         DUNGEON_PROGRAM,
                     )[0];
 
-                    let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
+                    let freeplay_data = await request_key_freeplays_data("", key_freeplays_account);
 
                     if (freeplay_data !== null) {
                         console.log("free plays remaining", freeplay_data);
@@ -581,7 +570,7 @@ export function DungeonApp() {
                     [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
                     DUNGEON_PROGRAM,
                 )[0];
-                let achievement_data = await request_player_achievement_data(bearer_token, achievement_data_key);
+                let achievement_data = await request_player_achievement_data("", achievement_data_key);
 
                 if (achievement_data !== null) {
                     if (DEBUG) {
@@ -610,40 +599,8 @@ export function DungeonApp() {
                 setAchievementData(null);
             }
         }
-    }, [wallet, bearer_token, current_key_mint, key_freeplays]);
+    }, [wallet, "", current_key_mint, key_freeplays]);
 */
-
-    const set_JWT_token = useCallback(async () => {
-        console.log("Setting new JWT token");
-        let token = await get_JWT_token();
-        setBearerToken(token["token"]);
-    }, []);
-
-    // interval for checking JWT
-    useEffect(() => {
-        let one_second = 1000;
-        if (bearer_interval.current === null) {
-            bearer_interval.current = window.setInterval(set_JWT_token, one_second * 60 * 5);
-        } else {
-            window.clearInterval(bearer_interval.current);
-            bearer_interval.current = null;
-        }
-        // here's the cleanup function
-        return () => {
-            if (bearer_interval.current !== null) {
-                window.clearInterval(bearer_interval.current);
-                bearer_interval.current = null;
-            }
-        };
-    }, [set_JWT_token]);
-
-    useEffect(() => {
-        if (DEBUG) {
-            console.log("In initial use effect");
-        }
-
-        set_JWT_token();
-    }, [set_JWT_token]);
 
     /*
     const ApplyKey = useCallback(async () => {
@@ -656,7 +613,7 @@ export function DungeonApp() {
 
         if (isNaN(parsed_key_index)) return;
 
-        let key_meta_data = await run_keyData_GPA(bearer_token, parsed_key_index);
+        let key_meta_data = await run_keyData_GPA("", parsed_key_index);
 
         if (key_meta_data === null) {
             setDiscountError("Key " + discount_key_index + " has not been minted");
@@ -676,7 +633,7 @@ export function DungeonApp() {
             true, // allow owner off curve
         );
 
-        let token_amount = await request_token_amount(bearer_token, key_token_account);
+        let token_amount = await request_token_amount("", key_token_account);
 
         if (token_amount !== 1) {
             setDiscountError("User does not own dungeon key " + key_index.toString());
@@ -693,7 +650,7 @@ export function DungeonApp() {
             DUNGEON_PROGRAM,
         )[0];
 
-        let freeplay_data = await request_key_freeplays_data(bearer_token, key_freeplays_account);
+        let freeplay_data = await request_key_freeplays_data("", key_freeplays_account);
 
         if (freeplay_data === null) {
             //console.log("no free play account found, setting to ", max_freeplays);
@@ -711,7 +668,7 @@ export function DungeonApp() {
 
         setCurrentKeyMint(key_mint);
         setCurrentKeyIndex(key_index);
-    }, [wallet, discount_key_index, bearer_token]);
+    }, [wallet, discount_key_index, ""]);
 */
     const LargeDoor = () => {
         const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
@@ -783,17 +740,11 @@ export function DungeonApp() {
 
     // account data
     const user_name = useRef<string | null>(null);
-    const password = useRef<string | null>(null);
     const user_keypair = useRef<Keypair | null>(null);
 
-    const player_state = useRef<PlayerData | null>(null);
     const check_user_state = useRef<boolean>(true);
-    const state_interval = useRef<number | null>(null);
 
-    const check_loot_balance = useRef<boolean>(true);
     const check_user_balance = useRef<boolean>(true);
-    const user_sol_balance = useRef<number>(0);
-    const user_loot_balance = useRef<number>(0);
 
     const {
         unityProvider,
@@ -818,43 +769,22 @@ export function DungeonApp() {
         };
     }, [detachAndUnloadImmediate]);
 
-    const setBalance = useCallback(
-        (pubkey: string, balance: number, decimals: number, uiAmount: number) => {
-            let account_data_json = {
-                pubkey: pubkey,
-                balance: balance,
-                decimals: decimals,
-                uiAmount: uiAmount,
-            };
-
-            sendMessage("DataManager", "UpdateSolAccount", JSON.stringify(account_data_json));
+    const setBrowserWallet = useCallback(
+        (pubkey: string) => {
+            sendMessage("ConnectUI", "setBrowserPubkey", pubkey);
         },
         [sendMessage],
     );
 
-    const setLootBalance = useCallback(
-        (pubkey: string, balance: number, decimals: number, uiAmount: number) => {
-            let account_data_json = {
-                pubkey: pubkey,
-                balance: balance,
-                decimals: decimals,
-                uiAmount: uiAmount,
-            };
+    useEffect(() => {
+        if (wallet.publicKey == null) return;
 
-            sendMessage("DataManager", "UpdateLootAccount", JSON.stringify(account_data_json));
-        },
-        [sendMessage],
-    );
+        setBrowserWallet(wallet.publicKey.toString());
+    }, [wallet, setBrowserWallet]);
 
-    const UpdateDungeonData = useCallback(
-        (data: string) => {
-            sendMessage("DataManager", "UpdateDungeonData", data);
-        },
-        [sendMessage],
-    );
-
+    /*
     const check_state = useCallback(async () => {
-        if (bearer_token === "") {
+        if ("" === "") {
             console.log("no bearer token set in check_state");
             return;
         }
@@ -867,7 +797,7 @@ export function DungeonApp() {
 
         console.log("check user state");
         if (check_user_balance.current) {
-            let new_balance = await request_current_balance(bearer_token, user_keypair.current.publicKey);
+            let new_balance = await request_current_balance("", user_keypair.current.publicKey);
 
             if (user_sol_balance.current === 0 || new_balance !== user_sol_balance.current) {
                 user_sol_balance.current = new_balance;
@@ -889,7 +819,7 @@ export function DungeonApp() {
                 true, // allow owner off curve
             );
 
-            let loot_amount = await request_token_amount(bearer_token, loot_token_account);
+            let loot_amount = await request_token_amount("", loot_token_account);
             loot_amount = loot_amount / 1.0e6;
 
             if (user_loot_balance.current === 0 || loot_amount !== user_loot_balance.current) {
@@ -900,9 +830,18 @@ export function DungeonApp() {
         }
 
         let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+        console.log("player data key: ", player_data_key.toString());
+        console.log("seed ", user_keypair.current.publicKey.toBytes());
+        console.log("dungeon program", DUNGEON_PROGRAM.toBuffer());
+        console.log("PDA", Buffer.from("ProgramDerivedAddress"));
 
+        let buffer = Buffer.alloc(0);
+        buffer = Buffer.concat([buffer, user_keypair.current.publicKey.toBuffer()]);
+        buffer = Buffer.concat([buffer, DUNGEON_PROGRAM.toBuffer(), Buffer.from("ProgramDerivedAddress")]);
+        let publicKeyBytes = createHash("sha256").update(buffer).digest("hex");
+        console.log("public key bytes: ", publicKeyBytes);
         try {
-            let player_data = await request_player_account_data(bearer_token, player_data_key);
+            let player_data = await request_player_account_data("", player_data_key);
 
             if (player_data === null) {
                 return;
@@ -940,7 +879,7 @@ export function DungeonApp() {
             console.log(error);
             player_state.current = null;
         }
-    }, [bearer_token, setBalance, setLootBalance, UpdateDungeonData]);
+    }, ["", setBalance, setLootBalance, UpdateDungeonData]);
 
     // interval for checking state
     useEffect(() => {
@@ -958,7 +897,7 @@ export function DungeonApp() {
             }
         };
     }, [check_state]);
-
+*/
     const sendLoginConfirmation = useCallback(
         (message: string) => {
             console.log("has unity loaded in sendLoginConfirmation", isLoaded);
@@ -994,7 +933,7 @@ export function DungeonApp() {
             DUNGEON_PROGRAM,
         )[0];
 
-        let house_data = await request_raw_account_data(bearer_token, player_home_key, "home data");
+        let house_data = await request_raw_account_data("", player_home_key, "home data");
 
         if (house_data === null) {
             console.log("Set home data to empty string");
@@ -1064,7 +1003,7 @@ export function DungeonApp() {
         check_rest_state.current = false;
 
         return;
-    }, [bearer_token, setLevelData]);
+    }, [setLevelData]);
 
     // interval for checking state
     useEffect(() => {
@@ -1085,66 +1024,66 @@ export function DungeonApp() {
 
     // Unity -> React
 
-    const UploadLevel = useCallback(
-        async (house_data: HouseData, layer: number) => {
-            if (user_keypair.current === null) return;
+    const UploadLevel = useCallback(async (house_data: HouseData, layer: number) => {
+        if (user_keypair.current === null) return;
 
-            let player_home_key = PublicKey.findProgramAddressSync(
-                [user_keypair.current.publicKey.toBytes(), Buffer.from("home")],
-                DUNGEON_PROGRAM,
-            )[0];
+        let player_home_key = PublicKey.findProgramAddressSync(
+            [user_keypair.current.publicKey.toBytes(), Buffer.from("home")],
+            DUNGEON_PROGRAM,
+        )[0];
 
-            const instruction_data = serialise_save_home_instruction(DungeonInstruction.save_home, layer, house_data);
+        const instruction_data = serialise_save_home_instruction(DungeonInstruction.save_home, layer, house_data);
 
-            let max_size = 1044;
-            if (instruction_data.length > max_size) return;
+        let max_size = 1044;
+        if (instruction_data.length > max_size) return;
 
-            var account_vector = [
-                { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
-                { pubkey: player_home_key, isSigner: false, isWritable: true },
-                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
-            ];
+        var account_vector = [
+            { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
+            { pubkey: player_home_key, isSigner: false, isWritable: true },
+            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+        ];
 
-            const play_instruction = new TransactionInstruction({
-                keys: account_vector,
-                programId: DUNGEON_PROGRAM,
-                data: instruction_data,
-            });
+        const play_instruction = new TransactionInstruction({
+            keys: account_vector,
+            programId: DUNGEON_PROGRAM,
+            data: instruction_data,
+        });
 
-            let txArgs = await get_current_blockhash(bearer_token);
+        let txArgs = await get_current_blockhash("");
 
-            let transaction = new Transaction(txArgs);
-            transaction.feePayer = user_keypair.current.publicKey;
+        let transaction = new Transaction(txArgs);
+        transaction.feePayer = user_keypair.current.publicKey;
 
-            transaction.add(play_instruction);
+        transaction.add(play_instruction);
 
-            transaction.sign(user_keypair.current);
+        transaction.sign(user_keypair.current);
 
-            try {
-                const encoded_transaction = bs58.encode(transaction.serialize());
+        try {
+            const encoded_transaction = bs58.encode(transaction.serialize());
 
-                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+            var transaction_response = await send_transaction("", encoded_transaction);
 
-                if (transaction_response.result === "INVALID") {
-                    console.log(transaction_response);
-                    return;
-                }
-            } catch (error) {
-                console.log(error);
+            if (transaction_response.result === "INVALID") {
+                console.log(transaction_response);
                 return;
             }
-        },
-        [bearer_token],
-    );
+        } catch (error) {
+            console.log(error);
+            return;
+        }
+    }, []);
 
     const CreatePlayerAccount = useCallback(
-        async (name: string, balance: bignum, data: number[], keypair: Keypair) => {
+        async (name: string, balance: bignum, iv: number[], salt: number[], data: number[], keypair: Keypair) => {
             if (wallet.publicKey === null || wallet.signTransaction === undefined || wallet.signMessage === undefined) return;
 
             let player_account_key = PublicKey.findProgramAddressSync([Buffer.from(name)], DUNGEON_PROGRAM)[0];
             let player_dungeon_key = PublicKey.findProgramAddressSync([keypair.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
-            const instruction_data = serialise_create_account_instruction(DungeonInstruction.create_account, name, balance, data);
+            console.log("iv :", iv, iv.length);
+            console.log("salt :", salt, salt.length);
+
+            const instruction_data = serialise_create_account_instruction(DungeonInstruction.create_account, name, balance, iv, salt, data);
 
             let max_size = 1044;
             if (instruction_data.length > max_size) return;
@@ -1164,7 +1103,7 @@ export function DungeonApp() {
                 data: instruction_data,
             });
 
-            let txArgs = await get_current_blockhash(bearer_token);
+            let txArgs = await get_current_blockhash("");
 
             let transaction = new Transaction(txArgs);
             transaction.feePayer = wallet.publicKey;
@@ -1177,7 +1116,7 @@ export function DungeonApp() {
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+                var transaction_response = await send_transaction("", encoded_transaction);
 
                 if (transaction_response.result === "INVALID") {
                     console.log(transaction_response);
@@ -1211,7 +1150,7 @@ export function DungeonApp() {
             };
             sendLoginConfirmation(JSON.stringify(message_json));
         },
-        [wallet, bearer_token, sendLoginConfirmation],
+        [wallet, sendLoginConfirmation],
     );
 
     // Save the level data
@@ -1270,94 +1209,36 @@ export function DungeonApp() {
             let account_json = JSON.parse(account_data);
 
             user_name.current = account_json["user_name"];
-            password.current = account_json["password"];
-            let balance: string = account_json["balance"];
+            let balance: number = account_json["balance"];
+            let iv: number[] = account_json["iv"];
+            let salt: number[] = account_json["salt"];
+            let data: number[] = account_json["data"];
+            let private_key: number[] = account_json["private_key"];
 
-            console.log("have user/pw", user_name.current, password.current);
+            console.log("have user data", iv, salt, data);
 
-            if (user_name.current == null || password.current == null) return;
+            user_keypair.current = Keypair.fromSecretKey(new Uint8Array(private_key));
 
-            // we do have an account
-            if (balance === "null") {
-                let player_account_key = PublicKey.findProgramAddressSync([Buffer.from(user_name.current)], DUNGEON_PROGRAM)[0];
-                let player_account_data = await request_raw_account_data(bearer_token, player_account_key, "player account data");
+            console.log(
+                "have key ",
+                balance,
+                user_name.current,
+                user_keypair.current.publicKey.toString(),
+                user_keypair.current.secretKey.toString(),
+            );
 
-                if (player_account_data !== null) {
-                    const [encrypted_data] = PlayerAccountData.struct.deserialize(player_account_data);
+            if (user_name.current === null) return;
 
-                    console.log("chain data: ", encrypted_data);
-                    const encryptedMessage = await readMessage({
-                        binaryMessage: Uint8Array.from(encrypted_data.data), // parse encrypted bytes
-                    });
-                    try {
-                        const { data: decrypted } = await decrypt({
-                            message: encryptedMessage,
-                            passwords: [password.current], // decrypt with password
-                            format: "binary", // output as Uint8Array
-                        });
-
-                        console.log("decrypted:", decrypted); // Uint8Array([0x01, 0x01, 0x01])
-                        let decrypted_json: any = JSON.parse(Buffer.from(decrypted).toString("utf8"));
-                        console.log("json: ", decrypted_json);
-
-                        let decrypted_keypair: Keypair = Keypair.fromSecretKey(Uint8Array.from(decrypted_json["secret"]));
-                        console.log(decrypted_keypair.publicKey.toString());
-
-                        user_keypair.current = decrypted_keypair;
-                    } catch (error) {
-                        console.log("error decrypting data, wrong password");
-                        console.log(error);
-
-                        let message_json = {
-                            result_code: -1,
-                            result_message: "Incorrect Passphrase",
-                        };
-
-                        sendLoginConfirmation(JSON.stringify(message_json));
-                        return;
-                    }
-
-                    unity_initialised.current = true;
-
-                    let message_json = {
-                        result_code: 0,
-                        result_message: "Login Succeeded",
-                    };
-
-                    sendLoginConfirmation(JSON.stringify(message_json));
-
-                    return;
-                }
-
-                console.log("player data was null");
-                return;
-            }
-
-            // if not then we need to set one up
-            const accountKeypair = Keypair.generate();
-            let secret: Uint8Array = accountKeypair.secretKey;
-
-            let json_result = {
-                name: user_name.current,
-                secret: Array.from(secret),
-            };
-
-            let to_encrypt = Buffer.from(JSON.stringify(json_result));
-
-            console.log("encrypt: ", JSON.stringify(json_result), to_encrypt);
-            const message = await createMessage({ binary: to_encrypt });
-            const encrypted = await encrypt({
-                message, // input as Message object
-                passwords: [password.current], // multiple passwords possible
-                format: "binary", // don't ASCII armor (for Uint8Array output)
-            });
-            console.log("encrypted:", encrypted); // Uint8Array
-
-            let new_balance: bignum = new BN(parseFloat(balance) * LAMPORTS_PER_SOL);
-
-            await CreatePlayerAccount(user_name.current, new_balance, Array.from(encrypted), accountKeypair);
+            await CreatePlayerAccount(
+                user_name.current,
+                new BN(Math.floor(balance * LAMPORTS_PER_SOL)),
+                Array.from(iv),
+                Array.from(salt),
+                Array.from(data),
+                user_keypair.current,
+            );
         },
-        [bearer_token, CreatePlayerAccount, sendLoginConfirmation],
+        [CreatePlayerAccount],
     );
 
     const handleTransferSOL = useCallback(
@@ -1374,7 +1255,7 @@ export function DungeonApp() {
                 lamports: amount_bn,
             });
 
-            let txArgs = await get_current_blockhash(bearer_token);
+            let txArgs = await get_current_blockhash("");
 
             let transaction = new Transaction(txArgs);
             transaction.feePayer = wallet.publicKey;
@@ -1387,7 +1268,7 @@ export function DungeonApp() {
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
-                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
+                var transaction_response = await send_transaction("", encoded_transaction);
                 console.log("transaction response:", transaction_response);
                 if (transaction_response.result === "INVALID") {
                     console.log(transaction_response);
@@ -1400,7 +1281,7 @@ export function DungeonApp() {
 
             check_user_balance.current = true;
         },
-        [wallet, bearer_token],
+        [wallet],
     );
 
     const handleTransferLOOT = useCallback(async () => {}, []);
@@ -1446,59 +1327,56 @@ export function DungeonApp() {
         };
     }, [addEventListener, removeEventListener, handleConfirmDataLoaded]);
 
-    const handleStartGathering = useCallback(
-        async (gathering_type: number) => {
-            console.log("detected start crafting", gathering_type);
+    const handleStartGathering = useCallback(async (gathering_type: number) => {
+        console.log("detected start crafting", gathering_type);
 
-            if (user_keypair.current === null) return;
+        if (user_keypair.current === null) return;
 
-            let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+        let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
-            const instruction_data = serialise_gather_instruction(DungeonInstruction.craft, gathering_type);
+        const instruction_data = serialise_gather_instruction(DungeonInstruction.craft, gathering_type);
 
-            var account_vector = [
-                { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
-                { pubkey: player_data_key, isSigner: false, isWritable: true },
+        var account_vector = [
+            { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
+            { pubkey: player_data_key, isSigner: false, isWritable: true },
 
-                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
-            ];
+            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+        ];
 
-            const play_instruction = new TransactionInstruction({
-                keys: account_vector,
-                programId: DUNGEON_PROGRAM,
-                data: instruction_data,
-            });
+        const play_instruction = new TransactionInstruction({
+            keys: account_vector,
+            programId: DUNGEON_PROGRAM,
+            data: instruction_data,
+        });
 
-            let txArgs = await get_current_blockhash(bearer_token);
+        let txArgs = await get_current_blockhash("");
 
-            let transaction = new Transaction(txArgs);
-            transaction.feePayer = user_keypair.current.publicKey;
+        let transaction = new Transaction(txArgs);
+        transaction.feePayer = user_keypair.current.publicKey;
 
-            console.log(transaction.recentBlockhash, transaction.lastValidBlockHeight);
+        console.log(transaction.recentBlockhash, transaction.lastValidBlockHeight);
 
-            transaction.add(play_instruction);
+        transaction.add(play_instruction);
 
-            transaction.sign(user_keypair.current);
+        transaction.sign(user_keypair.current);
 
-            console.log("sign with ", user_keypair.current.publicKey.toString());
-            try {
-                const encoded_transaction = bs58.encode(transaction.serialize());
+        console.log("sign with ", user_keypair.current.publicKey.toString());
+        try {
+            const encoded_transaction = bs58.encode(transaction.serialize());
 
-                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
-                console.log("transaction response:", transaction_response);
-                if (transaction_response.result === "INVALID") {
-                    console.log(transaction_response);
-                    return;
-                }
-            } catch (error) {
-                console.log(error);
+            var transaction_response = await send_transaction("", encoded_transaction);
+            console.log("transaction response:", transaction_response);
+            if (transaction_response.result === "INVALID") {
+                console.log(transaction_response);
                 return;
             }
+        } catch (error) {
+            console.log(error);
+            return;
+        }
 
-            check_user_state.current = true;
-        },
-        [bearer_token],
-    );
+        check_user_state.current = true;
+    }, []);
 
     useEffect(() => {
         addEventListener("StartCrafting", handleStartGathering);
@@ -1507,28 +1385,13 @@ export function DungeonApp() {
         };
     }, [addEventListener, removeEventListener, handleStartGathering]);
 
-    const handleDungeonInstruction = useCallback(
-        async (instruction_string: string) => {
-            console.log("detected dungeon instruction", instruction_string);
+    const handleDungeonInstruction = useCallback(async (instruction_string: string) => {
+        console.log("detected dungeon instruction", instruction_string);
 
-            if (user_keypair.current === null) return;
+        if (user_keypair.current === null) return;
 
-            let instruction_json = JSON.parse(instruction_string);
-
-            if (instruction_json["instruction"] === DungeonInstruction.play)
-                await Play(bearer_token, user_keypair.current, instruction_json);
-            else if (instruction_json["instruction"] === DungeonInstruction.quit) {
-                await Quit(bearer_token, user_keypair.current, instruction_json);
-                check_loot_balance.current = true;
-            } else if (instruction_json["instruction"] === DungeonInstruction.buy_potion) {
-                await BuyItem(bearer_token, user_keypair.current, instruction_json);
-                check_loot_balance.current = true;
-            }
-
-            check_user_state.current = true;
-        },
-        [bearer_token],
-    );
+        check_user_state.current = true;
+    }, []);
 
     useEffect(() => {
         addEventListener("SendDungeonInstruction", handleDungeonInstruction);

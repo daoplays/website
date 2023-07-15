@@ -406,7 +406,7 @@ export function RestScreen({ bearer_token }: { bearer_token: string }) {
             let player_account_key = PublicKey.findProgramAddressSync([Buffer.from(name)], DUNGEON_PROGRAM)[0];
             let player_dungeon_key = PublicKey.findProgramAddressSync([keypair.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
-            const instruction_data = serialise_create_account_instruction(DungeonInstruction.create_account, name, balance, data);
+            const instruction_data = serialise_create_account_instruction(DungeonInstruction.create_account, name, balance, [0], [0], data);
 
             let max_size = 1044;
             if (instruction_data.length > max_size) return;

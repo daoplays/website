@@ -794,16 +794,25 @@ class DungeonSaveHomeInstruction {
 }
 
 class DungeonCreateAccountInstruction {
-    constructor(readonly instruction: number, readonly character: string, readonly balance: bignum, readonly data: number[]) {}
+    constructor(
+        readonly instruction: number,
+        readonly character: string,
+        readonly balance: bignum,
+        readonly iv: number[],
+        readonly salt: number[],
+        readonly data: number[],
+    ) {}
 
     static readonly struct = new FixableBeetStruct<DungeonCreateAccountInstruction>(
         [
             ["instruction", u8],
             ["character", utf8String],
             ["balance", u64],
+            ["iv", uniformFixedSizeArray(u8, 16)],
+            ["salt", uniformFixedSizeArray(u8, 16)],
             ["data", array(u8)],
         ],
-        (args) => new DungeonCreateAccountInstruction(args.instruction!, args.character!, args.balance!, args.data!),
+        (args) => new DungeonCreateAccountInstruction(args.instruction!, args.character!, args.balance!, args.iv!, args.salt!, args.data!),
         "DungeonCreateAccountInstruction",
     );
 }
@@ -956,9 +965,11 @@ export function serialise_create_account_instruction(
     instruction: number,
     character: string,
     balance: bignum,
+    iv: number[],
+    salt: number[],
     encrypted_data: number[],
 ): Buffer {
-    const data = new DungeonCreateAccountInstruction(instruction, character, balance, encrypted_data);
+    const data = new DungeonCreateAccountInstruction(instruction, character, balance, iv, salt, encrypted_data);
     const [buf] = DungeonCreateAccountInstruction.struct.serialize(data);
 
     return buf;
