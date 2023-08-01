@@ -1,25 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 
-import PlotlyChart from "react-plotlyjs-ts";
-import { Box, Center, HStack, Text, VStack } from "@chakra-ui/react";
-import Table from "react-bootstrap/Table";
-//import { isMobile } from "react-device-detect";
-import Tab from "react-bootstrap/Tab";
-import Tabs from "react-bootstrap/Tabs";
-import Container from "react-bootstrap/Container";
-import { useMediaQuery } from "react-responsive";
-//import {
-//   useWallet
-//} from '@solana/wallet-adapter-react';
-
-import { DEFAULT_FONT_SIZE, DUNGEON_FONT_SIZE, EMOJI_SIZE } from "./constants";
-import { AchievementData, bignum_to_num, PlayerData } from "./utils";
-import { DungeonEnemy, DungeonCharacter } from "./dungeon_state";
-
-import "./css/table.css";
-import "./css/fonts.css";
-import "./css/tabs.css";
-
+/*
 import assassin_emoji from "./emojis/Assassin.gif";
 import blue_slime_emoji from "./emojis/BlueSlime.gif";
 import boulder_emoji from "./emojis/Boulder.png";
@@ -985,3 +966,4 @@ export function StatsScreen({
         </Container>
     );
 }
+*/

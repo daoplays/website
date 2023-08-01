@@ -33,15 +33,11 @@ import {
     send_transaction,
     bignum_to_num,
     request_raw_account_data,
-    serialise_save_home_instruction,
-    HouseData,
     HouseStateData,
     u64Data,
     serialise_create_account_instruction,
     serialise_gather_instruction,
 } from "./utils";
-
-import { DungeonInstruction } from "./dungeon_state";
 
 // navigation
 import { Navigation } from "./navigation";
@@ -63,113 +59,6 @@ export function DungeonApp() {
     // bearer token used to authorise RPC requests
     const [ready, setReady] = useState<boolean>(false);
 
-    /*
-    const DiscountKeyInput: React.FC<DiscountKeyInputProps> = ({ connect }) => {
-        let key_size = "50";
-        if (isMobile) {
-            key_size = "40";
-        }
-        const { setVisible } = useWalletModal();
-
-        const handleConnectWallet = useCallback(async () => {
-            setVisible(true);
-        }, [setVisible]);
-
-        return (
-            <>
-                <div style={{ marginTop: "1rem" }}></div>
-                <div
-                    style={{ margin: 0 }}
-                    onClick={
-                        connect
-                            ? () => {
-                                  CloseDiscountError();
-                                  handleConnectWallet();
-                              }
-                            : undefined
-                    }
-                >
-                    <Popover
-                        returnFocusOnClose={false}
-                        isOpen={show_discount_error}
-                        onClose={CloseDiscountError}
-                        placement="bottom"
-                        closeOnBlur={false}
-                    >
-                        <PopoverTrigger>
-                            <Button variant="link" size="md" onClick={OpenDiscountError}>
-                                <img style={{ imageRendering: "pixelated" }} src={key} width={key_size} alt={""} />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent backgroundColor={"black"}>
-                            <div className="font-face-sfpb" color="white">
-                                <PopoverHeader
-                                    style={{ borderBottomWidth: 0 }}
-                                    fontSize={DUNGEON_FONT_SIZE}
-                                    color="white"
-                                    fontWeight="semibold"
-                                    ml="2rem"
-                                    mr="2rem"
-                                >
-                                    Enter Key Number
-                                </PopoverHeader>
-                            </div>
-                            <PopoverArrow />
-                            <PopoverCloseButton ml="1rem" color="white" />
-                            <PopoverBody>
-                                <FocusLock returnFocus persistentFocus={false}>
-                                    <VStack align="center">
-                                        <div className="font-face-sfpb">
-                                            <NumberInput
-                                                fontSize={DUNGEON_FONT_SIZE}
-                                                color="white"
-                                                size="lg"
-                                                onChange={(valueString) => setDiscountKeyIndex(valueString)}
-                                                value={discount_key_index}
-                                                precision={0}
-                                                borderColor="white"
-                                                min={1}
-                                                max={3500}
-                                            >
-                                                <NumberInputField
-                                                    height={DUNGEON_FONT_SIZE}
-                                                    paddingTop="1rem"
-                                                    paddingBottom="1rem"
-                                                    borderColor="white"
-                                                />
-                                            </NumberInput>
-                                        </div>
-                                        <div className="font-face-sfpb">
-                                            <Button variant="link" size="md" color="white" onClick={ApplyKey}>
-                                                Apply
-                                            </Button>
-                                        </div>
-                                    </VStack>
-                                    {key_freeplays >= 0 && (
-                                        <>
-                                            <Divider mt="1rem" mb="1rem" />
-                                            <div className="font-face-sfpb">
-                                                <Text color="white">{key_freeplays} freeplays remaining</Text>
-                                            </div>
-                                        </>
-                                    )}
-                                    {discount_error && (
-                                        <>
-                                            <Divider mt="1rem" mb="1rem" />
-                                            <div className="font-face-sfpb">
-                                                <Text color="white">{discount_error}</Text>
-                                            </div>
-                                        </>
-                                    )}
-                                </FocusLock>
-                            </PopoverBody>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-            </>
-        );
-    };
-*/
     function Disclaimer() {
         const { setVisible } = useWalletModal();
         const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
@@ -293,383 +182,7 @@ export function DungeonApp() {
         );
     }
     */
-    /*
-    function RestModal() {
-        const handleClose = () => {
-            setShowRest(false);
-        };
 
-        if (show_rest === false) return <></>;
-
-        return (
-            <>
-                <Modal centered show={show_rest} animation={false} onHide={handleClose}>
-                    <div className="font-face-sfpb">
-                        <Modal.Header style={{ backgroundColor: "black" }} closeButton>
-                            <Modal.Title style={{ fontSize: 30, color: "white", fontWeight: "semibold" }}>Rest at the Inn</Modal.Title>
-                        </Modal.Header>
-                    </div>
-                    <div className="font-face-sfpb text-center">
-                        <Modal.Body style={{ backgroundColor: "black", fontSize: 20, color: "white", fontWeight: "semibold" }}>
-                            <HStack>
-                                <VStack>
-                                    <Box
-                                        as="button"
-                                        borderWidth="1px"
-                                        borderColor={rest_state === 0 ? "blue" : "black"}
-                                        onClick={() => setRestState(0)}
-                                    >
-                                        <img style={{ imageRendering: "pixelated" }} src={xp_bed} width={400} alt={"generic"} />
-                                    </Box>
-                                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        XP
-                                    </Text>
-                                    <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                        50% chance to gain +1 XP per room
-                                    </Text>
-                                </VStack>
-                                <VStack>
-                                    <Box
-                                        as="button"
-                                        borderWidth="1px"
-                                        borderColor={rest_state === 1 ? "green" : "black"}
-                                        onClick={() => setRestState(1)}
-                                    >
-                                        <img style={{ imageRendering: "pixelated" }} src={loot_bed} width={400} alt={"generic"} />
-                                    </Box>
-                                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        Loot
-                                    </Text>
-                                    <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                        +35% Loot per room
-                                    </Text>
-                                </VStack>
-                                <VStack>
-                                    <Box
-                                        as="button"
-                                        borderWidth="1px"
-                                        borderColor={rest_state === 2 ? "green" : "black"}
-                                        onClick={() => setRestState(2)}
-                                    >
-                                        <img style={{ imageRendering: "pixelated" }} src={power_bed} width={400} alt={"generic"} />
-                                    </Box>
-                                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                        Power
-                                    </Text>
-                                    <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                        +1 Power per room
-                                    </Text>
-                                </VStack>
-                            </HStack>
-                        </Modal.Body>
-                    </div>
-
-                    <Modal.Footer style={{ alignItems: "center", justifyContent: "center", backgroundColor: "black" }}>
-                        <Center width="100%">
-                            <VStack width="100%">
-                                <HStack width="100%">
-                                    <VStack width="33%">
-                                        <Box as="button" onClick={(e: any) => Rest(0)}>
-                                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                                1h
-                                                <br />
-                                                (4 LOOT)
-                                            </Text>
-                                        </Box>
-                                        <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                            +5 Energy
-                                        </Text>
-                                    </VStack>
-                                    <VStack width="33%">
-                                        <Box as="button" onClick={(e: any) => Rest(1)}>
-                                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                                4h
-                                                <br />
-                                                (20 LOOT)
-                                            </Text>
-                                        </Box>
-                                        <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                            +25 Energy
-                                        </Text>
-                                    </VStack>
-                                    <VStack width="33%">
-                                        <Box as="button" onClick={(e: any) => Rest(2)}>
-                                            <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white">
-                                                8h
-                                                <br />
-                                                (40 LOOT)
-                                            </Text>
-                                        </Box>
-                                        <Text className="font-face-sfpb" fontSize="10px" textAlign="center" color="grey">
-                                            +60 Energy
-                                        </Text>
-                                    </VStack>
-                                </HStack>
-                            </VStack>
-                        </Center>
-                    </Modal.Footer>
-                </Modal>
-            </>
-        );
-    }
-*/
-    /*
-    const check_state = useCallback(async () => {
-        if ("" === "") {
-            console.log("no bearer token set in check_state");
-            return;
-        }
-
-        if (DEBUG) {
-            console.log("in in it check_updates ", check_user_state.current);
-        }
-
-        if (!wallet.publicKey) {
-            return;
-        }
-
-        if (num_state_checks.current > 2) check_user_state.current = false;
-
-        if (!check_user_state.current && !check_achievements.current) return;
-
-        let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
-
-        let program_data_key = PublicKey.findProgramAddressSync([Buffer.from(DATA_ACCOUNT_SEED)], DUNGEON_PROGRAM)[0];
-
-        if (check_user_state.current) {
-            try {
-                let dungeon_program_data = await request_dungeon_program_data("", program_data_key);
-
-                if (dungeon_program_data !== null) {
-                    let ema_value = new BN(dungeon_program_data?.current_ema_value).toNumber() / 1e6;
-
-                    setLootPerDay(24 * 60 * ema_value);
-                }
-            } catch (error) {
-                console.log(error);
-                setLootPerDay(0);
-            }
-
-            try {
-                let player_data = await request_player_account_data("", player_data_key);
-
-                if (player_data === null) {
-                    num_state_checks.current += 1;
-                    setDataAccountStatus(AccountStatus.not_created);
-                    return;
-                }
-
-                setDataAccountStatus(AccountStatus.created);
-
-                let current_status = player_data.player_status + 1;
-                if (initial_status.current === DungeonStatus.unknown) {
-                    initial_status.current = current_status;
-                }
-
-                let current_num_interactions = new BN(player_data.num_interactions).toNumber();
-
-                if (current_interaction.current !== null && current_num_interactions <= current_interaction.current) {
-                    if (DEBUG) {
-                        console.log("num plays not increased", current_num_interactions);
-                    }
-                    return;
-                }
-
-                setPlayerData(player_data);
-
-                current_interaction.current = current_num_interactions;
-
-                num_interactions.current = current_num_interactions;
-
-                let current_xp = new BN(player_data.num_xp).toNumber();
-
-                if (DEBUG) {
-                    console.log(
-                        "in init, progress: ",
-                        player_data.current_room,
-                        "enemy",
-                        player_data.current_enemy,
-                        "alive",
-                        DungeonStatusString[player_data.player_status + 1],
-                        "num_interactions",
-                        current_num_interactions,
-                        "num_xp",
-                        current_xp,
-                    );
-                }
-
-                if (initial_num_interactions.current === -1) {
-                    initial_num_interactions.current = current_num_interactions;
-                }
-
-                if (current_num_interactions === 0) {
-                    return;
-                }
-
-                check_user_state.current = false;
-
-                setWhichCharacter(player_data.player_character);
-
-                setCurrentEnemy(player_data.current_enemy);
-
-                setCurrentLevel(player_data.current_room);
-
-                setCurrentStatus(current_status);
-
-                setTotalLoot(bignum_to_num(player_data.total_gold) / 1e6);
-
-                setLastLoot(bignum_to_num(player_data.last_gold) / 1e6);
-
-                setAdvantage(player_data.advantage === 1);
-
-                let loot_bonus_time = bignum_to_num(player_data.bonus_loot_activation_time);
-                let current_time = Date.now() / 1000;
-
-                setLootBonus(player_data.bonus_loot === 1 && (current_time - loot_bonus_time) / 60 < 10.1);
-
-                if (update_status_effects.current) {
-                    update_status_effects.current = false;
-                }
-
-                roll_one.current = player_data.dice_one;
-                roll_two.current = player_data.dice_two;
-
-                // just check the freeplay key if the amount remaining is greater than zero
-                if (current_key_mint !== null && key_freeplays > 0) {
-                    let key_freeplays_account = PublicKey.findProgramAddressSync(
-                        [Buffer.from("key_freeplays"), current_key_mint.toBytes()],
-                        DUNGEON_PROGRAM,
-                    )[0];
-
-                    let freeplay_data = await request_key_freeplays_data("", key_freeplays_account);
-
-                    if (freeplay_data !== null) {
-                        console.log("free plays remaining", freeplay_data);
-                        setKeyFreePlays(freeplay_data.freeplays_remaining);
-                    }
-                }
-                num_state_checks.current = 0;
-            } catch (error) {
-                console.log(error);
-                setCurrentLevel(0);
-                setCurrentStatus(DungeonStatus.unknown);
-                setCurrentEnemy(DungeonEnemy.None);
-                setDataAccountStatus(AccountStatus.not_created);
-                num_state_checks.current += 1;
-            }
-        }
-
-        if (check_achievements.current) {
-            if (DEBUG) {
-                console.log("check achievement status");
-            }
-
-            try {
-                // get the achievement data
-                let achievement_data_key = PublicKey.findProgramAddressSync(
-                    [wallet.publicKey.toBytes(), Buffer.from(ACHIEVEMENT_SEED)],
-                    DUNGEON_PROGRAM,
-                )[0];
-                let achievement_data = await request_player_achievement_data("", achievement_data_key);
-
-                if (achievement_data !== null) {
-                    if (DEBUG) {
-                        console.log(achievement_data);
-                        console.log(achievement_data.n_interactions, achievement_interations.current);
-                    }
-
-                    if (achievement_data.n_interactions >= achievement_interations.current) {
-                        if (DEBUG) {
-                            console.log("update achievement state");
-                        }
-
-                        setAchievementData(achievement_data);
-                        setAchievementStatus(achievement_data.achievement_state);
-                        achievement_interations.current = achievement_data.n_interactions;
-                        check_achievements.current = false;
-                    }
-                } else {
-                    setAchievementStatus(null);
-                    setAchievementData(null);
-                    check_achievements.current = false;
-                }
-            } catch (error) {
-                console.log(error);
-                setAchievementStatus(null);
-                setAchievementData(null);
-            }
-        }
-    }, [wallet, "", current_key_mint, key_freeplays]);
-*/
-
-    /*
-    const ApplyKey = useCallback(async () => {
-        if (wallet.publicKey === null) return;
-
-        setDiscountError(null);
-
-        let parsed_key_index = parseInt(discount_key_index);
-        //console.log("key index", discount_key_index, parsed_key_index, isNaN(parsed_key_index));
-
-        if (isNaN(parsed_key_index)) return;
-
-        let key_meta_data = await run_keyData_GPA("", parsed_key_index);
-
-        if (key_meta_data === null) {
-            setDiscountError("Key " + discount_key_index + " has not been minted");
-            return;
-        }
-
-        //console.log("key meta", key_meta_data, key_meta_data.key_mint.toString());
-
-        let key_mint = key_meta_data.key_mint;
-        let key_type = key_meta_data.key_type;
-        let key_index = parsed_key_index;
-
-        // before we go on lets check they actually own the nft
-        let key_token_account = await getAssociatedTokenAddress(
-            key_mint, // mint
-            wallet.publicKey, // owner
-            true, // allow owner off curve
-        );
-
-        let token_amount = await request_token_amount("", key_token_account);
-
-        if (token_amount !== 1) {
-            setDiscountError("User does not own dungeon key " + key_index.toString());
-            return;
-        }
-
-        let max_freeplays = 10;
-        if (key_type === KeyType.Silver) max_freeplays = 20;
-        if (key_type === KeyType.Gold) max_freeplays = 30;
-
-        // get remaining freeplays
-        let key_freeplays_account = PublicKey.findProgramAddressSync(
-            [Buffer.from("key_freeplays"), key_mint.toBytes()],
-            DUNGEON_PROGRAM,
-        )[0];
-
-        let freeplay_data = await request_key_freeplays_data("", key_freeplays_account);
-
-        if (freeplay_data === null) {
-            //console.log("no free play account found, setting to ", max_freeplays);
-            setKeyFreePlays(max_freeplays);
-        } else {
-            let current_time = Date.now() / 1000;
-            let current_date = Math.floor(current_time / 24 / 60 / 60);
-            //console.log("free plays remaining", freeplay_data.freeplays_remaining, freeplay_data.last_date, current_date);
-            if (current_date === freeplay_data.last_date) {
-                setKeyFreePlays(freeplay_data.freeplays_remaining);
-            } else {
-                setKeyFreePlays(max_freeplays);
-            }
-        }
-
-        setCurrentKeyMint(key_mint);
-        setCurrentKeyIndex(key_index);
-    }, [wallet, discount_key_index, ""]);
-*/
     const LargeDoor = () => {
         const isTabletOrMobile = useMediaQuery({ query: "(max-width: 900px)" });
 
@@ -782,122 +295,6 @@ export function DungeonApp() {
         setBrowserWallet(wallet.publicKey.toString());
     }, [wallet, setBrowserWallet]);
 
-    /*
-    const check_state = useCallback(async () => {
-        if ("" === "") {
-            console.log("no bearer token set in check_state");
-            return;
-        }
-
-        if (user_keypair.current === null) {
-            return;
-        }
-
-        if (!check_user_state.current && !check_user_balance.current) return;
-
-        console.log("check user state");
-        if (check_user_balance.current) {
-            let new_balance = await request_current_balance("", user_keypair.current.publicKey);
-
-            if (user_sol_balance.current === 0 || new_balance !== user_sol_balance.current) {
-                user_sol_balance.current = new_balance;
-                check_user_balance.current = false;
-                setBalance(
-                    user_keypair.current.publicKey.toString(),
-                    Math.floor(user_sol_balance.current * LAMPORTS_PER_SOL),
-                    9,
-                    user_sol_balance.current,
-                );
-            }
-        }
-
-        if (check_loot_balance.current) {
-            // get loot balance
-            let loot_token_account = await getAssociatedTokenAddress(
-                LOOT_TOKEN_MINT, // mint
-                user_keypair.current.publicKey, // owner
-                true, // allow owner off curve
-            );
-
-            let loot_amount = await request_token_amount("", loot_token_account);
-            loot_amount = loot_amount / 1.0e6;
-
-            if (user_loot_balance.current === 0 || loot_amount !== user_loot_balance.current) {
-                user_loot_balance.current = loot_amount;
-                check_loot_balance.current = false;
-                setLootBalance(loot_token_account.toString(), Math.floor(user_loot_balance.current * 1e6), 6, user_loot_balance.current);
-            }
-        }
-
-        let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
-        console.log("player data key: ", player_data_key.toString());
-        console.log("seed ", user_keypair.current.publicKey.toBytes());
-        console.log("dungeon program", DUNGEON_PROGRAM.toBuffer());
-        console.log("PDA", Buffer.from("ProgramDerivedAddress"));
-
-        let buffer = Buffer.alloc(0);
-        buffer = Buffer.concat([buffer, user_keypair.current.publicKey.toBuffer()]);
-        buffer = Buffer.concat([buffer, DUNGEON_PROGRAM.toBuffer(), Buffer.from("ProgramDerivedAddress")]);
-        let publicKeyBytes = createHash("sha256").update(buffer).digest("hex");
-        console.log("public key bytes: ", publicKeyBytes);
-        try {
-            let player_data = await request_player_account_data("", player_data_key);
-
-            if (player_data === null) {
-                return;
-            }
-
-            if (player_state.current === null) {
-                console.log("current state is null, update");
-                player_state.current = player_data;
-                check_user_state.current = false;
-
-                let data_string = JSON.stringify(player_data);
-                console.log("have player data", player_data);
-                console.log("have player data string", data_string);
-                console.log(
-                    "gold: ",
-                    player_data.last_gold.toString(),
-                    player_data.total_gold.toString(),
-                    new BN(player_data.total_gold).toJSON,
-                );
-                UpdateDungeonData(data_string);
-                return;
-            }
-            console.log("have player data", player_data);
-
-            console.log(bignum_to_num(player_data.num_interactions), bignum_to_num(player_state.current.num_interactions));
-            if (bignum_to_num(player_state.current.num_interactions) >= bignum_to_num(player_data.num_interactions)) return;
-
-            let data_string = JSON.stringify(player_data);
-
-            UpdateDungeonData(data_string);
-
-            player_state.current = player_data;
-            check_user_state.current = false;
-        } catch (error) {
-            console.log(error);
-            player_state.current = null;
-        }
-    }, ["", setBalance, setLootBalance, UpdateDungeonData]);
-
-    // interval for checking state
-    useEffect(() => {
-        if (state_interval.current === null) {
-            state_interval.current = window.setInterval(check_state, 1000);
-        } else {
-            window.clearInterval(state_interval.current);
-            state_interval.current = null;
-        }
-        // here's the cleanup function
-        return () => {
-            if (state_interval.current !== null) {
-                window.clearInterval(state_interval.current);
-                state_interval.current = null;
-            }
-        };
-    }, [check_state]);
-*/
     const sendLoginConfirmation = useCallback(
         (message: string) => {
             console.log("has unity loaded in sendLoginConfirmation", isLoaded);
@@ -1023,7 +420,7 @@ export function DungeonApp() {
     }, [get_rest_state]);
 
     // Unity -> React
-
+    /*
     const UploadLevel = useCallback(async (house_data: HouseData, layer: number) => {
         if (user_keypair.current === null) return;
 
@@ -1072,6 +469,21 @@ export function DungeonApp() {
             return;
         }
     }, []);
+*/
+
+    const enum DungeonInstruction {
+        add_funds = 0,
+        play = 1,
+        quit = 2,
+        explore = 3,
+        claim_achievement = 4,
+        drink_potion = 5,
+        buy_potion = 6,
+        save_home = 7,
+        rest = 8,
+        create_account = 9,
+        craft = 10,
+    }
 
     const CreatePlayerAccount = useCallback(
         async (name: string, balance: bignum, iv: number[], salt: number[], data: number[], keypair: Keypair) => {
@@ -1150,11 +562,11 @@ export function DungeonApp() {
             };
             sendLoginConfirmation(JSON.stringify(message_json));
         },
-        [wallet, sendLoginConfirmation],
+        [wallet, sendLoginConfirmation, DungeonInstruction.create_account],
     );
 
     // Save the level data
-
+    /*
     const handleSaveData = useCallback(
         async (level: string) => {
             console.log(level);
@@ -1202,7 +614,7 @@ export function DungeonApp() {
         },
         [UploadLevel],
     );
-
+*/
     const handleAccountData = useCallback(
         async (account_data: string) => {
             console.log(account_data);
@@ -1302,13 +714,6 @@ export function DungeonApp() {
     }, [addEventListener, removeEventListener, handleTransferLOOT]);
 
     useEffect(() => {
-        addEventListener("SendSaveData", handleSaveData);
-        return () => {
-            removeEventListener("SendSaveData", handleSaveData);
-        };
-    }, [addEventListener, removeEventListener, handleSaveData]);
-
-    useEffect(() => {
         addEventListener("SendAccountInfo", handleAccountData);
         return () => {
             removeEventListener("SendAccountInfo", handleAccountData);
@@ -1327,56 +732,59 @@ export function DungeonApp() {
         };
     }, [addEventListener, removeEventListener, handleConfirmDataLoaded]);
 
-    const handleStartGathering = useCallback(async (gathering_type: number) => {
-        console.log("detected start crafting", gathering_type);
+    const handleStartGathering = useCallback(
+        async (gathering_type: number) => {
+            console.log("detected start crafting", gathering_type);
 
-        if (user_keypair.current === null) return;
+            if (user_keypair.current === null) return;
 
-        let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
+            let player_data_key = PublicKey.findProgramAddressSync([user_keypair.current.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
 
-        const instruction_data = serialise_gather_instruction(DungeonInstruction.craft, gathering_type);
+            const instruction_data = serialise_gather_instruction(DungeonInstruction.craft, gathering_type);
 
-        var account_vector = [
-            { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
-            { pubkey: player_data_key, isSigner: false, isWritable: true },
+            var account_vector = [
+                { pubkey: user_keypair.current.publicKey, isSigner: true, isWritable: true },
+                { pubkey: player_data_key, isSigner: false, isWritable: true },
 
-            { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
-        ];
+                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
+            ];
 
-        const play_instruction = new TransactionInstruction({
-            keys: account_vector,
-            programId: DUNGEON_PROGRAM,
-            data: instruction_data,
-        });
+            const play_instruction = new TransactionInstruction({
+                keys: account_vector,
+                programId: DUNGEON_PROGRAM,
+                data: instruction_data,
+            });
 
-        let txArgs = await get_current_blockhash("");
+            let txArgs = await get_current_blockhash("");
 
-        let transaction = new Transaction(txArgs);
-        transaction.feePayer = user_keypair.current.publicKey;
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = user_keypair.current.publicKey;
 
-        console.log(transaction.recentBlockhash, transaction.lastValidBlockHeight);
+            console.log(transaction.recentBlockhash, transaction.lastValidBlockHeight);
 
-        transaction.add(play_instruction);
+            transaction.add(play_instruction);
 
-        transaction.sign(user_keypair.current);
+            transaction.sign(user_keypair.current);
 
-        console.log("sign with ", user_keypair.current.publicKey.toString());
-        try {
-            const encoded_transaction = bs58.encode(transaction.serialize());
+            console.log("sign with ", user_keypair.current.publicKey.toString());
+            try {
+                const encoded_transaction = bs58.encode(transaction.serialize());
 
-            var transaction_response = await send_transaction("", encoded_transaction);
-            console.log("transaction response:", transaction_response);
-            if (transaction_response.result === "INVALID") {
-                console.log(transaction_response);
+                var transaction_response = await send_transaction("", encoded_transaction);
+                console.log("transaction response:", transaction_response);
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    return;
+                }
+            } catch (error) {
+                console.log(error);
                 return;
             }
-        } catch (error) {
-            console.log(error);
-            return;
-        }
 
-        check_user_state.current = true;
-    }, []);
+            check_user_state.current = true;
+        },
+        [DungeonInstruction.craft],
+    );
 
     useEffect(() => {
         addEventListener("StartCrafting", handleStartGathering);
