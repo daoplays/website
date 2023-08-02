@@ -13,7 +13,6 @@ import { Keypair, PublicKey, Transaction, TransactionInstruction, LAMPORTS_PER_S
 
 import { WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { PhantomWalletAdapter, SolflareWalletAdapter, BackpackWalletAdapter } from "@solana/wallet-adapter-wallets";
-
 import { WalletModalProvider, useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 import BN from "bn.js";
@@ -25,7 +24,7 @@ import { Unity, useUnityContext } from "react-unity-webgl";
 import { bignum } from "@metaplex-foundation/beet";
 
 //  dungeon constants
-import { DEFAULT_FONT_SIZE, DUNGEON_PROGRAM, SYSTEM_KEY } from "./constants";
+import { DEFAULT_FONT_SIZE, DUNGEON_PROGRAM, SYSTEM_KEY, LOOT_TOKEN_MINT } from "./constants";
 
 // dungeon utils
 import {
@@ -47,6 +46,7 @@ import { Footer } from "./footer";
 import "./css/style.css";
 import "./css/fonts.css";
 import "./css/wallet.css";
+import { createTransferInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 const styles = require("./css/unity.css");
 
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -290,6 +290,7 @@ export function DungeonApp() {
     );
 
     useEffect(() => {
+        console.log("Wallet has changed", wallet.connected, wallet.connecting, wallet.disconnecting);
         if (wallet.publicKey == null) return;
 
         setBrowserWallet(wallet.publicKey.toString());
@@ -310,6 +311,14 @@ export function DungeonApp() {
         },
         [sendMessage, isLoaded],
     );
+
+    const sendTransferSOLMessage = useCallback(() => {
+        sendMessage("Account", "TransferSOL", "0");
+    }, [sendMessage]);
+
+    const sendTransferLootMessage = useCallback(() => {
+        sendMessage("ConnectUI", "updateLootBalance");
+    }, [sendMessage]);
 
     const get_rest_state = useCallback(async () => {
         if (user_keypair.current === null) {
@@ -487,7 +496,8 @@ export function DungeonApp() {
 
     const CreatePlayerAccount = useCallback(
         async (name: string, balance: bignum, iv: number[], salt: number[], data: number[], keypair: Keypair) => {
-            if (wallet.publicKey === null || wallet.signTransaction === undefined || wallet.signMessage === undefined) return;
+            console.log("create player account", wallet.publicKey === null);
+            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
             let player_account_key = PublicKey.findProgramAddressSync([Buffer.from(name)], DUNGEON_PROGRAM)[0];
             let player_dungeon_key = PublicKey.findProgramAddressSync([keypair.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
@@ -517,6 +527,8 @@ export function DungeonApp() {
 
             let txArgs = await get_current_blockhash("");
 
+            console.log("txArgs: ", txArgs);
+
             let transaction = new Transaction(txArgs);
             transaction.feePayer = wallet.publicKey;
 
@@ -525,6 +537,7 @@ export function DungeonApp() {
             transaction.partialSign(keypair);
 
             try {
+                console.log("sign transaction");
                 let signed_transaction = await wallet.signTransaction(transaction);
                 const encoded_transaction = bs58.encode(signed_transaction.serialize());
 
@@ -639,6 +652,10 @@ export function DungeonApp() {
                 user_keypair.current.secretKey.toString(),
             );
 
+            if (balance == 0) {
+                return;
+            }
+
             if (user_name.current === null) return;
 
             await CreatePlayerAccount(
@@ -655,7 +672,7 @@ export function DungeonApp() {
 
     const handleTransferSOL = useCallback(
         async (amount: number) => {
-            console.log("Transfer sol", amount);
+            console.log("Transfer sol", amount, wallet.publicKey === null, user_keypair.current === null);
             if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
             if (user_keypair.current === null) return;
@@ -696,7 +713,61 @@ export function DungeonApp() {
         [wallet],
     );
 
-    const handleTransferLOOT = useCallback(async () => {}, []);
+    const handleTransferLOOT = useCallback(
+        async (amount: number) => {
+            console.log("Transfer loot", amount, wallet.publicKey === null, user_keypair.current === null);
+            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
+
+            if (user_keypair.current === null) return;
+
+            let source_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                wallet.publicKey, // owner
+                true, // allow owner off curve
+            );
+
+            let destination_token_account = await getAssociatedTokenAddress(
+                LOOT_TOKEN_MINT, // mint
+                user_keypair.current.publicKey, // owner
+                true, // allow owner off curve
+            );
+
+            let amount_bn = BigInt(amount * 1e6);
+            const transfer_instruction = createTransferInstruction(
+                source_token_account,
+                destination_token_account,
+                wallet.publicKey,
+                amount_bn,
+                undefined,
+                TOKEN_PROGRAM_ID,
+            );
+
+            let txArgs = await get_current_blockhash("");
+
+            let transaction = new Transaction(txArgs);
+            transaction.feePayer = wallet.publicKey;
+
+            console.log(transaction.recentBlockhash, transaction.lastValidBlockHeight);
+
+            transaction.add(transfer_instruction);
+            console.log("send transaction");
+            try {
+                let signed_transaction = await wallet.signTransaction(transaction);
+                const encoded_transaction = bs58.encode(signed_transaction.serialize());
+
+                var transaction_response = await send_transaction("", encoded_transaction);
+                console.log("transaction response:", transaction_response);
+                if (transaction_response.result === "INVALID") {
+                    console.log(transaction_response);
+                    return;
+                }
+            } catch (error) {
+                console.log(error);
+                return;
+            }
+        },
+        [wallet],
+    );
 
     useEffect(() => {
         console.log("Have transfer sol event");
