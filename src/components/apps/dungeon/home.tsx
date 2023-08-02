@@ -255,10 +255,6 @@ export function DungeonApp() {
     const user_name = useRef<string | null>(null);
     const user_keypair = useRef<Keypair | null>(null);
 
-    const check_user_state = useRef<boolean>(true);
-
-    const check_user_balance = useRef<boolean>(true);
-
     const {
         unityProvider,
         requestFullscreen,
@@ -311,14 +307,6 @@ export function DungeonApp() {
         },
         [sendMessage, isLoaded],
     );
-
-    const sendTransferSOLMessage = useCallback(() => {
-        sendMessage("Account", "TransferSOL", "0");
-    }, [sendMessage]);
-
-    const sendTransferLootMessage = useCallback(() => {
-        sendMessage("ConnectUI", "updateLootBalance");
-    }, [sendMessage]);
 
     const get_rest_state = useCallback(async () => {
         if (user_keypair.current === null) {
@@ -652,7 +640,7 @@ export function DungeonApp() {
                 user_keypair.current.secretKey.toString(),
             );
 
-            if (balance == 0) {
+            if (balance === 0) {
                 return;
             }
 
@@ -707,8 +695,6 @@ export function DungeonApp() {
                 console.log(error);
                 return;
             }
-
-            check_user_balance.current = true;
         },
         [wallet],
     );
@@ -770,7 +756,6 @@ export function DungeonApp() {
     );
 
     useEffect(() => {
-        console.log("Have transfer sol event");
         addEventListener("TransferSOL", handleTransferSOL);
         return () => {
             removeEventListener("TransferSOL", handleTransferSOL);
@@ -851,8 +836,6 @@ export function DungeonApp() {
                 console.log(error);
                 return;
             }
-
-            check_user_state.current = true;
         },
         [DungeonInstruction.craft],
     );
@@ -863,21 +846,6 @@ export function DungeonApp() {
             removeEventListener("StartCrafting", handleStartGathering);
         };
     }, [addEventListener, removeEventListener, handleStartGathering]);
-
-    const handleDungeonInstruction = useCallback(async (instruction_string: string) => {
-        console.log("detected dungeon instruction", instruction_string);
-
-        if (user_keypair.current === null) return;
-
-        check_user_state.current = true;
-    }, []);
-
-    useEffect(() => {
-        addEventListener("SendDungeonInstruction", handleDungeonInstruction);
-        return () => {
-            removeEventListener("SendDungeonInstruction", handleDungeonInstruction);
-        };
-    }, [addEventListener, removeEventListener, handleDungeonInstruction]);
 
     function handleClickEnterFullscreen() {
         requestFullscreen(true);
