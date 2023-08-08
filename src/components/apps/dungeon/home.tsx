@@ -622,13 +622,13 @@ export function DungeonApp() {
             let account_json = JSON.parse(account_data);
 
             user_name.current = account_json["user_name"];
-            let balance: number = account_json["balance"];
+            let balance: number = parseFloat(account_json["balance"]);
             let iv: number[] = account_json["iv"];
             let salt: number[] = account_json["salt"];
             let data: number[] = account_json["data"];
             let private_key: number[] = account_json["private_key"];
 
-            console.log("have user data", iv, salt, data);
+            console.log("have user data", account_json);
 
             user_keypair.current = Keypair.fromSecretKey(new Uint8Array(private_key));
 
@@ -641,9 +641,11 @@ export function DungeonApp() {
             );
 
             if (balance === 0) {
+                console.log("balance zero, returning");
                 return;
             }
-
+            console.log("balance not zero, ", balance, balance === 0);
+    
             if (user_name.current === null) return;
 
             await CreatePlayerAccount(
