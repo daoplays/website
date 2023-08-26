@@ -13,6 +13,7 @@ import {
     i64,
     bignum,
     bool,
+    array,
 } from "@metaplex-foundation/beet";
 import { publicKey } from "@metaplex-foundation/beet-solana";
 
@@ -119,12 +120,23 @@ interface BlockHash {
 
 export async function get_current_blockhash(bearer: string): Promise<BlockHash> {
     var body = { id: 1, jsonrpc: "2.0", method: "getLatestBlockhash" };
-    const blockhash_data_result = await postData(RPC_NODE, bearer, body);
+    let have_blockhash = false;
 
-    let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
-    let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+    let hash_data: BlockHash = { blockhash: "", lastValidBlockHeight: 0 };
+    while (!have_blockhash) {
+        console.log("getting blockhash");
+        const blockhash_data_result = await postData(RPC_NODE, bearer, body);
 
-    let hash_data: BlockHash = { blockhash: blockhash, lastValidBlockHeight: last_valid };
+        if (blockhash_data_result["result"]["value"] == null) continue;
+
+        let blockhash = blockhash_data_result["result"]["value"]["blockhash"];
+        let last_valid = blockhash_data_result["result"]["value"]["lastValidBlockHeight"];
+
+        hash_data = { blockhash: blockhash, lastValidBlockHeight: last_valid };
+        have_blockhash = true;
+    }
+
+    console.log("BH: ", hash_data);
 
     return hash_data;
 }
@@ -139,6 +151,7 @@ export async function send_transaction(bearer: string, encoded_transaction: stri
     var body = { id: 1, jsonrpc: "2.0", method: "sendTransaction", params: [encoded_transaction, { skipPreflight: true }] };
 
     var response_json = await postData(RPC_NODE, bearer, body);
+    console.log(response_json);
     let transaction_response: TransactionResponseData = response_json;
 
     let valid_json = check_json(response_json);
@@ -430,7 +443,7 @@ class DungeonData {
 export class RestData {
     constructor(
         readonly energy: number,
-        readonly rest_time_remaining: bignum,
+        readonly rest_end_time: bignum,
         readonly power_bonus: number,
         readonly loot_bonus: number,
         readonly health_bonus: number,
@@ -440,25 +453,85 @@ export class RestData {
     static readonly struct = new BeetStruct<RestData>(
         [
             ["energy", u8],
-            ["rest_time_remaining", i64],
+            ["rest_end_time", i64],
             ["power_bonus", u8],
             ["loot_bonus", u8],
             ["health_bonus", u8],
             ["xp_bonus", u8],
         ],
-        (args) =>
-            new RestData(args.energy!, args.rest_time_remaining!, args.power_bonus!, args.loot_bonus!, args.health_bonus!, args.xp_bonus!),
+        (args) => new RestData(args.energy!, args.rest_end_time!, args.power_bonus!, args.loot_bonus!, args.health_bonus!, args.xp_bonus!),
         "RestData",
+    );
+}
+
+export class HouseData {
+    constructor(
+        readonly grid_width: number,
+        readonly grid_height: number,
+        readonly grid_cell_size: number,
+        readonly grid_offset: number[],
+        readonly sprites: number[],
+        readonly player_data: string[],
+        readonly enemy_data: string[],
+    ) {}
+
+    static readonly struct = new FixableBeetStruct<HouseData>(
+        [
+            ["grid_width", u8],
+            ["grid_height", u8],
+            ["grid_cell_size", u8],
+            ["grid_offset", uniformFixedSizeArray(u16, 3)],
+            ["sprites", array(u8)],
+            ["player_data", array(utf8String)],
+            ["enemy_data", array(utf8String)],
+        ],
+        (args) =>
+            new HouseData(
+                args.grid_width!,
+                args.grid_height!,
+                args.grid_cell_size!,
+                args.grid_offset!,
+                args.sprites!,
+                args.player_data!,
+                args.enemy_data!,
+            ),
+        "HouseData",
+    );
+}
+
+export class u64Data {
+    constructor(readonly value: bignum) {}
+
+    static readonly struct = new BeetStruct<u64Data>([["value", u64]], (args) => new u64Data(args.value!), "u64Data");
+}
+
+export class HouseStateData {
+    constructor(readonly data: HouseData[]) {}
+
+    static readonly struct = new FixableBeetStruct<HouseStateData>(
+        [["data", array(HouseData.struct)]],
+        (args) => new HouseStateData(args.data!),
+        "HouseStateData",
+    );
+}
+
+export class PlayerAccountData {
+    constructor(readonly data: number[]) {}
+
+    static readonly struct = new FixableBeetStruct<PlayerAccountData>(
+        [["data", array(u8)]],
+        (args) => new PlayerAccountData(args.data!),
+        "PlayerAccountData",
     );
 }
 
 export class PlayerData {
     constructor(
-        readonly num_plays: bignum,
+        readonly num_interactions: bignum,
         readonly num_xp: bignum,
-        readonly in_progress: number,
+        readonly current_room: number,
         readonly player_status: number,
-        readonly dungeon_enemy: number,
+        readonly current_enemy: number,
         readonly player_character: number,
         readonly last_gold: bignum,
         readonly current_key: number,
@@ -472,16 +545,18 @@ export class PlayerData {
         readonly dice_one: number,
         readonly dice_two: number,
         readonly rest_status: RestData[],
+        readonly stone_amount: number,
+        readonly wood_amount: number,
         readonly extra_space: bignum[],
     ) {}
 
     static readonly struct = new BeetStruct<PlayerData>(
         [
-            ["num_plays", u64],
+            ["num_interactions", u64],
             ["num_xp", u64],
-            ["in_progress", u8],
+            ["current_room", u8],
             ["player_status", u8],
-            ["dungeon_enemy", u8],
+            ["current_enemy", u8],
             ["player_character", u8],
             ["last_gold", u64],
             ["current_key", u8],
@@ -495,15 +570,17 @@ export class PlayerData {
             ["dice_one", u8],
             ["dice_two", u8],
             ["rest_status", uniformFixedSizeArray(RestData.struct, 3)],
-            ["extra_space", uniformFixedSizeArray(u8, 41)],
+            ["stone_amount", u8],
+            ["wood_amount", u8],
+            ["extra_space", uniformFixedSizeArray(u8, 39)],
         ],
         (args) =>
             new PlayerData(
-                args.num_plays!,
+                args.num_interactions!,
                 args.num_xp!,
-                args.in_progress!,
+                args.current_room!,
                 args.player_status!,
-                args.dungeon_enemy!,
+                args.current_enemy!,
                 args.player_character!,
                 args.last_gold!,
                 args.current_key!,
@@ -517,6 +594,8 @@ export class PlayerData {
                 args.dice_one!,
                 args.dice_two!,
                 args.rest_status!,
+                args.stone_amount!,
+                args.wood_amount!,
                 args.extra_space!,
             ),
         "PlayerData",
@@ -700,6 +779,57 @@ class DungeonRestInstruction {
     );
 }
 
+class DungeonSaveHomeInstruction {
+    constructor(readonly instruction: number, readonly layer: number, readonly data: HouseData) {}
+
+    static readonly struct = new FixableBeetStruct<DungeonSaveHomeInstruction>(
+        [
+            ["instruction", u8],
+            ["layer", u8],
+            ["data", HouseData.struct],
+        ],
+        (args) => new DungeonSaveHomeInstruction(args.instruction!, args.layer!, args.data!),
+        "DungeonSaveHomeInstruction",
+    );
+}
+
+class DungeonCreateAccountInstruction {
+    constructor(
+        readonly instruction: number,
+        readonly character: string,
+        readonly balance: bignum,
+        readonly iv: number[],
+        readonly salt: number[],
+        readonly data: number[],
+    ) {}
+
+    static readonly struct = new FixableBeetStruct<DungeonCreateAccountInstruction>(
+        [
+            ["instruction", u8],
+            ["character", utf8String],
+            ["balance", u64],
+            ["iv", uniformFixedSizeArray(u8, 16)],
+            ["salt", uniformFixedSizeArray(u8, 16)],
+            ["data", array(u8)],
+        ],
+        (args) => new DungeonCreateAccountInstruction(args.instruction!, args.character!, args.balance!, args.iv!, args.salt!, args.data!),
+        "DungeonCreateAccountInstruction",
+    );
+}
+
+class DungeonGatherInstruction {
+    constructor(readonly instruction: number, readonly gather_type: number) {}
+
+    static readonly struct = new BeetStruct<DungeonGatherInstruction>(
+        [
+            ["instruction", u8],
+            ["gather_type", u8],
+        ],
+        (args) => new DungeonGatherInstruction(args.instruction!, args.gather_type!),
+        "DungeonGatherInstruction",
+    );
+}
+
 export async function request_player_account_data(bearer: string, pubkey: PublicKey): Promise<PlayerData | null> {
     let account_data = await request_raw_account_data(bearer, pubkey);
 
@@ -748,6 +878,40 @@ export async function request_player_achievement_data(bearer: string, pubkey: Pu
     return data;
 }
 
+export async function request_player_home_data(bearer: string, pubkey: PublicKey): Promise<HouseStateData | null> {
+    let account_data = await request_raw_account_data(bearer, pubkey);
+
+    if (account_data === null) {
+        return null;
+    }
+
+    const [data] = HouseStateData.struct.deserialize(account_data);
+
+    return data;
+}
+
+export function serialise_house_data(
+    width: number,
+    height: number,
+    cell_size: number,
+    offset: number[],
+    sprites: number[],
+    player_data: string[],
+    enemy_data: string[],
+): Buffer {
+    const data = new HouseData(width, height, cell_size, offset, sprites, player_data, enemy_data);
+    const [buf] = HouseData.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_save_home_instruction(instruction: number, layer: number, house_data: HouseData): Buffer {
+    const data = new DungeonSaveHomeInstruction(instruction, layer, house_data);
+    const [buf] = DungeonSaveHomeInstruction.struct.serialize(data);
+
+    return buf;
+}
+
 export function serialise_play_instruction(instruction: number, which_character: number, bet_size: number): Buffer {
     const data = new DungeonPlayInstruction(instruction, which_character, bet_size);
     const [buf] = DungeonPlayInstruction.struct.serialize(data);
@@ -793,6 +957,27 @@ export function serialise_buy_potion_instruction(instruction: number, which_poti
 export function serialise_rest_instruction(instruction: number, character: number, rest_type: number, rest_length: number): Buffer {
     const data = new DungeonRestInstruction(instruction, character, rest_type, rest_length);
     const [buf] = DungeonRestInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_create_account_instruction(
+    instruction: number,
+    character: string,
+    balance: bignum,
+    iv: number[],
+    salt: number[],
+    encrypted_data: number[],
+): Buffer {
+    const data = new DungeonCreateAccountInstruction(instruction, character, balance, iv, salt, encrypted_data);
+    const [buf] = DungeonCreateAccountInstruction.struct.serialize(data);
+
+    return buf;
+}
+
+export function serialise_gather_instruction(instruction: number, gather_type: number): Buffer {
+    const data = new DungeonGatherInstruction(instruction, gather_type);
+    const [buf] = DungeonGatherInstruction.struct.serialize(data);
 
     return buf;
 }

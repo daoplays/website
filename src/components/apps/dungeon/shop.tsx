@@ -21,8 +21,6 @@ import {
     LOOT_TOKEN_MINT,
 } from "./constants";
 
-import { DungeonInstruction } from "./dungeon_state";
-
 import bs58 from "bs58";
 
 import {
@@ -35,7 +33,6 @@ import {
     request_token_amount,
     serialise_mint_from_collection_instruction,
     ShopData,
-    serialise_buy_potion_instruction,
     bignum_to_num,
     PlayerData,
 } from "./utils";
@@ -76,8 +73,6 @@ import tower_of_dur from "./shop_items/TowerOfDur.png";
 
 // potions
 import power_collection from "./shop_items/PotionCollection.gif";
-import power_potion from "./shop_items/Power_Potion.gif";
-import luck_potion from "./shop_items/Luck_Potion.gif";
 
 import "./css/style.css";
 import "./css/fonts.css";
@@ -538,74 +533,6 @@ export function ShopScreen({
         [wallet, bearer_token, check_sol_balance],
     );
 
-    const MintPotion = useCallback(
-        async (which: number) => {
-            if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
-
-            setProcessingTransaction(true);
-
-            let player_data_key = PublicKey.findProgramAddressSync([wallet.publicKey.toBytes()], DUNGEON_PROGRAM)[0];
-
-            let loot_token_account = await getAssociatedTokenAddress(
-                LOOT_TOKEN_MINT, // mint
-                wallet.publicKey, // owner
-                true, // allow owner off curve
-            );
-
-            let quantity = parseInt(potion_quantity);
-            if (isNaN(quantity)) {
-                setProcessingTransaction(false);
-                return;
-            }
-            const instruction_data = serialise_buy_potion_instruction(DungeonInstruction.buy_potion, which, quantity);
-
-            var account_vector = [
-                { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-                { pubkey: player_data_key, isSigner: false, isWritable: true },
-                { pubkey: LOOT_TOKEN_MINT, isSigner: false, isWritable: true },
-                { pubkey: loot_token_account, isSigner: false, isWritable: true },
-                { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-                { pubkey: SYSTEM_KEY, isSigner: false, isWritable: false },
-            ];
-
-            const play_instruction = new TransactionInstruction({
-                keys: account_vector,
-                programId: DUNGEON_PROGRAM,
-                data: instruction_data,
-            });
-
-            let txArgs = await get_current_blockhash(bearer_token);
-
-            let transaction = new Transaction(txArgs);
-            transaction.feePayer = wallet.publicKey;
-
-            transaction.add(play_instruction);
-
-            try {
-                let signed_transaction = await wallet.signTransaction(transaction);
-                const encoded_transaction = bs58.encode(signed_transaction.serialize());
-
-                var transaction_response = await send_transaction(bearer_token, encoded_transaction);
-
-                if (transaction_response.result === "INVALID") {
-                    console.log(transaction_response);
-                    setProcessingTransaction(false);
-                    return;
-                }
-            } catch (error) {
-                setProcessingTransaction(false);
-                console.log(error);
-                return;
-            }
-
-            setProcessingTransaction(false);
-            check_user_state.current = true;
-            check_sol_balance.current = true;
-            check_loot_balance.current = true;
-        },
-        [wallet, bearer_token, check_user_state, check_sol_balance, potion_quantity],
-    );
-
     const MintKey = useCallback(async () => {
         if (wallet.publicKey === null || wallet.signTransaction === undefined) return;
 
@@ -906,115 +833,6 @@ export function ShopScreen({
         );
     };
 
-    const PotionText = (): JSX.Element | null => {
-        return (
-            <Center width="100%">
-                <Box width="80%">
-                    <Text className="font-face-sfpb" fontSize={DUNGEON_FONT_SIZE} textAlign="center" color="white" mb="1rem">
-                        Magical potions to help you in your adventures
-                    </Text>
-                    <Center>
-                        <HStack>
-                            <VStack alignItems="center">
-                                <Box as="button" onClick={() => setWhichPotion(0)}>
-                                    <img style={{ imageRendering: "pixelated" }} src={power_potion} width="150" alt={""} />
-                                </Box>
-                                <Box>
-                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        Attack Potion
-                                    </Text>
-                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        10 LOOT
-                                    </Text>
-                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        You Own {player_data?.num_advantage_potions}
-                                    </Text>
-                                </Box>
-                            </VStack>
-
-                            <VStack alignItems="center">
-                                <Box as="button" onClick={() => setWhichPotion(1)}>
-                                    <img style={{ imageRendering: "pixelated" }} src={luck_potion} width="150" alt={""} />
-                                </Box>
-                                <Box as="button">
-                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        Potion of Luck
-                                    </Text>
-                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        50 LOOT
-                                    </Text>
-                                    <Text textAlign="center" className="font-face-sfpb" color="grey" fontSize="10px">
-                                        You Own {player_data?.num_bonus_loot_potions}
-                                    </Text>
-                                </Box>
-                            </VStack>
-                        </HStack>
-                    </Center>
-
-                    {which_potion === 0 && (
-                        <VStack>
-                            <Text
-                                mt="1rem"
-                                className="font-face-sfpb"
-                                fontSize={DUNGEON_FONT_SIZE}
-                                textAlign="center"
-                                color="white"
-                                mb="1rem"
-                            >
-                                Potion of Power - Roll two dice in the next Room and pick the highest value as your attack
-                            </Text>
-                            <VStack>
-                                <PotionQuantity />
-                                <Box
-                                    as="button"
-                                    onClick={() => {
-                                        MintPotion(0);
-                                    }}
-                                    borderWidth="1px"
-                                    borderColor="white"
-                                >
-                                    <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
-                                        Purchase
-                                    </Text>
-                                </Box>
-                            </VStack>
-                        </VStack>
-                    )}
-                    {which_potion === 1 && (
-                        <VStack>
-                            <Text
-                                mt="1rem"
-                                className="font-face-sfpb"
-                                fontSize={DUNGEON_FONT_SIZE}
-                                textAlign="center"
-                                color="white"
-                                mb="1rem"
-                            >
-                                Potion of Luck - Find 1-3 extra LOOT per room for 10 minutes after drinking
-                            </Text>
-                            <VStack>
-                                <PotionQuantity />
-
-                                <Box
-                                    as="button"
-                                    onClick={() => {
-                                        MintPotion(1);
-                                    }}
-                                    borderWidth="1px"
-                                    borderColor="white"
-                                >
-                                    <Text className="font-face-sfpb" color="white" fontSize={DUNGEON_FONT_SIZE}>
-                                        Purchase
-                                    </Text>
-                                </Box>
-                            </VStack>
-                        </VStack>
-                    )}
-                </Box>
-            </Center>
-        );
-    };
-
     const MusicText = (): JSX.Element | null => {
         return (
             <Center width="100%">
@@ -1218,10 +1036,6 @@ export function ShopScreen({
 
         if (collection_page === Collection.LorePages) {
             return <LoreText />;
-        }
-
-        if (collection_page === Collection.Potions) {
-            return <PotionText />;
         }
 
         return null;

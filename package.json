@@ -41,6 +41,7 @@
     "history": "^5.1.0",
     "jsonwebtoken": "^9.0.0",
     "material-design-icons": "^3.0.1",
+    "openpgp": "^5.9.0",
     "plotly.js": "^2.12.1",
     "react": "^18.2.0",
     "react-app-rewired": "^2.2.1",
@@ -60,6 +61,7 @@
     "react-select": "^5.7.0",
     "react-syntax-highlighter": "15.5.0",
     "react-twitch-embed": "^3.0.1",
+    "react-unity-webgl": "^9.4.0",
     "react-use-websocket": "^4.3.1",
     "reactstrap": "^9.1.1",
     "seedrandom": "^3.0.5",
@@ -88,5 +90,9 @@
       "not dead",
       "not op_mini all"
     ]
+  },
+  "devDependencies": {
+    "@openpgp/web-stream-tools": "^0.0.13",
+    "@types/crypto-js": "^4.1.1"
   }
 }
